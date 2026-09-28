@@ -40,3 +40,19 @@ test('WebSocket upgrades need our Origin but no content type', () => {
   assert.deepEqual(checkRequest({ ...base, headers: { host: '127.0.0.1:3456', origin: 'null' } }, PORT, 'upgrade'), { ok: false, reason: 'origin' })
   assert.deepEqual(checkRequest({ ...base, headers: { host: '127.0.0.1:3456' } }, PORT, 'upgrade'), { ok: false, reason: 'origin' })
 })
+
+test('Origin is bound to the validated Host, not any allowed authority', () => {
+  // Host/Origin mismatch: different names for same port
+  assert.deepEqual(checkRequest({ ...base, headers: { host: 'localhost:3456', origin: 'http://127.0.0.1:3456', 'content-type': 'application/json', 'sec-fetch-site': 'same-origin' } }, PORT, 'mutate'), { ok: false, reason: 'origin' })
+  assert.deepEqual(checkRequest({ ...base, headers: { host: '127.0.0.1:3456', origin: 'http://localhost:3456', 'content-type': 'application/json', 'sec-fetch-site': 'same-origin' } }, PORT, 'mutate'), { ok: false, reason: 'origin' })
+  assert.deepEqual(checkRequest({ ...base, headers: { host: 'localhost:3456', origin: 'http://127.0.0.1:3456' } }, PORT, 'upgrade'), { ok: false, reason: 'origin' })
+  assert.deepEqual(checkRequest({ ...base, headers: { host: '127.0.0.1:3456', origin: 'http://localhost:3456' } }, PORT, 'upgrade'), { ok: false, reason: 'origin' })
+  // Same IP but different port
+  assert.deepEqual(checkRequest({ ...base, headers: { host: '127.0.0.1:3456', origin: 'http://127.0.0.1:5173', 'content-type': 'application/json', 'sec-fetch-site': 'same-origin' } }, PORT, 'mutate'), { ok: false, reason: 'origin' })
+  assert.deepEqual(checkRequest({ ...base, headers: { host: '127.0.0.1:3456', origin: 'http://127.0.0.1:5173' } }, PORT, 'upgrade'), { ok: false, reason: 'origin' })
+})
+
+test('IPv6 loopback address is rejected as a Host header', () => {
+  assert.deepEqual(checkRequest({ ...base, headers: { host: '[::1]:3456' } }, PORT, 'read'), { ok: false, reason: 'host' })
+  assert.deepEqual(checkRequest({ ...base, headers: { host: '[::1]:3456', origin: 'http://[::1]:3456' } }, PORT, 'mutate'), { ok: false, reason: 'host' })
+})

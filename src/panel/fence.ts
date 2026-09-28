@@ -49,7 +49,7 @@ function header(request: FenceRequest, name: string): string | undefined {
 
 /** The loopback authorities this panel answers to on `port`. */
 export function allowedAuthorities(port: number): string[] {
-  return [`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]
+  return [`127.0.0.1:${port}`, `localhost:${port}`]
 }
 
 export function checkRequest(request: FenceRequest, port: number, kind: FenceKind): FenceVerdict {
@@ -59,7 +59,7 @@ export function checkRequest(request: FenceRequest, port: number, kind: FenceKin
   if (host === undefined || !authorities.includes(host)) return { ok: false, reason: 'host' }
   const site = header(request, 'sec-fetch-site')
   const origin = header(request, 'origin')
-  const originOk = origin !== undefined && authorities.some(authority => origin.toLowerCase() === `http://${authority}`)
+  const originOk = origin !== undefined && origin.toLowerCase() === `http://${host}`
   if (kind === 'read') {
     // `none` is a user-initiated navigation (typing the URL, preview_start).
     if (site !== undefined && site !== 'same-origin' && site !== 'none') return { ok: false, reason: 'fetch-site' }
