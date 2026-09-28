@@ -26,6 +26,29 @@ test('start waits for "Recording started"; stop finalizes with SIGINT', async ()
   assert.equal(recorder.active('BBB'), undefined)
 })
 
+test('concurrent start() calls for the same device: only one spawns, the other rejects', async () => {
+  const { spawnRecord, spawned } = fakeRecordSpawn()
+  const recorder = new Recorder({ dir: tempDir(), spawnRecord })
+  const results = await Promise.allSettled([recorder.start('BBB'), recorder.start('BBB')])
+  const fulfilled = results.filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof recorder.start>>> => r.status === 'fulfilled')
+  const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+  assert.equal(fulfilled.length, 1)
+  assert.equal(rejected.length, 1)
+  assert.match(String(rejected[0]?.reason), /already/)
+  assert.match(String(rejected[0]?.reason), new RegExp(fulfilled[0]?.value.udid ?? 'BBB'))
+  assert.equal(spawned.length, 1)
+  await recorder.stop('BBB')
+  assert.deepEqual(spawned[0]?.signals, ['SIGINT'])
+})
+
+test('a failed start releases the reservation so a later start can proceed', async () => {
+  const recorder = new Recorder({ dir: tempDir(), spawnRecord: fakeRecordSpawn({ exitEarly: true }).spawnRecord })
+  await assert.rejects(recorder.start('BBB'), /exited before recording/)
+  // If the reservation from the first (failed) start were never released, this
+  // would reject with /already/ instead of hitting the spawner again.
+  await assert.rejects(recorder.start('BBB'), /exited before recording/)
+})
+
 test('start fails loudly when recordVideo exits early', async () => {
   const recorder = new Recorder({ dir: tempDir(), spawnRecord: fakeRecordSpawn({ exitEarly: true }).spawnRecord })
   await assert.rejects(recorder.start('BBB'), /exited before recording \(code 1\): Invalid device/)

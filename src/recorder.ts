@@ -66,6 +66,7 @@ export class Recorder {
   readonly #stopTimeoutMs: number
   readonly #now: () => number
   readonly #active = new Map<string, ActiveRecording>()
+  readonly #starting = new Set<string>()
 
   constructor(options: RecorderOptions) {
     this.#dir = options.dir
@@ -89,19 +90,30 @@ export class Recorder {
     if (running !== undefined) {
       throw new Error(`a recording is already running for ${udid} (${running.info.path}) — stop it first with action "stop"`)
     }
-    const requested = outputPath?.trim() ?? ''
-    const path = requested === '' ? this.defaultPath(udid) : requested
-    if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`)
-    mkdirSync(dirname(path), { recursive: true })
-    const child = this.#spawnRecord(udid, path)
-    const exited = new Promise<number | null>(resolve => {
-      child.once('exit', code => resolve(code))
-      child.once('error', () => resolve(null))
-    })
-    await this.#waitForStart(child, exited)
-    const info: RecordingInfo = { udid, path, startedAt: this.#now() }
-    this.#active.set(udid, { child, info, exited })
-    return info
+    if (this.#starting.has(udid)) {
+      throw new Error(`a recording is already starting for ${udid} — wait for it to finish starting before trying again`)
+    }
+    // Reserved synchronously (no `await` above this line) so a second start()
+    // for the same udid, called before this one finishes starting, always
+    // observes the reservation instead of racing it past the check.
+    this.#starting.add(udid)
+    try {
+      const requested = outputPath?.trim() ?? ''
+      const path = requested === '' ? this.defaultPath(udid) : requested
+      if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`)
+      mkdirSync(dirname(path), { recursive: true })
+      const child = this.#spawnRecord(udid, path)
+      const exited = new Promise<number | null>(resolve => {
+        child.once('exit', code => resolve(code))
+        child.once('error', () => resolve(null))
+      })
+      await this.#waitForStart(child, exited)
+      const info: RecordingInfo = { udid, path, startedAt: this.#now() }
+      this.#active.set(udid, { child, info, exited })
+      return info
+    } finally {
+      this.#starting.delete(udid)
+    }
   }
 
   async stop(udid: string): Promise<RecordingResult> {
