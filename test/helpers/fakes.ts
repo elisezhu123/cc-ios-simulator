@@ -4,9 +4,12 @@
  */
 import type { ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { PassThrough } from 'node:stream'
 import type { SimHostController, SimHostStatus, SimStreamInfo } from '../../src/sim-host.js'
+import type { SimctlApi } from '../../src/deps.js'
+import type { SimulatorDevice } from '../../src/simctl.js'
+import { tinyPng } from './png.js'
 
 /** The public slice of SimHostController that the tools and the panel use. */
 export type FakeHost = Pick<SimHostController, 'binary' | 'streamInfo' | 'status' | 'ensureRunning' | 'stop' | 'acquire' | 'control'>
@@ -130,4 +133,57 @@ export function fakeRecordSpawn(options: { announce?: boolean; exitEarly?: boole
     return child as unknown as ChildProcess
   }
   return { spawnRecord, spawned }
+}
+
+/** Four simulators: two booted iPhones on different runtimes, two shut down. */
+export const DEVICES: readonly SimulatorDevice[] = [
+  { udid: 'AAA', name: 'iPhone 16', runtime: 'com.apple.CoreSimulator.SimRuntime.iOS-18-0', state: 'Shutdown' },
+  {
+    udid: 'BBB',
+    name: 'iPhone 17 Pro',
+    runtime: 'com.apple.CoreSimulator.SimRuntime.iOS-26-0',
+    state: 'Booted',
+    deviceType: 'com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro',
+  },
+  { udid: 'CCC', name: 'iPad Air', runtime: 'com.apple.CoreSimulator.SimRuntime.iOS-26-0', state: 'Shutdown' },
+  { udid: 'EEE', name: 'iPhone 15', runtime: 'com.apple.CoreSimulator.SimRuntime.iOS-18-0', state: 'Booted' },
+]
+
+/** A simctl stand-in over a mutable device list; records every side effect. */
+export function fakeSimctl(devices: SimulatorDevice[] = DEVICES.map(device => ({ ...device }))): {
+  api: SimctlApi
+  calls: unknown[][]
+  devices: SimulatorDevice[]
+} {
+  const calls: unknown[][] = []
+  const find = (reference: string): SimulatorDevice => {
+    const wanted = reference.trim()
+    const device = devices.find(candidate => candidate.udid === wanted)
+      ?? devices.find(candidate => candidate.name.toLowerCase() === wanted.toLowerCase())
+    if (device === undefined) throw new Error(`unknown simulator "${wanted}" — run ios_sim_devices to list available devices`)
+    return device
+  }
+  const setState = (udid: string, state: string): void => {
+    const device = devices.find(candidate => candidate.udid === udid)
+    if (device !== undefined) device.state = state
+  }
+  const api: SimctlApi = {
+    listDevices: async () => devices.map(device => ({ ...device })),
+    getDevice: async reference => ({ ...find(reference) }),
+    bootDevice: async udid => { calls.push(['boot', udid]); setState(udid, 'Booted') },
+    shutdownDevice: async udid => { calls.push(['shutdown', udid]); setState(udid, 'Shutdown') },
+    takeScreenshot: async (udid, filePath) => { calls.push(['screenshot', udid]); writeFileSync(filePath, tinyPng(1206, 2622)) },
+    installApp: async (udid, appPath) => { calls.push(['install', udid, appPath]) },
+    uninstallApp: async (udid, bundleId) => { calls.push(['uninstall', udid, bundleId]) },
+    launchApp: async (udid, bundleId) => { calls.push(['launch', udid, bundleId]); return `${bundleId}: 4242\n` },
+    terminateApp: async (udid, bundleId) => { calls.push(['terminate', udid, bundleId]); return '' },
+    openUrl: async (udid, url) => { calls.push(['openurl', udid, url]) },
+    sendPush: async (udid, bundleId, payloadPath) => {
+      calls.push(['push', udid, bundleId, JSON.parse(readFileSync(payloadPath, 'utf8')) as unknown])
+    },
+    setLocation: async (udid, latitude, longitude) => { calls.push(['location', udid, latitude, longitude]) },
+    clearLocation: async udid => { calls.push(['location-clear', udid]) },
+    setAppearance: async (udid, appearance) => { calls.push(['appearance', udid, appearance]) },
+  }
+  return { api, calls, devices }
 }
