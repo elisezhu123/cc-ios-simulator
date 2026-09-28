@@ -1985,6 +1985,7 @@ Expected: FAIL，`Cannot find module '.../src/screenshot.js'`。
 - [ ] **Step 3: 写 `src/screenshot.ts`**
 
 ```ts
+// Ported from dsh-ios (MIT, © 2026 ZSeven—W) @ d9a9731 — src/tools.ts (ScreenshotStore, readPngSize)
 /**
  * Screenshot cache shared by the tools and the panel: numbered full-size PNGs
  * per device (the ScreenshotStore naming is ported from dsh-ios src/tools.ts),
@@ -2765,6 +2766,7 @@ Expected: FAIL，`src/target.js`、`src/tools/result.js` 不存在。
 - [ ] **Step 5: 写 `src/target.ts`**
 
 ```ts
+// Ported from dsh-ios (MIT, © 2026 ZSeven—W) @ d9a9731 — src/tools.ts (resolveTargetDevice)
 /**
  * Which simulator a tool call targets, and the guards every tool shares.
  * The resolution order is ported from dsh-ios src/tools.ts
@@ -3166,6 +3168,7 @@ Expected: FAIL，`Cannot find module '.../src/tools/core.js'`。
 - [ ] **Step 3: 写 `src/tools/core.ts`**
 
 ```ts
+// Ported from dsh-ios (MIT, © 2026 ZSeven—W) @ d9a9731 — src/tools.ts (core tool behaviour)
 /**
  * Core `ios_sim_*` tools: devices, boot, shutdown, panel, screenshot and
  * interact. Behaviour follows dsh-ios src/tools.ts; screenshots come back as
@@ -3483,6 +3486,7 @@ Expected: FAIL，`Cannot find module '.../src/tools/apps.js'`。
 - [ ] **Step 3: 写 `src/tools/apps.ts`**
 
 ```ts
+// Ported from dsh-ios (MIT, © 2026 ZSeven—W) @ d9a9731 — src/tools.ts (app tool behaviour)
 /**
  * App tools: list, launch (by bundle id or display name), build & run,
  * install and uninstall. Listing and launch rules are ported from dsh-ios
@@ -3948,6 +3952,7 @@ Expected: FAIL，`Cannot find module '.../src/panel/fence.js'`。
 - [ ] **Step 3: 写 `src/panel/fence.ts`**
 
 ```ts
+// Ported from dsh-ios (MIT, © 2026 ZSeven—W) @ d9a9731 — src/stream-routes.ts (transport fence)
 /**
  * Transport fence for the panel server, ported from dsh-ios
  * src/stream-routes.ts (isLoopbackRemoteAddress & co): a loopback peer, a
@@ -4267,6 +4272,7 @@ Expected: FAIL，`Cannot find module '.../src/panel/panel-server.js'`。
 - [ ] **Step 3: 写 `src/panel/panel-server.ts`**
 
 ```ts
+// Ported from dsh-ios (MIT, © 2026 ZSeven—W) @ d9a9731 — src/stream-routes.ts (MJPEG proxy, control-socket relay)
 /**
  * The live panel's loopback HTTP + WebSocket server. It replaces dsh-ios's
  * signed DSH webserver routes (src/stream-routes.ts) with a dedicated
@@ -4938,6 +4944,7 @@ export function normalizePointerPoint(
 - [ ] **Step 4: 写 `src/panel/client/layout.ts`**
 
 ```ts
+// Ported from dsh-ios (MIT, © 2026 ZSeven—W) @ d9a9731 — src/client/sim-orientation.ts, sim-panel-size.ts, sim-frame-style.ts
 /**
  * Pure panel layout math (no DOM): orientation counter-rotation and the
  * pointer inverse mapping (ported from dsh-ios src/client/sim-orientation.ts,
@@ -5064,6 +5071,7 @@ export function screenRadius(width: number, height: number): number {
 - [ ] **Step 5: 写 `src/panel/client/copy.ts`**
 
 ```ts
+// Ported from dsh-ios (MIT, © 2026 ZSeven—W) @ d9a9731 — src/client/copy.ts (strings)
 /**
  * Panel copy in English and Chinese (strings from dsh-ios src/client/copy.ts
  * where they exist), picked from navigator.language.
