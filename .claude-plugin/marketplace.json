@@ -1,0 +1,11 @@
+{
+  "name": "ios-simulator-panel",
+  "owner": { "name": "elisezhu123" },
+  "plugins": [
+    {
+      "name": "ios-simulator",
+      "source": "./",
+      "description": "iOS Simulator tools and a live panel for Claude Code"
+    }
+  ]
+}
