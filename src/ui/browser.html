@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iOS Simulator Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0F1117;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #171A23;
+      padding: 12px 16px;
+      border-bottom: 1px solid #2A2E3A;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header h1 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #F5F5F5;
+    }
+
+    .device-info {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .simulator-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: auto;
+    }
+
+    .simulator-frame {
+      position: relative;
+      background: #000;
+      border-radius: 40px;
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .simulator-screen {
+      border-radius: 32px;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+    }
+
+    .simulator-screen img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: calc(100vh - 240px);
+      object-fit: contain;
+    }
+
+    .loading {
+      padding: 40px;
+      text-align: center;
+      color: #666;
+    }
+
+    .spinner {
+      border: 3px solid #2A2E3A;
+      border-top: 3px solid #5B8CFF;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .toolbar {
+      background: #171A23;
+      border-top: 1px solid #2A2E3A;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: #1E222E;
+      border: 1px solid #2A2E3A;
+      border-radius: 6px;
+      padding: 10px 16px;
+      color: #F5F5F5;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #252938;
+      border-color: #5B8CFF;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn.danger {
+      background: #3D1E1E;
+      border-color: #F87171;
+      color: #F87171;
+    }
+
+    .btn.danger:hover {
+      background: #4D2626;
+    }
+
+    .btn-icon {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .status {
+      text-align: center;
+      padding: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .status.error {
+      color: #F87171;
+    }
+
+    .status.success {
+      color: #34D399;
+    }
+
+    .error {
+      color: #F87171;
+      padding: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📱 iOS Simulator Panel</h1>
+    <div class="device-info" id="deviceInfo">Connecting...</div>
+  </div>
+
+  <div class="simulator-container">
+    <div class="simulator-frame">
+      <div class="simulator-screen">
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <div>Loading simulator...</div>
+        </div>
+        <img id="screenshot" style="display: none;" alt="Simulator screen">
+      </div>
+    </div>
+  </div>
+
+  <div class="status" id="status">Ready</div>
+
+  <div class="toolbar">
+    <button class="btn" id="btnHome" title="Home">
+      <svg class="btn-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Home
+    </button>
+
+    <button class="btn" id="btnScreenshot" title="Take screenshot">
+      <svg class="btn-icon" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+      Screenshot
+    </button>
+
+    <button class="btn" id="btnRotateLeft" title="Rotate left">
+      <svg class="btn-icon" viewBox="0 0 24 24"><path d="M7.11 8.53L5.7 7.11C4.8 8.27 4.24 9.61 4.07 11h2.02c.14-.87.49-1.72 1.02-2.47zM6.09 13H4.07c.17 1.39.72 2.73 1.62 3.89l1.41-1.42c-.52-.75-.87-1.59-1.01-2.47zm1.01 5.32c1.16.9 2.51 1.44 3.9 1.61V17.9c-.87-.15-1.71-.49-2.46-1.03L7.1 18.32zM13 4.07V1L8.45 5.55 13 10V6.09c2.84.48 5 2.94 5 5.91s-2.16 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93s-3.05-7.44-7-7.93z"/></svg>
+    </button>
+
+    <button class="btn" id="btnRotateRight" title="Rotate right">
+      <svg class="btn-icon" viewBox="0 0 24 24"><path d="M15.55 5.55L11 1v3.07C7.06 4.56 4 7.92 4 12s3.05 7.44 7 7.93v-2.02c-2.84-.48-5-2.94-5-5.91s2.16-5.43 5-5.91V10l4.55-4.45zM19.93 11c-.17-1.39-.72-2.73-1.62-3.89l-1.42 1.42c.54.75.88 1.6 1.02 2.47h2.02zM13 17.9v2.02c1.39-.17 2.74-.71 3.9-1.61l-1.44-1.44c-.75.54-1.59.89-2.46 1.03zm3.89-2.42l1.42 1.41c.9-1.16 1.45-2.5 1.62-3.89h-2.02c-.14.87-.48 1.72-1.02 2.48z"/></svg>
+    </button>
+
+    <button class="btn" id="btnRefresh" title="Refresh view">
+      <svg class="btn-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      Refresh
+    </button>
+
+    <button class="btn danger" id="btnShutdown" title="Shutdown simulator">
+      <svg class="btn-icon" viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+      Shutdown
+    </button>
+  </div>
+
+  <script>
+    let currentSimulator = null;
+
+    // Update status message
+    function setStatus(msg, type = 'normal') {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = msg;
+      statusEl.className = 'status';
+      if (type === 'error') statusEl.classList.add('error');
+      if (type === 'success') statusEl.classList.add('success');
+    }
+
+    // Update device info
+    function updateDeviceInfo(sim) {
+      const deviceInfo = document.getElementById('deviceInfo');
+      if (sim) {
+        deviceInfo.textContent = `${sim.name} - ${sim.runtime}`;
+        currentSimulator = sim;
+      } else {
+        deviceInfo.textContent = 'No booted simulator';
+      }
+    }
+
+    // Update screenshot display
+    function updateScreenshot(base64Data) {
+      const img = document.getElementById('screenshot');
+      const loading = document.getElementById('loading');
+
+      if (base64Data) {
+        img.src = 'data:image/png;base64,' + base64Data;
+        img.style.display = 'block';
+        loading.style.display = 'none';
+      }
+    }
+
+    // API call helper
+    async function apiCall(endpoint, options = {}) {
+      try {
+        const response = await fetch(endpoint, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || data.message || 'Request failed');
+        }
+
+        return data;
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    // Refresh screenshot
+    async function refreshScreenshot() {
+      try {
+        setStatus('Capturing screenshot...');
+        const data = await apiCall('/api/screenshot');
+
+        if (data.screenshot) {
+          updateScreenshot(data.screenshot);
+          setStatus('Ready', 'success');
+        }
+      } catch (error) {
+        setStatus(`Error: ${error.message}`, 'error');
+        console.error('Failed to refresh screenshot:', error);
+      }
+    }
+
+    // Get simulator info
+    async function getSimulatorInfo() {
+      try {
+        const sim = await apiCall('/api/simulator');
+        updateDeviceInfo(sim);
+      } catch (error) {
+        updateDeviceInfo(null);
+        console.error('Failed to get simulator info:', error);
+      }
+    }
+
+    // Disable buttons temporarily
+    function disableButtons(duration = 500) {
+      const buttons = document.querySelectorAll('.btn');
+      buttons.forEach(btn => btn.disabled = true);
+      setTimeout(() => {
+        buttons.forEach(btn => btn.disabled = false);
+      }, duration);
+    }
+
+    // Button handlers
+    document.getElementById('btnHome').addEventListener('click', async () => {
+      disableButtons();
+      try {
+        setStatus('Pressing Home...');
+        await apiCall('/api/home', { method: 'POST' });
+        setStatus('Home button pressed', 'success');
+        setTimeout(refreshScreenshot, 500);
+      } catch (error) {
+        setStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('btnScreenshot').addEventListener('click', async () => {
+      disableButtons();
+      await refreshScreenshot();
+    });
+
+    document.getElementById('btnRotateLeft').addEventListener('click', async () => {
+      disableButtons();
+      try {
+        setStatus('Rotating left...');
+        await apiCall('/api/rotate', {
+          method: 'POST',
+          body: JSON.stringify({ direction: 'left' })
+        });
+        setStatus('Rotated left', 'success');
+        setTimeout(refreshScreenshot, 500);
+      } catch (error) {
+        setStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('btnRotateRight').addEventListener('click', async () => {
+      disableButtons();
+      try {
+        setStatus('Rotating right...');
+        await apiCall('/api/rotate', {
+          method: 'POST',
+          body: JSON.stringify({ direction: 'right' })
+        });
+        setStatus('Rotated right', 'success');
+        setTimeout(refreshScreenshot, 500);
+      } catch (error) {
+        setStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('btnRefresh').addEventListener('click', async () => {
+      disableButtons();
+      await refreshScreenshot();
+    });
+
+    document.getElementById('btnShutdown').addEventListener('click', async () => {
+      if (confirm('Shutdown this simulator?')) {
+        disableButtons();
+        try {
+          setStatus('Shutting down...');
+          await apiCall('/api/shutdown', { method: 'POST' });
+          setStatus('Simulator shut down', 'success');
+        } catch (error) {
+          setStatus(`Error: ${error.message}`, 'error');
+        }
+      }
+    });
+
+    // Auto-refresh every 2 seconds
+    setInterval(refreshScreenshot, 2000);
+
+    // Initialize on load
+    setTimeout(async () => {
+      await getSimulatorInfo();
+      await refreshScreenshot();
+    }, 500);
+  </script>
+</body>
+</html>

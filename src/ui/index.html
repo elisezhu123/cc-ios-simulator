@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iOS Simulator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: white;
+      border-bottom: 1px solid #e5e5e7;
+      flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .header-title { font-size: 13px; font-weight: 600; color: #1d1d1f; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .fps-indicator { font-size: 11px; color: #86868b; font-weight: 500; }
+    .icon-button {
+      width: 28px; height: 28px; border: none; background: transparent;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; color: #1d1d1f; transition: background 0.15s;
+    }
+    .icon-button:hover { background: #f5f5f7; }
+    .icon-button svg { width: 16px; height: 16px; }
+    .controls {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; background: white;
+      border-bottom: 1px solid #e5e5e7; flex-shrink: 0;
+    }
+    .dropdown { position: relative; }
+    .dropdown-button {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; background: white;
+      border: 1px solid #d2d2d7; border-radius: 6px;
+      font-size: 12px; cursor: pointer; transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .dropdown-button:hover { background: #f5f5f7; border-color: #b8b8bd; }
+    .dropdown-button.active { background: #f5f5f7; border-color: #0066cc; }
+    .dropdown-label { font-weight: 500; color: #1d1d1f; }
+    .dropdown-value { color: #86868b; font-size: 11px; }
+    .dropdown-arrow { width: 10px; height: 10px; color: #86868b; }
+    .dropdown-menu {
+      position: absolute; top: calc(100% + 4px); left: 0;
+      background: white; border: 1px solid #d2d2d7;
+      border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      min-width: 220px; max-height: 400px; overflow-y: auto;
+      z-index: 1000; display: none;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-section { padding: 6px 0; border-bottom: 1px solid #e5e5e7; }
+    .dropdown-section:last-child { border-bottom: none; }
+    .dropdown-section-title {
+      padding: 6px 12px; font-size: 11px; font-weight: 600;
+      color: #86868b; text-transform: uppercase;
+    }
+    .dropdown-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; font-size: 12px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .dropdown-item:hover { background: #f5f5f7; }
+    .dropdown-item.selected { background: #e8f0fe; }
+    .dropdown-item-label { flex: 1; }
+    .dropdown-item-info { font-size: 11px; color: #86868b; margin-left: 8px; }
+    .dropdown-item-status { 
+      width: 8px; height: 8px; border-radius: 50%; 
+      background: #34c759; margin-left: 8px; 
+    }
+    .main-content {
+      flex: 1; display: flex; align-items: center; 
+      justify-content: center; padding: 20px; overflow: hidden;
+    }
+    .simulator-container {
+      position: relative; display: flex; flex-direction: column; 
+      align-items: center; max-height: 100%;
+    }
+    .simulator-frame {
+      position: relative; background: #1d1d1f; 
+      border-radius: 50px; padding: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: flex; flex-direction: column;
+    }
+    .simulator-notch {
+      position: absolute; top: 12px; left: 50%; 
+      transform: translateX(-50%); width: 150px; height: 30px;
+      background: #1d1d1f; border-radius: 0 0 20px 20px; z-index: 10;
+    }
+    .simulator-screen {
+      width: 390px; height: 844px; background: white;
+      border-radius: 40px; overflow: hidden; position: relative;
+    }
+    .simulator-screen img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .simulator-buttons-left {
+      position: absolute; left: -3px; top: 120px;
+    }
+    .simulator-button {
+      width: 3px; background: #1d1d1f; margin: 8px 0; border-radius: 2px 0 0 2px;
+    }
+    .simulator-button.volume-up { height: 50px; }
+    .simulator-button.volume-down { height: 50px; }
+    .simulator-button.silent { height: 30px; margin-top: -50px; }
+    .simulator-buttons-right {
+      position: absolute; right: -3px; top: 180px;
+    }
+    .simulator-button.power { height: 80px; border-radius: 0 2px 2px 0; }
+    .action-hint {
+      margin-top: 16px; padding: 8px 16px; background: rgba(0, 0, 0, 0.8);
+      color: white; font-size: 11px; border-radius: 8px;
+      display: none; animation: fadeIn 0.2s;
+    }
+    .action-hint.show { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .toolbar {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 16px; background: white;
+      border-top: 1px solid #e5e5e7; flex-shrink: 0;
+    }
+    .toolbar-button {
+      width: 40px; height: 40px; border: none;
+      background: white; border-radius: 8px;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: all 0.15s;
+      border: 1px solid #e5e5e7;
+    }
+    .toolbar-button:hover { background: #f5f5f7; }
+    .toolbar-button.active { background: #0066cc; color: white; border-color: #0066cc; }
+    .toolbar-button svg { width: 20px; height: 20px; }
+    .toolbar-button.recording { background: #ff3b30; color: white; border-color: #ff3b30; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #34c759; }
+    .status-dot.booted { background: #34c759; }
+    .status-dot.shutdown { background: #86868b; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <span class="header-title">iOS Simulator</span>
+    </div>
+    <div class="header-right">
+      <span class="fps-indicator">FPS: <span id="fps">30</span></span>
+      <button class="icon-button" onclick="toggleFullscreen()" title="Toggle fullscreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+      <button class="icon-button" onclick="closePanel()" title="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="dropdown">
+      <button class="dropdown-button" onclick="toggleDropdown('device')">
+        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+          <span class="dropdown-label" id="device-name">iPhone 18 Pro</span>
+          <span class="dropdown-value" id="device-os">iOS 27.0</span>
+        </div>
+        <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="dropdown-menu" id="device-menu">
+        <div class="dropdown-section">
+          <div class="dropdown-section-title">Booted</div>
+          <div class="dropdown-item selected" onclick="selectDevice('iPhone 18 Pro', 'iOS 27.0', 'booted')">
+            <span class="dropdown-item-label">iPhone 18 Pro</span>
+            <span class="dropdown-item-info">iOS 27.0</span>
+            <div class="status-dot booted"></div>
+          </div>
+        </div>
+        <div class="dropdown-section">
+          <div class="dropdown-section-title">Available (will boot)</div>
+          <div class="dropdown-item" onclick="selectDevice('iPhone 18 Pro Max', 'iOS 27.0', 'shutdown')">
+            <span class="dropdown-item-label">iPhone 18 Pro Max</span>
+            <span class="dropdown-item-info">iOS 27.0</span>
+            <div class="status-dot shutdown"></div>
+          </div>
+          <div class="dropdown-item" onclick="selectDevice('iPhone 18', 'iOS 27.0', 'shutdown')">
+            <span class="dropdown-item-label">iPhone 18</span>
+            <span class="dropdown-item-info">iOS 27.0</span>
+            <div class="status-dot shutdown"></div>
+          </div>
+          <div class="dropdown-item" onclick="selectDevice('iPad Pro 13-inch', 'iOS 27.0', 'shutdown')">
+            <span class="dropdown-item-label">iPad Pro 13-inch</span>
+            <span class="dropdown-item-info">iOS 27.0</span>
+            <div class="status-dot shutdown"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="dropdown-button" onclick="toggleDropdown('display')">
+        <span class="dropdown-label">Display</span>
+        <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="dropdown-menu" id="display-menu">
+        <div class="dropdown-section">
+          <div class="dropdown-item" onclick="selectDisplay('framerate')">
+            <span class="dropdown-item-label">Frame rate</span>
+            <span class="dropdown-item-info">30 FPS →</span>
+          </div>
+          <div class="dropdown-item" onclick="selectDisplay('resolution')">
+            <span class="dropdown-item-label">Resolution</span>
+            <span class="dropdown-item-info">50% →</span>
+          </div>
+          <div class="dropdown-item" onclick="selectDisplay('encoding')">
+            <span class="dropdown-item-label">Encoding</span>
+            <span class="dropdown-item-info">H.264 →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="dropdown-button" onclick="toggleDropdown('keyboard')">
+        <span class="dropdown-label">Keyboard</span>
+        <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="dropdown-menu" id="keyboard-menu">
+        <div class="dropdown-section">
+          <div class="dropdown-item" onclick="toggleKeyboard()">
+            <span class="dropdown-item-label">Show on-screen keyboard</span>
+            <span class="dropdown-item-info">⌘ K</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="simulator-container">
+      <div class="simulator-frame">
+        <div class="simulator-notch"></div>
+        <div class="simulator-buttons-left">
+          <div class="simulator-button silent"></div>
+          <div class="simulator-button volume-up"></div>
+          <div class="simulator-button volume-down"></div>
+        </div>
+        <div class="simulator-buttons-right">
+          <div class="simulator-button power"></div>
+        </div>
+        <div class="simulator-screen" id="simulator-screen">
+          <img id="stream" src="/api/screen" alt="Simulator Stream" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+      </div>
+      <div class="action-hint" id="action-hint"></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="toolbar-button" onclick="toolbarAction('home')" title="Home (⌘H)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
+    <button class="toolbar-button" onclick="toolbarAction('edit')" title="Edit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+    <button class="toolbar-button" onclick="toolbarAction('screenshot')" title="Screenshot (⌘S)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </button>
+    <button class="toolbar-button" id="record-button" onclick="toolbarAction('record')" title="Record">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+    </button>
+    <button class="toolbar-button" onclick="toolbarAction('refresh')" title="Refresh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+    </button>
+    <button class="toolbar-button" onclick="toolbarAction('power')" title="Power">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+    </button>
+    <button class="toolbar-button" onclick="toolbarAction('detach')" title="Detach simulator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+    </button>
+  </div>
+
+  <script>
+    let isRecording = false;
+    let refreshInterval;
+
+    function updateScreenshot() {
+      const img = document.getElementById('stream');
+      img.src = '/api/screen?' + Date.now();
+    }
+
+    function startScreenRefresh() {
+      updateScreenshot();
+      refreshInterval = setInterval(updateScreenshot, 1000);
+    }
+
+    startScreenRefresh();
+
+    function toggleDropdown(id) {
+      const menu = document.getElementById(id + '-menu');
+      const allMenus = document.querySelectorAll('.dropdown-menu');
+      allMenus.forEach(m => { if (m !== menu) m.classList.remove('show'); });
+      menu.classList.toggle('show');
+    }
+
+    function selectDevice(name, os, status) {
+      document.getElementById('device-name').textContent = name;
+      document.getElementById('device-os').textContent = os;
+      toggleDropdown('device');
+      if (status === 'shutdown') {
+        showHint('Booting ' + name + '...');
+        fetch('/api/boot?device=' + encodeURIComponent(name));
+      }
+    }
+
+    function selectDisplay(option) {
+      showHint('Display setting: ' + option);
+    }
+
+    function toggleKeyboard() {
+      fetch('/api/keyboard');
+      showHint('Toggling keyboard');
+      toggleDropdown('keyboard');
+    }
+
+    function toolbarAction(action) {
+      if (action === 'home') {
+        fetch('/api/home', { method: 'POST' });
+        showHint('Home ⌘H');
+      } else if (action === 'screenshot') {
+        fetch('/api/screenshot');
+        showHint('Save screenshot ⌘S');
+      } else if (action === 'record') {
+        isRecording = !isRecording;
+        const btn = document.getElementById('record-button');
+        btn.classList.toggle('recording', isRecording);
+        if (isRecording) {
+          fetch('/api/record/start', { method: 'POST' });
+          showHint('Recording...');
+        } else {
+          fetch('/api/record/stop', { method: 'POST' });
+          showHint('Recording stopped');
+        }
+      } else if (action === 'refresh') {
+        updateScreenshot();
+        showHint('Refreshing simulator');
+      } else if (action === 'power') {
+        fetch('/api/shutdown', { method: 'POST' });
+        showHint('Shutting down');
+      } else if (action === 'detach') {
+        showHint('Detach simulator');
+      }
+    }
+
+    function showHint(text) {
+      const hint = document.getElementById('action-hint');
+      hint.textContent = text;
+      hint.classList.add('show');
+      setTimeout(() => hint.classList.remove('show'), 2000);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    function closePanel() {
+      window.close();
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'h') {
+        e.preventDefault();
+        toolbarAction('home');
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        toolbarAction('screenshot');
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleKeyboard();
+      }
+    });
+  </script>
+</body>
+</html>

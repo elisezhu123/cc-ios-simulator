@@ -1,0 +1,37 @@
+{
+  "name": "ios-simulator-panel",
+  "version": "2.0.0",
+  "description": "iOS Simulator MCP App with live preview panel",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && npm run build:ui",
+    "build:ui": "mkdir -p dist/ui && cp -r src/ui/* dist/ui/",
+    "dev": "tsc --watch",
+    "prepare": "npm run build",
+    "test": "node test-server.mjs",
+    "configure": "node configure.mjs",
+    "demo": "./demo.sh",
+    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "ios",
+    "simulator",
+    "xcode"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.1.2",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@types/ws": "^8.18.1",
+    "express": "^5.2.1",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

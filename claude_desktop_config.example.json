@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "ios-simulator": {
+      "command": "node",
+      "args": [
+        "/Users/elise123/Tools/Claude/ios-simulator-panel/dist/index.js"
+      ]
+    }
+  }
+}
