@@ -21,11 +21,13 @@ const list = JSON.parse(textOf(await client.callTool({ name: 'ios_sim_devices', 
 const device = list.devices[0]
 if (device === undefined) {
   console.error(`no simulator matches "${query}"`)
+  await client.close()
   process.exit(1)
 }
 const boot = await client.callTool({ name: 'ios_sim_boot', arguments: { udid: device.udid } })
 if (boot.isError === true) {
   console.error(textOf(boot))
+  await client.close()
   process.exit(1)
 }
 console.log(`panel: ${JSON.parse(textOf(boot)).panelUrl} (${device.name}) — Ctrl+C to stop`)
