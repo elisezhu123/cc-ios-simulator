@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iOS Simulator</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/main.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <select id="device-picker"></select>
+    <span id="status" class="status" role="status" data-kind="connecting"></span>
+  </header>
+  <nav class="toolbar">
+    <button id="btn-home" type="button"></button>
+    <button id="btn-screenshot" type="button"></button>
+    <button id="btn-rotate" type="button"></button>
+    <select id="device-action"></select>
+    <button id="btn-refresh" type="button"></button>
+    <span class="spacer"></span>
+    <select id="size-mode"></select>
+    <select id="frame-style"></select>
+  </nav>
+  <main class="stage" id="stage">
+    <div class="frame" id="frame">
+      <div class="screen" id="screen">
+        <img id="stream" alt="" draggable="false">
+      </div>
+    </div>
+    <p id="placeholder" class="placeholder" hidden></p>
+  </main>
+</body>
+</html>
