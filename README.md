@@ -1,143 +1,64 @@
-# iOS Simulator Panel - MCP App
+# iOS Simulator 插件（Claude Code）
 
-A Claude Desktop MCP App that provides a **live iOS Simulator preview panel** with interactive controls, similar to Claude's official iOS Simulator integration.
+在 Claude Code 里驱动 iOS 模拟器：实时画面面板、点击和手势、安装和启动 app、构建运行。核心代码移植自 [dsh-ios](https://github.com/ZSeven-W/dsh-ios)（MIT）。
 
-## Features
+## 功能
 
-- 🖼️ **Live preview panel** embedded directly in Claude Desktop's UI
-- 🔄 **Auto-refresh** every 2 seconds to show real-time changes
-- 🎮 **Interactive controls**: Home, Screenshot, Rotate, Refresh, Shutdown
-- 📱 **Device frame** with realistic iPhone bezel
-- ⚡ **Fast operations** using `xcrun simctl` commands
+- **实时面板**：serve-sim 的 MJPEG 视频流，可以直接在画面上点击、拖动；工具栏有 Home（双击打开后台 App）、截图、旋转、设备操作、刷新；支持切换设备、尺寸（适应 / 50–125% / S·M·L）和外框（无框 / 边框 / 真机框）。
+- **16 个工具**：`ios_sim_devices`、`ios_sim_boot`、`ios_sim_shutdown`、`ios_sim_panel`、`ios_sim_screenshot`、`ios_sim_interact`、`ios_sim_list_apps`、`ios_sim_launch_app`、`ios_sim_build_run`、`ios_sim_install_app`、`ios_sim_uninstall_app`、`ios_sim_open_url`、`ios_sim_push`、`ios_sim_location`、`ios_sim_appearance`、`ios_sim_record`。
+- **截图直接给 Claude 看**：JPEG，长边不超过 1024 px。
+- **Skill `ios-ui-automation`**：教 Claude 怎么观察、操作、确认，以及哪些事不要做（比如猜 bundle id）。
 
-## Prerequisites
+## 运行要求
 
-- macOS with Xcode installed
-- Xcode Command Line Tools
-- Claude Desktop app
-- Node.js 18+
+- macOS、完整 Xcode、Apple Silicon（serve-sim 只提供 arm64 版本）
+- Node.js ≥ 20
+- `device_action` 里除锁屏以外的动作需要给运行 Claude 的应用开启"辅助功能"权限
 
-## Installation
+## 安装
 
-1. **Build the project:**
+开发调试（直接加载本目录）：
 
-```bash
+~~~bash
+claude --plugin-dir ~/Tools/Claude/Projects/ios-simulator-panel
+~~~
+
+正式安装（本目录同时是一个本地 marketplace）：
+
+~~~text
+/plugin marketplace add ~/Tools/Claude/Projects/ios-simulator-panel
+/plugin install ios-simulator@ios-simulator-panel
+~~~
+
+## 使用
+
+对 Claude 说"启动 iPhone 17 Pro 模拟器"。`ios_sim_boot` 会返回 `panelUrl`，Claude 会在 Code 标签页的浏览器面板里打开它；在终端里使用时，把这个地址复制到浏览器即可。
+
+## 环境变量
+
+| 变量 | 作用 | 默认值 |
+|---|---|---|
+| `IOS_SIM_PANEL_PORT` | 面板端口（被占用时依次尝试到 +20） | `3456` |
+| `IOS_SIM_CACHE_DIR` | 截图、录屏、构建产物的缓存目录 | `~/Library/Caches/ios-simulator` |
+| `IOS_SIM_SERVE_SIM_BIN` | 指定 serve-sim 可执行文件 | 插件自带，找不到时用 `npx -y serve-sim@0.1.47` |
+
+## 开发
+
+~~~bash
 npm install
-npm run build
-```
+npm test              # 单元与集成测试，不需要模拟器
+npm run build         # 类型检查 + 打包 dist/（dist 需要提交）
+npm run check:bundle  # 启动 dist/server.js 并确认 16 个工具
+IOS_SIM_SMOKE=1 npm run test:live   # 在真实模拟器上冒烟
+npm run dev:panel     # 启动一台模拟器并保持面板运行，用于在浏览器里调试
+~~~
 
-2. **Add to Claude Desktop config:**
+## 路线图
 
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+第 ① 期是本版本。之后依次是：② UI 自动化（AXe 无障碍树 + Vision OCR）、③ 日志与调试、④ SwiftUI 预览热重载、⑤ USB 真机（WebDriverAgent）。
 
-```json
-{
-  "mcpServers": {
-    "ios-simulator": {
-      "command": "node",
-      "args": ["/Users/elise123/Tools/Claude/ios-simulator-panel/dist/index.js"]
-    }
-  }
-}
-```
+## 致谢与许可
 
-3. **Restart Claude Desktop**
-
-## Usage
-
-### Open the Simulator Panel
-
-In Claude Desktop, ask Claude to open the simulator panel:
-
-```
-Open the iOS simulator panel
-```
-
-Claude will call the `simulator_open_panel` tool, which opens a live preview panel on the right side showing:
-- Real-time simulator screen
-- Interactive control buttons
-- Device info in the header
-
-### Available Tools
-
-The MCP server provides these tools:
-
-- **`simulator_open_panel`** - Opens the live preview UI panel
-- **`simulator_list`** - List all available simulators
-- **`simulator_boot`** - Boot a specific simulator
-- **`simulator_shutdown`** - Shutdown the running simulator
-- **`simulator_screenshot`** - Capture a screenshot
-- **`simulator_home`** - Press the home button
-- **`simulator_rotate`** - Rotate device (left/right)
-
-### UI Controls
-
-Once the panel is open, you can interact directly:
-
-- **🏠 Home** - Press the home button
-- **📸 Screenshot** - Capture current screen
-- **↶ Rotate Left** - Rotate device counter-clockwise
-- **↷ Rotate Right** - Rotate device clockwise
-- **🔄 Refresh** - Manually refresh the view
-- **⏻ Shutdown** - Shutdown the simulator
-
-## How It Works
-
-1. **MCP Server** (`src/index.ts`) registers tools and serves the UI resource
-2. **UI Panel** (`src/ui/index.html`) renders in Claude Desktop using MCP App Bridge
-3. **Communication** happens through the App Bridge - UI calls MCP tools, gets results
-4. **Screenshots** are captured via `xcrun simctl io screenshot` and returned as base64
-5. **Auto-refresh** polls for new screenshots every 2 seconds
-
-## Development
-
-**Watch mode:**
-```bash
-npm run dev
-```
-
-**Build:**
-```bash
-npm run build
-```
-
-**Test locally with MCP Inspector:**
-```bash
-npx @modelcontextprotocol/inspector node dist/index.js
-```
-
-## Architecture
-
-```
-Claude Desktop
-    ↕ MCP Protocol
-MCP Server (stdio)
-    ├─ Tools (simulator control)
-    └─ UI Resource (HTML panel)
-        ↕ App Bridge
-    UI Panel (rendered in Claude)
-        ↓
-xcrun simctl (Xcode CLI)
-    ↓
-iOS Simulator
-```
-
-## Troubleshooting
-
-**Panel doesn't open:**
-- Check Claude Desktop config is correct
-- Restart Claude Desktop after config changes
-- Check console for MCP server errors
-
-**Simulator not found:**
-- Boot a simulator first: `open -a Simulator`
-- Or use `simulator_boot` tool with a specific UDID
-
-**Screenshot not updating:**
-- Ensure simulator is booted and visible
-- Check system permissions for screen capture
-- Try manual refresh button
-
-## License
-
-MIT
+- [dsh-ios](https://github.com/ZSeven-W/dsh-ios)（MIT，© 2026 ZSeven—W）：serve-sim 生命周期、手势、设备动作、app 列表、构建流程、面板协议与布局都移植自这里，见 `THIRD_PARTY_NOTICES.md`。
+- [serve-sim](https://github.com/EvanBacon/serve-sim)（Apache-2.0）：视频流与触控。
+- 许可：MIT
