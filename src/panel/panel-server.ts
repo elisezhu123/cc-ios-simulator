@@ -12,7 +12,7 @@ import { readFile } from 'node:fs/promises'
 import { createServer, get as httpGet, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { basename, join, sep } from 'node:path'
-import type { Duplex } from 'node:stream'
+import { pipeline, type Duplex } from 'node:stream'
 import { WebSocket, WebSocketServer, type RawData } from 'ws'
 import { PANEL_PORT_ATTEMPTS } from '../config.js'
 import type { ScreenshotService, SimctlApi, StreamHost } from '../deps.js'
@@ -74,8 +74,9 @@ function sendJson(res: ServerResponse, status: number, value: unknown): void {
 }
 
 function rejectUpgrade(socket: Duplex, status: number): void {
-  socket.once('finish', () => socket.destroy())
-  socket.end(`HTTP/1.1 ${status} ${STATUS_TEXT[status] ?? 'Error'}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`)
+  if (socket.destroyed) return
+  socket.write(`HTTP/1.1 ${status} ${STATUS_TEXT[status] ?? 'Error'}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`)
+  socket.destroy()
 }
 
 function toBuffer(data: RawData): Buffer {
@@ -242,16 +243,23 @@ export class PanelServer {
     return booted.length === 0 ? undefined : pickPreferred(booted)
   }
 
+  /** Only streams the device already running; never boots or switches one (spec §8.1: GET routes are side-effect free). */
   async #serveStream(res: ServerResponse): Promise<void> {
-    const device = await this.#currentDevice()
-    if (device === undefined) throw new HttpError(503, 'no booted simulator — boot one with ios_sim_boot')
+    const status = this.#options.host.status()
+    if (!status.running || status.device === undefined) {
+      throw new HttpError(503, 'no simulator is streaming — boot one with ios_sim_boot')
+    }
     const release = this.#options.host.acquire()
     let streamUrl: string
     try {
-      streamUrl = (await this.#options.host.ensureRunning({ udid: device.udid })).streamUrl
+      streamUrl = (await this.#options.host.ensureRunning({ udid: status.device })).streamUrl
     } catch (error) {
       release()
       throw new HttpError(502, `the simulator stream failed to start: ${errorMessage(error)}`)
+    }
+    if (this.#disposed || res.destroyed) {
+      release()
+      return
     }
     this.#proxy(streamUrl, res, release)
   }
@@ -302,7 +310,8 @@ export class PanelServer {
     let real: string
     try {
       const path = join(dir, name)
-      if (lstatSync(path).isSymbolicLink()) throw new HttpError(404, 'not found')
+      const stat = lstatSync(path)
+      if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, 'not found')
       real = realpathSync(path)
       if (!real.startsWith(realpathSync(dir) + sep)) throw new HttpError(404, 'not found')
     } catch (error) {
@@ -314,7 +323,9 @@ export class PanelServer {
       'x-content-type-options': 'nosniff',
       'cross-origin-resource-policy': 'same-origin',
     })
-    createReadStream(real).pipe(res)
+    // pipeline (unlike .pipe()) forwards a source read error instead of leaving it uncaught —
+    // e.g. the file vanishing between the checks above and the actual read (screenshot pruning).
+    pipeline(createReadStream(real), res, () => {})
   }
 
   async #status(): Promise<Record<string, unknown>> {
@@ -384,9 +395,14 @@ export class PanelServer {
   }
 
   async #handleUpgrade(req: IncomingMessage, socket: Duplex, head: Buffer): Promise<void> {
+    // Node hands us this socket raw; until a listener is attached, any error on it
+    // (e.g. the client resetting the connection) is an uncaught exception.
+    socket.on('error', () => socket.destroy())
     try {
-      if (new URL(req.url ?? '/', 'http://127.0.0.1').pathname !== '/ws') return rejectUpgrade(socket, 404)
+      // The fence gates every route (spec §8.1): check it before even the path,
+      // so a foreign-Origin upgrade to an unknown path is still a 403, not a 404.
       if (!this.#allowed(req, 'upgrade')) return rejectUpgrade(socket, 403)
+      if (new URL(req.url ?? '/', 'http://127.0.0.1').pathname !== '/ws') return rejectUpgrade(socket, 404)
       const key = req.headers['sec-websocket-key']
       if (typeof key !== 'string' || !WEBSOCKET_KEY_PATTERN.test(key)) return rejectUpgrade(socket, 400)
       const status = this.#options.host.status()
