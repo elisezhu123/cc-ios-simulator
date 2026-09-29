@@ -40172,8 +40172,8 @@ var StdioServerTransport = class {
 
 // src/app-list.ts
 import { readFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { homedir as homedir2 } from "node:os";
+import { join as join2 } from "node:path";
 
 // src/plist.ts
 function readBigEndianUInt(buffer, pos, size) {
@@ -40514,6 +40514,38 @@ __export(simctl_exports, {
   uninstallApp: () => uninstallApp
 });
 import { execFile } from "node:child_process";
+
+// src/config.ts
+import { homedir } from "node:os";
+import { join } from "node:path";
+var PLUGIN_NAME = "ios-simulator";
+var SIMULATOR_UNAVAILABLE = "iOS Simulator requires macOS with Xcode";
+var SERVER_VERSION = "0.1.0";
+var SERVE_SIM_VERSION = "0.1.47";
+var DEFAULT_PANEL_PORT = 3456;
+var PANEL_PORT_ATTEMPTS = 21;
+var INTERACT_SETTLE_MS = 300;
+var RECORD_STOP_TIMEOUT_MS = 1e4;
+var RECORD_START_TIMEOUT_MS = 15e3;
+var SCREENSHOT_KEEP = 100;
+var MODEL_IMAGE_MAX_EDGE = 1024;
+var MODEL_IMAGE_JPEG_QUALITY = 80;
+function cacheRoot(env = process.env) {
+  const override = env.IOS_SIM_CACHE_DIR?.trim();
+  return override !== void 0 && override !== "" ? override : join(homedir(), "Library", "Caches", "ios-simulator");
+}
+function preferredPanelPort(env = process.env) {
+  const raw = env.IOS_SIM_PANEL_PORT?.trim();
+  if (raw === void 0 || raw === "") return DEFAULT_PANEL_PORT;
+  const port = Number(raw);
+  return Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : DEFAULT_PANEL_PORT;
+}
+function serveSimBinOverride(env = process.env) {
+  const raw = env.IOS_SIM_SERVE_SIM_BIN?.trim();
+  return raw === void 0 || raw === "" ? void 0 : raw;
+}
+
+// src/simctl.ts
 var SimctlError = class extends Error {
   constructor(message, stderr, code) {
     super(message);
@@ -40560,8 +40592,21 @@ var runner = runXcrunSimctl;
 function setSimctlRunnerForTests(next) {
   runner = next ?? runXcrunSimctl;
 }
+var NO_XCODE_OUTPUT = /xcrun: error: (?:unable to find utility "simctl"|invalid active developer path)|xcode-select: (?:error|note):/iu;
+function noXcodeError(error62) {
+  if (!(error62 instanceof SimctlError)) return void 0;
+  if (error62.code !== "ENOENT" && !NO_XCODE_OUTPUT.test(error62.stderr)) return void 0;
+  const detail = error62.stderr.split("\n").map((line) => line.trim()).filter((line) => line !== "").pop();
+  return new SimctlError(
+    `${SIMULATOR_UNAVAILABLE} \u2014 xcrun cannot run simctl on this Mac${detail === void 0 ? "" : ` (${detail})`}; install Xcode (the Command Line Tools alone have no simulator), open it once, then select it with \`sudo xcode-select -s /Applications/Xcode.app\``,
+    error62.stderr,
+    error62.code
+  );
+}
 function execSimctl(args, timeoutMs, signal) {
-  return runner(args, timeoutMs, signal);
+  return runner(args, timeoutMs, signal).catch((error62) => {
+    throw noXcodeError(error62) ?? error62;
+  });
 }
 function alreadyInState(stderr, state) {
   return stderr.includes(`current state: ${state}`) || stderr.includes(`Unable to ${state === "Booted" ? "boot" : "shutdown"} device in current state`);
@@ -40841,7 +40886,7 @@ function lprojCandidates(language) {
   return candidates;
 }
 function simulatorPrefsPath(udid) {
-  return join(homedir(), "Library", "Developer", "CoreSimulator", "Devices", udid, "data", "Library", "Preferences", ".GlobalPreferences.plist");
+  return join2(homedir2(), "Library", "Developer", "CoreSimulator", "Devices", udid, "data", "Library", "Preferences", ".GlobalPreferences.plist");
 }
 async function simulatorLanguage(udid, prefsPath = simulatorPrefsPath(udid)) {
   let bytes;
@@ -40872,7 +40917,7 @@ async function localizeSimApps(apps, language, readStringsAt = readStringsFileFr
   const localized = await mapWithLimit(apps, LOCALIZE_CONCURRENCY, async (app) => {
     if (app.appPath === void 0 || candidates.length === 0) return void 0;
     for (const candidate of candidates) {
-      const dict = await readStringsAt(join(app.appPath, `${candidate}.lproj`, "InfoPlist.strings"));
+      const dict = await readStringsAt(join2(app.appPath, `${candidate}.lproj`, "InfoPlist.strings"));
       const display = dict.CFBundleDisplayName;
       if (display !== void 0 && display !== "") return display;
       const bundleName = dict.CFBundleName;
@@ -40940,7 +40985,7 @@ ${ambiguous.join("\n")}`
 import { execFile as execFile2, spawn } from "node:child_process";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { readFile as readFile2 } from "node:fs/promises";
-import { basename, dirname, join as join2, normalize, resolve } from "node:path";
+import { basename, dirname, join as join3, normalize, resolve } from "node:path";
 var LIST_TIMEOUT_MS = 6e4;
 var PLIST_TIMEOUT_MS = 3e4;
 var OUTPUT_TAIL_LINES = 400;
@@ -40965,7 +41010,7 @@ function detectProject(projectPath) {
     }
     return { kind: "xcworkspace", root: dirname(absolute), location: absolute };
   }
-  if (existsSync(absolute) && statSync(absolute).isDirectory() && existsSync(join2(absolute, "Package.swift"))) {
+  if (existsSync(absolute) && statSync(absolute).isDirectory() && existsSync(join3(absolute, "Package.swift"))) {
     return { kind: "package", root: absolute, location: absolute };
   }
   throw new Error(
@@ -40991,7 +41036,7 @@ function assembleBuildArgs(invocation) {
 }
 async function packageNameFromManifest(packageDir) {
   try {
-    const manifest = await readFile2(join2(packageDir, "Package.swift"), "utf8");
+    const manifest = await readFile2(join3(packageDir, "Package.swift"), "utf8");
     const match = /^\s*name\s*:\s*"([^"]+)"/mu.exec(manifest);
     return match === null ? void 0 : match[1];
   } catch {
@@ -41086,9 +41131,9 @@ function buildFailureDetail(lines) {
   return tail.length === 0 ? "(no output captured)" : tail.join("\n");
 }
 function findBuiltApp(derivedDataPath, configuration, productHint, sdkSuffix = "iphonesimulator") {
-  const products = join2(derivedDataPath, "Build", "Products", `${configuration}-${sdkSuffix}`);
+  const products = join3(derivedDataPath, "Build", "Products", `${configuration}-${sdkSuffix}`);
   if (!existsSync(products)) return void 0;
-  const apps = readdirSync(products).filter((name) => name.endsWith(".app")).map((name) => join2(products, name)).filter((path) => statSync(path).isDirectory() && existsSync(join2(path, "Info.plist")));
+  const apps = readdirSync(products).filter((name) => name.endsWith(".app")).map((name) => join3(products, name)).filter((path) => statSync(path).isDirectory() && existsSync(join3(path, "Info.plist")));
   if (apps.length === 0) return void 0;
   if (productHint !== void 0) {
     const hinted = apps.find((path) => basename(path) === `${productHint}.app`);
@@ -41098,7 +41143,7 @@ function findBuiltApp(derivedDataPath, configuration, productHint, sdkSuffix = "
   return apps[0];
 }
 async function readBundleIdentifier(appPath, signal) {
-  const infoPlist = join2(appPath, "Info.plist");
+  const infoPlist = join3(appPath, "Info.plist");
   if (!existsSync(infoPlist)) {
     throw new Error(`built app has no Info.plist: ${appPath}`);
   }
@@ -41121,7 +41166,7 @@ async function readBundleIdentifier(appPath, signal) {
 }
 async function buildRun(options) {
   const { target, configuration, device, cacheDir, signal } = options;
-  const derivedDataPath = join2(cacheDir, "builds", projectSlug(target.location), "DerivedData");
+  const derivedDataPath = join3(cacheDir, "builds", projectSlug(target.location), "DerivedData");
   const scheme = await resolveScheme(target, options.scheme, signal);
   const { exitCode, lines } = await runXcodeBuild({
     target,
@@ -41154,35 +41199,6 @@ ${buildFailureDetail(lines)}`);
     ...scheme === void 0 ? {} : { scheme },
     configuration
   };
-}
-
-// src/config.ts
-import { homedir as homedir2 } from "node:os";
-import { join as join3 } from "node:path";
-var PLUGIN_NAME = "ios-simulator";
-var SERVER_VERSION = "0.1.0";
-var SERVE_SIM_VERSION = "0.1.47";
-var DEFAULT_PANEL_PORT = 3456;
-var PANEL_PORT_ATTEMPTS = 21;
-var INTERACT_SETTLE_MS = 300;
-var RECORD_STOP_TIMEOUT_MS = 1e4;
-var RECORD_START_TIMEOUT_MS = 15e3;
-var SCREENSHOT_KEEP = 100;
-var MODEL_IMAGE_MAX_EDGE = 1024;
-var MODEL_IMAGE_JPEG_QUALITY = 80;
-function cacheRoot(env = process.env) {
-  const override = env.IOS_SIM_CACHE_DIR?.trim();
-  return override !== void 0 && override !== "" ? override : join3(homedir2(), "Library", "Caches", "ios-simulator");
-}
-function preferredPanelPort(env = process.env) {
-  const raw = env.IOS_SIM_PANEL_PORT?.trim();
-  if (raw === void 0 || raw === "") return DEFAULT_PANEL_PORT;
-  const port = Number(raw);
-  return Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : DEFAULT_PANEL_PORT;
-}
-function serveSimBinOverride(env = process.env) {
-  const raw = env.IOS_SIM_SERVE_SIM_BIN?.trim();
-  return raw === void 0 || raw === "" ? void 0 : raw;
 }
 
 // src/panel/panel-server.ts
@@ -41470,7 +41486,6 @@ var ScreenshotStore = class {
 };
 
 // src/target.ts
-var SIMULATOR_UNAVAILABLE = "iOS Simulator requires macOS with Xcode";
 function assertMac(platform) {
   if (platform !== "darwin") {
     throw new Error(`${SIMULATOR_UNAVAILABLE} \u2014 this host runs ${platform}, so no simulator tools can run here`);
@@ -43431,6 +43446,21 @@ function closeSocket(socket, closedState) {
 var SCROLL_HOLD_MS = 175;
 var SCROLL_DIRECTIONS = ["up", "down", "left", "right"];
 var US_KEYBOARD_TEXT = /^[\x20-\x7E\t\n]+$/u;
+var SERVE_SIM_BUTTONS = [
+  "home",
+  "lock",
+  "siri",
+  "side_button",
+  "swipe_home",
+  "app_switcher",
+  "power",
+  "volume-up",
+  "volume-down",
+  "action",
+  "side-button",
+  "digital-crown",
+  "left-side-button"
+];
 function sleep5(milliseconds) {
   return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
 }
@@ -43495,7 +43525,11 @@ function interactControlArgs(args) {
       if (typeof args.name !== "string" || args.name.trim() === "") {
         throw new Error('ios_sim_interact: action "button" requires a button name, e.g. "home"');
       }
-      return [["button", args.name.trim()]];
+      const name = args.name.trim();
+      if (!SERVE_SIM_BUTTONS.includes(name)) {
+        throw new Error(`ios_sim_interact: unknown button ${JSON.stringify(name)} \u2014 serve-sim supports ${SERVE_SIM_BUTTONS.join(", ")}`);
+      }
+      return [["button", name]];
     }
     case "gesture": {
       if (typeof args.json !== "object" || args.json === null || Array.isArray(args.json)) {
@@ -43743,8 +43777,14 @@ function registerCoreTools(server, deps) {
       });
     }
     await deps.host.ensureRunning({ udid: device.udid });
-    const panelUrl = await deps.panel.ensureStarted();
-    return jsonResult({ device: deviceSummary(device, "Booted"), state: "booted", streaming: true, panelUrl });
+    let panel;
+    try {
+      panel = { panelUrl: await deps.panel.ensureStarted() };
+    } catch (error62) {
+      const message = error62 instanceof Error ? error62.message : String(error62);
+      panel = { note: `booted and streaming, but the live panel could not start (${message}) \u2014 ios_sim_panel retries it` };
+    }
+    return jsonResult({ device: deviceSummary(device, "Booted"), state: "booted", streaming: true, ...panel });
   }));
   server.registerTool("ios_sim_shutdown", {
     title: "Shut down a simulator",
@@ -43810,7 +43850,7 @@ function registerCoreTools(server, deps) {
       x: external_exports.number().min(0).max(1).optional().describe("Normalized x (tap: required; scroll: start anchor, default 0.5)"),
       y: external_exports.number().min(0).max(1).optional().describe("Normalized y (tap: required; scroll: start anchor, default 0.5)"),
       text: external_exports.string().optional().describe('Text for "type" (US-keyboard ASCII only)'),
-      name: external_exports.string().optional().describe('Button for "button" (home, lock, \u2026) or the action for "device_action"'),
+      name: external_exports.string().optional().describe('Button for "button" (home, lock, siri, volume-up, \u2026; an unknown name fails with the full list) or the action for "device_action"'),
       json: external_exports.record(external_exports.string(), external_exports.unknown()).optional().describe('Gesture for "gesture": a drag {"fromX":0.1,"fromY":0.5,"toX":0.9,"toY":0.5,"duration":0.3} or one raw frame {"type":"begin","x":0.5,"y":0.5}'),
       direction: external_exports.enum(["up", "down", "left", "right"]).optional().describe('Scroll direction named by the CONTENT: "down" reveals content further down (the finger moves up)'),
       amount: external_exports.number().min(0).max(1).optional().describe("Fraction of the screen a scroll travels (default 0.6)"),

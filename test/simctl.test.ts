@@ -5,6 +5,7 @@ import {
   bootDevice,
   clearLocation,
   getDevice,
+  listDevices,
   locationSetArgs,
   openUrl,
   parseDeviceList,
@@ -70,6 +71,17 @@ test('bootDevice tolerates an already-booted device and waits for bootstatus', a
 test('shutdownDevice tolerates an already-shutdown device', async () => {
   fakeRunner({ shutdown: new SimctlError('shutdown failed', 'Unable to shutdown device in current state: Shutdown') })
   await shutdownDevice('AAA')
+})
+
+test('an xcrun without a usable Xcode fails simctl calls with the SIMULATOR_UNAVAILABLE text', async () => {
+  const noSimctl = 'xcrun: error: unable to find utility "simctl", not a developer tool or in PATH\n'
+  fakeRunner({ list: new SimctlError(`simctl list devices --json failed: ${noSimctl.trim()}`, noSimctl, 72) })
+  await assert.rejects(listDevices(), /iOS Simulator requires macOS with Xcode — .*unable to find utility "simctl"/)
+  fakeRunner({ boot: new SimctlError('simctl boot BBB failed', '', 'ENOENT') }) // no xcrun at all
+  await assert.rejects(bootDevice('BBB'), /iOS Simulator requires macOS with Xcode/)
+  // Any other simctl failure keeps its own message.
+  fakeRunner({ boot: new SimctlError('simctl boot BBB failed: Invalid device: BBB', 'Invalid device: BBB') })
+  await assert.rejects(bootDevice('BBB'), (error: Error) => error.message === 'simctl boot BBB failed: Invalid device: BBB')
 })
 
 test('locationSetArgs joins latitude and longitude into ONE argument', () => {

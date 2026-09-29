@@ -7,12 +7,13 @@
  * @module ios-simulator/target
  */
 
+import { SIMULATOR_UNAVAILABLE } from './config.js'
 import type { SimctlApi, StreamHost } from './deps.js'
 import type { SimStreamInfo } from './sim-host.js'
 import { compareRuntimesDesc, type SimulatorDevice } from './simctl.js'
 
-/** Error prefix on hosts that cannot run the simulator. */
-export const SIMULATOR_UNAVAILABLE = 'iOS Simulator requires macOS with Xcode'
+// Defined in config.ts, where simctl.ts can share it without an import cycle.
+export { SIMULATOR_UNAVAILABLE }
 
 export function assertMac(platform: NodeJS.Platform): void {
   if (platform !== 'darwin') {

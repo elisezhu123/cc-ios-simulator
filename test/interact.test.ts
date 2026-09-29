@@ -15,6 +15,20 @@ test('interactControlArgs maps each action to serve-sim CLI arguments', () => {
   assert.equal(interactControlArgs({ action: 'scroll', direction: 'down' }).length, 3)
 })
 
+test('button names are checked against the ones serve-sim 0.1.47 acts on', () => {
+  // HIDInjector.sendButton's switch, then the CLI's HID usage table (node_modules/serve-sim).
+  const supported = [
+    'home', 'lock', 'siri', 'side_button', 'swipe_home', 'app_switcher',
+    'power', 'volume-up', 'volume-down', 'action', 'side-button', 'digital-crown', 'left-side-button',
+  ]
+  for (const name of supported) assert.deepEqual(interactControlArgs({ action: 'button', name }), [['button', name]])
+  assert.throws(
+    () => interactControlArgs({ action: 'button', name: 'reboot' }),
+    new RegExp(`unknown button "reboot" — serve-sim supports ${supported.join(', ')}`),
+  )
+  assert.throws(() => interactControlArgs({ action: 'button', name: 'Home' }), /unknown button "Home"/)
+})
+
 test('interactControlArgs rejects bad input with actionable errors', () => {
   assert.throws(() => interactControlArgs({ action: 'tap', x: 0.5 }), /requires numeric x and y/)
   assert.throws(() => interactControlArgs({ action: 'type', text: '你好' }), /US-keyboard ASCII/)

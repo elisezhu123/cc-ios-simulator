@@ -297,11 +297,20 @@ async function loadDevices(): Promise<void> {
   const response = await fetch('/api/devices')
   if (!response.ok) return
   const { devices, streaming } = await response.json() as { devices: DeviceRow[]; streaming?: string }
-  ui.picker.replaceChildren(...devices.map(device => {
+  const rows = devices.map(device => {
     const node = option(device.udid, `${device.name} · ${runtimeLabel(device.runtime)}${device.state === 'Booted' ? ` · ${copy.booted}` : ''}`)
     node.selected = device.udid === streaming
     return node
-  }))
+  })
+  if (!devices.some(device => device.udid === streaming)) {
+    // With no row selected the browser shows the first device, and picking it fires no
+    // `change`: a selected, disabled placeholder makes every device a real choice.
+    const placeholder = option('', copy.pickDevice)
+    placeholder.disabled = true
+    placeholder.selected = true
+    rows.unshift(placeholder)
+  }
+  ui.picker.replaceChildren(...rows)
 }
 
 async function refreshStatus(): Promise<void> {

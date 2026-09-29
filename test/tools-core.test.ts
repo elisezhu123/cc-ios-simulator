@@ -1,6 +1,8 @@
 import { test, type TestContext } from 'node:test'
 import assert from 'node:assert/strict'
 import { WebSocketServer } from 'ws'
+import * as simctl from '../src/simctl.js'
+import { SimctlError, setSimctlRunnerForTests } from '../src/simctl.js'
 import { registerCoreTools } from '../src/tools/core.js'
 import { textOf, toolHarness } from './helpers/harness.js'
 
@@ -33,6 +35,30 @@ test('ios_sim_boot degrades to a plain boot when serve-sim is unavailable', asyn
   assert.equal(body.streaming, false)
   assert.match(body.note, /serve-sim is unavailable/)
   assert.deepEqual(h.simctlCalls, [['boot', 'CCC']])
+  await h.close()
+})
+
+test('ios_sim_boot still reports a booted, streaming device when the live panel cannot start', async () => {
+  const h = await toolHarness(registerCoreTools, {
+    deps: { panel: { ensureStarted: async () => { throw new Error('could not start the panel server on 127.0.0.1:3456+: listen EADDRINUSE') } } },
+  })
+  const result = await h.call('ios_sim_boot', { udid: 'CCC' })
+  assert.equal(result.isError, undefined)
+  const body = h.json(result) as { state: string; streaming: boolean; panelUrl?: string; note: string }
+  assert.deepEqual([body.state, body.streaming, body.panelUrl], ['booted', true, undefined])
+  assert.match(body.note, /live panel could not start \(.*EADDRINUSE\).*ios_sim_panel/)
+  assert.deepEqual(h.hostCalls, [['ensureRunning', 'CCC']])
+  await h.close()
+})
+
+test('without a usable Xcode the tools answer with the SIMULATOR_UNAVAILABLE text', async t => {
+  const noSimctl = 'xcrun: error: unable to find utility "simctl", not a developer tool or in PATH\n'
+  setSimctlRunnerForTests(async args => { throw new SimctlError(`simctl ${args.join(' ')} failed: ${noSimctl.trim()}`, noSimctl, 72) })
+  t.after(() => setSimctlRunnerForTests())
+  const h = await toolHarness(registerCoreTools, { deps: { simctl } })
+  const result = await h.call('ios_sim_devices')
+  assert.equal(result.isError, true)
+  assert.match(textOf(result), /^ios_sim_devices: iOS Simulator requires macOS with Xcode — /)
   await h.close()
 })
 

@@ -136,8 +136,15 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       })
     }
     await deps.host.ensureRunning({ udid: device.udid })
-    const panelUrl = await deps.panel.ensureStarted()
-    return jsonResult({ device: deviceSummary(device, 'Booted'), state: 'booted', streaming: true, panelUrl })
+    // Booted and streaming already: a panel that cannot start (no free port, say) must not fail the boot.
+    let panel: { panelUrl: string } | { note: string }
+    try {
+      panel = { panelUrl: await deps.panel.ensureStarted() }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      panel = { note: `booted and streaming, but the live panel could not start (${message}) — ios_sim_panel retries it` }
+    }
+    return jsonResult({ device: deviceSummary(device, 'Booted'), state: 'booted', streaming: true, ...panel })
   }))
 
   server.registerTool('ios_sim_shutdown', {
@@ -216,7 +223,8 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       x: z.number().min(0).max(1).optional().describe('Normalized x (tap: required; scroll: start anchor, default 0.5)'),
       y: z.number().min(0).max(1).optional().describe('Normalized y (tap: required; scroll: start anchor, default 0.5)'),
       text: z.string().optional().describe('Text for "type" (US-keyboard ASCII only)'),
-      name: z.string().optional().describe('Button for "button" (home, lock, …) or the action for "device_action"'),
+      name: z.string().optional()
+        .describe('Button for "button" (home, lock, siri, volume-up, …; an unknown name fails with the full list) or the action for "device_action"'),
       json: z.record(z.string(), z.unknown()).optional()
         .describe('Gesture for "gesture": a drag {"fromX":0.1,"fromY":0.5,"toX":0.9,"toY":0.5,"duration":0.3} or one raw frame {"type":"begin","x":0.5,"y":0.5}'),
       direction: z.enum(['up', 'down', 'left', 'right']).optional()

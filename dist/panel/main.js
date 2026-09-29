@@ -25,6 +25,7 @@ var EN = {
   frame: "Simulator frame style",
   frameStyles: { none: "Frameless", bezel: "Bezel", device: "Device" },
   picker: "Simulator device",
+  pickDevice: "Pick a simulator\u2026",
   booted: "booted",
   switching: "switching\u2026",
   captureFailed: "Screenshot failed",
@@ -56,6 +57,7 @@ var ZH = {
   frame: "\u6A21\u62DF\u5668\u8FB9\u6846\u6837\u5F0F",
   frameStyles: { none: "\u65E0\u6846", bezel: "\u8FB9\u6846", device: "\u771F\u673A\u6846" },
   picker: "\u6A21\u62DF\u5668\u8BBE\u5907",
+  pickDevice: "\u9009\u62E9\u6A21\u62DF\u5668\u2026",
   booted: "\u5DF2\u542F\u52A8",
   switching: "\u5207\u6362\u4E2D\u2026",
   captureFailed: "\u622A\u56FE\u5931\u8D25",
@@ -404,11 +406,18 @@ async function loadDevices() {
   const response = await fetch("/api/devices");
   if (!response.ok) return;
   const { devices, streaming } = await response.json();
-  ui.picker.replaceChildren(...devices.map((device) => {
+  const rows = devices.map((device) => {
     const node = option(device.udid, `${device.name} \xB7 ${runtimeLabel(device.runtime)}${device.state === "Booted" ? ` \xB7 ${copy.booted}` : ""}`);
     node.selected = device.udid === streaming;
     return node;
-  }));
+  });
+  if (!devices.some((device) => device.udid === streaming)) {
+    const placeholder = option("", copy.pickDevice);
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    rows.unshift(placeholder);
+  }
+  ui.picker.replaceChildren(...rows);
 }
 async function refreshStatus() {
   const response = await fetch("/api/status");

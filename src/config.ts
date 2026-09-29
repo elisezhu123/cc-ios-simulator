@@ -7,6 +7,8 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 export const PLUGIN_NAME = 'ios-simulator'
+/** Error prefix on hosts that cannot run the simulator (non-macOS, or no usable Xcode). */
+export const SIMULATOR_UNAVAILABLE = 'iOS Simulator requires macOS with Xcode'
 export const SERVER_VERSION = '0.1.0'
 /** serve-sim version pinned for the npx fallback (package.json pins the same). */
 export const SERVE_SIM_VERSION = '0.1.47'

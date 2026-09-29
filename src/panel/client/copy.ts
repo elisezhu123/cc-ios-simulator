@@ -25,6 +25,8 @@ export interface PanelCopy {
   frame: string
   frameStyles: Record<'none' | 'bezel' | 'device', string>
   picker: string
+  /** The picker's placeholder while nothing streams. */
+  pickDevice: string
   booted: string
   switching: string
   captureFailed: string
@@ -57,6 +59,7 @@ const EN: PanelCopy = {
   frame: 'Simulator frame style',
   frameStyles: { none: 'Frameless', bezel: 'Bezel', device: 'Device' },
   picker: 'Simulator device',
+  pickDevice: 'Pick a simulator…',
   booted: 'booted',
   switching: 'switching…',
   captureFailed: 'Screenshot failed',
@@ -89,6 +92,7 @@ const ZH: PanelCopy = {
   frame: '模拟器边框样式',
   frameStyles: { none: '无框', bezel: '边框', device: '真机框' },
   picker: '模拟器设备',
+  pickDevice: '选择模拟器…',
   booted: '已启动',
   switching: '切换中…',
   captureFailed: '截图失败',

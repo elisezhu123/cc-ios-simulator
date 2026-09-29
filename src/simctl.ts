@@ -9,6 +9,7 @@
  */
 
 import { execFile } from 'node:child_process'
+import { SIMULATOR_UNAVAILABLE } from './config.js'
 
 /** One available simulator device as reported by `simctl list devices`. */
 export interface SimulatorDevice {
@@ -78,8 +79,30 @@ export function setSimctlRunnerForTests(next?: SimctlRunner): void {
   runner = next ?? runXcrunSimctl
 }
 
+/** What xcrun / xcode-select print when no full Xcode is selected (only the Command Line Tools, or none). */
+const NO_XCODE_OUTPUT = /xcrun: error: (?:unable to find utility "simctl"|invalid active developer path)|xcode-select: (?:error|note):/iu
+
+/**
+ * Spec §10: without a usable Xcode every tool answers with the
+ * SIMULATOR_UNAVAILABLE text instead of a raw xcrun error (ENOENT: no xcrun at all).
+ */
+function noXcodeError(error: unknown): SimctlError | undefined {
+  if (!(error instanceof SimctlError)) return undefined
+  if (error.code !== 'ENOENT' && !NO_XCODE_OUTPUT.test(error.stderr)) return undefined
+  const detail = error.stderr.split('\n').map(line => line.trim()).filter(line => line !== '').pop()
+  return new SimctlError(
+    `${SIMULATOR_UNAVAILABLE} — xcrun cannot run simctl on this Mac${detail === undefined ? '' : ` (${detail})`}; install `
+      + 'Xcode (the Command Line Tools alone have no simulator), open it once, then select it with '
+      + '`sudo xcode-select -s /Applications/Xcode.app`',
+    error.stderr,
+    error.code,
+  )
+}
+
 function execSimctl(args: readonly string[], timeoutMs: number, signal?: AbortSignal): Promise<string> {
-  return runner(args, timeoutMs, signal)
+  return runner(args, timeoutMs, signal).catch((error: unknown) => {
+    throw noXcodeError(error) ?? error
+  })
 }
 
 interface SimctlDeviceEntry {

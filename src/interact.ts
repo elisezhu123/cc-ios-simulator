@@ -45,6 +45,17 @@ const SCROLL_DIRECTIONS = ['up', 'down', 'left', 'right'] as const
 /** serve-sim types through the US keyboard layout only. */
 const US_KEYBOARD_TEXT = /^[\x20-\x7E\t\n]+$/u
 
+/**
+ * The button names serve-sim 0.1.47 acts on: its helper's HIDInjector.sendButton
+ * switch (home … app_switcher) and its CLI's HID usage table (power …
+ * left-side-button). Any other name is sent, ignored by the helper, and still
+ * reported as a success.
+ */
+export const SERVE_SIM_BUTTONS = [
+  'home', 'lock', 'siri', 'side_button', 'swipe_home', 'app_switcher',
+  'power', 'volume-up', 'volume-down', 'action', 'side-button', 'digital-crown', 'left-side-button',
+] as const
+
 function sleep(milliseconds: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, milliseconds))
 }
@@ -129,7 +140,11 @@ export function interactControlArgs(args: SimInteractArgs): string[][] {
       if (typeof args.name !== 'string' || args.name.trim() === '') {
         throw new Error('ios_sim_interact: action "button" requires a button name, e.g. "home"')
       }
-      return [['button', args.name.trim()]]
+      const name = args.name.trim()
+      if (!(SERVE_SIM_BUTTONS as readonly string[]).includes(name)) {
+        throw new Error(`ios_sim_interact: unknown button ${JSON.stringify(name)} — serve-sim supports ${SERVE_SIM_BUTTONS.join(', ')}`)
+      }
+      return [['button', name]]
     }
     case 'gesture': {
       if (typeof args.json !== 'object' || args.json === null || Array.isArray(args.json)) {
