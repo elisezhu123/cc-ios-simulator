@@ -18,6 +18,7 @@ The loop is **observe once → act → read the result the action returns**. Eve
 
 - `ios_sim_screenshot` returns a JPEG you can look at (long edge at most 1024 px) plus JSON with the full-resolution PNG path.
 - Tap coordinates are normalized to the image you were given: `x = pixelX / image.width`, `y = pixelY / image.height` (the JSON repeats `image.width` and `image.height`). Aim at the centre of a control.
+- Screenshots are always returned upright, also in landscape, and coordinates always refer to the image you were given — the tools map them to the device.
 
 ## Acting
 

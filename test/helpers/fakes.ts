@@ -150,12 +150,16 @@ export const DEVICES: readonly SimulatorDevice[] = [
 ]
 
 /** A simctl stand-in over a mutable device list; records every side effect. */
-export function fakeSimctl(devices: SimulatorDevice[] = DEVICES.map(device => ({ ...device }))): {
+export function fakeSimctl(
+  devices: SimulatorDevice[] = DEVICES.map(device => ({ ...device })),
+  options: { screenshotSize?: { width: number; height: number } } = {},
+): {
   api: SimctlApi
   calls: unknown[][]
   devices: SimulatorDevice[]
 } {
   const calls: unknown[][] = []
+  const screenshotSize = options.screenshotSize ?? { width: 1206, height: 2622 }
   const find = (reference: string): SimulatorDevice => {
     const wanted = reference.trim()
     const device = devices.find(candidate => candidate.udid === wanted)
@@ -172,7 +176,10 @@ export function fakeSimctl(devices: SimulatorDevice[] = DEVICES.map(device => ({
     getDevice: async reference => ({ ...find(reference) }),
     bootDevice: async udid => { calls.push(['boot', udid]); setState(udid, 'Booted') },
     shutdownDevice: async udid => { calls.push(['shutdown', udid]); setState(udid, 'Shutdown') },
-    takeScreenshot: async (udid, filePath) => { calls.push(['screenshot', udid]); writeFileSync(filePath, tinyPng(1206, 2622)) },
+    takeScreenshot: async (udid, filePath) => {
+      calls.push(['screenshot', udid])
+      writeFileSync(filePath, tinyPng(screenshotSize.width, screenshotSize.height))
+    },
     installApp: async (udid, appPath) => { calls.push(['install', udid, appPath]) },
     uninstallApp: async (udid, bundleId) => { calls.push(['uninstall', udid, bundleId]) },
     launchApp: async (udid, bundleId) => { calls.push(['launch', udid, bundleId]); return `${bundleId}: 4242\n` },

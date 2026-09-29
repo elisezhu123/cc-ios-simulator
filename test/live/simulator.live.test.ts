@@ -66,10 +66,20 @@ test('live: boot, panel, screenshot, input, rotate, record', { skip: LIVE ? fals
   assert.equal(scroll.body.delivery.channel, 'ws', `scroll fell back to the CLI: ${String(scroll.body.delivery.wsError)}`)
 
   await call('ios_sim_launch_app', { udid, bundleId: 'com.apple.mobilesafari' })
+  // A rotate sent while Safari is still launching does not turn its interface: let it render first.
+  await new Promise(resolve => setTimeout(resolve, 4000))
   await call('ios_sim_interact', { udid, action: 'rotate', orientation: 'landscape_left', screenshot: false })
-  await new Promise(resolve => setTimeout(resolve, 1500))
-  const landscape = await call('ios_sim_screenshot', { udid })
+  // The interface turns a moment after the device: poll until the capture is landscape-shaped (up to 10 s).
+  const wide = (shot: { body: any }): boolean => shot.body.image.width > shot.body.image.height
+  const deadline = Date.now() + 10_000
+  let landscape = await call('ios_sim_screenshot', { udid })
+  while (!wide(landscape) && Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    landscape = await call('ios_sim_screenshot', { udid })
+  }
   console.log(`landscape screenshot: ${landscape.body.width}x${landscape.body.height}, model image ${landscape.body.image.width}x${landscape.body.image.height}`)
+  assert.equal(landscape.body.orientation, 'landscape_left')
+  assert.ok(wide(landscape), `the interface never turned landscape: the model image was still ${landscape.body.image.width}x${landscape.body.image.height} 10 s after rotate landscape_left`)
   await call('ios_sim_interact', { udid, action: 'rotate', orientation: 'portrait', screenshot: false })
 
   const started = await call('ios_sim_record', { udid, action: 'start' })

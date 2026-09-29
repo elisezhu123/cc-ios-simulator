@@ -24,6 +24,8 @@ export interface Harness {
 export interface HarnessOptions {
   host?: FakeHostOptions
   devices?: SimulatorDevice[]
+  /** Pixel size of the fake simctl screenshots (default 1206×2622, portrait). */
+  screenshotSize?: { width: number; height: number }
   deps?: Partial<ToolDeps>
 }
 
@@ -40,7 +42,7 @@ export async function toolHarness(
 ): Promise<Harness> {
   const cacheRoot = mkdtempSync(join(tmpdir(), 'ios-sim-tools-'))
   const { host, calls: hostCalls } = fakeHost(options.host)
-  const { api: simctl, calls: simctlCalls } = fakeSimctl(options.devices)
+  const { api: simctl, calls: simctlCalls } = fakeSimctl(options.devices, { screenshotSize: options.screenshotSize })
   const deps: ToolDeps = {
     host,
     stream: new SimStreamSource(host),

@@ -43478,10 +43478,131 @@ async function performSimInteract(host, deviceUdid, args, payloads, options = {}
   return { channel: "cli", ...wsError === void 0 ? {} : { wsError } };
 }
 
+// src/panel/client/layout.ts
+var SIZE_OPTIONS = [
+  { id: "fit", mode: { kind: "fit" }, en: "Fit", zh: "\u9002\u5E94" },
+  ...[50, 75, 100, 125].map((value) => ({ id: `percent-${value}`, mode: { kind: "percent", value }, en: `${value}%`, zh: `${value}%` })),
+  { id: "preset-S", mode: { kind: "preset", width: 240 }, en: "S \xB7 240px", zh: "S\uFF08240px\uFF09" },
+  { id: "preset-M", mode: { kind: "preset", width: 320 }, en: "M \xB7 320px", zh: "M\uFF08320px\uFF09" },
+  { id: "preset-L", mode: { kind: "preset", width: 420 }, en: "L \xB7 420px", zh: "L\uFF08420px\uFF09" }
+];
+function framebufferPoint(orientation, displayed) {
+  switch (orientation) {
+    case "landscape_left":
+      return { x: displayed.y, y: 1 - displayed.x };
+    case "landscape_right":
+      return { x: 1 - displayed.y, y: displayed.x };
+    case "portrait_upside_down":
+      return { x: 1 - displayed.x, y: 1 - displayed.y };
+    default:
+      return { x: displayed.x, y: displayed.y };
+  }
+}
+
+// src/panel/client/protocol.ts
+var SIM_CONFIG_TAG = 130;
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function messageBytes(data) {
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  return void 0;
+}
+function parseSimConfigFrame(data) {
+  const bytes = messageBytes(data);
+  if (bytes === void 0 || bytes.length < 2 || bytes[0] !== SIM_CONFIG_TAG) return void 0;
+  try {
+    const value = JSON.parse(new TextDecoder().decode(bytes.subarray(1)));
+    if (isRecord(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
+      return { width: value.width, height: value.height, orientation: value.orientation };
+    }
+  } catch {
+  }
+  return void 0;
+}
+
+// src/orientation.ts
+function isLandscape(orientation) {
+  return orientation === "landscape_left" || orientation === "landscape_right";
+}
+var silentReads = /* @__PURE__ */ new Map();
+var SILENT_AFTER_READS = 2;
+function readSimScreenConfig(wsUrl, timeoutMs = 800) {
+  if ((silentReads.get(wsUrl) ?? 0) >= SILENT_AFTER_READS) return Promise.resolve(void 0);
+  return new Promise((resolve4) => {
+    let settled = false;
+    const socket = new import_websocket.default(wsUrl, { perMessageDeflate: false });
+    const finish = (config2) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.terminate();
+      resolve4(config2);
+    };
+    const timer = setTimeout(() => {
+      silentReads.set(wsUrl, (silentReads.get(wsUrl) ?? 0) + 1);
+      finish(void 0);
+    }, timeoutMs);
+    socket.on("message", (data) => {
+      const config2 = parseSimConfigFrame(data);
+      if (config2 === void 0) return;
+      silentReads.delete(wsUrl);
+      finish(config2);
+    });
+    socket.on("error", () => finish(void 0));
+    socket.on("close", () => finish(void 0));
+  });
+}
+var SCROLL_DIRECTIONS2 = {
+  landscape_left: { down: "right", up: "left", right: "up", left: "down" },
+  landscape_right: { down: "left", up: "right", right: "down", left: "up" }
+};
+function toFramebufferArgs(orientation, args) {
+  if (!isLandscape(orientation)) return args;
+  const map2 = (x, y) => framebufferPoint(orientation, { x, y });
+  switch (args.action) {
+    case "tap": {
+      if (typeof args.x !== "number" || typeof args.y !== "number") return args;
+      const point = map2(args.x, args.y);
+      return { ...args, x: point.x, y: point.y };
+    }
+    case "scroll": {
+      const anchor2 = map2(args.x ?? 0.5, args.y ?? 0.5);
+      const direction = args.direction === void 0 ? void 0 : SCROLL_DIRECTIONS2[orientation][args.direction];
+      return { ...args, x: anchor2.x, y: anchor2.y, ...direction === void 0 ? {} : { direction } };
+    }
+    case "gesture": {
+      const json2 = args.json;
+      if (typeof json2 !== "object" || json2 === null || Array.isArray(json2)) return args;
+      const record2 = json2;
+      const drag = simDragRequestOf(record2);
+      if (drag !== void 0) {
+        const from = map2(drag.fromX, drag.fromY);
+        const to = map2(drag.toX, drag.toY);
+        return { ...args, json: { ...record2, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y } };
+      }
+      if (typeof record2.x === "number" && typeof record2.y === "number") {
+        const point = map2(record2.x, record2.y);
+        return { ...args, json: { ...record2, x: point.x, y: point.y } };
+      }
+      return args;
+    }
+    default:
+      return args;
+  }
+}
+
 // src/tools/core.ts
 var ROTATE_ORIENTATIONS = ["portrait", "landscape_left", "portrait_upside_down", "landscape_right"];
 var XCODE27_TYPE_HINT = " \u2014 with Xcode 27, keyboard input needs Device Hub running with this simulator visible and frontmost, and the app that launched Claude enabled under System Settings \u25B8 Privacy & Security \u25B8 Accessibility; if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)";
 function registerCoreTools(server, deps) {
+  const orientationOf = async (udid) => {
+    const info = deps.host.streamInfo;
+    if (info === void 0 || info.device !== udid) return "portrait";
+    return (await readSimScreenConfig(info.wsUrl))?.orientation ?? "portrait";
+  };
+  const lastImageLandscape = /* @__PURE__ */ new Map();
   server.registerTool("ios_sim_devices", {
     title: "List iOS simulators",
     description: "List the iOS Simulator devices on this Mac (udid, name, runtime, state, deviceType): booted first, then newest runtime. Use it to find the udid or name the other ios_sim_* tools take; `streaming` names the device the live panel shows.",
@@ -43565,8 +43686,11 @@ function registerCoreTools(server, deps) {
     const device = await resolveTargetDevice(deps, udid);
     requireBooted("ios_sim_screenshot", device);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
+    const orientation = await orientationOf(device.udid);
     const image = await deps.screenshots.toModelImage(capture);
+    lastImageLandscape.set(device.udid, image.width > image.height);
     return jsonResult({
+      orientation,
       path: capture.path,
       bytes: capture.bytes,
       ...capture.width === void 0 ? {} : { width: capture.width, height: capture.height },
@@ -43623,9 +43747,12 @@ function registerCoreTools(server, deps) {
         direction: args.direction,
         amount: args.amount
       };
-      const payloads = interactControlArgs(simArgs);
+      const orientation = await orientationOf(device.udid);
+      const mapToFramebuffer = isLandscape(orientation) && (lastImageLandscape.get(device.udid) ?? true);
+      const framebufferArgs = mapToFramebuffer ? toFramebufferArgs(orientation, simArgs) : simArgs;
+      const payloads = interactControlArgs(framebufferArgs);
       try {
-        delivery = await performSimInteract(deps.host, device.udid, simArgs, payloads);
+        delivery = await performSimInteract(deps.host, device.udid, framebufferArgs, payloads);
       } catch (error62) {
         const message = error62 instanceof Error ? error62.message : String(error62);
         throw new Error(`serve-sim ${args.action} failed: ${message}${args.action === "type" ? XCODE27_TYPE_HINT : ""}`);
@@ -43636,6 +43763,7 @@ function registerCoreTools(server, deps) {
     await sleep3(deps.settleMs);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
     const image = await deps.screenshots.toModelImage(capture);
+    lastImageLandscape.set(device.udid, image.width > image.height);
     return jsonResult({
       ...result,
       screenshot: {

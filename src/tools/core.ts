@@ -11,6 +11,7 @@ import { z } from 'zod'
 import type { ToolDeps } from '../deps.js'
 import { DEVICE_ACTIONS, isDeviceAction } from '../device-actions.js'
 import { interactControlArgs, performSimInteract, type SimInteractArgs, type SimInteractDelivery } from '../interact.js'
+import { isLandscape, readSimScreenConfig, toFramebufferArgs } from '../orientation.js'
 import { assertMac, assertStreamAvailable, ensureStreamFor, requireBooted, resolveTargetDevice, sortDevices } from '../target.js'
 import { deviceSummary, jsonResult, runTool, sleep, UDID_PARAM } from './result.js'
 
@@ -21,6 +22,20 @@ const XCODE27_TYPE_HINT = ' — with Xcode 27, keyboard input needs Device Hub r
   + 'if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)'
 
 export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
+  /** serve-sim's orientation for a streamed device; portrait when unknown. */
+  const orientationOf = async (udid: string): Promise<string> => {
+    const info = deps.host.streamInfo
+    if (info === undefined || info.device !== udid) return 'portrait'
+    return (await readSimScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
+  }
+  /**
+   * udid → whether the last model image returned for it was wider than tall.
+   * Captures are upright in the INTERFACE orientation, so a landscape device
+   * whose interface is still portrait (an app launching, a portrait-only app)
+   * yields a portrait image whose coordinates already match the framebuffer.
+   */
+  const lastImageLandscape = new Map<string, boolean>()
+
   server.registerTool('ios_sim_devices', {
     title: 'List iOS simulators',
     description: 'List the iOS Simulator devices on this Mac (udid, name, runtime, state, deviceType): booted first, '
@@ -119,8 +134,11 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     const device = await resolveTargetDevice(deps, udid)
     requireBooted('ios_sim_screenshot', device)
     const capture = await deps.screenshots.capture(device.udid, extra.signal)
+    const orientation = await orientationOf(device.udid)
     const image = await deps.screenshots.toModelImage(capture)
+    lastImageLandscape.set(device.udid, image.width > image.height)
     return jsonResult({
+      orientation,
       path: capture.path,
       bytes: capture.bytes,
       ...(capture.width === undefined ? {} : { width: capture.width, height: capture.height }),
@@ -185,9 +203,14 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
         direction: args.direction,
         amount: args.amount,
       }
-      const payloads = interactControlArgs(simArgs)
+      // Coordinates refer to the image the model was given: map them to the portrait
+      // framebuffer only while that image shows a landscape interface (no image yet: trust serve-sim).
+      const orientation = await orientationOf(device.udid)
+      const mapToFramebuffer = isLandscape(orientation) && (lastImageLandscape.get(device.udid) ?? true)
+      const framebufferArgs = mapToFramebuffer ? toFramebufferArgs(orientation, simArgs) : simArgs
+      const payloads = interactControlArgs(framebufferArgs)
       try {
-        delivery = await performSimInteract(deps.host, device.udid, simArgs, payloads)
+        delivery = await performSimInteract(deps.host, device.udid, framebufferArgs, payloads)
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         throw new Error(`serve-sim ${args.action} failed: ${message}${args.action === 'type' ? XCODE27_TYPE_HINT : ''}`)
@@ -198,6 +221,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     await sleep(deps.settleMs)
     const capture = await deps.screenshots.capture(device.udid, extra.signal)
     const image = await deps.screenshots.toModelImage(capture)
+    lastImageLandscape.set(device.udid, image.width > image.height)
     return jsonResult({
       ...result,
       screenshot: {
