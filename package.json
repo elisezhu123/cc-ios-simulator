@@ -14,7 +14,8 @@
     "check:bundle": "node scripts/check-bundle.mjs",
     "test": "node --import tsx --test test/*.test.ts",
     "test:live": "node --import tsx --test test/live/*.test.ts",
-    "dev:panel": "node scripts/dev-panel.mjs"
+    "dev:panel": "node scripts/dev-panel.mjs",
+    "notices": "node scripts/notices.mjs"
   },
   "dependencies": {
     "serve-sim": "0.1.47"

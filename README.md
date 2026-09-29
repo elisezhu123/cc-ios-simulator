@@ -51,6 +51,7 @@ npm run build         # 类型检查 + 打包 dist/（dist 需要提交）
 npm run check:bundle  # 启动 dist/server.js 并确认 16 个工具
 IOS_SIM_SMOKE=1 npm run test:live   # 在真实模拟器上冒烟
 npm run dev:panel     # 启动一台模拟器并保持面板运行，用于在浏览器里调试
+npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTICES.md（依赖变化后运行）
 ~~~
 
 ## 路线图

@@ -1,5 +1,6 @@
 {
   "name": "ios-simulator-panel",
+  "description": "Local marketplace for the ios-simulator plugin: drive the iOS Simulator from Claude Code with a live stream panel",
   "owner": { "name": "elisezhu123" },
   "plugins": [
     {

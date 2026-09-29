@@ -11,14 +11,17 @@ The loop is **observe once → act → read the result the action returns**. Eve
 
 1. `ios_sim_devices` lists simulators, booted first. Use a udid or the exact name ("iPhone 17 Pro").
 2. `ios_sim_boot` boots it and starts the live stream; the result carries `panelUrl`.
+   - No `panelUrl` means a degraded boot, and a `note` says why. With `streaming: false`, serve-sim is unavailable (an Intel Mac, no npx): the device is booted, and screenshots, apps, `open_url`, `push`, `location`, `appearance` and `record` still work, but taps, typing, scrolling and the panel do not — tell the user rather than retrying. With `streaming: true`, only the panel could not start; `ios_sim_panel` retries it.
 3. Open the panel for the user **once per session**: in the Claude desktop app call the browser tool `preview_start` with `{ "url": "<panelUrl>" }`; in a terminal-only session, print the URL for the user. `ios_sim_panel` returns the URL again later and never boots a device.
 4. The user can tap, drag, press Home, rotate and take screenshots in the panel; your tool calls and their clicks drive the same simulator.
+5. `ios_sim_shutdown` shuts a simulator down when you are done; it stops that device's recording and live stream first.
 
 ## Reading the screen
 
 - `ios_sim_screenshot` returns a JPEG you can look at (long edge at most 1024 px) plus JSON with the full-resolution PNG path.
 - Tap coordinates are normalized to the image you were given: `x = pixelX / image.width`, `y = pixelY / image.height` (the JSON repeats `image.width` and `image.height`). Aim at the centre of a control.
 - Screenshots are always returned upright, also in landscape, and coordinates always refer to the image you were given — the tools map them to the device.
+- A result may carry a `warning` — for example the live stream lost the landscape orientation, so taps would miss, or a recording ended on its own. Read it and do what it says before your next action; do not ignore it.
 
 ## Acting
 
@@ -28,13 +31,13 @@ The loop is **observe once → act → read the result the action returns**. Eve
 | type ASCII into the focused field | `ios_sim_interact {action:"type", text}` |
 | scroll | `ios_sim_interact {action:"scroll", direction}` — direction names the CONTENT: `down` reveals what is below (the finger moves up) |
 | drag or swipe | `ios_sim_interact {action:"gesture", json:{fromX, fromY, toX, toY, duration}}` |
-| go home | `ios_sim_interact {action:"button", name:"home"}` |
+| go home | `ios_sim_interact {action:"button", name:"home"}` (other buttons: `lock`, `siri`, `volume-up`, …; an unknown name returns the full list) |
 | rotate | `ios_sim_interact {action:"rotate", orientation:"landscape_left"}` |
-| app switcher, lock, unlock, shake, Siri | `ios_sim_interact {action:"device_action", name}` |
+| app switcher, lock, unlock, shake, Siri, Action button, re-center the window | `ios_sim_interact {action:"device_action", name}` with `name` one of `app-switcher`, `lock`, `unlock`, `shake`, `siri`, `action-button`, `re-center` |
 
 - Chaining actions (tap a field, type, tap Done)? Pass `screenshot:false` on all but the last one.
 - `type` only supports US-keyboard ASCII. For Chinese, emoji or other text run `printf '%s' '中文' | xcrun simctl pbcopy <udid>` in Bash, then long-press the field and tap Paste.
-- Every `device_action` except `lock` drives Simulator.app's menu through AppleScript and needs the Accessibility permission for the app running Claude. If one fails with that hint, tell the user instead of retrying.
+- `lock` is a hardware-button press through serve-sim. The other six device actions drive Simulator.app through AppleScript — menu clicks, and `unlock` is a keystroke (⇧⌘H twice) — so they bring Simulator.app to the front for a moment and need the Accessibility permission for the app running Claude. If one fails with that hint, tell the user instead of retrying.
 - With Xcode 27, keyboard input also needs Device Hub running with the simulator visible and frontmost. `serve-sim repair-input -d <udid>` revives dead input but restarts SpringBoard — ask the user before running it.
 
 ## Apps
