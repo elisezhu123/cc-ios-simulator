@@ -50,3 +50,14 @@ test('ios_sim_record starts and stops one recording per device', async () => {
   assert.match(textOf(await h.call('ios_sim_record', { action: 'stop' })), /no recording is running/)
   await h.close()
 })
+
+test('ios_sim_record stop works after the device shut down; start still needs a booted device', async () => {
+  const h = await toolHarness(registerEnvTools)
+  await h.call('ios_sim_record', { action: 'start', udid: 'BBB' })
+  await h.deps.simctl.shutdownDevice('BBB')
+  const stopped = await h.call('ios_sim_record', { action: 'stop', udid: 'BBB' })
+  assert.equal(stopped.isError, undefined)
+  assert.equal((h.json(stopped) as { bytes: number }).bytes, 2048)
+  assert.match(textOf(await h.call('ios_sim_record', { action: 'start', udid: 'BBB' })), /is Shutdown — boot it first/)
+  await h.close()
+})

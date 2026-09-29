@@ -58,18 +58,31 @@ async function main(): Promise<void> {
   registerEnvTools(server, deps)
 
   let shuttingDown = false
+  /** A failed shutdown step gets one stderr line and never blocks the exit. */
+  const logFailure = (step: string) => (error: unknown): void => {
+    process.stderr.write(`${PLUGIN_NAME}: shutdown: ${step} failed: ${error instanceof Error ? error.message : String(error)}\n`)
+  }
   const shutdown = async (): Promise<void> => {
     if (shuttingDown) return
     shuttingDown = true
-    await recorder.stopAll().catch(() => undefined)
-    await host.dispose().catch(() => undefined)
-    await panel.dispose().catch(() => undefined)
+    // Side by side: a movie that takes seconds to finalize must not hold the
+    // serve-sim kill back past the host's kill window.
+    await Promise.all([
+      recorder.stopAll().catch(logFailure('finishing the recordings')),
+      host.dispose().catch(logFailure('stopping the serve-sim stream')),
+    ])
+    await panel.dispose().catch(logFailure('closing the panel server'))
     process.exit(0)
   }
   process.stdin.on('end', () => { void shutdown() })
   process.stdin.on('close', () => { void shutdown() })
-  process.on('SIGTERM', () => { void shutdown() })
-  process.on('SIGINT', () => { void shutdown() })
+  for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP'] as const) process.on(signal, () => { void shutdown() })
+  // Backstop for exits that skip the async shutdown (an uncaught exception, a
+  // fatal error): 'exit' handlers run synchronously, so signal what still runs.
+  process.on('exit', () => {
+    host.terminateOnExit()
+    recorder.interruptOnExit()
+  })
   server.server.onclose = () => { void shutdown() }
 
   await server.connect(new StdioServerTransport())

@@ -1,5 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { spawn } from 'node:child_process'
+import { once } from 'node:events'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -59,4 +61,22 @@ test('the stdio MCP server lists the 16 ios_sim tools and answers calls', async 
   } finally {
     await client.close()
   }
+})
+
+test('the server shuts down cleanly on SIGHUP (its terminal or session went away)', async () => {
+  const child = spawn(process.execPath, ['--import', 'tsx', join(ROOT, 'src/server.ts')], { cwd: ROOT, env: childEnv(), stdio: ['pipe', 'pipe', 'pipe'] })
+  let stderr = ''
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`the server never became ready: ${stderr}`)), 20_000)
+    child.stderr.on('data', chunk => {
+      stderr += String(chunk)
+      if (!stderr.includes('MCP server ready')) return
+      clearTimeout(timer)
+      resolve()
+    })
+  })
+  const exited = once(child, 'exit') as Promise<[number | null, NodeJS.Signals | null]>
+  child.kill('SIGHUP')
+  const [code, signal] = await exited
+  assert.deepEqual({ code, signal }, { code: 0, signal: null })
 })

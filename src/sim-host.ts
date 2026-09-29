@@ -36,7 +36,7 @@ import { createServer } from 'node:net'
 import { delimiter, dirname, join } from 'node:path'
 import type { Readable } from 'node:stream'
 import { fileURLToPath } from 'node:url'
-import { bootDevice } from './simctl.js'
+import { bootDevice, listDevices } from './simctl.js'
 import { SERVE_SIM_VERSION, serveSimBinOverride } from './config.js'
 
 /** serve-sim stream child: no stdin, piped stdout/stderr. */
@@ -759,13 +759,35 @@ export class SimHostController {
     this.#disposed = true
     this.stopKeepAlive()
     this.#disposePromise = (async () => {
-      // Let an in-flight shared launch settle so its child is visible to
-      // stop(); it observes `disposed` and will not start another stream.
+      // Stop FIRST: a launch still waiting on bootstatus, a slow handshake or
+      // an npx download must not keep a spawned serve-sim alive past the host's
+      // kill window (~4 s after it closes our stdin). stop() kills the child
+      // (set synchronously at spawn) and bumps the launch epoch; a launch that
+      // has not spawned yet observes `disposed` and never will.
+      await this.stop()
       await this.#starting?.catch(() => {})
+      // Reap anything that landed while the launch settled.
       await this.stop()
       await this.#launchQueue
     })()
     return this.#disposePromise
+  }
+
+  /**
+   * Exit backstop for a process that exits without awaiting dispose() (an
+   * uncaught exception, a fatal error): SIGTERM a still-running serve-sim
+   * process group. Synchronous, because 'exit' handlers cannot await.
+   */
+  terminateOnExit(kill: (pid: number, signal: NodeJS.Signals) => void = (pid, signal) => { process.kill(pid, signal) }): void {
+    const child = this.#child
+    if (child?.pid === undefined || child.exitCode !== null || child.signalCode !== null) return
+    try {
+      kill(-child.pid, 'SIGTERM')
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ESRCH') {
+        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage(error)}\n`)
+      }
+    }
   }
 
   async #keepAliveTick(): Promise<void> {
@@ -783,8 +805,16 @@ export class SimHostController {
     if (now - exitAt < this.#options.restartDelayMs) return
     if (!this.binary.available) return
     this.#exitAt = undefined
-    this.#restarts += 1
     try {
+      // A device shut down outside these tools (Simulator.app, `simctl
+      // shutdown`) takes serve-sim down with it. That stop is intentional:
+      // restarting would boot the device again.
+      if (!(await this.#isBooted(device))) {
+        this.#intentionalStop = true
+        this.#noteStderr(`${device} is no longer booted; the stream stays stopped until the next ensureRunning`)
+        return
+      }
+      this.#restarts += 1
       await this.ensureRunning({ udid: device })
     } catch (error) {
       this.#lastError = errorMessage(error)
@@ -792,6 +822,11 @@ export class SimHostController {
       // close handler; only re-arm here if no child ever recorded an exit.
       if (this.#exitAt === undefined) this.#exitAt = Date.now()
     }
+  }
+
+  /** Whether simctl lists `udid` as Booted; a failed listing rejects (the keep-alive retries later). */
+  async #isBooted(udid: string): Promise<boolean> {
+    return (await listDevices()).some(device => device.udid === udid && device.state === 'Booted')
   }
 
   /**
@@ -832,6 +867,8 @@ export class SimHostController {
     await bootDevice(udid)
     if (this.#disposed) throw new Error('ios-simulator: sim host is disposed')
     const port = await this.#findFreePort()
+    // Last chance before spawning: a dispose() that began meanwhile must not get a new child.
+    if (this.#disposed) throw new Error('ios-simulator: sim host is disposed')
     const outcome = await this.#launchStream(udid, port)
     if (outcome.kind === 'mismatch') {
       // A stale helper answered for a different device. Reclaim it and

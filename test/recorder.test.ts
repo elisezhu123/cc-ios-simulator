@@ -70,3 +70,45 @@ test('stop without a recording and bad extensions are rejected', async () => {
 test('recordVideoArgs records h264 and overwrites', () => {
   assert.deepEqual(recordVideoArgs('BBB', '/tmp/a.mov'), ['simctl', 'io', 'BBB', 'recordVideo', '--codec=h264', '--force', '/tmp/a.mov'])
 })
+
+test('the exit backstop SIGINTs every still-tracked recordVideo child', async () => {
+  const { spawnRecord, spawned } = fakeRecordSpawn()
+  const recorder = new Recorder({ dir: tempDir(), spawnRecord })
+  await recorder.start('BBB')
+  await recorder.start('EEE')
+  recorder.interruptOnExit()
+  assert.deepEqual(spawned.map(record => record.signals), [['SIGINT'], ['SIGINT']])
+})
+
+test('a recording that ends on its own frees the device for a new start', async () => {
+  const { spawnRecord, spawned } = fakeRecordSpawn()
+  const recorder = new Recorder({ dir: tempDir(), spawnRecord })
+  await recorder.start('BBB')
+  spawned[0]?.exit(1) // the simulator shut down: recordVideo exits by itself
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(recorder.active('BBB'), undefined)
+  const again = await recorder.start('BBB')
+  assert.equal(recorder.active('BBB')?.path, again.path)
+  await recorder.stop('BBB')
+  assert.deepEqual(spawned.map(record => record.signals), [[], ['SIGINT']])
+})
+
+test('stop reports a recording that ended on its own: an error without a movie, a warning with one', async () => {
+  const { spawnRecord, spawned } = fakeRecordSpawn()
+  let clock = 1_000
+  const recorder = new Recorder({ dir: tempDir(), spawnRecord, now: () => clock })
+  await recorder.start('BBB')
+  spawned[0]?.exit(1)
+  await new Promise(resolve => setImmediate(resolve))
+  await assert.rejects(recorder.stop('BBB'), /ended on its own \(recordVideo exited with code 1 — was the simulator shut down\?\) without writing/)
+  await assert.rejects(recorder.stop('BBB'), /no recording is running/)
+  const info = await recorder.start('BBB')
+  clock = 3_000
+  spawned[1]?.exit(0, 4096)
+  await new Promise(resolve => setImmediate(resolve))
+  clock = 9_000
+  const result = await recorder.stop('BBB')
+  assert.deepEqual({ path: result.path, bytes: result.bytes, durationMs: result.durationMs }, { path: info.path, bytes: 4096, durationMs: 2_000 })
+  assert.match(result.warning ?? '', /ended on its own before stop \(recordVideo exited with code 0/)
+  assert.deepEqual(spawned[1]?.signals, [])
+})

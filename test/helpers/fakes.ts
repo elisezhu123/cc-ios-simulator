@@ -4,9 +4,11 @@
  */
 import type { ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { PassThrough } from 'node:stream'
-import type { SimHostController, SimHostStatus, SimStreamInfo } from '../../src/sim-host.js'
+import type { ServeSimBinary, SimHostController, SimHostStatus, SimStreamInfo } from '../../src/sim-host.js'
 import type { SimctlApi } from '../../src/deps.js'
 import type { SimulatorDevice } from '../../src/simctl.js'
 import { tinyPng } from './png.js'
@@ -91,10 +93,66 @@ export function fakeHost(options: FakeHostOptions = {}): FakeHostHandle {
   return { host, calls, consumers: () => consumers }
 }
 
+export interface FakeServeSim {
+  /** Launches this fake through the real SimHostController spawn path. */
+  binary: ServeSimBinary
+  /** Pids of every launch so far, in order. */
+  pids(): number[]
+  /** SIGKILL every launch that is still running (test cleanup, or a crash). */
+  killAll(): void
+}
+
+/** True while `pid` is a running process. */
+export function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * A serve-sim stand-in script for SimHostController: logs its pid, then either
+ * prints the handshake serve-sim prints (for the requested port and device) or
+ * never does (a hung helper, a slow npx download), and runs until killed.
+ */
+export function fakeServeSimBinary(options: { handshake: boolean }): FakeServeSim {
+  const dir = mkdtempSync(join(tmpdir(), 'ios-sim-fake-serve-sim-'))
+  const pidFile = join(dir, 'pids')
+  const script = join(dir, 'serve-sim.mjs')
+  writeFileSync(script, [
+    "import { appendFileSync } from 'node:fs'",
+    `appendFileSync(${JSON.stringify(pidFile)}, process.pid + '\\n')`,
+    'const argv = process.argv.slice(2)',
+    "const port = Number(argv[argv.indexOf('--port') + 1])",
+    'const device = argv[argv.length - 1]',
+    `if (${String(options.handshake)}) {`,
+    "  const url = 'http://127.0.0.1:' + port",
+    "  process.stdout.write(JSON.stringify({ url, streamUrl: url + '/stream.mjpeg', wsUrl: 'ws://127.0.0.1:' + port + '/ws', port, device }) + '\\n')",
+    '}',
+    'setInterval(() => {}, 1 << 30)',
+  ].join('\n'))
+  const pids = (): number[] => existsSync(pidFile)
+    ? readFileSync(pidFile, 'utf8').split('\n').filter(line => line !== '').map(Number)
+    : []
+  return {
+    binary: { available: true, source: 'package-bin', command: process.execPath, args: [script] },
+    pids,
+    killAll: () => {
+      for (const pid of pids()) {
+        if (isAlive(pid)) process.kill(pid, 'SIGKILL')
+      }
+    },
+  }
+}
+
 export interface FakeRecording {
   udid: string
   path: string
   signals: string[]
+  /** recordVideo ending on its own (device shut down, simctl crash), optionally after writing `bytes`. */
+  exit(code: number | null, bytes?: number): void
 }
 
 /**
@@ -107,10 +165,18 @@ export function fakeRecordSpawn(options: { announce?: boolean; exitEarly?: boole
 } {
   const spawned: FakeRecording[] = []
   const spawnRecord = (udid: string, path: string): ChildProcess => {
-    const record: FakeRecording = { udid, path, signals: [] }
-    spawned.push(record)
     const stderr = new PassThrough()
     const emitter = new EventEmitter()
+    const record: FakeRecording = {
+      udid,
+      path,
+      signals: [],
+      exit: (code, bytes = 0) => {
+        if (bytes > 0) writeFileSync(path, Buffer.alloc(bytes, 1))
+        emitter.emit('exit', code)
+      },
+    }
+    spawned.push(record)
     const child = Object.assign(emitter, {
       stderr,
       kill(signal: NodeJS.Signals = 'SIGTERM'): boolean {

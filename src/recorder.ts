@@ -21,6 +21,8 @@ export interface RecordingResult {
   path: string
   bytes: number
   durationMs: number
+  /** Set when recordVideo had already ended on its own before stop. */
+  warning?: string
 }
 
 export type SpawnRecord = (udid: string, path: string) => ChildProcess
@@ -37,6 +39,13 @@ interface ActiveRecording {
   child: ChildProcess
   info: RecordingInfo
   exited: Promise<number | null>
+}
+
+/** A recording whose recordVideo exited without a stop (device shut down, simctl crashed). */
+interface EndedRecording {
+  info: RecordingInfo
+  code: number | null
+  endedAt: number
 }
 
 /** `xcrun simctl io <udid> recordVideo --codec=h264 --force <path>` arguments. */
@@ -66,6 +75,8 @@ export class Recorder {
   readonly #stopTimeoutMs: number
   readonly #now: () => number
   readonly #active = new Map<string, ActiveRecording>()
+  /** Recordings that ended on their own, kept until the next stop (or start) for that device reports them. */
+  readonly #ended = new Map<string, EndedRecording>()
   readonly #starting = new Set<string>()
 
   constructor(options: RecorderOptions) {
@@ -109,7 +120,16 @@ export class Recorder {
       })
       await this.#waitForStart(child, exited)
       const info: RecordingInfo = { udid, path, startedAt: this.#now() }
-      this.#active.set(udid, { child, info, exited })
+      const entry: ActiveRecording = { child, info, exited }
+      this.#ended.delete(udid)
+      this.#active.set(udid, entry)
+      void exited.then(code => {
+        // Ended on its own: free the device for a new start and keep what
+        // happened for the next stop. A stop() already removed its entry.
+        if (this.#active.get(udid) !== entry) return
+        this.#active.delete(udid)
+        this.#ended.set(udid, { info, code, endedAt: this.#now() })
+      })
       return info
     } finally {
       this.#starting.delete(udid)
@@ -118,7 +138,7 @@ export class Recorder {
 
   async stop(udid: string): Promise<RecordingResult> {
     const recording = this.#active.get(udid)
-    if (recording === undefined) throw new Error(`no recording is running for ${udid} — start one with action "start"`)
+    if (recording === undefined) return this.#reportEnded(udid)
     this.#active.delete(udid)
     recording.child.kill('SIGINT')
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -141,6 +161,32 @@ export class Recorder {
   /** Finish every running recording (used on shutdown). */
   async stopAll(): Promise<void> {
     await Promise.all([...this.#active.keys()].map(udid => this.stop(udid).catch(() => undefined)))
+  }
+
+  /**
+   * Exit backstop for a process that exits without awaiting stopAll(): SIGINT
+   * every still-tracked recordVideo child so it finalizes its movie on its own.
+   * Synchronous, because 'exit' handlers cannot await.
+   */
+  interruptOnExit(): void {
+    for (const { child } of this.#active.values()) child.kill('SIGINT')
+  }
+
+  /** stop() for a device whose recording already ended on its own (or never started). */
+  #reportEnded(udid: string): RecordingResult {
+    const ended = this.#ended.get(udid)
+    if (ended === undefined) throw new Error(`no recording is running for ${udid} — start one with action "start"`)
+    this.#ended.delete(udid)
+    const why = `recordVideo exited with code ${String(ended.code)} — was the simulator shut down?`
+    const bytes = fileSize(ended.info.path)
+    if (bytes === 0) throw new Error(`the recording for ${udid} ended on its own (${why}) without writing ${ended.info.path}`)
+    return {
+      udid,
+      path: ended.info.path,
+      bytes,
+      durationMs: ended.endedAt - ended.info.startedAt,
+      warning: `the recording ended on its own before stop (${why}), so it may be cut short`,
+    }
   }
 
   #waitForStart(child: ChildProcess, exited: Promise<number | null>): Promise<void> {

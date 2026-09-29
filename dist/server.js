@@ -42017,6 +42017,8 @@ var Recorder = class {
   #stopTimeoutMs;
   #now;
   #active = /* @__PURE__ */ new Map();
+  /** Recordings that ended on their own, kept until the next stop (or start) for that device reports them. */
+  #ended = /* @__PURE__ */ new Map();
   #starting = /* @__PURE__ */ new Set();
   constructor(options) {
     this.#dir = options.dir;
@@ -42053,7 +42055,14 @@ var Recorder = class {
       });
       await this.#waitForStart(child, exited);
       const info = { udid, path, startedAt: this.#now() };
-      this.#active.set(udid, { child, info, exited });
+      const entry = { child, info, exited };
+      this.#ended.delete(udid);
+      this.#active.set(udid, entry);
+      void exited.then((code) => {
+        if (this.#active.get(udid) !== entry) return;
+        this.#active.delete(udid);
+        this.#ended.set(udid, { info, code, endedAt: this.#now() });
+      });
       return info;
     } finally {
       this.#starting.delete(udid);
@@ -42061,7 +42070,7 @@ var Recorder = class {
   }
   async stop(udid) {
     const recording = this.#active.get(udid);
-    if (recording === void 0) throw new Error(`no recording is running for ${udid} \u2014 start one with action "start"`);
+    if (recording === void 0) return this.#reportEnded(udid);
     this.#active.delete(udid);
     recording.child.kill("SIGINT");
     let timer;
@@ -42085,6 +42094,30 @@ var Recorder = class {
   /** Finish every running recording (used on shutdown). */
   async stopAll() {
     await Promise.all([...this.#active.keys()].map((udid) => this.stop(udid).catch(() => void 0)));
+  }
+  /**
+   * Exit backstop for a process that exits without awaiting stopAll(): SIGINT
+   * every still-tracked recordVideo child so it finalizes its movie on its own.
+   * Synchronous, because 'exit' handlers cannot await.
+   */
+  interruptOnExit() {
+    for (const { child } of this.#active.values()) child.kill("SIGINT");
+  }
+  /** stop() for a device whose recording already ended on its own (or never started). */
+  #reportEnded(udid) {
+    const ended = this.#ended.get(udid);
+    if (ended === void 0) throw new Error(`no recording is running for ${udid} \u2014 start one with action "start"`);
+    this.#ended.delete(udid);
+    const why = `recordVideo exited with code ${String(ended.code)} \u2014 was the simulator shut down?`;
+    const bytes = fileSize(ended.info.path);
+    if (bytes === 0) throw new Error(`the recording for ${udid} ended on its own (${why}) without writing ${ended.info.path}`);
+    return {
+      udid,
+      path: ended.info.path,
+      bytes,
+      durationMs: ended.endedAt - ended.info.startedAt,
+      warning: `the recording ended on its own before stop (${why}), so it may be cut short`
+    };
   }
   #waitForStart(child, exited) {
     return new Promise((resolve4, reject) => {
@@ -42658,12 +42691,32 @@ var SimHostController = class {
     this.#disposed = true;
     this.stopKeepAlive();
     this.#disposePromise = (async () => {
+      await this.stop();
       await this.#starting?.catch(() => {
       });
       await this.stop();
       await this.#launchQueue;
     })();
     return this.#disposePromise;
+  }
+  /**
+   * Exit backstop for a process that exits without awaiting dispose() (an
+   * uncaught exception, a fatal error): SIGTERM a still-running serve-sim
+   * process group. Synchronous, because 'exit' handlers cannot await.
+   */
+  terminateOnExit(kill = (pid, signal) => {
+    process.kill(pid, signal);
+  }) {
+    const child = this.#child;
+    if (child?.pid === void 0 || child.exitCode !== null || child.signalCode !== null) return;
+    try {
+      kill(-child.pid, "SIGTERM");
+    } catch (error62) {
+      if (error62.code !== "ESRCH") {
+        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage3(error62)}
+`);
+      }
+    }
   }
   async #keepAliveTick() {
     const now = Date.now();
@@ -42678,13 +42731,22 @@ var SimHostController = class {
     if (now - exitAt < this.#options.restartDelayMs) return;
     if (!this.binary.available) return;
     this.#exitAt = void 0;
-    this.#restarts += 1;
     try {
+      if (!await this.#isBooted(device)) {
+        this.#intentionalStop = true;
+        this.#noteStderr(`${device} is no longer booted; the stream stays stopped until the next ensureRunning`);
+        return;
+      }
+      this.#restarts += 1;
       await this.ensureRunning({ udid: device });
     } catch (error62) {
       this.#lastError = errorMessage3(error62);
       if (this.#exitAt === void 0) this.#exitAt = Date.now();
     }
+  }
+  /** Whether simctl lists `udid` as Booted; a failed listing rejects (the keep-alive retries later). */
+  async #isBooted(udid) {
+    return (await listDevices()).some((device) => device.udid === udid && device.state === "Booted");
   }
   /**
    * Poll the adopted helper's health route (derived from the stream URL)
@@ -42721,6 +42783,7 @@ var SimHostController = class {
     await bootDevice(udid);
     if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
     const port = await this.#findFreePort();
+    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
     const outcome = await this.#launchStream(udid, port);
     if (outcome.kind === "mismatch") {
       if (reclaim) {
@@ -43908,21 +43971,24 @@ function registerEnvTools(server, deps) {
   }));
   server.registerTool("ios_sim_record", {
     title: "Record the screen",
-    description: 'Record the simulator screen. action "start" begins a recording (outputPath optional, .mov or .mp4; default in the plugin cache); action "stop" finishes it and returns the file path, size and duration. One recording per device.',
+    description: 'Record the simulator screen. action "start" begins a recording (outputPath optional, .mov or .mp4 \u2014 an existing file at that path is overwritten; default in the plugin cache); action "stop" finishes it and returns the file path, size and duration (it also works after the device shut down \u2014 pass its udid then). One recording per device.',
     inputSchema: { action: external_exports.enum(["start", "stop"]), outputPath: external_exports.string().optional(), udid: UDID_PARAM }
   }, async (args) => runTool("ios_sim_record", async () => {
-    const device = await bootedDevice("ios_sim_record", args.udid);
     if (args.action === "start") {
-      const info = await deps.recorder.start(device.udid, args.outputPath === void 0 ? void 0 : resolve3(args.outputPath));
-      return jsonResult({ device: deviceSummary(device), recording: true, path: info.path });
+      const device2 = await bootedDevice("ios_sim_record", args.udid);
+      const info = await deps.recorder.start(device2.udid, args.outputPath === void 0 ? void 0 : resolve3(args.outputPath));
+      return jsonResult({ device: deviceSummary(device2), recording: true, path: info.path });
     }
+    assertMac(deps.platform);
+    const device = await resolveTargetDevice(deps, args.udid);
     const result = await deps.recorder.stop(device.udid);
     return jsonResult({
       device: deviceSummary(device),
       recording: false,
       path: result.path,
       bytes: result.bytes,
-      durationMs: result.durationMs
+      durationMs: result.durationMs,
+      ...result.warning === void 0 ? {} : { warning: result.warning }
     });
   }));
 }
@@ -43962,12 +44028,18 @@ async function main() {
   registerAppTools(server, deps);
   registerEnvTools(server, deps);
   let shuttingDown = false;
+  const logFailure = (step) => (error62) => {
+    process.stderr.write(`${PLUGIN_NAME}: shutdown: ${step} failed: ${error62 instanceof Error ? error62.message : String(error62)}
+`);
+  };
   const shutdown = async () => {
     if (shuttingDown) return;
     shuttingDown = true;
-    await recorder.stopAll().catch(() => void 0);
-    await host.dispose().catch(() => void 0);
-    await panel.dispose().catch(() => void 0);
+    await Promise.all([
+      recorder.stopAll().catch(logFailure("finishing the recordings")),
+      host.dispose().catch(logFailure("stopping the serve-sim stream"))
+    ]);
+    await panel.dispose().catch(logFailure("closing the panel server"));
     process.exit(0);
   };
   process.stdin.on("end", () => {
@@ -43976,11 +44048,12 @@ async function main() {
   process.stdin.on("close", () => {
     void shutdown();
   });
-  process.on("SIGTERM", () => {
+  for (const signal of ["SIGTERM", "SIGINT", "SIGHUP"]) process.on(signal, () => {
     void shutdown();
   });
-  process.on("SIGINT", () => {
-    void shutdown();
+  process.on("exit", () => {
+    host.terminateOnExit();
+    recorder.interruptOnExit();
   });
   server.server.onclose = () => {
     void shutdown();

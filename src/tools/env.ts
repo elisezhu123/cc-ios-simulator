@@ -97,16 +97,20 @@ export function registerEnvTools(server: McpServer, deps: ToolDeps): void {
 
   server.registerTool('ios_sim_record', {
     title: 'Record the screen',
-    description: 'Record the simulator screen. action "start" begins a recording (outputPath optional, .mov or .mp4; '
-      + 'default in the plugin cache); action "stop" finishes it and returns the file path, size and duration. '
+    description: 'Record the simulator screen. action "start" begins a recording (outputPath optional, .mov or .mp4 — '
+      + 'an existing file at that path is overwritten; default in the plugin cache); action "stop" finishes it and '
+      + 'returns the file path, size and duration (it also works after the device shut down — pass its udid then). '
       + 'One recording per device.',
     inputSchema: { action: z.enum(['start', 'stop']), outputPath: z.string().optional(), udid: UDID_PARAM },
   }, async args => runTool('ios_sim_record', async () => {
-    const device = await bootedDevice('ios_sim_record', args.udid)
     if (args.action === 'start') {
+      const device = await bootedDevice('ios_sim_record', args.udid)
       const info = await deps.recorder.start(device.udid, args.outputPath === undefined ? undefined : resolve(args.outputPath))
       return jsonResult({ device: deviceSummary(device), recording: true, path: info.path })
     }
+    // Stopping only finalizes (or reports) our own recording, so the device need not be booted any more.
+    assertMac(deps.platform)
+    const device = await resolveTargetDevice(deps, args.udid)
     const result = await deps.recorder.stop(device.udid)
     return jsonResult({
       device: deviceSummary(device),
@@ -114,6 +118,7 @@ export function registerEnvTools(server: McpServer, deps: ToolDeps): void {
       path: result.path,
       bytes: result.bytes,
       durationMs: result.durationMs,
+      ...(result.warning === undefined ? {} : { warning: result.warning }),
     })
   }))
 }
