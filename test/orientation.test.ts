@@ -1,4 +1,4 @@
-import { test } from 'node:test'
+import { test, type TestContext } from 'node:test'
 import assert from 'node:assert/strict'
 import { WebSocketServer } from 'ws'
 import { readSimScreenConfig, toFramebufferArgs } from '../src/orientation.js'
@@ -40,28 +40,45 @@ test('readSimScreenConfig returns the first tag-130 frame, or undefined on silen
   silent.close()
 })
 
+/** A stand-in control socket, closed after the test, that greets the connections `greet` picks with a landscape_left config frame. */
+async function configSocket(t: TestContext, greet: (connection: number) => boolean): Promise<{ url: string; connections(): number }> {
+  let connections = 0
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  t.after(() => wss.close())
+  wss.on('connection', socket => {
+    connections += 1
+    if (greet(connections)) {
+      socket.send(Buffer.concat([Buffer.from([130]), Buffer.from('{"width":1206,"height":2622,"orientation":"landscape_left"}')]))
+    }
+  })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  return { url: `ws://127.0.0.1:${(wss.address() as { port: number }).port}`, connections: () => connections }
+}
+
 test('readSimScreenConfig asks a cold stream again, but not a socket silent twice in a row', async t => {
-  const frame = Buffer.concat([Buffer.from([130]), Buffer.from('{"width":1206,"height":2622,"orientation":"landscape_left"}')])
-  const server = async (greet: (connection: number) => boolean): Promise<{ url: string; connections(): number }> => {
-    let connections = 0
-    const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
-    t.after(() => wss.close())
-    wss.on('connection', socket => {
-      connections += 1
-      if (greet(connections)) socket.send(frame)
-    })
-    await new Promise<void>(resolve => wss.once('listening', () => resolve()))
-    return { url: `ws://127.0.0.1:${(wss.address() as { port: number }).port}`, connections: () => connections }
-  }
   // serve-sim greets only once the stream's capture session has a first frame, and the
   // stream's first control connection may be what starts that session.
-  const cold = await server(connection => connection > 1)
+  const cold = await configSocket(t, connection => connection > 1)
   assert.equal(await readSimScreenConfig(cold.url, 100), undefined)
   assert.deepEqual(await readSimScreenConfig(cold.url, 100), { width: 1206, height: 2622, orientation: 'landscape_left' })
 
-  const silent = await server(() => false)
+  const silent = await configSocket(t, () => false)
   assert.equal(await readSimScreenConfig(silent.url, 100), undefined)
   assert.equal(await readSimScreenConfig(silent.url, 100), undefined)
   assert.equal(await readSimScreenConfig(silent.url, 100), undefined)
   assert.equal(silent.connections(), 2)
+})
+
+test('readSimScreenConfig asks a socket it gave up on again after a minute', async t => {
+  let clock = 0
+  const now = (): number => clock
+  const wakes = await configSocket(t, connection => connection > 2)
+  assert.equal(await readSimScreenConfig(wakes.url, 50, now), undefined)
+  assert.equal(await readSimScreenConfig(wakes.url, 50, now), undefined)
+  clock = 59_999
+  assert.equal(await readSimScreenConfig(wakes.url, 50, now), undefined)
+  assert.equal(wakes.connections(), 2)
+  clock = 60_000
+  assert.deepEqual(await readSimScreenConfig(wakes.url, 50, now), { width: 1206, height: 2622, orientation: 'landscape_left' })
+  assert.equal(wakes.connections(), 3)
 })

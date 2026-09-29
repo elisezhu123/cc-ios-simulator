@@ -103,19 +103,25 @@ test('ios_sim_interact explains bad arguments, a missing serve-sim and a non-Mac
   await linux.close()
 })
 
-/** A stand-in serve-sim control socket, closed after the test, that greets like serve-sim with a landscape_left config frame (tag 130). */
-async function landscapeLeftSocket(t: TestContext): Promise<string> {
+/**
+ * A stand-in serve-sim control socket, closed after the test, that greets every client like
+ * serve-sim with a config frame (tag 130) for its current `orientation`, and counts its connections.
+ */
+async function serveSimSocket(t: TestContext, orientation: string): Promise<{ wsUrl: string; orientation: string; connections(): number }> {
+  let connections = 0
   const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
   t.after(() => wss.close())
-  wss.on('connection', socket => {
-    socket.send(Buffer.concat([Buffer.from([130]), Buffer.from('{"width":1206,"height":2622,"orientation":"landscape_left"}')]))
-  })
   await new Promise<void>(resolve => wss.once('listening', () => resolve()))
-  return `ws://127.0.0.1:${(wss.address() as { port: number }).port}`
+  const stand = { wsUrl: `ws://127.0.0.1:${(wss.address() as { port: number }).port}`, orientation, connections: () => connections }
+  wss.on('connection', socket => {
+    connections += 1
+    socket.send(Buffer.concat([Buffer.from([130]), Buffer.from(JSON.stringify({ width: 1206, height: 2622, orientation: stand.orientation }))]))
+  })
+  return stand
 }
 
 test('in a landscape interface, the upright landscape capture passes through and taps are mapped to the framebuffer', async t => {
-  const wsUrl = await landscapeLeftSocket(t)
+  const { wsUrl } = await serveSimSocket(t, 'landscape_left')
   const h = await toolHarness(registerCoreTools, {
     host: { device: 'BBB', wsUrl, exposeStreamInfo: true },
     screenshotSize: { width: 2622, height: 1206 },
@@ -129,7 +135,7 @@ test('in a landscape interface, the upright landscape capture passes through and
 })
 
 test('a portrait-shaped capture on a landscape device is not rotated and turns the tap mapping off', async t => {
-  const wsUrl = await landscapeLeftSocket(t)
+  const { wsUrl } = await serveSimSocket(t, 'landscape_left')
   const h = await toolHarness(registerCoreTools, {
     host: { device: 'BBB', wsUrl, exposeStreamInfo: true },
     screenshotSize: { width: 1206, height: 2622 },
@@ -140,6 +146,87 @@ test('a portrait-shaped capture on a landscape device is not rotated and turns t
   const shot = h.json(await h.call('ios_sim_screenshot')) as { orientation: string; image: { width: number; height: number } }
   assert.equal(shot.orientation, 'landscape_left')
   assert.deepEqual(shot.image, { width: 471, height: 1024 })
+  await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
+  const taps = h.hostCalls.filter(call => call[1] === 'tap').map(call => call.join(' '))
+  assert.deepEqual(taps, ['control tap -d BBB 0.75 0.75', 'control tap -d BBB 0.25 0.75'])
+  await h.close()
+})
+
+test('a stream that lost the landscape orientation a rotate set is resynced before the tap, which stays mapped', async t => {
+  // A new serve-sim session (idle stop, device switch, crash restart) reads portrait while the device stays landscape.
+  const serveSim = await serveSimSocket(t, 'portrait')
+  const h = await toolHarness(registerCoreTools, {
+    host: { device: 'BBB', wsUrl: serveSim.wsUrl, exposeStreamInfo: true },
+    screenshotSize: { width: 2622, height: 1206 },
+  })
+  await h.call('ios_sim_interact', { action: 'rotate', orientation: 'landscape_left', screenshot: false })
+  const shot = h.json(await h.call('ios_sim_screenshot')) as { orientation: string; warning?: string }
+  assert.equal(shot.orientation, 'landscape_left')
+  assert.equal(shot.warning, undefined)
+  const before = h.hostCalls.length
+  await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
+  assert.deepEqual(
+    h.hostCalls.slice(before).map(call => call.join(' ')),
+    ['control rotate landscape_left -d BBB', 'control tap -d BBB 0.75 0.75'],
+  )
+  await h.close()
+})
+
+test('a landscape orientation read from serve-sim is remembered, so a restarted stream is resynced too', async t => {
+  // Rotated from the panel, not through the tools: the tools learn it from serve-sim's config frame.
+  const serveSim = await serveSimSocket(t, 'landscape_right')
+  const h = await toolHarness(registerCoreTools, {
+    host: { device: 'BBB', wsUrl: serveSim.wsUrl, exposeStreamInfo: true },
+    screenshotSize: { width: 2622, height: 1206 },
+  })
+  assert.equal((h.json(await h.call('ios_sim_screenshot')) as { orientation: string }).orientation, 'landscape_right')
+  serveSim.orientation = 'portrait' // the stream restarted: a new serve-sim session reads portrait
+  const before = h.hostCalls.length
+  await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
+  assert.deepEqual(
+    h.hostCalls.slice(before).map(call => call.join(' ')),
+    ['control rotate landscape_right -d BBB', 'control tap -d BBB 0.25 0.25'],
+  )
+  await h.close()
+})
+
+test('a landscape screen whose orientation the stream does not know is tapped unmapped, with a warning', async t => {
+  const serveSim = await serveSimSocket(t, 'portrait')
+  const h = await toolHarness(registerCoreTools, {
+    host: { device: 'BBB', wsUrl: serveSim.wsUrl, exposeStreamInfo: true },
+    screenshotSize: { width: 2622, height: 1206 },
+  })
+  const shot = h.json(await h.call('ios_sim_screenshot')) as { orientation: string; warning?: string }
+  assert.equal(shot.orientation, 'portrait')
+  assert.match(shot.warning ?? '', /orientation/)
+  const tap = h.json(await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })) as { warning?: string }
+  assert.match(tap.warning ?? '', /"rotate".*landscape_left.*landscape_right/)
+  assert.deepEqual(h.hostCalls.filter(call => call[0] === 'control').map(call => call.join(' ')), ['control tap -d BBB 0.25 0.75'])
+  await h.close()
+})
+
+test('type, button, rotate and device_action never ask the stream for its orientation', async t => {
+  const serveSim = await serveSimSocket(t, 'landscape_left')
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB', wsUrl: serveSim.wsUrl, exposeStreamInfo: true } })
+  await h.call('ios_sim_interact', { action: 'type', text: 'a', screenshot: false })
+  await h.call('ios_sim_interact', { action: 'button', name: 'home', screenshot: false })
+  await h.call('ios_sim_interact', { action: 'rotate', orientation: 'landscape_left', screenshot: false })
+  await h.call('ios_sim_interact', { action: 'device_action', name: 'lock', screenshot: false })
+  assert.equal(serveSim.connections(), 0)
+  await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.5, screenshot: false })
+  assert.equal(serveSim.connections(), 1)
+  await h.close()
+})
+
+test('the effect screenshot of an interact records the image shape for the next tap', async t => {
+  const { wsUrl } = await serveSimSocket(t, 'landscape_left')
+  const h = await toolHarness(registerCoreTools, {
+    host: { device: 'BBB', wsUrl, exposeStreamInfo: true },
+    screenshotSize: { width: 1206, height: 2622 },
+  })
+  // No image yet: the landscape reading decides, and the effect screenshot comes back portrait-shaped …
+  await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75 })
+  // … so the next tap goes out as given.
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
   const taps = h.hostCalls.filter(call => call[1] === 'tap').map(call => call.join(' '))
   assert.deepEqual(taps, ['control tap -d BBB 0.75 0.75', 'control tap -d BBB 0.25 0.75'])

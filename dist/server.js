@@ -43526,10 +43526,13 @@ function parseSimConfigFrame(data) {
 function isLandscape(orientation) {
   return orientation === "landscape_left" || orientation === "landscape_right";
 }
-var silentReads = /* @__PURE__ */ new Map();
+var timeoutsInARow = /* @__PURE__ */ new Map();
+var givenUpAt = /* @__PURE__ */ new Map();
 var SILENT_AFTER_READS = 2;
-function readSimScreenConfig(wsUrl, timeoutMs = 800) {
-  if ((silentReads.get(wsUrl) ?? 0) >= SILENT_AFTER_READS) return Promise.resolve(void 0);
+var SILENT_RETRY_MS = 6e4;
+function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
+  const since = givenUpAt.get(wsUrl);
+  if (since !== void 0 && now() - since < SILENT_RETRY_MS) return Promise.resolve(void 0);
   return new Promise((resolve4) => {
     let settled = false;
     const socket = new import_websocket.default(wsUrl, { perMessageDeflate: false });
@@ -43541,13 +43544,16 @@ function readSimScreenConfig(wsUrl, timeoutMs = 800) {
       resolve4(config2);
     };
     const timer = setTimeout(() => {
-      silentReads.set(wsUrl, (silentReads.get(wsUrl) ?? 0) + 1);
+      const timeouts = (timeoutsInARow.get(wsUrl) ?? 0) + 1;
+      timeoutsInARow.set(wsUrl, timeouts);
+      if (timeouts >= SILENT_AFTER_READS) givenUpAt.set(wsUrl, now());
       finish(void 0);
     }, timeoutMs);
     socket.on("message", (data) => {
       const config2 = parseSimConfigFrame(data);
       if (config2 === void 0) return;
-      silentReads.delete(wsUrl);
+      timeoutsInARow.delete(wsUrl);
+      givenUpAt.delete(wsUrl);
       finish(config2);
     });
     socket.on("error", () => finish(void 0));
@@ -43596,13 +43602,26 @@ function toFramebufferArgs(orientation, args) {
 // src/tools/core.ts
 var ROTATE_ORIENTATIONS = ["portrait", "landscape_left", "portrait_upside_down", "landscape_right"];
 var XCODE27_TYPE_HINT = " \u2014 with Xcode 27, keyboard input needs Device Hub running with this simulator visible and frontmost, and the app that launched Claude enabled under System Settings \u25B8 Privacy & Security \u25B8 Accessibility; if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)";
+var COORDINATE_ACTIONS = /* @__PURE__ */ new Set(["tap", "scroll", "gesture"]);
+var LOST_ORIENTATION_WARNING = 'the screen looks landscape, but the live stream does not know its orientation (the device was rotated outside these tools, or the stream restarted), so taps, scrolls and gestures go out without the landscape mapping and can miss \u2014 send ios_sim_interact {action: "rotate", orientation: "landscape_left" or "landscape_right"} matching the screen, then retry';
 function registerCoreTools(server, deps) {
+  const lastImageLandscape = /* @__PURE__ */ new Map();
+  const rememberedLandscape = /* @__PURE__ */ new Map();
   const orientationOf = async (udid) => {
     const info = deps.host.streamInfo;
     if (info === void 0 || info.device !== udid) return "portrait";
-    return (await readSimScreenConfig(info.wsUrl))?.orientation ?? "portrait";
+    const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? "portrait";
+    if (isLandscape(orientation)) rememberedLandscape.set(udid, orientation);
+    return orientation;
   };
-  const lastImageLandscape = /* @__PURE__ */ new Map();
+  const effectiveOrientation = async (udid) => {
+    const reported = await orientationOf(udid);
+    if (isLandscape(reported) || lastImageLandscape.get(udid) !== true) return { orientation: reported };
+    const remembered = rememberedLandscape.get(udid);
+    if (remembered === void 0) return { orientation: reported, warning: LOST_ORIENTATION_WARNING };
+    if (deps.host.streamInfo?.device === udid) await deps.stream.control.rotate?.(remembered);
+    return { orientation: remembered };
+  };
   server.registerTool("ios_sim_devices", {
     title: "List iOS simulators",
     description: "List the iOS Simulator devices on this Mac (udid, name, runtime, state, deviceType): booted first, then newest runtime. Use it to find the udid or name the other ios_sim_* tools take; `streaming` names the device the live panel shows.",
@@ -43686,11 +43705,12 @@ function registerCoreTools(server, deps) {
     const device = await resolveTargetDevice(deps, udid);
     requireBooted("ios_sim_screenshot", device);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
-    const orientation = await orientationOf(device.udid);
     const image = await deps.screenshots.toModelImage(capture);
     lastImageLandscape.set(device.udid, image.width > image.height);
+    const { orientation, warning } = await effectiveOrientation(device.udid);
     return jsonResult({
       orientation,
+      ...warning === void 0 ? {} : { warning },
       path: capture.path,
       bytes: capture.bytes,
       ...capture.width === void 0 ? {} : { width: capture.width, height: capture.height },
@@ -43721,6 +43741,7 @@ function registerCoreTools(server, deps) {
     requireBooted("ios_sim_interact", device);
     await ensureStreamFor(deps.host, device);
     let delivery;
+    let warning;
     if (args.action === "rotate") {
       if (args.orientation === void 0) {
         throw new Error(`action "rotate" requires orientation: ${ROTATE_ORIENTATIONS.join(", ")}`);
@@ -43728,6 +43749,8 @@ function registerCoreTools(server, deps) {
       const rotate = deps.stream.control.rotate;
       if (rotate === void 0) throw new Error("this stream backend cannot rotate the device");
       await rotate(args.orientation);
+      if (isLandscape(args.orientation)) rememberedLandscape.set(device.udid, args.orientation);
+      else rememberedLandscape.delete(device.udid);
     } else if (args.action === "device_action") {
       const action = args.name;
       if (!isDeviceAction(action)) {
@@ -43747,9 +43770,14 @@ function registerCoreTools(server, deps) {
         direction: args.direction,
         amount: args.amount
       };
-      const orientation = await orientationOf(device.udid);
-      const mapToFramebuffer = isLandscape(orientation) && (lastImageLandscape.get(device.udid) ?? true);
-      const framebufferArgs = mapToFramebuffer ? toFramebufferArgs(orientation, simArgs) : simArgs;
+      let framebufferArgs = simArgs;
+      if (COORDINATE_ACTIONS.has(args.action)) {
+        const view = await effectiveOrientation(device.udid);
+        warning = view.warning;
+        if (isLandscape(view.orientation) && (lastImageLandscape.get(device.udid) ?? true)) {
+          framebufferArgs = toFramebufferArgs(view.orientation, simArgs);
+        }
+      }
       const payloads = interactControlArgs(framebufferArgs);
       try {
         delivery = await performSimInteract(deps.host, device.udid, framebufferArgs, payloads);
@@ -43758,7 +43786,12 @@ function registerCoreTools(server, deps) {
         throw new Error(`serve-sim ${args.action} failed: ${message}${args.action === "type" ? XCODE27_TYPE_HINT : ""}`);
       }
     }
-    const result = { action: args.action, device: deviceSummary(device), ...delivery === void 0 ? {} : { delivery } };
+    const result = {
+      action: args.action,
+      device: deviceSummary(device),
+      ...delivery === void 0 ? {} : { delivery },
+      ...warning === void 0 ? {} : { warning }
+    };
     if (args.screenshot === false) return jsonResult(result);
     await sleep3(deps.settleMs);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);

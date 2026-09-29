@@ -14,26 +14,34 @@ import { parseSimConfigFrame, type SimScreenConfig } from './panel/client/protoc
 import { simDragRequestOf } from './sim-gesture.js'
 
 type Direction = 'up' | 'down' | 'left' | 'right'
-type Landscape = 'landscape_left' | 'landscape_right'
+export type Landscape = 'landscape_left' | 'landscape_right'
 
 export function isLandscape(orientation: string): orientation is Landscape {
   return orientation === 'landscape_left' || orientation === 'landscape_right'
 }
 
 /**
- * Timed-out reads in a row per control socket. serve-sim greets a socket with
- * its config only once the stream's capture session has a first frame, and a
+ * Give-up bookkeeping per control socket. serve-sim greets a socket with its
+ * config only once the stream's capture session has a first frame, and a
  * stream's first control connection may be what starts that session (the
  * greeting then took 1.1 s on a live simulator), so one timeout is not
- * silence. A socket silent on two reads in a row is not asked again: a
- * serve-sim that never sends a config costs two waits, not one per screenshot.
+ * silence. A socket silent on two reads in a row is given up on for a minute
+ * (a restarted serve-sim reuses the url): a serve-sim that never sends a
+ * config then costs one wait a minute instead of one per screenshot.
  */
-const silentReads = new Map<string, number>()
+const timeoutsInARow = new Map<string, number>()
+const givenUpAt = new Map<string, number>()
 const SILENT_AFTER_READS = 2
+const SILENT_RETRY_MS = 60_000
 
 /** Read serve-sim's current screen config (tag 130) from its control socket. */
-export function readSimScreenConfig(wsUrl: string, timeoutMs = 800): Promise<SimScreenConfig | undefined> {
-  if ((silentReads.get(wsUrl) ?? 0) >= SILENT_AFTER_READS) return Promise.resolve(undefined)
+export function readSimScreenConfig(
+  wsUrl: string,
+  timeoutMs = 800,
+  now: () => number = Date.now,
+): Promise<SimScreenConfig | undefined> {
+  const since = givenUpAt.get(wsUrl)
+  if (since !== undefined && now() - since < SILENT_RETRY_MS) return Promise.resolve(undefined)
   return new Promise(resolve => {
     let settled = false
     const socket = new WebSocket(wsUrl, { perMessageDeflate: false })
@@ -45,13 +53,16 @@ export function readSimScreenConfig(wsUrl: string, timeoutMs = 800): Promise<Sim
       resolve(config)
     }
     const timer = setTimeout(() => {
-      silentReads.set(wsUrl, (silentReads.get(wsUrl) ?? 0) + 1)
+      const timeouts = (timeoutsInARow.get(wsUrl) ?? 0) + 1
+      timeoutsInARow.set(wsUrl, timeouts)
+      if (timeouts >= SILENT_AFTER_READS) givenUpAt.set(wsUrl, now())
       finish(undefined)
     }, timeoutMs)
     socket.on('message', data => {
       const config = parseSimConfigFrame(data)
       if (config === undefined) return
-      silentReads.delete(wsUrl)
+      timeoutsInARow.delete(wsUrl)
+      givenUpAt.delete(wsUrl)
       finish(config)
     })
     socket.on('error', () => finish(undefined))

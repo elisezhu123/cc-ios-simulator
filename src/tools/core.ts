@@ -11,7 +11,7 @@ import { z } from 'zod'
 import type { ToolDeps } from '../deps.js'
 import { DEVICE_ACTIONS, isDeviceAction } from '../device-actions.js'
 import { interactControlArgs, performSimInteract, type SimInteractArgs, type SimInteractDelivery } from '../interact.js'
-import { isLandscape, readSimScreenConfig, toFramebufferArgs } from '../orientation.js'
+import { isLandscape, readSimScreenConfig, toFramebufferArgs, type Landscape } from '../orientation.js'
 import { assertMac, assertStreamAvailable, ensureStreamFor, requireBooted, resolveTargetDevice, sortDevices } from '../target.js'
 import { deviceSummary, jsonResult, runTool, sleep, UDID_PARAM } from './result.js'
 
@@ -21,13 +21,15 @@ const XCODE27_TYPE_HINT = ' — with Xcode 27, keyboard input needs Device Hub r
   + 'frontmost, and the app that launched Claude enabled under System Settings ▸ Privacy & Security ▸ Accessibility; '
   + 'if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)'
 
+/** The interact actions whose arguments carry screen coordinates. */
+const COORDINATE_ACTIONS: ReadonlySet<string> = new Set(['tap', 'scroll', 'gesture'])
+
+const LOST_ORIENTATION_WARNING = 'the screen looks landscape, but the live stream does not know its orientation (the '
+  + 'device was rotated outside these tools, or the stream restarted), so taps, scrolls and gestures go out without '
+  + 'the landscape mapping and can miss — send ios_sim_interact {action: "rotate", orientation: "landscape_left" or '
+  + '"landscape_right"} matching the screen, then retry'
+
 export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
-  /** serve-sim's orientation for a streamed device; portrait when unknown. */
-  const orientationOf = async (udid: string): Promise<string> => {
-    const info = deps.host.streamInfo
-    if (info === undefined || info.device !== udid) return 'portrait'
-    return (await readSimScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
-  }
   /**
    * udid → whether the last model image returned for it was wider than tall.
    * Captures are upright in the INTERFACE orientation, so a landscape device
@@ -35,6 +37,38 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
    * yields a portrait image whose coordinates already match the framebuffer.
    */
   const lastImageLandscape = new Map<string, boolean>()
+  /**
+   * udid → the landscape orientation last sent through `rotate` or read from
+   * serve-sim (a rotate to a portrait orientation forgets it).
+   */
+  const rememberedLandscape = new Map<string, Landscape>()
+  /** serve-sim's orientation for a streamed device; portrait when unknown. Landscape readings are remembered. */
+  const orientationOf = async (udid: string): Promise<string> => {
+    const info = deps.host.streamInfo
+    if (info === undefined || info.device !== udid) return 'portrait'
+    const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
+    if (isLandscape(orientation)) rememberedLandscape.set(udid, orientation)
+    return orientation
+  }
+  /**
+   * The orientation coordinates are mapped with and screenshots report.
+   * serve-sim keeps it per stream session, starting at portrait and learning
+   * only the rotates sent through that session, so a new session (idle stop,
+   * device switch, crash restart) or a rotation made in Simulator.app reads
+   * portrait while the interface stays landscape. When the last image was
+   * landscape-shaped, a remembered landscape orientation is re-sent the way
+   * `rotate` sends it (a no-op on the device that resyncs serve-sim and the
+   * panel) and used; with none remembered, a warning says what to do.
+   */
+  const effectiveOrientation = async (udid: string): Promise<{ orientation: string; warning?: string }> => {
+    const reported = await orientationOf(udid)
+    if (isLandscape(reported) || lastImageLandscape.get(udid) !== true) return { orientation: reported }
+    const remembered = rememberedLandscape.get(udid)
+    if (remembered === undefined) return { orientation: reported, warning: LOST_ORIENTATION_WARNING }
+    // The rotate path drives the streamed device: resync only when that is this device.
+    if (deps.host.streamInfo?.device === udid) await deps.stream.control.rotate?.(remembered)
+    return { orientation: remembered }
+  }
 
   server.registerTool('ios_sim_devices', {
     title: 'List iOS simulators',
@@ -134,11 +168,12 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     const device = await resolveTargetDevice(deps, udid)
     requireBooted('ios_sim_screenshot', device)
     const capture = await deps.screenshots.capture(device.udid, extra.signal)
-    const orientation = await orientationOf(device.udid)
     const image = await deps.screenshots.toModelImage(capture)
     lastImageLandscape.set(device.udid, image.width > image.height)
+    const { orientation, warning } = await effectiveOrientation(device.udid)
     return jsonResult({
       orientation,
+      ...(warning === undefined ? {} : { warning }),
       path: capture.path,
       bytes: capture.bytes,
       ...(capture.width === undefined ? {} : { width: capture.width, height: capture.height }),
@@ -177,6 +212,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     requireBooted('ios_sim_interact', device)
     await ensureStreamFor(deps.host, device)
     let delivery: SimInteractDelivery | undefined
+    let warning: string | undefined
     if (args.action === 'rotate') {
       if (args.orientation === undefined) {
         throw new Error(`action "rotate" requires orientation: ${ROTATE_ORIENTATIONS.join(', ')}`)
@@ -184,6 +220,8 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       const rotate = deps.stream.control.rotate
       if (rotate === undefined) throw new Error('this stream backend cannot rotate the device')
       await rotate(args.orientation)
+      if (isLandscape(args.orientation)) rememberedLandscape.set(device.udid, args.orientation)
+      else rememberedLandscape.delete(device.udid)
     } else if (args.action === 'device_action') {
       const action = args.name
       if (!isDeviceAction(action)) {
@@ -203,11 +241,16 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
         direction: args.direction,
         amount: args.amount,
       }
-      // Coordinates refer to the image the model was given: map them to the portrait
-      // framebuffer only while that image shows a landscape interface (no image yet: trust serve-sim).
-      const orientation = await orientationOf(device.udid)
-      const mapToFramebuffer = isLandscape(orientation) && (lastImageLandscape.get(device.udid) ?? true)
-      const framebufferArgs = mapToFramebuffer ? toFramebufferArgs(orientation, simArgs) : simArgs
+      let framebufferArgs = simArgs
+      if (COORDINATE_ACTIONS.has(args.action)) {
+        // Coordinates refer to the image the model was given: map them to the portrait
+        // framebuffer only while that image shows a landscape interface (no image yet: trust serve-sim).
+        const view = await effectiveOrientation(device.udid)
+        warning = view.warning
+        if (isLandscape(view.orientation) && (lastImageLandscape.get(device.udid) ?? true)) {
+          framebufferArgs = toFramebufferArgs(view.orientation, simArgs)
+        }
+      }
       const payloads = interactControlArgs(framebufferArgs)
       try {
         delivery = await performSimInteract(deps.host, device.udid, framebufferArgs, payloads)
@@ -216,7 +259,12 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
         throw new Error(`serve-sim ${args.action} failed: ${message}${args.action === 'type' ? XCODE27_TYPE_HINT : ''}`)
       }
     }
-    const result = { action: args.action, device: deviceSummary(device), ...(delivery === undefined ? {} : { delivery }) }
+    const result = {
+      action: args.action,
+      device: deviceSummary(device),
+      ...(delivery === undefined ? {} : { delivery }),
+      ...(warning === undefined ? {} : { warning }),
+    }
     if (args.screenshot === false) return jsonResult(result)
     await sleep(deps.settleMs)
     const capture = await deps.screenshots.capture(device.udid, extra.signal)
