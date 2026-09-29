@@ -41706,6 +41706,10 @@ var PanelServer = class {
         if (error62.code === "EADDRINUSE") continue;
         break;
       }
+      server.on("error", (error62) => {
+        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage2(error62)}
+`);
+      });
       this.#server = server;
       this.#port = server.address().port;
       return `http://127.0.0.1:${this.#port}/`;
@@ -42380,6 +42384,9 @@ function probeHttpAlive(url2, timeoutMs) {
     req.end();
   });
 }
+function serveSimControlArgs(command, udid, positionals) {
+  return [command, "-d", udid, "--", ...positionals];
+}
 function execServeSim(binary, args, timeoutMs) {
   return new Promise((resolve4, reject) => {
     execFile5(binary.command, [...binary.args, ...args], {
@@ -42924,32 +42931,32 @@ var SimStreamSource = class {
   control = {
     tap: async (x, y) => {
       requireNormalized(x, y);
-      await this.#run(["tap", String(x), String(y)]);
+      await this.#run("tap", String(x), String(y));
     },
     drag: async (drag) => {
       requireNormalized(drag.fromX, drag.fromY);
       requireNormalized(drag.toX, drag.toY);
       const holdMs = Math.min(2e3, Math.max(20, Math.round((drag.duration ?? 0.3) * 500)));
-      await this.#run(["gesture", JSON.stringify({ type: "begin", x: drag.fromX, y: drag.fromY })]);
+      await this.#run("gesture", JSON.stringify({ type: "begin", x: drag.fromX, y: drag.fromY }));
       await sleep2(holdMs);
-      await this.#run(["gesture", JSON.stringify({ type: "move", x: drag.toX, y: drag.toY })]);
+      await this.#run("gesture", JSON.stringify({ type: "move", x: drag.toX, y: drag.toY }));
       await sleep2(holdMs);
-      await this.#run(["gesture", JSON.stringify({ type: "end", x: drag.toX, y: drag.toY })]);
+      await this.#run("gesture", JSON.stringify({ type: "end", x: drag.toX, y: drag.toY }));
     },
     button: async (name = "home") => {
-      await this.#run(["button", name]);
+      await this.#run("button", name);
     },
     type: async (text) => {
       if (typeof text !== "string" || text === "") throw new TypeError("ios-simulator: type requires a non-empty text");
-      await this.#run(["type", text]);
+      await this.#run("type", text);
     },
     rotate: async (orientation) => {
-      await this.#run(["rotate", orientation]);
+      await this.#run("rotate", orientation);
     },
     deviceAction: (action) => runSimulatorDeviceAction(
       action,
       async (name) => {
-        await this.#run(["button", name]);
+        await this.#run("button", name);
       }
     ),
     screenshot: async () => {
@@ -42970,9 +42977,10 @@ var SimStreamSource = class {
       }
     }
   };
-  async #run(args) {
+  /** One serve-sim control call for the streamed device; `--` precedes the positionals (see serveSimControlArgs). */
+  async #run(command, ...positionals) {
     const udid = this.#requireDevice();
-    await this.host.control([...args, "-d", udid]);
+    await this.host.control(serveSimControlArgs(command, udid, positionals));
   }
   #requireDevice() {
     const udid = this.host.status().device ?? this.#lastInfo?.device;
@@ -43016,6 +43024,7 @@ function sleep3(milliseconds) {
 }
 
 // src/tools/apps.ts
+var NOT_AN_OPTION = /^(?!\s*-)/u;
 function registerAppTools(server, deps) {
   server.registerTool("ios_sim_list_apps", {
     title: "List installed apps",
@@ -43091,8 +43100,8 @@ function registerAppTools(server, deps) {
     description: "Build an Xcode project (.xcodeproj), workspace (.xcworkspace) or Swift package directory for the iOS Simulator, install the .app and launch it. Device: udid/name, else the streamed device, else a booted simulator, else the newest-runtime iPhone (booted for you). On failure the error carries the filtered xcodebuild tail with the compiler errors. A full build takes minutes \u2014 do not retry it in a loop.",
     inputSchema: {
       projectPath: external_exports.string().min(1).describe("Absolute path to a .xcodeproj, a .xcworkspace, or a Swift package directory"),
-      scheme: external_exports.string().optional(),
-      configuration: external_exports.string().optional().describe("Build configuration (default Debug)"),
+      scheme: external_exports.string().regex(NOT_AN_OPTION, 'scheme must not start with "-"').optional(),
+      configuration: external_exports.string().regex(NOT_AN_OPTION, 'configuration must not start with "-"').optional().describe("Build configuration (default Debug)"),
       udid: UDID_PARAM
     }
   }, async (args, extra) => runTool("ios_sim_build_run", async () => {
@@ -43441,9 +43450,9 @@ function interactControlArgs(args) {
 }
 async function performSimInteractControl(host, deviceUdid, payloads) {
   for (const payload of payloads) {
-    const [command, ...rest] = payload;
+    const [command, ...positionals] = payload;
     if (command === void 0) continue;
-    await host.control([command, "-d", deviceUdid, ...rest]);
+    await host.control(serveSimControlArgs(command, deviceUdid, positionals));
     if (payloads.length > 1 && payload !== payloads[payloads.length - 1]) {
       await sleep5(SCROLL_HOLD_MS);
     }
@@ -43604,6 +43613,10 @@ var ROTATE_ORIENTATIONS = ["portrait", "landscape_left", "portrait_upside_down",
 var XCODE27_TYPE_HINT = " \u2014 with Xcode 27, keyboard input needs Device Hub running with this simulator visible and frontmost, and the app that launched Claude enabled under System Settings \u25B8 Privacy & Security \u25B8 Accessibility; if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)";
 var COORDINATE_ACTIONS = /* @__PURE__ */ new Set(["tap", "scroll", "gesture"]);
 var LOST_ORIENTATION_WARNING = 'the screen looks landscape, but the live stream does not know its orientation (the device was rotated outside these tools, or the stream restarted), so taps, scrolls and gestures go out without the landscape mapping and can miss \u2014 send ios_sim_interact {action: "rotate", orientation: "landscape_left" or "landscape_right"} matching the screen, then retry';
+function resyncFailedWarning(orientation, error62) {
+  const message = error62 instanceof Error ? error62.message : String(error62);
+  return `the screen looks landscape, but its orientation could not be resynced with the live stream (${message}); taps, scrolls and gestures retry the resync first and fail while it keeps failing \u2014 send ios_sim_interact {action: "rotate", orientation: "${orientation}"} (or the landscape orientation the screen shows), then retry`;
+}
 function registerCoreTools(server, deps) {
   const lastImageLandscape = /* @__PURE__ */ new Map();
   const rememberedLandscape = /* @__PURE__ */ new Map();
@@ -43614,12 +43627,19 @@ function registerCoreTools(server, deps) {
     if (isLandscape(orientation)) rememberedLandscape.set(udid, orientation);
     return orientation;
   };
-  const effectiveOrientation = async (udid) => {
+  const effectiveOrientation = async (udid, onResyncFailure = "throw") => {
     const reported = await orientationOf(udid);
     if (isLandscape(reported) || lastImageLandscape.get(udid) !== true) return { orientation: reported };
     const remembered = rememberedLandscape.get(udid);
     if (remembered === void 0) return { orientation: reported, warning: LOST_ORIENTATION_WARNING };
-    if (deps.host.streamInfo?.device === udid) await deps.stream.control.rotate?.(remembered);
+    if (deps.host.streamInfo?.device === udid) {
+      try {
+        await deps.stream.control.rotate?.(remembered);
+      } catch (error62) {
+        if (onResyncFailure === "throw") throw error62;
+        return { orientation: remembered, warning: resyncFailedWarning(remembered, error62) };
+      }
+    }
     return { orientation: remembered };
   };
   server.registerTool("ios_sim_devices", {
@@ -43707,7 +43727,7 @@ function registerCoreTools(server, deps) {
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
     const image = await deps.screenshots.toModelImage(capture);
     lastImageLandscape.set(device.udid, image.width > image.height);
-    const { orientation, warning } = await effectiveOrientation(device.udid);
+    const { orientation, warning } = await effectiveOrientation(device.udid, "warn");
     return jsonResult({
       orientation,
       ...warning === void 0 ? {} : { warning },

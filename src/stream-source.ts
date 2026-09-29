@@ -25,7 +25,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { runSimulatorDeviceAction, type DeviceAction } from './device-actions.js'
 import { takeScreenshot } from './simctl.js'
-import type { SimHostController, SimStreamInfo } from './sim-host.js'
+import { serveSimControlArgs, type SimHostController, type SimStreamInfo } from './sim-host.js'
 
 /** The slice of SimHostController this adapter uses (structural, so tests can fake it). */
 export type SimStreamHost = Pick<SimHostController, 'ensureRunning' | 'status' | 'stop' | 'acquire' | 'control'>
@@ -213,7 +213,7 @@ export class SimStreamSource implements StreamSource {
   readonly control: StreamControl = {
     tap: async (x, y) => {
       requireNormalized(x, y)
-      await this.#run(['tap', String(x), String(y)])
+      await this.#run('tap', String(x), String(y))
     },
     drag: async drag => {
       requireNormalized(drag.fromX, drag.fromY)
@@ -221,25 +221,25 @@ export class SimStreamSource implements StreamSource {
       const holdMs = Math.min(2_000, Math.max(20, Math.round((drag.duration ?? 0.3) * 500)))
       // serve-sim's `gesture` CLI sends one WS gesture frame per call; a drag
       // is begin → move → end with the requested press duration in between.
-      await this.#run(['gesture', JSON.stringify({ type: 'begin', x: drag.fromX, y: drag.fromY })])
+      await this.#run('gesture', JSON.stringify({ type: 'begin', x: drag.fromX, y: drag.fromY }))
       await sleep(holdMs)
-      await this.#run(['gesture', JSON.stringify({ type: 'move', x: drag.toX, y: drag.toY })])
+      await this.#run('gesture', JSON.stringify({ type: 'move', x: drag.toX, y: drag.toY }))
       await sleep(holdMs)
-      await this.#run(['gesture', JSON.stringify({ type: 'end', x: drag.toX, y: drag.toY })])
+      await this.#run('gesture', JSON.stringify({ type: 'end', x: drag.toX, y: drag.toY }))
     },
     button: async (name = 'home') => {
-      await this.#run(['button', name])
+      await this.#run('button', name)
     },
     type: async text => {
       if (typeof text !== 'string' || text === '') throw new TypeError('ios-simulator: type requires a non-empty text')
-      await this.#run(['type', text])
+      await this.#run('type', text)
     },
     rotate: async orientation => {
-      await this.#run(['rotate', orientation])
+      await this.#run('rotate', orientation)
     },
     deviceAction: action => runSimulatorDeviceAction(
       action,
-      async name => { await this.#run(['button', name]) },
+      async name => { await this.#run('button', name) },
     ),
     screenshot: async () => {
       const udid = this.#requireDevice()
@@ -261,9 +261,10 @@ export class SimStreamSource implements StreamSource {
     },
   }
 
-  async #run(args: readonly string[]): Promise<void> {
+  /** One serve-sim control call for the streamed device; `--` precedes the positionals (see serveSimControlArgs). */
+  async #run(command: string, ...positionals: string[]): Promise<void> {
     const udid = this.#requireDevice()
-    await this.host.control([...args, '-d', udid])
+    await this.host.control(serveSimControlArgs(command, udid, positionals))
   }
 
   #requireDevice(): string {

@@ -22,6 +22,23 @@ test('interactControlArgs rejects bad input with actionable errors', () => {
   assert.throws(() => scrollRequestOf({ action: 'scroll', direction: 'up', amount: 2 }), /amount/)
 })
 
+test('every serve-sim CLI call ends its options with --, so typed text cannot become an option', async () => {
+  const { host, calls } = fakeHost({ device: 'BBB' })
+  const actions: SimInteractArgs[] = [
+    { action: 'type', text: '--file=x' },
+    { action: 'tap', x: 0.5, y: 0.25 },
+    { action: 'button', name: 'home' },
+    { action: 'gesture', json: { type: 'begin', x: 0.5, y: 0.5 } },
+  ]
+  for (const args of actions) await performSimInteract(host, 'BBB', args, interactControlArgs(args))
+  assert.deepEqual(calls, [
+    ['control', 'type', '-d', 'BBB', '--', '--file=x'],
+    ['control', 'tap', '-d', 'BBB', '--', '0.5', '0.25'],
+    ['control', 'button', '-d', 'BBB', '--', 'home'],
+    ['control', 'gesture', '-d', 'BBB', '--', '{"type":"begin","x":0.5,"y":0.5}'],
+  ])
+})
+
 test('performSimInteract falls back to the CLI when no control socket is known', async () => {
   const { host, calls } = fakeHost({ device: 'BBB' })
   const args: SimInteractArgs = { action: 'scroll', direction: 'down' }

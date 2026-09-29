@@ -29,6 +29,14 @@ const LOST_ORIENTATION_WARNING = 'the screen looks landscape, but the live strea
   + 'the landscape mapping and can miss — send ios_sim_interact {action: "rotate", orientation: "landscape_left" or '
   + '"landscape_right"} matching the screen, then retry'
 
+/** The capture came back, but re-sending the remembered landscape orientation to the stream failed. */
+function resyncFailedWarning(orientation: string, error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  return `the screen looks landscape, but its orientation could not be resynced with the live stream (${message}); `
+    + 'taps, scrolls and gestures retry the resync first and fail while it keeps failing — send ios_sim_interact '
+    + `{action: "rotate", orientation: "${orientation}"} (or the landscape orientation the screen shows), then retry`
+}
+
 export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
   /**
    * udid → whether the last model image returned for it was wider than tall.
@@ -59,14 +67,26 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
    * landscape-shaped, a remembered landscape orientation is re-sent the way
    * `rotate` sends it (a no-op on the device that resyncs serve-sim and the
    * panel) and used; with none remembered, a warning says what to do.
+   * A failed resync throws for `interact` (a mis-mapped tap is worse than an
+   * error) but only warns for a screenshot, whose capture already succeeded.
    */
-  const effectiveOrientation = async (udid: string): Promise<{ orientation: string; warning?: string }> => {
+  const effectiveOrientation = async (
+    udid: string,
+    onResyncFailure: 'throw' | 'warn' = 'throw',
+  ): Promise<{ orientation: string; warning?: string }> => {
     const reported = await orientationOf(udid)
     if (isLandscape(reported) || lastImageLandscape.get(udid) !== true) return { orientation: reported }
     const remembered = rememberedLandscape.get(udid)
     if (remembered === undefined) return { orientation: reported, warning: LOST_ORIENTATION_WARNING }
     // The rotate path drives the streamed device: resync only when that is this device.
-    if (deps.host.streamInfo?.device === udid) await deps.stream.control.rotate?.(remembered)
+    if (deps.host.streamInfo?.device === udid) {
+      try {
+        await deps.stream.control.rotate?.(remembered)
+      } catch (error) {
+        if (onResyncFailure === 'throw') throw error
+        return { orientation: remembered, warning: resyncFailedWarning(remembered, error) }
+      }
+    }
     return { orientation: remembered }
   }
 
@@ -170,7 +190,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     const capture = await deps.screenshots.capture(device.udid, extra.signal)
     const image = await deps.screenshots.toModelImage(capture)
     lastImageLandscape.set(device.udid, image.width > image.height)
-    const { orientation, warning } = await effectiveOrientation(device.udid)
+    const { orientation, warning } = await effectiveOrientation(device.udid, 'warn')
     return jsonResult({
       orientation,
       ...(warning === undefined ? {} : { warning }),

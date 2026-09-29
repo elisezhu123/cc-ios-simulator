@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { createServer, request, type IncomingHttpHeaders } from 'node:http'
-import { connect } from 'node:net'
+import { createServer, request, Server, type IncomingHttpHeaders } from 'node:http'
+import { connect, type AddressInfo } from 'node:net'
 import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -348,6 +348,37 @@ test('GET /stream stays side-effect free (503, no ensureRunning/acquire) when no
     assert.equal(consumers(), 0)
   } finally {
     await panel.dispose()
+  }
+})
+
+/** The panel's own listening http.Server (PanelServer keeps it private). */
+function listeningServerOn(port: number): Server {
+  const handles = (process as unknown as { _getActiveHandles(): unknown[] })._getActiveHandles()
+  const server = handles.find((handle): handle is Server => handle instanceof Server && (handle.address() as AddressInfo | null)?.port === port)
+  if (server === undefined) throw new Error(`no listening server on port ${port}`)
+  return server
+}
+
+test('an error on the listening panel server is logged to stderr, and the panel keeps answering', async () => {
+  const f = await panelFixture()
+  const written: string[] = []
+  const write = process.stderr.write
+  try {
+    process.stderr.write = ((chunk: string | Uint8Array) => {
+      written.push(String(chunk))
+      return true
+    }) as typeof process.stderr.write
+    try {
+      // e.g. accept() failing with EMFILE: an unhandled 'error' would kill the MCP server and orphan serve-sim.
+      listeningServerOn(f.port).emit('error', Object.assign(new Error('accept EMFILE'), { code: 'EMFILE' }))
+    } finally {
+      process.stderr.write = write
+    }
+    assert.match(written.join(''), /panel server error.*accept EMFILE/)
+    assert.equal(written.length, 1)
+    assert.equal((await call(f.port, '/api/status')).status, 200)
+  } finally {
+    await f.close()
   }
 })
 

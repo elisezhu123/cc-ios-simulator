@@ -46,6 +46,27 @@ test('ios_sim_build_run boots the fallback iPhone, builds and returns the panel 
   await h.close()
 })
 
+// xcodebuild honours some flags even as an option's value: `-scheme -version` prints the Xcode version.
+test('ios_sim_build_run refuses a scheme that xcodebuild would read as an option, before touching a device', async () => {
+  const h = await toolHarness(registerAppTools)
+  const refused = await h.call('ios_sim_build_run', { projectPath: '/p/App.xcodeproj', scheme: '-version' })
+  assert.equal(refused.isError, true)
+  assert.match(textOf(refused), /scheme must not start with "-"/)
+  assert.deepEqual(h.simctlCalls, [])
+  const dashInside = h.json(await h.call('ios_sim_build_run', { projectPath: '/p/App.xcodeproj', scheme: 'My-App' })) as { scheme: string }
+  assert.equal(dashInside.scheme, 'My-App')
+  await h.close()
+})
+
+test('ios_sim_build_run refuses a configuration that xcodebuild would read as an option, before touching a device', async () => {
+  const h = await toolHarness(registerAppTools)
+  const refused = await h.call('ios_sim_build_run', { projectPath: '/p/App.xcodeproj', configuration: ' -version' })
+  assert.equal(refused.isError, true)
+  assert.match(textOf(refused), /configuration must not start with "-"/)
+  assert.deepEqual(h.simctlCalls, [])
+  await h.close()
+})
+
 test('ios_sim_install_app needs a real .app bundle and reports its bundle id', async () => {
   const h = await toolHarness(registerAppTools)
   assert.match(textOf(await h.call('ios_sim_install_app', { appPath: '/nope/App.app' })), /containing Info\.plist/)

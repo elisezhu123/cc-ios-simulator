@@ -14,7 +14,7 @@ import type { AddressInfo } from 'node:net'
 import { basename, join, sep } from 'node:path'
 import { pipeline, type Duplex } from 'node:stream'
 import { WebSocket, WebSocketServer, type RawData } from 'ws'
-import { PANEL_PORT_ATTEMPTS } from '../config.js'
+import { PANEL_PORT_ATTEMPTS, PLUGIN_NAME } from '../config.js'
 import type { ScreenshotService, SimctlApi, StreamHost } from '../deps.js'
 import { isDeviceAction } from '../device-actions.js'
 import { isScreenshotFileName } from '../screenshot.js'
@@ -169,6 +169,11 @@ export class PanelServer {
         if ((error as NodeJS.ErrnoException).code === 'EADDRINUSE') continue
         break
       }
+      // A listening server still emits 'error' (e.g. accept() failing with EMFILE). Unhandled, that is an
+      // uncaught exception that kills the MCP server and orphans serve-sim: log it and keep serving.
+      server.on('error', error => {
+        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage(error)}\n`)
+      })
       this.#server = server
       this.#port = (server.address() as AddressInfo).port
       return `http://127.0.0.1:${this.#port}/`

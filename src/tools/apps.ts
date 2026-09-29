@@ -15,6 +15,13 @@ import type { ToolDeps } from '../deps.js'
 import { assertMac, ensureStreamFor, requireBooted, resolveTargetDevice } from '../target.js'
 import { deviceSummary, jsonResult, runTool, UDID_PARAM } from './result.js'
 
+/**
+ * xcodebuild honours some flags even where an option's value belongs
+ * (`-scheme -version` prints the Xcode version and exits 0), so a scheme or
+ * configuration must not start with "-".
+ */
+const NOT_AN_OPTION = /^(?!\s*-)/u
+
 export function registerAppTools(server: McpServer, deps: ToolDeps): void {
   server.registerTool('ios_sim_list_apps', {
     title: 'List installed apps',
@@ -107,8 +114,9 @@ export function registerAppTools(server: McpServer, deps: ToolDeps): void {
       + 'xcodebuild tail with the compiler errors. A full build takes minutes — do not retry it in a loop.',
     inputSchema: {
       projectPath: z.string().min(1).describe('Absolute path to a .xcodeproj, a .xcworkspace, or a Swift package directory'),
-      scheme: z.string().optional(),
-      configuration: z.string().optional().describe('Build configuration (default Debug)'),
+      scheme: z.string().regex(NOT_AN_OPTION, 'scheme must not start with "-"').optional(),
+      configuration: z.string().regex(NOT_AN_OPTION, 'configuration must not start with "-"').optional()
+        .describe('Build configuration (default Debug)'),
       udid: UDID_PARAM,
     },
   }, async (args, extra) => runTool('ios_sim_build_run', async () => {

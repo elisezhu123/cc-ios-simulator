@@ -442,6 +442,16 @@ function probeHttpAlive(url: string, timeoutMs: number): Promise<boolean> {
   })
 }
 
+/**
+ * The argv of one serve-sim control subcommand (`tap`, `gesture`, `button`,
+ * `type`, `rotate`): `<command> -d <udid> -- <positionals…>`. serve-sim parses
+ * its options anywhere in argv (commander), so without the `--` typed text such
+ * as "--file=.env" would make `type` read that host file and type it.
+ */
+export function serveSimControlArgs(command: string, udid: string, positionals: readonly string[]): string[] {
+  return [command, '-d', udid, '--', ...positionals]
+}
+
 /** Run serve-sim with the given args through one resolved binary. */
 function execServeSim(
   binary: ServeSimBinary,

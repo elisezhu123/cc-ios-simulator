@@ -6,7 +6,7 @@
  * @module ios-simulator/interact
  */
 
-import type { SimStreamInfo } from './sim-host.js'
+import { serveSimControlArgs, type SimStreamInfo } from './sim-host.js'
 import {
   sendSimGesture,
   simDragPath,
@@ -157,9 +157,9 @@ export interface SimGestureHostLike {
 
 async function performSimInteractControl(host: SimGestureHostLike, deviceUdid: string, payloads: string[][]): Promise<void> {
   for (const payload of payloads) {
-    const [command, ...rest] = payload
+    const [command, ...positionals] = payload
     if (command === undefined) continue
-    await host.control([command, '-d', deviceUdid, ...rest])
+    await host.control(serveSimControlArgs(command, deviceUdid, positionals))
     // Dwelling between frames is what makes serve-sim register a drag
     // instead of three independent touches.
     if (payloads.length > 1 && payload !== payloads[payloads.length - 1]) {

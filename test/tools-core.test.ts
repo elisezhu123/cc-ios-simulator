@@ -74,9 +74,17 @@ test('ios_sim_interact taps through serve-sim and returns the effect screenshot'
   const h = await toolHarness(registerCoreTools, { host: { device: 'BBB' } })
   const result = await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.25 })
   assert.equal(result.isError, undefined)
-  assert.ok(h.hostCalls.some(call => call.join(' ') === 'control tap -d BBB 0.5 0.25'))
+  assert.ok(h.hostCalls.some(call => call.join(' ') === 'control tap -d BBB -- 0.5 0.25'))
   assert.ok(result.content.some(block => block.type === 'image'))
   assert.equal((h.json(result) as { delivery: { channel: string } }).delivery.channel, 'cli')
+  await h.close()
+})
+
+test('ios_sim_interact types option-like text literally: -- keeps it from becoming a serve-sim option', async () => {
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB' } })
+  const result = await h.call('ios_sim_interact', { action: 'type', text: '--file=.env', screenshot: false })
+  assert.equal(result.isError, undefined)
+  assert.deepEqual(h.hostCalls.filter(call => call[0] === 'control'), [['control', 'type', '-d', 'BBB', '--', '--file=.env']])
   await h.close()
 })
 
@@ -85,7 +93,7 @@ test('ios_sim_interact rotate and device_action go through the stream source', a
   await h.call('ios_sim_interact', { action: 'rotate', orientation: 'landscape_left', screenshot: false })
   await h.call('ios_sim_interact', { action: 'device_action', name: 'lock', screenshot: false })
   const controls = h.hostCalls.filter(call => call[0] === 'control').map(call => call.slice(1).join(' '))
-  assert.deepEqual(controls, ['rotate landscape_left -d BBB', 'button lock -d BBB'])
+  assert.deepEqual(controls, ['rotate -d BBB -- landscape_left', 'button -d BBB -- lock'])
   await h.close()
 })
 
@@ -130,7 +138,7 @@ test('in a landscape interface, the upright landscape capture passes through and
   assert.equal(shot.orientation, 'landscape_left')
   assert.deepEqual(shot.image, { width: 1024, height: 471 })
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
-  assert.ok(h.hostCalls.some(call => call.join(' ') === 'control tap -d BBB 0.75 0.75'))
+  assert.ok(h.hostCalls.some(call => call.join(' ') === 'control tap -d BBB -- 0.75 0.75'))
   await h.close()
 })
 
@@ -148,7 +156,7 @@ test('a portrait-shaped capture on a landscape device is not rotated and turns t
   assert.deepEqual(shot.image, { width: 471, height: 1024 })
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
   const taps = h.hostCalls.filter(call => call[1] === 'tap').map(call => call.join(' '))
-  assert.deepEqual(taps, ['control tap -d BBB 0.75 0.75', 'control tap -d BBB 0.25 0.75'])
+  assert.deepEqual(taps, ['control tap -d BBB -- 0.75 0.75', 'control tap -d BBB -- 0.25 0.75'])
   await h.close()
 })
 
@@ -167,7 +175,7 @@ test('a stream that lost the landscape orientation a rotate set is resynced befo
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
   assert.deepEqual(
     h.hostCalls.slice(before).map(call => call.join(' ')),
-    ['control rotate landscape_left -d BBB', 'control tap -d BBB 0.75 0.75'],
+    ['control rotate -d BBB -- landscape_left', 'control tap -d BBB -- 0.75 0.75'],
   )
   await h.close()
 })
@@ -185,8 +193,32 @@ test('a landscape orientation read from serve-sim is remembered, so a restarted 
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
   assert.deepEqual(
     h.hostCalls.slice(before).map(call => call.join(' ')),
-    ['control rotate landscape_right -d BBB', 'control tap -d BBB 0.25 0.25'],
+    ['control rotate -d BBB -- landscape_right', 'control tap -d BBB -- 0.25 0.25'],
   )
+  await h.close()
+})
+
+test('a failed orientation resync still returns the screenshot with a warning, while interact still fails', async t => {
+  const serveSim = await serveSimSocket(t, 'landscape_right')
+  const h = await toolHarness(registerCoreTools, {
+    host: { device: 'BBB', wsUrl: serveSim.wsUrl, exposeStreamInfo: true },
+    screenshotSize: { width: 2622, height: 1206 },
+  })
+  // Right after a stream restart, the serve-sim CLI call that resyncs the orientation is the likeliest to fail.
+  h.deps.stream.control.rotate = async () => { throw new Error('serve-sim rotate -d BBB -- landscape_right failed (exit 1)') }
+  assert.equal((h.json(await h.call('ios_sim_screenshot')) as { orientation: string }).orientation, 'landscape_right')
+  serveSim.orientation = 'portrait' // the stream restarted: a new serve-sim session reads portrait
+  const shot = await h.call('ios_sim_screenshot')
+  assert.equal(shot.isError, undefined)
+  assert.ok(shot.content.some(block => block.type === 'image'))
+  const body = h.json(shot) as { orientation: string; warning?: string }
+  assert.equal(body.orientation, 'landscape_right')
+  assert.match(body.warning ?? '', /could not be resynced.*landscape_right failed \(exit 1\).*"rotate", orientation: "landscape_right"/)
+  // A tap mapped with an unconfirmed orientation is worse than an error: interact still fails.
+  const tap = await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
+  assert.equal(tap.isError, true)
+  assert.match(textOf(tap), /^ios_sim_interact: serve-sim rotate .* failed/)
+  assert.deepEqual(h.hostCalls.filter(call => call[0] === 'control'), [])
   await h.close()
 })
 
@@ -201,7 +233,7 @@ test('a landscape screen whose orientation the stream does not know is tapped un
   assert.match(shot.warning ?? '', /orientation/)
   const tap = h.json(await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })) as { warning?: string }
   assert.match(tap.warning ?? '', /"rotate".*landscape_left.*landscape_right/)
-  assert.deepEqual(h.hostCalls.filter(call => call[0] === 'control').map(call => call.join(' ')), ['control tap -d BBB 0.25 0.75'])
+  assert.deepEqual(h.hostCalls.filter(call => call[0] === 'control').map(call => call.join(' ')), ['control tap -d BBB -- 0.25 0.75'])
   await h.close()
 })
 
@@ -229,6 +261,6 @@ test('the effect screenshot of an interact records the image shape for the next 
   // … so the next tap goes out as given.
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
   const taps = h.hostCalls.filter(call => call[1] === 'tap').map(call => call.join(' '))
-  assert.deepEqual(taps, ['control tap -d BBB 0.75 0.75', 'control tap -d BBB 0.25 0.75'])
+  assert.deepEqual(taps, ['control tap -d BBB -- 0.75 0.75', 'control tap -d BBB -- 0.25 0.75'])
   await h.close()
 })
