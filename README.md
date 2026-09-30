@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Claude Code Plugin" src="https://img.shields.io/badge/Claude%20Code-Plugin-d97757">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-30%20tools-4f7cff">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-31%20tools-4f7cff">
   <img alt="Platform" src="https://img.shields.io/badge/macOS-Apple%20Silicon-1f2330?logo=apple">
   <img alt="Node" src="https://img.shields.io/badge/Node.js-%E2%89%A5%2020-339933?logo=node.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
@@ -24,7 +24,7 @@
 
 - [效果预览](#效果预览)
 - [支持的功能](#支持的功能)
-- [工具一览（30 个）](#工具一览30-个)
+- [工具一览（31 个）](#工具一览31-个)
 - [运行要求](#运行要求)
 - [安装](#安装)
 - [快速上手](#快速上手)
@@ -60,6 +60,7 @@
 | 🐞 **日志与调试** | 读取模拟器统一日志（最近一段或限时实时抓取，可按 App / 谓词 / 正则过滤）；列出运行中的 App 进程；抓线程栈（LLDB 批处理，失败时退回 `sample`）；`leaks` 查内存泄漏或导出 `.memgraph`；查看 App 的安装路径、数据目录和 Info.plist |
 | 📰 **列表 / 信息流** | 把信息流拆成一行行，解析每行的计数（如「57 回复」「18 喜欢」）；在行内相对位置点击，并用计数 ±1 确认操作生效 |
 | 📱 **设备操作** | 后台 App（多任务）、锁屏、解锁、摇一摇、Siri、Action 按钮、窗口重新居中 |
+| ✏️ **截图标注** | 面板里点铅笔按钮冻结当前画面，用画笔 / 直线 / 箭头 / 矩形 / 椭圆 / 文字（5 种颜色，可撤销重做）标出问题，点"添加到对话"：图片存给 Claude（`ios_sim_annotation`）并复制到剪贴板 |
 | 👀 **Claude 看屏** | 截图以**图片**直接返回给 Claude（JPEG，长边 ≤ 1024 px）；每次交互后自动附带结果截图 |
 | 🧭 **横竖屏** | 截图始终是正向的；Claude 给出的坐标会按当前方向自动换算到设备上 |
 | 📦 **App 管理** | 列出已安装 App（名称按模拟器语言本地化，中文可搜）、按名称或 bundle id 启动 / 重启、安装 `.app`、卸载 |
@@ -74,7 +75,7 @@
 
 ---
 
-## 工具一览（30 个）
+## 工具一览（31 个）
 
 所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。以下工具还可以传**连接的真机**的 udid 或名字（见 `ios_sim_devices` 返回的 `realDevices`）：
 
@@ -93,6 +94,7 @@
 | `ios_sim_panel` | 为已启动的设备确保推流并返回 `panelUrl`，不会启动设备；传运行着 WebDriverAgent 的 iPhone 时，面板改为显示这台真机 |
 | `ios_sim_screenshot` | 截图，以图片返回给 Claude，同时给出原尺寸 PNG 路径 |
 | `ios_sim_interact` | 交互：`tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`，默认附带结果截图 |
+| `ios_sim_annotation` | 返回你在面板里标注的截图（最新的在前，`index` 取更早的，`list: true` 只列清单）；截图结果里有新标注时会带 `userAnnotations` 提示 |
 | `ios_real_start_wda` | 在 USB 连接的 iPhone / iPad 上启动 WebDriverAgent（已在运行就直接接管，否则签名、构建并启动，冷构建需要几分钟）；`status` 查看状态，`stop` 停止 |
 
 ### App
@@ -274,6 +276,7 @@ sequenceDiagram
 - **顶栏**：设备选择器（选中未启动的设备会自动启动并切换推流）+ 连接状态（实时 / 连接中 / 离线）。
 - **工具栏**：
   - 回到桌面：单击回主屏，**双击**打开后台 App；
+  - 标注（铅笔）：冻结一张原尺寸截图，在上面画画笔 / 直线 / 箭头 / 矩形 / 椭圆 / 文字，红蓝绿黑白 5 种颜色，撤销（⌘Z）/ 重做（⇧⌘Z）/ 清空，Esc 关闭；"添加到对话"（⌘↩）把标注图保存给 Claude（让它调用 `ios_sim_annotation`，或截图时它会看到提示），同时复制到剪贴板，可直接粘贴进对话；
   - 截图：在新标签页打开原尺寸截图；
   - 旋转：竖屏 → 横屏左 → 倒置 → 横屏右 循环；
   - 设备操作：后台 App / 锁屏 / 解锁 / 摇一摇 / Siri / Action 按钮 / 窗口重新居中；
@@ -307,7 +310,7 @@ assets/ocr.swift                    # Vision OCR 助手源码（首次使用时�
 assets/preview-host/                # SwiftUI 预览宿主 App 的源码
 src/
   server.ts            # MCP 入口、组装、生命周期
-  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts：30 个工具
+  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts：31 个工具
   sim-host.ts          # serve-sim 生命周期
   stream-source.ts     # 视频流抽象（为真机预留）
   sim-gesture.ts       # WebSocket 手势通道
@@ -473,7 +476,7 @@ printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
 npm install
 npm test              # 单元与集成测试，不需要模拟器
 npm run build         # 类型检查 + 打包 dist/（dist 需要提交）
-npm run check:bundle  # 启动 dist/server.js 并确认 30 个工具
+npm run check:bundle  # 启动 dist/server.js 并确认 31 个工具
 IOS_SIM_SMOKE=1 npm run test:live   # 在真实模拟器上冒烟
 npm run dev:panel     # 启动一台模拟器并保持面板运行，用于在浏览器里调试
 npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTICES.md（依赖变化后运行）
