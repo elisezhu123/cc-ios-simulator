@@ -9,7 +9,6 @@
  * @module ios-simulator/uitree
  */
 
-import { detectListRows } from './list-rows.js'
 import { filterOcrItems, type OcrItem } from './ocr-backend.js'
 import type { AxeElement } from './uitree-backend.js'
 
@@ -49,9 +48,6 @@ const FRAME_EPSILON = 1
 
 export const OCR_FALLBACK_HINT = 'The accessibility tree is empty or degenerate (no labeled elements), so the app '
   + 'exposes little or no accessibility information — run ios_sim_find_text to OCR the screen instead.'
-
-export const LIST_ROW_REDIRECT_HINT = 'This looks like a list; the control you seek lives inside an aggregated row — '
-  + 'run ios_sim_ui_rows to inspect the rows, then use ios_sim_tap_row to operate inside one.'
 
 /** Round to 2 decimals; negative zero never escapes. */
 export function round2(value: number): number {
@@ -219,28 +215,6 @@ function sameFrame(a: Frame, b: Frame): boolean {
   return containsFrame(a, b) && containsFrame(b, a)
 }
 
-/** True when the tree contains a repeated list/feed pattern of aggregated rows. */
-export function hasRepeatedAggregatedRows(roots: readonly AxeElement[], size: Size): boolean {
-  const detected = detectListRows([...roots], { bounds: size })
-  if (detected.repeatedGroups === 0) return false
-  const rawRows: AxeElement[] = []
-  const collect = (element: AxeElement): void => {
-    if (detected.rows.some(row => row.type === element.type && sameFrame(row.frame, element.frame))) rawRows.push(element)
-    for (const child of element.children) collect(child)
-  }
-  for (const root of roots) collect(root)
-  const hasControlDescendant = (element: AxeElement): boolean =>
-    element.children.some(child => TAPPABLE_TYPES.has(child.type) || hasControlDescendant(child))
-  const aggregatedByGroup = new Map<number, number>()
-  for (const row of detected.rows) {
-    if (row.group === undefined) continue
-    const raw = rawRows.find(element => row.type === element.type && sameFrame(row.frame, element.frame))
-    if (raw === undefined || hasControlDescendant(raw)) continue
-    aggregatedByGroup.set(row.group, (aggregatedByGroup.get(row.group) ?? 0) + 1)
-  }
-  return [...aggregatedByGroup.values()].some(count => count >= 2)
-}
-
 export interface UiTreeResult {
   /** Screen size in points. */
   size: Size
@@ -273,10 +247,8 @@ export function buildTreeResult(
   const filter = args.filter?.trim() ?? ''
   if (filter !== '' && built.count === 0) {
     // A filter miss says nothing about the app, only about the filter.
-    hints.push(hasRepeatedAggregatedRows(roots, size)
-      ? LIST_ROW_REDIRECT_HINT
-      : `The filter ${JSON.stringify(filter)} matched nothing. A filter miss says nothing about the app — re-run `
-        + 'WITHOUT a filter to see what is actually there.')
+    hints.push(`The filter ${JSON.stringify(filter)} matched nothing. A filter miss says nothing about the app — re-run `
+      + 'WITHOUT a filter to see what is actually there.')
   } else if (!hasLabeledNode(capped.tree)) {
     if (args.max_depth !== undefined) {
       hints.push(`max_depth ${args.max_depth} shows only container chrome — the labeled controls live deeper; re-run without max_depth.`)
@@ -386,12 +358,10 @@ export function resolveTapTarget(
     candidates = matches('contains')
     matchedBy = 'contains'
   }
-  const bounds = screenBounds(roots)
   if (candidates.length === 0) {
     const wanted = wantedFields.map(([field, value]) => `${field}=${value}`).join(' and ')
-    throw new Error(hasRepeatedAggregatedRows(roots, bounds)
-      ? `no accessibility element matches ${wanted} on the current screen — ${LIST_ROW_REDIRECT_HINT}`
-      : `no accessibility element matches ${wanted} on the current screen — run ios_sim_ui_tree to inspect the visible elements`)
+    throw new Error(`no accessibility element matches ${wanted} on the current screen — run ios_sim_ui_tree to inspect `
+      + 'the visible elements (a control inside a feed row is not an element of its own: use ios_sim_ui_rows)')
   }
   // Accessibility sometimes lists one element twice with identical frames.
   const unique = candidates.filter((element, index) =>
@@ -413,6 +383,7 @@ export function resolveTapTarget(
     return chain.reduce((deepest, element) => (element.depth > deepest.depth ? element : deepest), chain[0]!)
   })
   const wanted = wantedFields.map(([field, value]) => `${field} ${JSON.stringify(value)}`).join(' and ')
+  const bounds = screenBounds(roots)
   const allowOffscreen = options.allowOffscreen === true
   const viable = representatives.filter(element =>
     element.enabled !== false && (allowOffscreen || !isOffscreenElement(element, bounds)))
