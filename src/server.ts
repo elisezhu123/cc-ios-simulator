@@ -22,6 +22,7 @@ import {
 } from './config.js'
 import type { ToolDeps } from './deps.js'
 import { Devicectl, devicectlRunner } from './devicectl.js'
+import { AnnotationStore } from './annotations.js'
 import { DevTools } from './devtools.js'
 import { realWdaSeams, WdaController } from './wda-host.js'
 import { OcrHelper } from './ocr-backend.js'
@@ -54,6 +55,7 @@ async function main(): Promise<void> {
     log: line => process.stderr.write(`${line}\n`),
   })
   const wda = new WdaController(realWdaSeams({ cacheRoot: root }))
+  const annotations = new AnnotationStore({ dir: join(root, 'annotations') })
   const realDevices = new Devicectl({ run: devicectlRunner(options => devtools.run(options)) })
   const recorder = new Recorder({ dir: join(root, 'recordings') })
   const panel = new PanelServer({
@@ -66,6 +68,7 @@ async function main(): Promise<void> {
     screenshots,
     wda,
     realDevices,
+    annotations,
   })
   const deps: ToolDeps = {
     host,
@@ -81,6 +84,7 @@ async function main(): Promise<void> {
     devtools,
     preview,
     realDevices,
+    annotations,
     wda,
     cacheRoot: root,
     platform: process.platform,

@@ -4,6 +4,7 @@
  * @module ios-simulator/deps
  */
 
+import type { AnnotationStore } from './annotations.js'
 import type { InstalledApp } from './app-list.js'
 import type { BuildRunOptions, BuildRunResult, ProjectTarget } from './build-run.js'
 import type { RealDevice, RealDeviceApi } from './devicectl.js'
@@ -120,6 +121,8 @@ export interface ToolDeps {
   preview: PreviewApi
   /** Connected iPhones and iPads (devicectl). */
   realDevices: RealDeviceApi
+  /** Screenshots the user annotated in the panel ("Add to chat"). */
+  annotations: Pick<AnnotationStore, 'list' | 'markSeen' | 'unseenCount'>
   /** WebDriverAgent for the real-device screen, touch and UI tools. */
   wda: WdaApi
   cacheRoot: string
