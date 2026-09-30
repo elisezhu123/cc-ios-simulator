@@ -252,6 +252,11 @@ export class WdaController {
     await this.stop()
   }
 
+  /** Synchronous exit backstop: kill the runner this controller launched. */
+  terminateOnExit(): void {
+    this.#running?.runner?.kill()
+  }
+
   async #adopt(device: RealDevice): Promise<Running | undefined> {
     const tunnel = await this.#seams.openTunnel(hardwareUdidOf(device), WDA_DEVICE_PORT)
     const client = this.#seams.createClient(`http://127.0.0.1:${tunnel.localPort}`)

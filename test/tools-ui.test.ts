@@ -35,6 +35,7 @@ async function uiHarness(
     const screenshots: ToolDeps['screenshots'] = {
       dir: store.dir,
       capture: (udid, signal) => store!.capture(udid, signal),
+      save: (udid, png) => store!.save(udid, png),
       toModelImage: async capture => ({ data: 'SlBFRw==', mimeType: 'image/jpeg', width: Math.round((capture.width ?? 0) / 2.5), height: Math.round((capture.height ?? 0) / 2.5) }),
     }
     Object.assign(deps, { axe: axe.api, ocr: ocr.api, screenshots })

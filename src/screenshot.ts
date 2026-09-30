@@ -7,7 +7,7 @@
  */
 
 import { execFile } from 'node:child_process'
-import { closeSync, existsSync, mkdirSync, openSync, readSync, readdirSync, statSync, unlinkSync } from 'node:fs'
+import { closeSync, existsSync, mkdirSync, openSync, readSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { MODEL_IMAGE_JPEG_QUALITY, MODEL_IMAGE_MAX_EDGE, SCREENSHOT_KEEP } from './config.js'
@@ -149,6 +149,15 @@ export class ScreenshotStore {
     const size = readPngSize(path)
     this.prune()
     return { path, bytes, ...(size === undefined ? {} : size) }
+  }
+
+  /** Store a PNG taken elsewhere (a real device's WebDriverAgent) like a capture, then prune. */
+  save(udid: string, png: Buffer): ScreenshotCapture {
+    const path = this.nextPath(udid)
+    writeFileSync(path, png)
+    const size = readPngSize(path)
+    this.prune()
+    return { path, bytes: png.length, ...(size === undefined ? {} : size) }
   }
 
   /** Keep the newest `keep` screenshots (by mtime, then index). */

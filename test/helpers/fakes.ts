@@ -9,12 +9,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PassThrough } from 'node:stream'
 import type { ServeSimBinary, SimHostController, SimHostStatus, SimStreamInfo } from '../../src/sim-host.js'
-import type { AxeApi, OcrApi, SimctlApi } from '../../src/deps.js'
+import type { AxeApi, OcrApi, SimctlApi, WdaApi } from '../../src/deps.js'
 import type { RealApp, RealDevice, RealDeviceApi, RealProcess } from '../../src/devicectl.js'
 import type { DebugToolName, DevToolsApi, RunOptions, RunOutcome } from '../../src/devtools.js'
 import type { OcrItem } from '../../src/ocr-backend.js'
 import type { AxeElement } from '../../src/uitree-backend.js'
 import type { SimulatorDevice } from '../../src/simctl.js'
+import type { WdaSessionClient, WdaStatus } from '../../src/wda-host.js'
 import { tinyPng } from './png.js'
 
 /** The public slice of SimHostController that the tools and the panel use. */
@@ -386,4 +387,66 @@ export function fakeRealDevices(options: { devices?: RealDevice[]; apps?: RealAp
     installApp: async (udid, appPath) => { calls.push(`install ${udid} ${appPath}`) },
   }
   return { api, calls }
+}
+
+/**
+ * A WebDriverAgent stand-in: a client whose every call is recorded, `sources`
+ * are the XML reads in order (the last one repeats), screenshots are a PNG of
+ * `pixelSize`, and the app window is `windowSize` points. With `notRunning`
+ * set, `control` fails with that message (WDA was never started).
+ */
+export function fakeWda(options: {
+  sources?: string[]
+  windowSize?: { width: number; height: number }
+  pixelSize?: { width: number; height: number }
+  notRunning?: string
+} = {}): { api: WdaApi; client: WdaSessionClient; calls: string[] } {
+  const calls: string[] = []
+  const sources = options.sources ?? ['<XCUIElementTypeApplication type="XCUIElementTypeApplication" name="Settings" label="Settings" x="0" y="0" width="402" height="874"/>']
+  const windowSize = options.windowSize ?? { width: 402, height: 874 }
+  const pixelSize = options.pixelSize ?? { width: 1206, height: 2622 }
+  let reads = 0
+  let status: WdaStatus = { phase: 'idle' }
+  const client: WdaSessionClient = {
+    health: async () => ({ ready: true }),
+    ensureSession: async () => 'session-1',
+    pressButton: async name => { calls.push(`button ${name}`) },
+    tap: async (x, y) => { calls.push(`tap ${x},${y}`) },
+    dragFromToForDuration: async drag => { calls.push(`drag ${drag.fromX},${drag.fromY} -> ${drag.toX},${drag.toY} ${drag.duration}s`) },
+    typeText: async text => { calls.push(`type ${text}`) },
+    lock: async () => { calls.push('lock') },
+    unlock: async () => { calls.push('unlock') },
+    activateSiri: async () => { calls.push('siri') },
+    activeAppInfo: async () => ({ bundleId: 'com.apple.Preferences' }),
+    screenshot: async () => { calls.push('screenshot'); return { pngBase64: tinyPng(pixelSize.width, pixelSize.height).toString('base64') } },
+    source: async () => {
+      calls.push('source')
+      const xml = sources[Math.min(reads, sources.length - 1)]!
+      reads += 1
+      return xml
+    },
+    setSnapshotDepth: async depth => { calls.push(`depth ${depth}`) },
+    getOrientation: async () => 'PORTRAIT',
+    setOrientation: async orientation => { calls.push(`orientation ${orientation}`) },
+    windowSize: async () => ({ ...windowSize }),
+  }
+  const api: WdaApi = {
+    status: () => status,
+    start: async device => {
+      calls.push(`start ${device.udid}`)
+      status = { phase: 'running', device: { udid: device.udid, name: device.name }, controlPort: 50100, tunnel: 'usbmux', adopted: false }
+      return status
+    },
+    control: async () => {
+      if (options.notRunning !== undefined) throw new Error(options.notRunning)
+      return client
+    },
+    stop: async () => {
+      calls.push('stop')
+      const device = status.device
+      status = { phase: 'idle' }
+      return device === undefined ? { stopped: false } : { stopped: true, device }
+    },
+  }
+  return { api, client, calls }
 }
