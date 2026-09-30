@@ -96,6 +96,14 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 - One session at a time. `action: "stop"` removes the host app when you are done.
 - Nothing is written into the user's package: the host app and build products live in the plugin cache.
 
+## Real iPhones and iPads
+
+- `ios_sim_devices` lists connected devices under `realDevices`. Pass one's udid or name to `ios_sim_list_apps`, `ios_sim_launch_app`, `ios_sim_install_app`, `ios_sim_processes` or `ios_sim_app_info`; those run through devicectl.
+- Everything else (screenshots, taps, the accessibility tree, OCR, logs, backtraces) works on simulators only for now and says so when handed a real device — tell the user rather than retrying.
+- On a phone, app names are devicectl's base (usually English) names: a Chinese label from the screen will not match, so use the English name or the bundle id.
+- A real device is someone's phone: every launch or install happens for real. Do not uninstall apps there (the tool refuses: the data cannot be recovered).
+- "Not reachable by CoreDevice", "locked", "Developer Mode is off" are fixed on the phone (reconnect, unlock, enable) — pass the message on to the user.
+
 ## Apps
 
 - **Never guess a third-party bundle id.** Use `ios_sim_launch_app {name}` (a case-insensitive display-name substring) or look the id up with `ios_sim_list_apps` first.

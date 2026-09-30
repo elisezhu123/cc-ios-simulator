@@ -67,6 +67,7 @@
 | 🌐 **环境模拟** | 打开 URL / Deep Link、模拟推送通知（APNs payload）、设置 / 清除 GPS 定位、浅色 / 深色模式 |
 | 🎬 **录屏** | 开始 / 停止录屏，输出 `.mov` / `.mp4`，每台设备同时一个录屏 |
 | 🖥️ **多设备** | 列出、启动、关闭任意模拟器；面板里可一键切换（未启动的会自动启动） |
+| 📲 **USB 真机（部分）** | 列出连接的 iPhone / iPad；在真机上列出 / 启动 / 结束 App、安装已签名的 `.app`、查看进程和 App 信息（devicectl）。真机截图、点击、无障碍树等需要 WebDriverAgent，后续提供 |
 | 🧠 **内置 Skill** | `ios-ui-automation`：教 Claude 按"观察 → 操作 → 确认"的节奏工作，并避开常见坑（例如不猜 bundle id） |
 | 🔒 **安全** | 面板只监听 `127.0.0.1`，校验 Host / Origin 防 DNS 重绑定和跨站调用；所有命令用参数数组执行，无 shell 注入 |
 | 🌏 **中英双语** | 面板界面按浏览器语言自动切换中文 / 英文 |
@@ -75,13 +76,13 @@
 
 ## 工具一览（29 个）
 
-所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。不传时依次使用：正在推流的设备 → 第一台已启动的设备。`ios_sim_interact` 的坐标是 **0..1 归一化值**；UI 自动化工具返回的位置是设备的**点（point）**坐标。
+所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。`ios_sim_list_apps`、`ios_sim_launch_app`、`ios_sim_install_app`、`ios_sim_processes`、`ios_sim_app_info` 还可以传**连接的真机**的 udid 或名字（见 `ios_sim_devices` 返回的 `realDevices`）。不传时依次使用：正在推流的设备 → 第一台已启动的设备。`ios_sim_interact` 的坐标是 **0..1 归一化值**；UI 自动化工具返回的位置是设备的**点（point）**坐标。
 
 ### 设备与画面
 
 | 工具 | 作用 |
 |---|---|
-| `ios_sim_devices` | 列出模拟器（已启动的在前，runtime 新的在前），可按名称 / udid / runtime 过滤 |
+| `ios_sim_devices` | 列出模拟器（已启动的在前，runtime 新的在前），可按名称 / udid / runtime 过滤；连接的 iPhone / iPad 列在 `realDevices` 里 |
 | `ios_sim_boot` | 启动模拟器并开始推流，返回 `panelUrl` |
 | `ios_sim_shutdown` | 关闭模拟器（先停止它的录屏和推流） |
 | `ios_sim_panel` | 为已启动的设备确保推流并返回 `panelUrl`，不会启动设备 |
@@ -308,6 +309,7 @@ src/
   uitree.ts            # 无障碍树裁剪、控件匹配、OCR 文字匹配
   list-rows.ts         # 列表行识别与计数解析
   devtools.ts          # 日志 / 调试子进程运行器与输出解析
+  devicectl.ts         # 真机：xcrun devicectl 的封装
   preview-source.ts    # Package.swift 解析、预览扫描、生成 Swift 代码
   preview-host.ts      # 预览会话：构建宿主 App、热替换、文件监听
   recorder.ts          # 录屏进程管理
@@ -333,7 +335,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | UI 自动化 | 模拟器 + 真机 | 已移植模拟器部分（7 个工具），点击工具额外返回结果截图 |
 | 日志与调试 | 模拟器 + 真机 | 已移植模拟器部分（5 个工具） |
 | SwiftUI 预览热重载 | 已支持 | 已移植（`ios_sim_preview`） |
-| USB 真机 | 已支持 | **尚未支持**，计划在第 ⑤ 期移植，见 [路线图](#路线图) |
+| USB 真机 | 已支持 | 部分支持：devicectl 的设备 / App / 进程操作已移植；WebDriverAgent 的截图、点击、无障碍树和实时画面**尚未支持**，见 [路线图](#路线图) |
 
 移植的文件在第一行注明了来源（`Ported from dsh-ios (MIT) @ d9a9731 — src/<file>`），完整清单见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
@@ -414,6 +416,13 @@ printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
 </details>
 
 <details>
+<summary><b>连着 iPhone，但 `realDevices` 里没有，或提示 not available？</b></summary>
+
+用数据线连接，解锁手机并点"信任此电脑"，在"设置 ▸ 隐私与安全性"里打开"开发者模式"（手机会重启）。然后在终端运行 `xcrun devicectl list devices` 确认能看到这台设备。真机上的 App 名称是 devicectl 返回的基础（通常是英文）名，按中文名搜不到时用英文名或 bundle id。
+
+</details>
+
+<details>
 <summary><b>横屏后点击位置不对？</b></summary>
 
 如果设备是在 Simulator.app 里手动旋转的，视频流可能不知道当前方向，结果里会带 `warning`。按提示调用一次 `ios_sim_interact {action: "rotate", orientation: "landscape_left" 或 "landscape_right"}` 即可同步。
@@ -441,7 +450,7 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 ## 路线图
 
 > [!IMPORTANT]
-> 目前完成了第 ① 期、第 ④ 期，以及第 ②、③ 期的模拟器部分。第 ⑤ 期**还没有开始**，表中列出的这些工具现在都不能用，仅供了解后续规划。
+> 目前完成了第 ①、④ 期，第 ②、③ 期的模拟器部分，以及第 ⑤ 期的第一步（devicectl）。第 ⑤ 期剩下的 WebDriverAgent 部分**还没有开始**。
 
 | 期 | 内容 | 状态 |
 |---|---|---|
@@ -449,7 +458,9 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 | ② UI 自动化 | AXe 无障碍树 + Vision OCR：`ui_tree`、`tap_element`、`find_text`、`tap_text`、`wait_for`、`ui_rows`、`tap_row` | ✅ 已完成（模拟器；真机随第 ⑤ 期） |
 | ③ 日志与调试 | `logs`、`processes`、`backtrace`、`leaks`、`app_info` | ✅ 已完成（模拟器；真机随第 ⑤ 期） |
 | ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | ✅ 已完成 |
-| ⑤ USB 真机 | WebDriverAgent + usbmux + devicectl，同一面板驱动真实 iPhone | ⏳ 未开始 |
+| ⑤a USB 真机：devicectl | 列出真机；真机上的 App 列表 / 启动 / 安装、进程、App 信息 | ✅ 已完成 |
+| ⑤b USB 真机：WebDriverAgent | 构建启动 WDA、usbmux 转发；真机截图、点击、输入、无障碍树、OCR 点击 | ⏳ 未开始 |
+| ⑤c USB 真机：实时画面 | 面板显示真机画面 | ⏳ 未开始 |
 
 ---
 
