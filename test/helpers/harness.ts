@@ -54,6 +54,7 @@ export async function toolHarness(
       ensureStarted: async () => 'http://127.0.0.1:3999/',
       showRealDevice: async () => 'http://127.0.0.1:3999/',
       showSimulator: () => {},
+      openHint: () => ({}),
     },
     recorder: new Recorder({ dir: join(cacheRoot, 'recordings'), spawnRecord: fakeRecordSpawn().spawnRecord }),
     builder: {

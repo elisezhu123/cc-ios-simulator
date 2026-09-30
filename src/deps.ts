@@ -57,6 +57,8 @@ export interface PanelHandle {
   showRealDevice(device: RealDevice): Promise<string>
   /** Show simulators again. */
   showSimulator(): void
+  /** How the panel reaches the user (opened in the browser, or how to show it in Claude Code desktop). */
+  openHint(url: string): Record<string, unknown>
 }
 
 export interface RecorderApi {

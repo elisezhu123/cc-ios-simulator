@@ -154,9 +154,10 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     await deps.host.ensureRunning({ udid: device.udid })
     deps.panel.showSimulator()
     // Booted and streaming already: a panel that cannot start (no free port, say) must not fail the boot.
-    let panel: { panelUrl: string } | { note: string }
+    let panel: Record<string, unknown>
     try {
-      panel = { panelUrl: await deps.panel.ensureStarted() }
+      const panelUrl = await deps.panel.ensureStarted()
+      panel = { panelUrl, ...deps.panel.openHint(panelUrl) }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       panel = { note: `booted and streaming, but the live panel could not start (${message}) — ios_sim_panel retries it` }
@@ -183,8 +184,9 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
   server.registerTool('ios_sim_panel', {
     title: 'Open the live panel',
     description: 'Make sure the live stream runs for a booted simulator and return panelUrl, the live panel (video, '
-      + 'tap/drag, Home, rotate, screenshot). Open it with preview_start {url: panelUrl} in the browser pane; in a '
-      + 'terminal-only session give the URL to the user. Never boots a device. Given a connected iPhone/iPad on which '
+      + 'tap/drag, Home, annotate, screenshot, record, rotate). In the terminal the panel opens in the default browser '
+      + 'the first time it starts; in Claude Code desktop the result says how to show it in the built-in browser pane '
+      + '(openInClaude). Never boots a device. Given a connected iPhone/iPad on which '
       + 'ios_real_start_wda is running, the panel shows that phone instead (WebDriverAgent live view and touch).',
     inputSchema: { udid: UDID_PARAM },
   }, async ({ udid }) => runTool('ios_sim_panel', async () => {
@@ -198,8 +200,8 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       return jsonResult({
         panelUrl,
         device: realDeviceSummary(target.device),
-        hint: 'Open panelUrl in the browser pane (preview_start with this url); in a terminal-only session give the URL to the user. '
-          + 'The live view comes from WebDriverAgent; taps and drags in it go to the phone.',
+        ...deps.panel.openHint(panelUrl),
+        hint: 'The live view comes from WebDriverAgent; taps and drags in it go to the phone. If the user cannot see the panel, give them panelUrl.',
       })
     }
     assertStreamAvailable(deps.host)
@@ -211,7 +213,8 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     return jsonResult({
       panelUrl,
       device: deviceSummary(device),
-      hint: 'Open panelUrl in the browser pane (preview_start with this url); in a terminal-only session give the URL to the user.',
+      ...deps.panel.openHint(panelUrl),
+      hint: 'If the user cannot see the panel, give them panelUrl.',
     })
   }))
 
