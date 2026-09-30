@@ -1,7 +1,7 @@
 {
   "name": "ios-simulator",
   "version": "0.1.0",
-  "description": "Drive the iOS Simulator from Claude Code: live stream panel, taps and gestures, apps, build & run. Ported from dsh-ios.",
+  "description": "Drive the iOS Simulator from Claude Code: live stream panel, taps and gestures, accessibility tree and OCR, apps, build & run. Ported from dsh-ios.",
   "author": { "name": "elisezhu123" },
   "license": "MIT",
   "keywords": ["ios", "simulator", "xcode", "mcp"],

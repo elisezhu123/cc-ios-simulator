@@ -9444,7 +9444,7 @@ var require_websocket = __commonJS({
     var http = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes, createHash } = __require("crypto");
+    var { randomBytes, createHash: createHash3 } = __require("crypto");
     var { Duplex, Readable } = __require("stream");
     var { URL: URL2 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -10125,7 +10125,7 @@ var require_websocket = __commonJS({
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest = createHash("sha1").update(key + GUID).digest("base64");
+        const digest = createHash3("sha1").update(key + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -10494,7 +10494,7 @@ var require_websocket_server = __commonJS({
     var EventEmitter = __require("events");
     var http = __require("http");
     var { Duplex } = __require("stream");
-    var { createHash } = __require("crypto");
+    var { createHash: createHash3 } = __require("crypto");
     var extension2 = require_extension();
     var PerMessageDeflate2 = require_permessage_deflate();
     var subprotocol2 = require_subprotocol();
@@ -10801,7 +10801,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest = createHash("sha1").update(key + GUID).digest("base64");
+        const digest = createHash3("sha1").update(key + GUID).digest("base64");
         const headers = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -10889,8 +10889,8 @@ var require_websocket_server = __commonJS({
 });
 
 // src/server.ts
-import { dirname as dirname4, join as join11 } from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
+import { dirname as dirname5, join as join13 } from "node:path";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
 var util;
@@ -16521,8 +16521,8 @@ function emoji() {
 }
 var ipv4 = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 var ipv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;
-var mac = (delimiter2) => {
-  const escapedDelim = escapeRegex(delimiter2 ?? ":");
+var mac = (delimiter4) => {
+  const escapedDelim = escapeRegex(delimiter4 ?? ":");
   return new RegExp(`^(?:[0-9A-F]{2}${escapedDelim}){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}${escapedDelim}){5}[0-9a-f]{2}$`);
 };
 var cidrv4 = /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/;
@@ -31519,7 +31519,7 @@ function visit(schema, fnOrHandlers) {
     return h ? h(node2, rewritten) : node2;
   };
   const cache = /* @__PURE__ */ new Map();
-  function run(s) {
+  function run3(s) {
     const cached2 = cache.get(s);
     if (cached2 === RESOLVING) {
       return new $ZodLazy({
@@ -31545,21 +31545,21 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newShape = {};
         for (const k of keys) {
-          const mapped = run(oldShape[k]);
+          const mapped = run3(oldShape[k]);
           if (mapped !== oldShape[k])
             changed = true;
           newShape[k] = mapped;
         }
         let newCatchall = def.catchall;
         if (def.catchall) {
-          newCatchall = run(def.catchall);
+          newCatchall = run3(def.catchall);
           if (newCatchall !== def.catchall)
             changed = true;
         }
         return changed ? clone(s, { ...def, shape: newShape, catchall: newCatchall }) : s;
       }
       case "array": {
-        const mapped = run(def.element);
+        const mapped = run3(def.element);
         return mapped === def.element ? s : clone(s, { ...def, element: mapped });
       }
       case "tuple": {
@@ -31567,14 +31567,14 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newItems = [];
         for (const item of oldItems) {
-          const mapped = run(item);
+          const mapped = run3(item);
           if (mapped !== item)
             changed = true;
           newItems.push(mapped);
         }
         let newRest = def.rest;
         if (def.rest) {
-          newRest = run(def.rest);
+          newRest = run3(def.rest);
           if (newRest !== def.rest)
             changed = true;
         }
@@ -31582,12 +31582,12 @@ function visit(schema, fnOrHandlers) {
       }
       case "record":
       case "map": {
-        const newKey = run(def.keyType);
-        const newVal = run(def.valueType);
+        const newKey = run3(def.keyType);
+        const newVal = run3(def.valueType);
         return newKey === def.keyType && newVal === def.valueType ? s : clone(s, { ...def, keyType: newKey, valueType: newVal });
       }
       case "set": {
-        const newVal = run(def.valueType);
+        const newVal = run3(def.valueType);
         return newVal === def.valueType ? s : clone(s, { ...def, valueType: newVal });
       }
       case "union": {
@@ -31595,7 +31595,7 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newOptions = [];
         for (const opt of oldOptions) {
-          const mapped = run(opt);
+          const mapped = run3(opt);
           if (mapped !== opt)
             changed = true;
           newOptions.push(mapped);
@@ -31603,8 +31603,8 @@ function visit(schema, fnOrHandlers) {
         return changed ? clone(s, { ...def, options: newOptions }) : s;
       }
       case "intersection": {
-        const newLeft = run(def.left);
-        const newRight = run(def.right);
+        const newLeft = run3(def.left);
+        const newRight = run3(def.right);
         return newLeft === def.left && newRight === def.right ? s : clone(s, { ...def, left: newLeft, right: newRight });
       }
       case "optional":
@@ -31616,23 +31616,23 @@ function visit(schema, fnOrHandlers) {
       case "nonoptional":
       case "promise":
       case "success": {
-        const newInner = run(def.innerType);
+        const newInner = run3(def.innerType);
         return newInner === def.innerType ? s : clone(s, { ...def, innerType: newInner });
       }
       case "pipe": {
-        const newIn = run(def.in);
-        const newOut = run(def.out);
+        const newIn = run3(def.in);
+        const newOut = run3(def.out);
         return newIn === def.in && newOut === def.out ? s : clone(s, { ...def, in: newIn, out: newOut });
       }
       case "function": {
-        const newInput = run(def.input);
-        const newOutput = run(def.output);
+        const newInput = run3(def.input);
+        const newOutput = run3(def.output);
         return newInput === def.input && newOutput === def.output ? s : clone(s, { ...def, input: newInput, output: newOutput });
       }
       case "lazy": {
         const original = def.getter;
         const { _cachedInner, ...rest } = def;
-        return clone(s, { ...rest, getter: () => run(original()) });
+        return clone(s, { ...rest, getter: () => run3(original()) });
       }
       // A leaf by choice: `parts` are regex fragments, not data positions.
       case "template_literal":
@@ -31663,7 +31663,7 @@ function visit(schema, fnOrHandlers) {
       }
     }
   }
-  return run(schema);
+  return run3(schema);
 }
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
@@ -40527,6 +40527,9 @@ var PANEL_PORT_ATTEMPTS = 21;
 var INTERACT_SETTLE_MS = 300;
 var RECORD_STOP_TIMEOUT_MS = 1e4;
 var RECORD_START_TIMEOUT_MS = 15e3;
+var OCR_POLL_INTERVAL_MS = 600;
+var TAP_EXPECTATION_BUDGET_MS = 4e3;
+var ROW_VERIFY_SETTLE_MS = 800;
 var SCREENSHOT_KEEP = 100;
 var MODEL_IMAGE_MAX_EDGE = 1024;
 var MODEL_IMAGE_JPEG_QUALITY = 80;
@@ -40845,7 +40848,7 @@ function toPublicApp(app) {
 async function mapWithLimit(items, limit, worker) {
   const results = new Array(items.length);
   let next = 0;
-  const run = async () => {
+  const run3 = async () => {
     for (; ; ) {
       const index = next;
       next += 1;
@@ -40854,7 +40857,7 @@ async function mapWithLimit(items, limit, worker) {
     }
   };
   const workers = [];
-  for (let w = 0; w < Math.max(1, Math.min(limit, items.length)); w += 1) workers.push(run());
+  for (let w = 0; w < Math.max(1, Math.min(limit, items.length)); w += 1) workers.push(run3());
   await Promise.all(workers);
   return results;
 }
@@ -41201,11 +41204,249 @@ ${buildFailureDetail(lines)}`);
   };
 }
 
+// src/ocr-backend.ts
+import { execFile as execFile3 } from "node:child_process";
+import { createHash } from "node:crypto";
+import { mkdirSync, readFileSync, renameSync, rmSync, statSync as statSync2, writeFileSync } from "node:fs";
+import { delimiter, dirname as dirname2, join as join4 } from "node:path";
+import { fileURLToPath } from "node:url";
+var OCR_INSTALL_HINT = 'the plugin compiles its bundled Vision OCR helper with swiftc on first use \u2014 install Xcode (or the Command Line Tools: run "xcode-select --install") so ios_sim_find_text / ios_sim_tap_text / ios_sim_wait_for can run';
+var SWIFTC_CANDIDATES = ["/usr/bin/swiftc", "/usr/local/bin/swiftc"];
+var OCR_COMPILE_TIMEOUT_MS = 5 * 60 * 1e3;
+var OCR_EXEC_TIMEOUT_MS = 12e4;
+var OCR_MAX_BUFFER_BYTES = 8 * 1024 * 1024;
+var DIGEST_FILE = ".ios-simulator-ocr.sha256";
+function isExecutableFile(path) {
+  try {
+    const info = statSync2(path);
+    return info.isFile() && (info.mode & 73) !== 0;
+  } catch {
+    return false;
+  }
+}
+function isFile(path) {
+  try {
+    return statSync2(path).isFile();
+  } catch {
+    return false;
+  }
+}
+function findOnPath(command, env) {
+  for (const dir of (env.PATH ?? "").split(delimiter)) {
+    if (dir === "") continue;
+    const candidate = join4(dir, command);
+    if (isExecutableFile(candidate)) return candidate;
+  }
+  return void 0;
+}
+function sha256File(path) {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+function run(command, args, timeoutMs, signal) {
+  return new Promise((resolve4, reject) => {
+    execFile3(command, [...args], { timeout: timeoutMs, maxBuffer: OCR_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
+      if (error62 !== null) {
+        reject(Object.assign(error62, { stdout, stderr }));
+        return;
+      }
+      resolve4({ stdout, stderr });
+    });
+  });
+}
+function defaultOcrSourcePath() {
+  return join4(dirname2(fileURLToPath(import.meta.url)), "..", "assets", "ocr.swift");
+}
+var OcrHelper = class {
+  #cacheDir;
+  #platform;
+  #env;
+  #sourcePath;
+  #compiling;
+  constructor(options) {
+    this.#cacheDir = options.cacheDir;
+    this.#platform = options.platform ?? process.platform;
+    this.#env = options.env ?? process.env;
+    this.#sourcePath = options.sourcePath ?? defaultOcrSourcePath();
+  }
+  /** The swiftc to use: `IOS_SIM_SWIFTC` → PATH → well-known locations. */
+  #swiftc() {
+    const explicit = this.#env.IOS_SIM_SWIFTC?.trim();
+    if (explicit !== void 0 && explicit !== "") {
+      if (isExecutableFile(explicit)) return { command: explicit };
+      return { reason: `IOS_SIM_SWIFTC points at a missing or non-executable file: ${explicit}` };
+    }
+    const onPath = findOnPath("swiftc", this.#env);
+    if (onPath !== void 0) return { command: onPath };
+    const known = SWIFTC_CANDIDATES.find(isExecutableFile);
+    if (known !== void 0) return { command: known };
+    return { reason: "swiftc (the Swift compiler) was not found on PATH \u2014 install Xcode or the Command Line Tools" };
+  }
+  #slot(sourceSha256) {
+    return join4(this.#cacheDir, sourceSha256.slice(0, 16));
+  }
+  /** A cached compile whose recorded digest still matches the binary's bytes. */
+  #validCached(sourceSha256) {
+    const binary = join4(this.#slot(sourceSha256), "ocr");
+    if (!isExecutableFile(binary)) return void 0;
+    try {
+      const recorded = readFileSync(join4(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
+      if (!/^[0-9a-f]{64}$/u.test(recorded)) return void 0;
+      return recorded === sha256File(binary) ? binary : void 0;
+    } catch {
+      return void 0;
+    }
+  }
+  /** Resolve without compiling: source + swiftc probe + cache validation. */
+  resolve() {
+    if (this.#platform !== "darwin") return { available: false, reason: "Vision OCR only runs on macOS with Xcode" };
+    if (!isFile(this.#sourcePath)) {
+      return { available: false, reason: `the bundled OCR Swift source was not found at ${this.#sourcePath}` };
+    }
+    const cached2 = this.#validCached(sha256File(this.#sourcePath));
+    if (cached2 !== void 0) return { available: true, command: cached2 };
+    const swiftc = this.#swiftc();
+    if (swiftc.command === void 0) return { available: false, reason: swiftc.reason };
+    return {
+      available: false,
+      reason: "the OCR helper has not been compiled into the plugin cache yet (compiled on first use)",
+      compilable: true
+    };
+  }
+  /** Resolve, compiling the bundled source on first use. Never throws. */
+  async ensure() {
+    const resolved = this.resolve();
+    if (resolved.available || resolved.compilable !== true) return resolved;
+    if (this.#compiling === void 0) {
+      this.#compiling = this.#compile().finally(() => {
+        this.#compiling = void 0;
+      });
+    }
+    try {
+      await this.#compiling;
+    } catch (error62) {
+      return { available: false, reason: `OCR helper compilation failed (${error62 instanceof Error ? error62.message : String(error62)})` };
+    }
+    return this.resolve();
+  }
+  /**
+   * swiftc -O into a temp file, sanity-launch it (no arguments → usage, exit
+   * 2), then move it into its slot and record its digest.
+   */
+  async #compile() {
+    const swiftc = this.#swiftc();
+    if (swiftc.command === void 0) throw new Error(swiftc.reason);
+    const sourceSha256 = sha256File(this.#sourcePath);
+    const cached2 = this.#validCached(sourceSha256);
+    if (cached2 !== void 0) return cached2;
+    const slot = this.#slot(sourceSha256);
+    mkdirSync(slot, { recursive: true });
+    const tmp = join4(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
+    try {
+      try {
+        await run(swiftc.command, ["-O", this.#sourcePath, "-o", tmp], OCR_COMPILE_TIMEOUT_MS);
+      } catch (error62) {
+        const detail = error62.stderr?.trim();
+        throw new Error(`swiftc -O ${this.#sourcePath} failed${detail === void 0 || detail === "" ? "" : `: ${detail}`}`);
+      }
+      try {
+        await run(tmp, [], 6e4);
+      } catch (error62) {
+        if (error62.code !== 2) {
+          throw new Error(`the compiled OCR helper failed its sanity launch: ${error62 instanceof Error ? error62.message : String(error62)}`);
+        }
+      }
+      const binary = join4(slot, "ocr");
+      renameSync(tmp, binary);
+      writeFileSync(join4(slot, DIGEST_FILE), `${sha256File(binary)}
+`, "utf8");
+      return binary;
+    } finally {
+      rmSync(tmp, { force: true });
+    }
+  }
+  /** OCR one PNG: ensure the helper, run it, parse its JSON. */
+  async recognize(imagePath, signal) {
+    const binary = await this.ensure();
+    if (!binary.available || binary.command === void 0) {
+      throw new Error(`the Vision OCR helper is unavailable${binary.reason === void 0 ? "" : ` (${binary.reason})`}; ${OCR_INSTALL_HINT}`);
+    }
+    let stdout;
+    try {
+      stdout = (await run(binary.command, [imagePath], OCR_EXEC_TIMEOUT_MS, signal)).stdout;
+    } catch (error62) {
+      const { stdout: out, stderr } = error62;
+      const detail = stderr?.trim() || out?.trim() || (error62 instanceof Error ? error62.message : String(error62));
+      throw new Error(`the OCR helper failed: ${detail}`);
+    }
+    return parseOcrOutput(stdout);
+  }
+};
+function parseOcrOutput(stdout) {
+  let parsed;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch (error62) {
+    throw new Error(`the OCR helper returned non-JSON output: ${error62 instanceof Error ? error62.message : String(error62)}`);
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error("the OCR helper returned an unexpected payload (expected an object with an items array)");
+  }
+  const record2 = parsed;
+  if (!Array.isArray(record2.items)) {
+    throw new Error("the OCR helper returned an unexpected payload (missing items array)");
+  }
+  const finite = (value) => typeof value === "number" && Number.isFinite(value) ? value : void 0;
+  const seen = /* @__PURE__ */ new Set();
+  const items = [];
+  for (const entry of record2.items) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const raw = entry;
+    const text = typeof raw.text === "string" ? raw.text.trim() : "";
+    const confidence = finite(raw.confidence);
+    const x = finite(raw.x);
+    const y = finite(raw.y);
+    const w = finite(raw.w);
+    const h = finite(raw.h);
+    if (text === "" || confidence === void 0 || x === void 0 || y === void 0 || w === void 0 || h === void 0) continue;
+    if (confidence < 0 || confidence > 1 || x < 0 || y < 0 || w < 0 || h < 0) continue;
+    const key = `${text}\0${x}\0${y}\0${w}\0${h}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    items.push({ text, confidence, rect: { x, y, w, h } });
+  }
+  items.sort((a, b) => b.confidence - a.confidence);
+  return items;
+}
+function filterOcrItems(items, query, minConfidence = 0) {
+  const needle = query !== void 0 && query.trim() !== "" ? query.trim().toLowerCase() : void 0;
+  return items.filter((item) => (needle === void 0 || item.text.toLowerCase().includes(needle)) && item.confidence >= minConfidence);
+}
+function requireSize(size, what) {
+  if (!Number.isFinite(size.width) || !Number.isFinite(size.height) || size.width <= 0 || size.height <= 0) {
+    throw new RangeError(`${what} must be a finite positive size, got ${size.width}x${size.height}`);
+  }
+}
+function pixelRectToPoints(rect, pixelSize, pointSize) {
+  requireSize(pixelSize, "pixelSize");
+  requireSize(pointSize, "pointSize");
+  const scaleX = pointSize.width / pixelSize.width;
+  const scaleY = pointSize.height / pixelSize.height;
+  return { x: rect.x * scaleX, y: rect.y * scaleY, w: rect.w * scaleX, h: rect.h * scaleY };
+}
+function rectCenter(rect) {
+  return { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 };
+}
+function pixelRectToNormalizedCenter(rect, pixelSize) {
+  requireSize(pixelSize, "pixelSize");
+  const center = rectCenter(rect);
+  return { x: center.x / pixelSize.width, y: center.y / pixelSize.height };
+}
+
 // src/panel/panel-server.ts
 import { createReadStream, lstatSync, realpathSync } from "node:fs";
 import { readFile as readFile4 } from "node:fs/promises";
 import { createServer, get as httpGet } from "node:http";
-import { basename as basename2, join as join5, sep } from "node:path";
+import { basename as basename2, join as join6, sep } from "node:path";
 import { pipeline } from "node:stream";
 
 // node_modules/ws/wrapper.mjs
@@ -41219,7 +41460,7 @@ var import_websocket = __toESM(require_websocket(), 1);
 var import_websocket_server = __toESM(require_websocket_server(), 1);
 
 // src/device-actions.ts
-import { execFile as execFile3 } from "node:child_process";
+import { execFile as execFile4 } from "node:child_process";
 var OSASCRIPT_TIMEOUT_MS = 8e3;
 var DEVICE_ACTIONS = [
   "app-switcher",
@@ -41306,7 +41547,7 @@ function simulatorHomeKeystrokeScript(repeat) {
 }
 function runOsascript(script, timeoutMs) {
   return new Promise((resolve4, reject) => {
-    execFile3("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
+    execFile4("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
       if (error62 === null) {
         resolve4();
         return;
@@ -41332,10 +41573,10 @@ async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRI
 }
 
 // src/screenshot.ts
-import { execFile as execFile4 } from "node:child_process";
-import { closeSync, existsSync as existsSync2, mkdirSync, openSync, readSync, readdirSync as readdirSync2, statSync as statSync2, unlinkSync } from "node:fs";
+import { execFile as execFile5 } from "node:child_process";
+import { closeSync, existsSync as existsSync2, mkdirSync as mkdirSync2, openSync, readSync, readdirSync as readdirSync2, statSync as statSync3, unlinkSync } from "node:fs";
 import { readFile as readFile3, rm } from "node:fs/promises";
-import { join as join4 } from "node:path";
+import { join as join5 } from "node:path";
 var FILE_PATTERN = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
 var SIPS_TIMEOUT_MS = 3e4;
 function isScreenshotFileName(name) {
@@ -41383,7 +41624,7 @@ function jpegSize(buffer) {
 }
 function runSips(args) {
   return new Promise((resolve4, reject) => {
-    execFile4("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
+    execFile5("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
       if (error62 === null) {
         resolve4();
         return;
@@ -41411,7 +41652,7 @@ var ScreenshotStore = class {
    * names already on disk are skipped so concurrent writers never collide.
    */
   nextPath(udid) {
-    mkdirSync(this.dir, { recursive: true });
+    mkdirSync2(this.dir, { recursive: true });
     const safe = udid.replace(/[^A-Za-z0-9_-]/g, "_");
     let next = this.#next.get(safe);
     if (next === void 0) {
@@ -41423,10 +41664,10 @@ var ScreenshotStore = class {
         if (Number.isInteger(index) && index >= next) next = index + 1;
       }
     }
-    let path = join4(this.dir, `screenshot-${safe}-${next}.png`);
+    let path = join5(this.dir, `screenshot-${safe}-${next}.png`);
     while (existsSync2(path)) {
       next += 1;
-      path = join4(this.dir, `screenshot-${safe}-${next}.png`);
+      path = join5(this.dir, `screenshot-${safe}-${next}.png`);
     }
     this.#next.set(safe, next + 1);
     return path;
@@ -41435,7 +41676,7 @@ var ScreenshotStore = class {
   async capture(udid, signal) {
     const path = this.nextPath(udid);
     await this.#take(udid, path, signal);
-    const bytes = statSync2(path).size;
+    const bytes = statSync3(path).size;
     const size = readPngSize(path);
     this.prune();
     return { path, bytes, ...size === void 0 ? {} : size };
@@ -41450,10 +41691,10 @@ var ScreenshotStore = class {
     }
     if (names.length <= this.#keep) return;
     const entries = names.map((name) => {
-      const path = join4(this.dir, name);
+      const path = join5(this.dir, name);
       let mtime = 0;
       try {
-        mtime = statSync2(path).mtimeMs;
+        mtime = statSync3(path).mtimeMs;
       } catch {
       }
       return { path, mtime, index: Number(FILE_PATTERN.exec(name)?.[1] ?? 0) };
@@ -41494,7 +41735,7 @@ function assertMac(platform) {
 function assertStreamAvailable(host) {
   if (!host.binary.available) {
     throw new Error(
-      `serve-sim is unavailable (${host.binary.reason ?? "unknown reason"}) \u2014 touch input and the live panel need it; the simctl-only tools (ios_sim_screenshot, ios_sim_list_apps, ios_sim_launch_app, ios_sim_open_url, ios_sim_push, ios_sim_location, ios_sim_appearance, ios_sim_record) still work`
+      `serve-sim is unavailable (${host.binary.reason ?? "unknown reason"}) \u2014 touch input and the live panel need it; the simctl-only tools (ios_sim_screenshot, ios_sim_list_apps, ios_sim_launch_app, ios_sim_open_url, ios_sim_push, ios_sim_location, ios_sim_appearance, ios_sim_record) still work, and so do the AXe and OCR tools (ios_sim_ui_tree, ios_sim_tap_element, ios_sim_ui_rows, ios_sim_tap_row, ios_sim_find_text, ios_sim_wait_for)`
     );
   }
 }
@@ -41768,7 +42009,7 @@ var PanelServer = class {
     }
   }
   async #serveStatic(res, entry) {
-    const body = await readFile4(join5(this.#options.staticDir, entry.file));
+    const body = await readFile4(join6(this.#options.staticDir, entry.file));
     const port = this.#port;
     res.writeHead(200, {
       "content-type": entry.type,
@@ -41855,7 +42096,7 @@ var PanelServer = class {
     const dir = this.#options.screenshots.dir;
     let real;
     try {
-      const path = join5(dir, name);
+      const path = join6(dir, name);
       const stat = lstatSync(path);
       if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, "not found");
       real = realpathSync(path);
@@ -41928,9 +42169,9 @@ var PanelServer = class {
     const device = await this.#currentDevice();
     if (device === void 0) throw new HttpError(409, "no booted simulator");
     await this.#options.host.ensureRunning({ udid: device.udid });
-    const run = this.#options.stream.control.deviceAction;
-    if (run === void 0) throw new HttpError(501, "device actions are not supported by this backend");
-    await run(action);
+    const run3 = this.#options.stream.control.deviceAction;
+    if (run3 === void 0) throw new HttpError(501, "device actions are not supported by this backend");
+    await run3(action);
     return { ok: true, action };
   }
   async #handleUpgrade(req, socket, head) {
@@ -42009,8 +42250,8 @@ var PanelServer = class {
 
 // src/recorder.ts
 import { spawn as spawn2 } from "node:child_process";
-import { mkdirSync as mkdirSync2, statSync as statSync3 } from "node:fs";
-import { dirname as dirname2, join as join6 } from "node:path";
+import { mkdirSync as mkdirSync3, statSync as statSync4 } from "node:fs";
+import { dirname as dirname3, join as join7 } from "node:path";
 function recordVideoArgs(udid, path) {
   return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
 }
@@ -42020,7 +42261,7 @@ function safeName(udid) {
 }
 function fileSize(path) {
   try {
-    return statSync3(path).size;
+    return statSync4(path).size;
   } catch {
     return 0;
   }
@@ -42047,7 +42288,7 @@ var Recorder = class {
   }
   defaultPath(udid) {
     const stamp = new Date(this.#now()).toISOString().replace(/[:.]/g, "-");
-    return join6(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
+    return join7(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
   }
   async start(udid, outputPath) {
     const running = this.#active.get(udid);
@@ -42062,7 +42303,7 @@ var Recorder = class {
       const requested = outputPath?.trim() ?? "";
       const path = requested === "" ? this.defaultPath(udid) : requested;
       if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`);
-      mkdirSync2(dirname2(path), { recursive: true });
+      mkdirSync3(dirname3(path), { recursive: true });
       const child = this.#spawnRecord(udid, path);
       const exited = new Promise((resolve4) => {
         child.once("exit", (code) => resolve4(code));
@@ -42165,15 +42406,15 @@ var Recorder = class {
 
 // src/sim-host.ts
 import {
-  execFile as execFile5,
+  execFile as execFile6,
   spawn as spawn3
 } from "node:child_process";
-import { readFileSync, statSync as statSync4 } from "node:fs";
+import { readFileSync as readFileSync2, statSync as statSync5 } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
 import { createServer as createServer2 } from "node:net";
-import { delimiter, dirname as dirname3, join as join7 } from "node:path";
-import { fileURLToPath } from "node:url";
+import { delimiter as delimiter2, dirname as dirname4, join as join8 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 var SERVE_SIM_PACKAGE = "serve-sim";
 var STREAM_PORT_RANGE_START = 3181;
 var STREAM_PORT_RANGE_LENGTH = 64;
@@ -42194,26 +42435,26 @@ function errorMessage3(error62) {
 function sleep(milliseconds) {
   return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
 }
-function isExecutableFile(path) {
+function isExecutableFile2(path) {
   try {
-    const info = statSync4(path);
+    const info = statSync5(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
   }
 }
-function isFile(path) {
+function isFile2(path) {
   try {
-    return statSync4(path).isFile();
+    return statSync5(path).isFile();
   } catch {
     return false;
   }
 }
-function findOnPath(command) {
-  for (const dir of (process.env.PATH ?? "").split(delimiter)) {
+function findOnPath2(command) {
+  for (const dir of (process.env.PATH ?? "").split(delimiter2)) {
     if (dir === "") continue;
-    const candidate = join7(dir, command);
-    if (isExecutableFile(candidate)) return candidate;
+    const candidate = join8(dir, command);
+    if (isExecutableFile2(candidate)) return candidate;
   }
   return void 0;
 }
@@ -42222,11 +42463,11 @@ function resolvePackageManifest(packageName) {
     return createRequire(import.meta.url).resolve(`${packageName}/package.json`);
   } catch {
   }
-  let current = dirname3(fileURLToPath(import.meta.url));
+  let current = dirname4(fileURLToPath2(import.meta.url));
   for (; ; ) {
-    const candidate = join7(current, "node_modules", packageName, "package.json");
-    if (isFile(candidate)) return candidate;
-    const parent = dirname3(current);
+    const candidate = join8(current, "node_modules", packageName, "package.json");
+    if (isFile2(candidate)) return candidate;
+    const parent = dirname4(current);
     if (parent === current) return void 0;
     current = parent;
   }
@@ -42235,7 +42476,7 @@ function tryResolvePackageBin() {
   const manifestPath = resolvePackageManifest(SERVE_SIM_PACKAGE);
   if (manifestPath === void 0) return void 0;
   try {
-    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    const manifest = JSON.parse(readFileSync2(manifestPath, "utf8"));
     const bin = manifest.bin;
     let binPath;
     if (typeof bin === "string") binPath = bin;
@@ -42244,8 +42485,8 @@ function tryResolvePackageBin() {
       if (typeof candidate === "string") binPath = candidate;
     }
     if (binPath === void 0) return void 0;
-    const resolved = join7(dirname3(manifestPath), binPath);
-    return isExecutableFile(resolved) ? resolved : void 0;
+    const resolved = join8(dirname4(manifestPath), binPath);
+    return isExecutableFile2(resolved) ? resolved : void 0;
   } catch {
     return void 0;
   }
@@ -42261,13 +42502,13 @@ function resolveServeSimBinary(options = {}) {
   }
   const override = "override" in options ? options.override : serveSimBinOverride();
   if (override !== void 0) {
-    return isExecutableFile(override) ? { available: true, source: "package-bin", command: override, args: [] } : { available: false, source: "unavailable", args: [], reason: `IOS_SIM_SERVE_SIM_BIN is not an executable file: ${override}` };
+    return isExecutableFile2(override) ? { available: true, source: "package-bin", command: override, args: [] } : { available: false, source: "unavailable", args: [], reason: `IOS_SIM_SERVE_SIM_BIN is not an executable file: ${override}` };
   }
   const packageBin = (options.packageBin ?? tryResolvePackageBin)();
   if (packageBin !== void 0) {
     return { available: true, source: "package-bin", command: packageBin, args: [] };
   }
-  const npx = (options.findNpx ?? (() => findOnPath("npx")))();
+  const npx = (options.findNpx ?? (() => findOnPath2("npx")))();
   if (npx === void 0) {
     return { available: false, source: "unavailable", args: [], reason: "serve-sim is not installed and npx is not on PATH" };
   }
@@ -42437,7 +42678,7 @@ function serveSimControlArgs(command, udid, positionals) {
 }
 function execServeSim(binary, args, timeoutMs) {
   return new Promise((resolve4, reject) => {
-    execFile5(binary.command, [...binary.args, ...args], {
+    execFile6(binary.command, [...binary.args, ...args], {
       timeout: timeoutMs,
       maxBuffer: 4 * 1024 * 1024
     }, (error62, stdout, stderr) => {
@@ -42926,16 +43167,16 @@ var SimHostController = class {
     this.#idleTimer = void 0;
   }
   #serializeLaunch(task) {
-    const run = this.#launchQueue.then(task, task);
-    this.#launchQueue = run.then(() => void 0, () => void 0);
-    return run;
+    const run3 = this.#launchQueue.then(task, task);
+    this.#launchQueue = run3.then(() => void 0, () => void 0);
+    return run3;
   }
 };
 
 // src/stream-source.ts
-import { readFileSync as readFileSync2, unlinkSync as unlinkSync2 } from "node:fs";
+import { readFileSync as readFileSync3, unlinkSync as unlinkSync2 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join as join8 } from "node:path";
+import { join as join9 } from "node:path";
 function errorMessage4(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
@@ -43039,10 +43280,10 @@ var SimStreamSource = class {
     ),
     screenshot: async () => {
       const udid = this.#requireDevice();
-      const path = join8(tmpdir(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
+      const path = join9(tmpdir(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
       try {
         await takeScreenshot(udid, path);
-        const pngBase64 = readFileSync2(path).toString("base64");
+        const pngBase64 = readFileSync3(path).toString("base64");
         const size = pngDimensionsFromBase64(pngBase64);
         return { pngBase64, ...size === void 0 ? {} : size };
       } catch (error62) {
@@ -43071,7 +43312,7 @@ var SimStreamSource = class {
 
 // src/tools/apps.ts
 import { existsSync as existsSync3 } from "node:fs";
-import { join as join9, resolve as resolve2 } from "node:path";
+import { join as join10, resolve as resolve2 } from "node:path";
 
 // src/tools/result.ts
 var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name. Default: the streamed device, else the newest-runtime booted iPhone.");
@@ -43216,7 +43457,7 @@ function registerAppTools(server, deps) {
   }, async (args, extra) => runTool("ios_sim_install_app", async () => {
     assertMac(deps.platform);
     const appPath = resolve2(args.appPath);
-    if (!existsSync3(join9(appPath, "Info.plist"))) {
+    if (!existsSync3(join10(appPath, "Info.plist"))) {
       throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`);
     }
     const device = await resolveTargetDevice(deps, args.udid);
@@ -43879,9 +44120,9 @@ function registerCoreTools(server, deps) {
       if (!isDeviceAction(action)) {
         throw new Error(`action "device_action" requires name \u2014 one of ${DEVICE_ACTIONS.join(", ")}`);
       }
-      const run = deps.stream.control.deviceAction;
-      if (run === void 0) throw new Error("this stream backend has no device actions");
-      await run(action);
+      const run3 = deps.stream.control.deviceAction;
+      if (run3 === void 0) throw new Error("this stream backend has no device actions");
+      await run3(action);
     } else {
       const simArgs = {
         action: args.action,
@@ -43934,7 +44175,7 @@ function registerCoreTools(server, deps) {
 // src/tools/env.ts
 import { randomUUID } from "node:crypto";
 import { mkdir, rm as rm2, writeFile } from "node:fs/promises";
-import { join as join10, resolve as resolve3 } from "node:path";
+import { join as join11, resolve as resolve3 } from "node:path";
 function registerEnvTools(server, deps) {
   const bootedDevice = async (tool, udid) => {
     assertMac(deps.platform);
@@ -43966,9 +44207,9 @@ function registerEnvTools(server, deps) {
     }
     const bundleId = args.bundleId.trim();
     const device = await bootedDevice("ios_sim_push", args.udid);
-    const dir = join10(deps.cacheRoot, "tmp");
+    const dir = join11(deps.cacheRoot, "tmp");
     await mkdir(dir, { recursive: true });
-    const file2 = join10(dir, `push-${randomUUID()}.json`);
+    const file2 = join11(dir, `push-${randomUUID()}.json`);
     await writeFile(file2, JSON.stringify(args.payload), { mode: 384 });
     try {
       await deps.simctl.sendPush(device.udid, bundleId, file2, extra.signal);
@@ -44033,17 +44274,1232 @@ function registerEnvTools(server, deps) {
   }));
 }
 
+// src/list-rows.ts
+function isRowOffscreenFrame(frame, bounds) {
+  if (bounds.width <= 0 || bounds.height <= 0) return false;
+  return frame.x + frame.w <= 0 || frame.y + frame.h <= 0 || frame.x >= bounds.width || frame.y >= bounds.height;
+}
+var CELL_TYPES = /* @__PURE__ */ new Set(["Cell", "TableRow", "CollectionCell", "ListItem", "Row"]);
+var INTERACTIVE_TYPES = /* @__PURE__ */ new Set([
+  "Button",
+  "Link",
+  "Switch",
+  "TextField",
+  "SearchField",
+  "TextArea",
+  "Tab",
+  "TabButton",
+  "Menu",
+  "MenuItem",
+  "MenuBarItem",
+  "Slider",
+  "Stepper",
+  "Incrementor",
+  "PickerWheel",
+  "Handle",
+  "RadioButton",
+  "CheckBox",
+  "DisclosureTriangle",
+  "PopUpButton",
+  "ComboBox",
+  "ScrollBar"
+]);
+var MIN_REPEATED_ROWS = 2;
+var SHAPE_EPSILON = 2;
+var MIN_ROW_HEIGHT = 24;
+var MAX_ROW_HEIGHT = 600;
+var MIN_ROW_WIDTH_FRACTION = 0.4;
+function round2(value) {
+  const rounded = Math.round(value * 100) / 100;
+  return rounded === 0 ? 0 : rounded;
+}
+function normalizeCountKey(key) {
+  return key.trim().toLowerCase().replace(/\s+/g, " ").replace(/\u00a0/g, " ");
+}
+var MULTIPLIERS = {
+  \u4E07: 1e4,
+  \u4EBF: 1e8,
+  k: 1e3,
+  K: 1e3,
+  m: 1e6,
+  M: 1e6,
+  w: 1e4,
+  W: 1e4
+};
+var TERMINATORS = `\\s,\uFF0C.\u3002:\uFF1A;\uFF1B!\uFF01?\uFF1F\u2026\u2014\\-\u2013%+*/()\uFF08\uFF09\\[\\]\u3010\u3011'"\u201C\u201D\xB7\u2022~`;
+var COUNT_REGEXP = new RegExp(
+  // The class must cover every MULTIPLIERS key — `W` (net-speak 万) was
+  // missing, so "3.2W 赞" parsed the W into the classifier instead of ×10000.
+  `(\\d[\\d,]*(?:\\.\\d+)?)\\s*([\u4E07\u4EBFkmwKMW]?)\\s*([^\\d${TERMINATORS}]+)(?!\\d)`,
+  "gu"
+);
+function scanCounts(label) {
+  const counts = [];
+  for (const match of label.matchAll(COUNT_REGEXP)) {
+    const raw = match[1].replace(/,/g, "");
+    const base = Number(raw);
+    if (!Number.isFinite(base)) continue;
+    const multiplier = MULTIPLIERS[match[2]] ?? 1;
+    const key = normalizeCountKey(match[3]);
+    if (key === "") continue;
+    counts.push({ key, value: base * multiplier });
+  }
+  return counts;
+}
+function parseCountsFromLabel(label) {
+  const counts = [];
+  for (const scanned of scanCounts(label)) {
+    const existing = counts.find((count) => count.key === scanned.key);
+    if (existing !== void 0) {
+      existing.value = scanned.value;
+      continue;
+    }
+    counts.push({ key: scanned.key, value: scanned.value });
+  }
+  return counts;
+}
+function rowCountFor(row, key) {
+  const needle = normalizeCountKey(key);
+  return row.counts.find((count) => count.key === needle)?.value;
+}
+function aggregateRowLabel(element) {
+  const parts = [];
+  const walk = (node2) => {
+    if (node2.label !== void 0 && node2.label.trim() !== "") {
+      const trimmed = node2.label.trim();
+      if (!parts.includes(trimmed)) parts.push(trimmed);
+    }
+    for (const child of node2.children) walk(child);
+  };
+  walk(element);
+  return parts.length > 0 ? parts.join(" ") : void 0;
+}
+function hasInteractiveDescendant(element) {
+  if (INTERACTIVE_TYPES.has(element.type)) return true;
+  return element.children.some(hasInteractiveDescendant);
+}
+function flatten(roots) {
+  const entries = [];
+  const walk = (element, depth) => {
+    entries.push({ element, depth });
+    for (const child of element.children) walk(child, depth + 1);
+  };
+  for (const root of roots) walk(root, 0);
+  return entries;
+}
+function sameFrame(a, b) {
+  return Math.abs(a.x - b.x) <= SHAPE_EPSILON && Math.abs(a.y - b.y) <= SHAPE_EPSILON && Math.abs(a.w - b.w) <= SHAPE_EPSILON && Math.abs(a.h - b.h) <= SHAPE_EPSILON;
+}
+function shapeKey(element) {
+  const widthBucket = Math.round(element.frame.w / 4) * 4;
+  const heightBucket = Math.round(element.frame.h / 4) * 4;
+  return `${element.type}:${widthBucket}x${heightBucket}`;
+}
+function detectListRows(roots, options) {
+  const minRepeatedRows = options.minRepeatedRows ?? MIN_REPEATED_ROWS;
+  const entries = flatten(roots);
+  const candidates = /* @__PURE__ */ new Map();
+  let omittedOffscreen = 0;
+  for (const entry of entries) {
+    if (!CELL_TYPES.has(entry.element.type)) continue;
+    if (isRowOffscreenFrame(entry.element.frame, options.bounds)) {
+      omittedOffscreen += 1;
+      continue;
+    }
+    const duplicate = [...candidates.entries()].find(([element]) => sameFrame(element.frame, entry.element.frame));
+    if (duplicate === void 0) candidates.set(entry.element, entry);
+  }
+  const fallbackShapes = /* @__PURE__ */ new Map();
+  for (const entry of entries) {
+    const element = entry.element;
+    if (CELL_TYPES.has(element.type) || INTERACTIVE_TYPES.has(element.type)) continue;
+    if (entry.depth === 0) continue;
+    const { frame } = element;
+    if (frame.w < options.bounds.width * MIN_ROW_WIDTH_FRACTION) continue;
+    if (frame.h < MIN_ROW_HEIGHT || frame.h > MAX_ROW_HEIGHT) continue;
+    if (isRowOffscreenFrame(frame, options.bounds)) continue;
+    if (aggregateRowLabel(element) === void 0) continue;
+    if (hasInteractiveDescendant(element)) continue;
+    if (candidates.has(element)) continue;
+    const key = shapeKey(element);
+    const group = fallbackShapes.get(key);
+    if (group === void 0) fallbackShapes.set(key, [entry]);
+    else group.push(entry);
+  }
+  let fallbackRows = 0;
+  for (const group of fallbackShapes.values()) {
+    if (group.length < minRepeatedRows) continue;
+    for (const entry of group) {
+      const duplicate = [...candidates.entries()].find(([element]) => sameFrame(element.frame, entry.element.frame));
+      if (duplicate === void 0) {
+        candidates.set(entry.element, entry);
+        fallbackRows += 1;
+      }
+    }
+  }
+  const ordered = [...candidates.keys()].sort((a, b) => a.frame.y - b.frame.y || a.frame.x - b.frame.x);
+  const groupIds = /* @__PURE__ */ new Map();
+  let nextGroupId = 0;
+  const groupOf = (element) => {
+    const key = shapeKey(element);
+    const existing = groupIds.get(key);
+    if (existing !== void 0) return existing;
+    groupIds.set(key, nextGroupId);
+    nextGroupId += 1;
+    return nextGroupId - 1;
+  };
+  const rows = ordered.map((element, index) => {
+    const label = aggregateRowLabel(element);
+    const bucket = groupOf(element);
+    const siblings = ordered.filter((other) => other !== element && shapeKey(other) === shapeKey(element)).length;
+    return {
+      index,
+      type: element.type,
+      frame: {
+        x: round2(element.frame.x),
+        y: round2(element.frame.y),
+        w: round2(element.frame.w),
+        h: round2(element.frame.h)
+      },
+      ...label === void 0 ? {} : { label },
+      counts: label === void 0 ? [] : parseCountsFromLabel(label),
+      ...siblings + 1 >= minRepeatedRows ? { group: bucket } : {}
+    };
+  });
+  const repeatedGroups = new Set(rows.filter((row) => row.group !== void 0).map((row) => row.group)).size;
+  return { rows, repeatedGroups, omittedOffscreen, fallbackRows };
+}
+function requireFraction(value, axis) {
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(`ios_sim_tap_row: ${axis} must be a fraction within 0..1, got ${String(value)}`);
+  }
+}
+function planRowTap(rows, index, fractionX, fractionY, bounds) {
+  requireFraction(fractionX, "x");
+  requireFraction(fractionY, "y");
+  if (!Number.isInteger(index) || index < 0 || index >= rows.length) {
+    throw new Error(
+      `ios_sim_tap_row: row ${index} does not exist \u2014 the current screen has ${rows.length} visible row(s). Re-run ios_sim_ui_rows and tap a row index it actually reports; never tap a remembered position.`
+    );
+  }
+  const row = rows[index];
+  if (isRowOffscreenFrame(row.frame, bounds)) {
+    throw new Error(
+      `ios_sim_tap_row: row ${index} lies off-screen \u2014 scroll it into view first, then re-run ios_sim_ui_rows so the fresh tree re-locates it.`
+    );
+  }
+  return {
+    row,
+    inRow: { x: fractionX, y: fractionY },
+    tap: {
+      x: round2(row.frame.x + fractionX * row.frame.w),
+      y: round2(row.frame.y + fractionY * row.frame.h)
+    }
+  };
+}
+function requireCountKey(row, key) {
+  const value = rowCountFor(row, key);
+  if (value === void 0) {
+    const shown = row.counts.length === 0 ? "the row label carries no counters at all" : `the row label parses to: ${row.counts.map((count) => `${count.key}=${count.value}`).join(", ")}`;
+    throw new Error(
+      `ios_sim_tap_row: cannot verify a ${JSON.stringify(key)} change \u2014 ${shown}. Re-run ios_sim_ui_rows and use one of the counter keys it actually reports; a tap on a control that cannot be identified is refused, never probed.`
+    );
+  }
+  return value;
+}
+function sanitizeCountDelta(delta) {
+  if (delta !== 1 && delta !== -1) {
+    throw new Error(`ios_sim_tap_row: expect_count.delta must be +1 or -1 (a single toggle), got ${String(delta)}`);
+  }
+  return delta;
+}
+function rowsStayedPut(before, after) {
+  const driftY = Math.abs(after.frame.y - before.frame.y);
+  const driftX = Math.abs(after.frame.x - before.frame.x);
+  return driftY <= Math.max(8, before.frame.h * 0.25) && driftX <= Math.max(8, before.frame.w * 0.25);
+}
+function verifyCountChange(before, after, key, delta) {
+  const normalized = normalizeCountKey(key);
+  const beforeValue = rowCountFor(before, normalized);
+  const afterValue = rowCountFor(after, normalized);
+  if (beforeValue === void 0) {
+    return { key: normalized, delta, after: afterValue, verified: false, changed: afterValue !== void 0, reason: "the key was absent from the before label" };
+  }
+  if (afterValue === void 0) {
+    return { key: normalized, delta, before: beforeValue, verified: false, changed: false, reason: "the key is absent from the re-read label (the row text changed)" };
+  }
+  if (!rowsStayedPut(before, after)) {
+    return { key: normalized, delta, before: beforeValue, after: afterValue, verified: false, changed: afterValue !== beforeValue, reason: "the row moved after the action, so the counters are not comparable" };
+  }
+  const moved = afterValue - beforeValue;
+  return {
+    key: normalized,
+    delta,
+    before: beforeValue,
+    after: afterValue,
+    verified: moved === delta,
+    changed: moved !== 0,
+    ...moved === delta ? {} : { reason: `the counter moved by ${moved}, not the expected ${delta > 0 ? "+" : ""}${delta}` }
+  };
+}
+
+// src/uitree.ts
+var OUTPUT_CAP_BYTES = 40 * 1024;
+var OCR_DEFAULT_MIN_CONFIDENCE = 0.3;
+var TAPPABLE_TYPES = /* @__PURE__ */ new Set([
+  "Button",
+  "Cell",
+  "Link",
+  "Switch",
+  "TextField",
+  "SearchField",
+  "TextArea",
+  "Tab",
+  "TabButton",
+  "Menu",
+  "MenuItem",
+  "MenuBarItem",
+  "Slider",
+  "Stepper",
+  "Incrementor",
+  "PickerWheel",
+  "Handle",
+  "RadioButton",
+  "CheckBox",
+  "DisclosureTriangle",
+  "PopUpButton",
+  "ComboBox",
+  "ScrollBar",
+  "Window"
+]);
+var FRAME_EPSILON = 1;
+var OCR_FALLBACK_HINT = "The accessibility tree is empty or degenerate (no labeled elements), so the app exposes little or no accessibility information \u2014 run ios_sim_find_text to OCR the screen instead.";
+function round22(value) {
+  const rounded = Math.round(value * 100) / 100;
+  return rounded === 0 ? 0 : rounded;
+}
+function roundFrame(frame) {
+  return { x: round22(frame.x), y: round22(frame.y), w: round22(frame.w), h: round22(frame.h) };
+}
+function toUiTreeNode(element) {
+  const node2 = { type: element.type, frame: roundFrame(element.frame), children: [] };
+  if (element.label !== void 0) node2.label = element.label;
+  if (element.identifier !== void 0) node2.identifier = element.identifier;
+  if (element.value !== void 0) node2.value = element.value;
+  if (element.visible !== void 0) node2.visible = element.visible;
+  if (element.enabled !== void 0) node2.enabled = element.enabled;
+  if (element.selected !== void 0) node2.selected = element.selected;
+  return node2;
+}
+function buildCompactTree(roots, maxDepth, filter) {
+  const needle = filter !== void 0 && filter.trim() !== "" ? filter.trim().toLowerCase() : void 0;
+  let count = 0;
+  const walk = (element, depth) => {
+    const selfMatches = needle === void 0 || [element.type, element.label, element.identifier].some((value) => value?.toLowerCase().includes(needle) === true);
+    const children = [];
+    if (maxDepth === void 0 || depth < maxDepth) {
+      for (const child of element.children) {
+        const compact = walk(child, depth + 1);
+        if (compact !== void 0) children.push(compact);
+      }
+    }
+    if (!selfMatches && children.length === 0) return void 0;
+    const node2 = toUiTreeNode(element);
+    node2.children = children;
+    count += 1;
+    return node2;
+  };
+  const tree = [];
+  for (const root of roots) {
+    const compact = walk(root, 0);
+    if (compact !== void 0) tree.push(compact);
+  }
+  return { tree, count };
+}
+function treeDepth(nodes) {
+  let depth = 0;
+  for (const node2 of nodes) {
+    if (node2.children.length > 0) depth = Math.max(depth, 1 + treeDepth(node2.children));
+  }
+  return depth;
+}
+function pruneDeepestLevel(nodes) {
+  const depth = treeDepth(nodes);
+  if (depth === 0) return;
+  const pruneAt = (list, level) => {
+    for (const node2 of list) {
+      if (level === depth - 1) node2.children = [];
+      else pruneAt(node2.children, level + 1);
+    }
+  };
+  pruneAt(nodes, 0);
+}
+function jsonBytes(value) {
+  return Buffer.byteLength(JSON.stringify(value), "utf8");
+}
+function capTreeToBytes(tree, capBytes = OUTPUT_CAP_BYTES) {
+  let truncated = jsonBytes(tree) > capBytes;
+  while (jsonBytes(tree) > capBytes && treeDepth(tree) > 0) pruneDeepestLevel(tree);
+  if (!truncated) truncated = jsonBytes(tree) > capBytes;
+  return { tree, truncated };
+}
+function isOffscreenFrame(frame, bounds) {
+  if (bounds.width <= 0 || bounds.height <= 0) return false;
+  return frame.x + frame.w <= 0 || frame.y + frame.h <= 0 || frame.x >= bounds.width || frame.y >= bounds.height;
+}
+function isOffscreenElement(element, bounds) {
+  return element.visible === false || isOffscreenFrame(element.frame, bounds);
+}
+function pruneOffscreenTree(tree, bounds) {
+  let omitted = 0;
+  const countAll = (node2) => 1 + node2.children.reduce((sum, child) => sum + countAll(child), 0);
+  const walk = (node2, isRoot) => {
+    if (!isRoot && isOffscreenElement(node2, bounds)) {
+      omitted += countAll(node2);
+      return void 0;
+    }
+    const children = [];
+    for (const child of node2.children) {
+      const kept2 = walk(child, false);
+      if (kept2 !== void 0) children.push(kept2);
+    }
+    node2.children = children;
+    return node2;
+  };
+  const kept = [];
+  for (const root of tree) {
+    const node2 = walk(root, true);
+    if (node2 !== void 0) kept.push(node2);
+  }
+  return { tree: kept, omitted };
+}
+function hasLabeledNode(tree) {
+  for (const node2 of tree) {
+    if (node2.type !== "Application" && node2.label !== void 0 && node2.label !== "") return true;
+    if (hasLabeledNode(node2.children)) return true;
+  }
+  return false;
+}
+function countNodes(node2) {
+  return 1 + node2.children.reduce((sum, child) => sum + countNodes(child), 0);
+}
+function screenBounds(roots) {
+  let width = 0;
+  let height = 0;
+  for (const root of roots) {
+    width = Math.max(width, root.frame.x + root.frame.w);
+    height = Math.max(height, root.frame.y + root.frame.h);
+  }
+  if (width <= 0 || height <= 0) {
+    width = roots[0]?.frame.w ?? 0;
+    height = roots[0]?.frame.h ?? 0;
+  }
+  return { width, height };
+}
+function containsFrame(outer, inner) {
+  return outer.x <= inner.x + FRAME_EPSILON && outer.y <= inner.y + FRAME_EPSILON && outer.x + outer.w >= inner.x + inner.w - FRAME_EPSILON && outer.y + outer.h >= inner.y + inner.h - FRAME_EPSILON;
+}
+function sameFrame2(a, b) {
+  return containsFrame(a, b) && containsFrame(b, a);
+}
+function buildTreeResult(roots, size, args) {
+  const built = buildCompactTree(roots, args.max_depth, args.filter);
+  const pruned = args.include_offscreen === true ? { tree: built.tree, omitted: 0 } : pruneOffscreenTree(built.tree, size);
+  const capped = capTreeToBytes(pruned.tree);
+  const hints = [];
+  if (capped.truncated) {
+    hints.push("The tree exceeded the 40 KB output cap and its deepest levels were pruned. Re-run with max_depth or filter to narrow the subtree.");
+  }
+  const filter = args.filter?.trim() ?? "";
+  if (filter !== "" && built.count === 0) {
+    hints.push(`The filter ${JSON.stringify(filter)} matched nothing. A filter miss says nothing about the app \u2014 re-run WITHOUT a filter to see what is actually there.`);
+  } else if (!hasLabeledNode(capped.tree)) {
+    if (args.max_depth !== void 0) {
+      hints.push(`max_depth ${args.max_depth} shows only container chrome \u2014 the labeled controls live deeper; re-run without max_depth.`);
+    } else if (capped.truncated) {
+      hints.push("The tree was pruned to fit the output cap, so the surviving levels carry no labels \u2014 narrow it with a filter before concluding anything about the app.");
+    } else if (pruned.omitted > 0) {
+      hints.push(`The visible tree carries no labels \u2014 every labeled element is among the ${pruned.omitted} off-screen element(s) excluded from the output. Scroll, or re-run with include_offscreen=true.`);
+    } else {
+      hints.push(OCR_FALLBACK_HINT);
+    }
+  }
+  return {
+    size: { width: round22(size.width), height: round22(size.height) },
+    nodeCount: capped.tree.reduce((count, node2) => count + countNodes(node2), 0),
+    omittedOffscreen: pruned.omitted,
+    ...capped.truncated ? { truncated: true } : {},
+    ...hints.length > 0 ? { hint: hints.join(" ") } : {},
+    tree: capped.tree
+  };
+}
+function flattenElements(roots) {
+  const flat = [];
+  const walk = (element, depth) => {
+    const entry = { type: element.type, frame: element.frame, depth };
+    if (element.label !== void 0) entry.label = element.label;
+    if (element.identifier !== void 0) entry.identifier = element.identifier;
+    if (element.value !== void 0) entry.value = element.value;
+    if (element.visible !== void 0) entry.visible = element.visible;
+    if (element.enabled !== void 0) entry.enabled = element.enabled;
+    flat.push(entry);
+    for (const child of element.children) walk(child, depth + 1);
+  };
+  for (const root of roots) walk(root, 0);
+  return flat;
+}
+function describeCandidate(element, index) {
+  const label = element.label === void 0 ? "" : ` label=${JSON.stringify(element.label)}`;
+  const identifier = element.identifier === void 0 ? "" : ` identifier=${JSON.stringify(element.identifier)}`;
+  const flags = `${element.visible === false ? " visible=false" : ""}${element.enabled === false ? " enabled=false" : ""}`;
+  const frame = roundFrame(element.frame);
+  return `${index}) type=${element.type}${label}${identifier}${flags} frame={x:${frame.x},y:${frame.y},w:${frame.w},h:${frame.h}}`;
+}
+function tapGateFailure(representatives, bounds, wanted, allowOffscreen) {
+  const offscreen = representatives.filter((element) => isOffscreenElement(element, bounds));
+  const disabled = representatives.filter((element) => element.enabled === false);
+  const hint = allowOffscreen ? " (allow_offscreen=true bypasses only the off-screen check \u2014 disabled stays refused)" : "";
+  if (offscreen.length > 0 && disabled.length > 0) {
+    throw new Error(`${wanted} matched ${representatives.length} element(s) that are off-screen or disabled \u2014 scroll the off-screen ones into view first and enable the disabled ones${hint}`);
+  }
+  if (offscreen.length > 0) {
+    const noun2 = representatives.length === 1 ? "matched an off-screen element" : `matched ${representatives.length} off-screen elements`;
+    throw new Error(`${wanted} ${noun2} \u2014 scroll it into view first, then retry; pass allow_offscreen=true to tap the recorded coordinates anyway${hint}`);
+  }
+  const noun = representatives.length === 1 ? "matched a disabled element" : `matched ${representatives.length} disabled elements`;
+  throw new Error(`${wanted} ${noun} \u2014 the control is disabled, so a tap would do nothing; enable it first${hint}`);
+}
+function resolveTapTarget(roots, selector, options = {}) {
+  const identifier = selector.identifier?.trim() || void 0;
+  const label = selector.label?.trim() || void 0;
+  if (identifier === void 0 && label === void 0) {
+    throw new Error("an element selector is required: identifier and/or label");
+  }
+  const wantedFields = [];
+  if (identifier !== void 0) wantedFields.push(["identifier", identifier]);
+  if (label !== void 0) wantedFields.push(["label", label]);
+  const flat = flattenElements(roots);
+  const matches = (mode) => flat.filter((element) => wantedFields.every(([field, value]) => {
+    const actual = element[field];
+    if (actual === void 0) return false;
+    return mode === "exact" ? actual === value : actual.toLowerCase().includes(value.toLowerCase());
+  }));
+  let candidates = matches("exact");
+  let matchedBy = "exact";
+  if (candidates.length === 0) {
+    candidates = matches("contains");
+    matchedBy = "contains";
+  }
+  if (candidates.length === 0) {
+    const wanted2 = wantedFields.map(([field, value]) => `${field}=${value}`).join(" and ");
+    throw new Error(`no accessibility element matches ${wanted2} on the current screen \u2014 run ios_sim_ui_tree to inspect the visible elements (a control inside a feed row is not an element of its own: use ios_sim_ui_rows)`);
+  }
+  const unique = candidates.filter((element, index) => !candidates.slice(0, index).some((other) => sameFrame2(element.frame, other.frame) && element.type === other.type));
+  const chains = [];
+  for (const element of unique) {
+    const chain = chains.find((group) => group.some((other) => !sameFrame2(element.frame, other.frame) && (containsFrame(element.frame, other.frame) || containsFrame(other.frame, element.frame))));
+    if (chain === void 0) chains.push([element]);
+    else chain.push(element);
+  }
+  const representatives = chains.map((chain) => {
+    const tappable = chain.filter((element) => TAPPABLE_TYPES.has(element.type));
+    if (tappable.length > 0) {
+      return tappable.find((element) => !tappable.some((other) => other !== element && containsFrame(other.frame, element.frame) && !sameFrame2(other.frame, element.frame))) ?? tappable[0];
+    }
+    return chain.reduce((deepest, element) => element.depth > deepest.depth ? element : deepest, chain[0]);
+  });
+  const wanted = wantedFields.map(([field, value]) => `${field} ${JSON.stringify(value)}`).join(" and ");
+  const bounds = screenBounds(roots);
+  const allowOffscreen = options.allowOffscreen === true;
+  const viable = representatives.filter((element) => element.enabled !== false && (allowOffscreen || !isOffscreenElement(element, bounds)));
+  if (viable.length === 0) tapGateFailure(representatives, bounds, wanted, allowOffscreen);
+  if (viable.length > 1) {
+    const skipped = representatives.length - viable.length;
+    const shown = representatives.slice(0, 8);
+    const more = representatives.length - shown.length;
+    throw new Error(`${representatives.length} elements match ${wanted}${skipped > 0 ? ` (${skipped} skipped: off-screen or disabled)` : ""} \u2014 use a more specific selector (exact label, identifier, or ios_sim_ui_tree to disambiguate). Candidates:
+` + shown.map((element, index) => `  ${describeCandidate(element, index + 1)}`).join("\n") + (more > 0 ? `
+  \u2026and ${more} more` : ""));
+  }
+  return { element: viable[0], matchedBy };
+}
+function frameCenter(frame) {
+  const round1 = (value) => {
+    const rounded = Math.round(value * 10) / 10;
+    return rounded === 0 ? 0 : rounded;
+  };
+  return { x: round1(frame.x + frame.w / 2), y: round1(frame.y + frame.h / 2) };
+}
+function sanitizeMinConfidence(value) {
+  if (value === void 0) return OCR_DEFAULT_MIN_CONFIDENCE;
+  if (!Number.isFinite(value) || value < 0 || value > 1) throw new Error("min_confidence must be a number within 0..1");
+  return value;
+}
+function tapExpectation(args) {
+  const expectText = args.expect_text?.trim() || void 0;
+  const expectGone = args.expect_gone?.trim() || void 0;
+  if (expectText !== void 0 && expectGone !== void 0) {
+    throw new Error("pass expect_text OR expect_gone, not both \u2014 they assert opposite outcomes");
+  }
+  if (expectText !== void 0) return { text: expectText, mode: "appear" };
+  if (expectGone !== void 0) return { text: expectGone, mode: "disappear" };
+  return void 0;
+}
+function ocrTextPresent(items, text) {
+  const needle = text.toLowerCase();
+  return items.find((item) => item.text === text) ?? items.find((item) => item.text.toLowerCase().includes(needle));
+}
+async function pollForText(read, text, mode, timeoutMs, intervalMs, minConfidence, signal) {
+  const startedAt = Date.now();
+  const deadline = startedAt + timeoutMs;
+  for (; ; ) {
+    const present = ocrTextPresent(filterOcrItems(await read(), text, minConfidence), text);
+    const matched = mode === "appear" ? present !== void 0 : present === void 0;
+    const waitedMs = Date.now() - startedAt;
+    if (matched) return mode === "appear" && present !== void 0 ? { matched, waitedMs, item: present } : { matched, waitedMs };
+    if (signal?.aborted === true || Date.now() >= deadline) return { matched: false, waitedMs };
+    await new Promise((resolve4) => setTimeout(resolve4, Math.min(intervalMs, Math.max(0, deadline - Date.now()))));
+  }
+}
+function resolveOcrTextTarget(items, query, unfiltered = items, minConfidence = 0) {
+  const matches = (pool2, mode) => mode === "exact" ? pool2.filter((item) => item.text === query) : pool2.filter((item) => item.text.toLowerCase().includes(query.toLowerCase()));
+  let pool = matches(items, "exact");
+  let matchedBy = "exact";
+  if (pool.length === 0) {
+    pool = matches(items, "contains");
+    matchedBy = "contains";
+  }
+  if (pool.length === 0) {
+    const nearMiss = [...matches(unfiltered, "exact"), ...matches(unfiltered, "contains")].filter((item) => item.confidence < minConfidence).sort((a, b) => b.confidence - a.confidence)[0];
+    if (nearMiss !== void 0) {
+      throw new Error(`${JSON.stringify(nearMiss.text)} IS on the current screen, but its OCR confidence ${nearMiss.confidence.toFixed(2)} is below min_confidence ${minConfidence.toFixed(2)} \u2014 pass a lower min_confidence (CJK labels commonly read 0.3\u20130.6) or tap it by identifier with ios_sim_tap_element`);
+    }
+    throw new Error(`no recognized text matches ${JSON.stringify(query)} on the current screen \u2014 run ios_sim_find_text to see everything the OCR read`);
+  }
+  const unique = pool.filter((item, index) => !pool.slice(0, index).some((other) => other.text === item.text && other.rect.x === item.rect.x && other.rect.y === item.rect.y && other.rect.w === item.rect.w && other.rect.h === item.rect.h));
+  if (unique.length > 1) {
+    const shown = unique.slice(0, 8);
+    const more = unique.length - shown.length;
+    throw new Error(`${unique.length} OCR matches for ${JSON.stringify(query)} \u2014 use a more specific query, or raise min_confidence to drop weak matches. Candidates:
+` + shown.map((item, index) => {
+      const rect = roundFrame(item.rect);
+      return `  ${index + 1}) text=${JSON.stringify(item.text)} confidence=${round22(item.confidence)} rect={x:${rect.x},y:${rect.y},w:${rect.w},h:${rect.h}}`;
+    }).join("\n") + (more > 0 ? `
+  \u2026and ${more} more` : ""));
+  }
+  return { item: unique[0], matchedBy };
+}
+function capList(items, capBytes = OUTPUT_CAP_BYTES) {
+  if (jsonBytes(items) <= capBytes) return { items: [...items], truncated: false };
+  const kept = [...items];
+  while (jsonBytes(kept) > capBytes && kept.length > 1) kept.pop();
+  return { items: kept, truncated: true };
+}
+
+// src/tools/ui.ts
+var SCREENSHOT_PARAM = external_exports.boolean().optional().describe("Return a screenshot of the result as an image (default true); pass false when chaining actions");
+var EXPECT_TEXT_PARAM = external_exports.string().optional().describe("Text that should APPEAR after the tap: screen OCR is polled for up to ~4 s and reported as expected.matched");
+var EXPECT_GONE_PARAM = external_exports.string().optional().describe("Text that should DISAPPEAR after the tap (mutually exclusive with expect_text); expected.matched = it is gone");
+var MIN_CONFIDENCE_PARAM = external_exports.number().min(0).max(1).optional().describe('Minimum OCR confidence 0..1 (default 0.3 \u2014 CJK labels commonly read 0.3\u20130.6, so do not raise it "to be safe")');
+var IMAGE_LANDSCAPE_UNSYNCED_WARNING = 'the screen looks landscape, but the live stream does not report a landscape orientation, so the tap went out without the landscape mapping and may miss \u2014 send ios_sim_interact {action: "rotate", orientation: "landscape_left" or "landscape_right"} matching the screen, then retry';
+function registerUiTools(server, deps) {
+  const pointSizes = /* @__PURE__ */ new Map();
+  const bootedTarget = async (tool, udid) => {
+    assertMac(deps.platform);
+    const device = await resolveTargetDevice(deps, udid);
+    requireBooted(tool, device);
+    return device;
+  };
+  const readTree = async (device, signal) => {
+    try {
+      return await deps.axe.describeUi(device.udid, signal);
+    } catch (error62) {
+      const message = error62 instanceof Error ? error62.message : String(error62);
+      throw new Error(`could not read the accessibility tree of ${device.name} (${device.udid}): ${message}`);
+    }
+  };
+  const pointSizeOf = async (udid, pixelSize, signal) => {
+    const key = `${udid}:${pixelSize.width}x${pixelSize.height}`;
+    const cached2 = pointSizes.get(key);
+    if (cached2 !== void 0) return { size: cached2 };
+    try {
+      if (deps.axe.resolve().available) {
+        const size = screenBounds(await deps.axe.describeUi(udid, signal));
+        if (size.width > 0 && size.height > 0) {
+          pointSizes.set(key, size);
+          return { size };
+        }
+      }
+    } catch {
+    }
+    return {
+      size: pixelSize,
+      note: "the simulator point size could not be resolved (the AXe helper is not installed yet, or describe-ui failed) \u2014 size and rects are in image pixels instead of points"
+    };
+  };
+  const readOcr = async (device, signal) => {
+    const capture = await deps.screenshots.capture(device.udid, signal);
+    if (capture.width === void 0 || capture.height === void 0 || capture.width <= 0 || capture.height <= 0) {
+      throw new Error(`could not determine the screenshot pixel size of ${device.name} (unreadable PNG header)`);
+    }
+    const pixelSize = { width: capture.width, height: capture.height };
+    const point = await pointSizeOf(device.udid, pixelSize, signal);
+    let items;
+    try {
+      items = await deps.ocr.recognize(capture.path, signal);
+    } catch (error62) {
+      throw new Error(`OCR failed for ${device.name}: ${error62 instanceof Error ? error62.message : String(error62)}`);
+    }
+    return { items, pixelSize, pointSize: point.size, path: capture.path, ...point.note === void 0 ? {} : { note: point.note } };
+  };
+  const pointsItem = (item, snapshot) => ({
+    text: item.text,
+    confidence: round22(item.confidence),
+    rect: roundFrame(pixelRectToPoints(item.rect, snapshot.pixelSize, snapshot.pointSize))
+  });
+  const runExpectation = async (device, expectation, signal) => {
+    if (expectation === void 0) return void 0;
+    const outcome = await pollForText(
+      async () => (await readOcr(device, signal)).items,
+      expectation.text,
+      expectation.mode,
+      TAP_EXPECTATION_BUDGET_MS,
+      deps.pollIntervalMs,
+      0,
+      signal
+    );
+    return { ...expectation, matched: outcome.matched, waitedMs: outcome.waitedMs };
+  };
+  const withScreenshot = async (device, body, screenshot, signal) => {
+    if (screenshot === false) return jsonResult(body);
+    const capture = await deps.screenshots.capture(device.udid, signal);
+    const image = await deps.screenshots.toModelImage(capture);
+    return jsonResult({
+      ...body,
+      screenshot: {
+        path: capture.path,
+        ...capture.width === void 0 ? {} : { width: capture.width, height: capture.height },
+        image: { width: image.width, height: image.height }
+      }
+    }, image);
+  };
+  server.registerTool("ios_sim_ui_tree", {
+    title: "Read the accessibility tree",
+    description: "Dump the accessibility element tree of the frontmost app on a booted simulator (AXe helper): type, label, identifier, value, enabled / selected flags and frames in device points, plus the screen size in points. Use it to find elements by identity and tap them with ios_sim_tap_element instead of guessing coordinates; selected=true marks the chosen option of a list or picker (reported only when the app says so). Off-screen elements are EXCLUDED by default and counted as omittedOffscreen (include_offscreen:true lists them). Output is capped at ~40 KB: past that the deepest levels are pruned and truncated:true is set \u2014 narrow with filter or max_depth. An unlabeled read comes with a hint naming its cause (filter miss, output cap, off-screen exclusion); only a full unfiltered read with no labels points to ios_sim_find_text. Feed rows aggregate their controls into one element \u2014 use ios_sim_ui_rows for those. AXe is used from PATH or Homebrew, else downloaded (pinned release) on first use.",
+    inputSchema: {
+      udid: UDID_PARAM,
+      max_depth: external_exports.number().int().min(0).optional().describe("Maximum nesting depth to include (0 = app roots only)"),
+      filter: external_exports.string().optional().describe("Case-insensitive substring over label, identifier and type; matches and their ancestors are kept"),
+      include_offscreen: external_exports.boolean().optional().describe("Include off-screen elements (default false)")
+    },
+    annotations: { readOnlyHint: true }
+  }, async (args, extra) => runTool("ios_sim_ui_tree", async () => {
+    const device = await bootedTarget("ios_sim_ui_tree", args.udid);
+    const roots = await readTree(device, extra.signal);
+    const result = buildTreeResult(roots, screenBounds(roots), args);
+    const { tree, ...summary } = result;
+    return jsonResult({ ...summary, device: deviceSummary(device), tree });
+  }));
+  server.registerTool("ios_sim_tap_element", {
+    title: "Tap an accessibility element",
+    description: "Tap an element of a booted simulator by identity \u2014 identifier and/or label, exact match first, then case-insensitive substring \u2014 through the AXe helper. Nested duplicates (a row mirroring its label onto child text) collapse to one target; several distinct matches fail with every candidate listed. Off-screen or disabled matches are refused with what to do instead (allow_offscreen:true taps an off-screen element anyway; disabled always refuses). The tap lands on the element center; a screenshot of the effect comes back as an image. To CONFIRM the tap worked pass expect_text (text that should appear) or expect_gone (text that should disappear) \u2014 screen OCR is polled and reported as expected.matched.",
+    inputSchema: {
+      udid: UDID_PARAM,
+      identifier: external_exports.string().optional().describe('Accessibility identifier, e.g. "com.apple.settings.general"'),
+      label: external_exports.string().optional().describe('Accessibility label, e.g. "General"'),
+      allow_offscreen: external_exports.boolean().optional().describe("Tap an off-screen match at its recorded coordinates (default false)"),
+      expect_text: EXPECT_TEXT_PARAM,
+      expect_gone: EXPECT_GONE_PARAM,
+      screenshot: SCREENSHOT_PARAM
+    }
+  }, async (args, extra) => runTool("ios_sim_tap_element", async () => {
+    const expectation = tapExpectation(args);
+    const device = await bootedTarget("ios_sim_tap_element", args.udid);
+    const roots = await readTree(device, extra.signal);
+    const { element, matchedBy } = resolveTapTarget(roots, args, { allowOffscreen: args.allow_offscreen === true });
+    const center = frameCenter(element.frame);
+    try {
+      await deps.axe.tap(device.udid, center.x, center.y, extra.signal);
+    } catch (error62) {
+      throw new Error(`AXe tap at (${center.x}, ${center.y}) failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
+    }
+    await sleep3(deps.settleMs);
+    const expected = await runExpectation(device, expectation, extra.signal);
+    return withScreenshot(device, {
+      action: "tap-element",
+      element: {
+        type: element.type,
+        ...element.label === void 0 ? {} : { label: element.label },
+        ...element.identifier === void 0 ? {} : { identifier: element.identifier },
+        ...element.value === void 0 ? {} : { value: element.value },
+        frame: roundFrame(element.frame)
+      },
+      matchedBy,
+      center,
+      device: deviceSummary(device),
+      ...expected === void 0 ? {} : { expected }
+    }, args.screenshot, extra.signal);
+  }));
+  server.registerTool("ios_sim_find_text", {
+    title: "Find text on screen (OCR)",
+    description: "OCR the CURRENT screen of a booted simulator with the plugin's Vision helper (accurate, zh-Hans + en-US; compiled with swiftc on first use). Returns items [{text, confidence, rect}] with rects in device points (origin top-left), confidence-sorted and capped at ~40 KB. The quickest way to learn what text is on screen and where; also covers what the accessibility tree cannot see (games, canvas, text baked into images, badge counts). Icon-only controls carry no text \u2014 use ios_sim_ui_tree for those.",
+    inputSchema: {
+      udid: UDID_PARAM,
+      query: external_exports.string().optional().describe('Case-insensitive substring filter on the recognized text, e.g. "\u652F\u4ED8" or "Payment"'),
+      min_confidence: MIN_CONFIDENCE_PARAM
+    },
+    annotations: { readOnlyHint: true }
+  }, async (args, extra) => runTool("ios_sim_find_text", async () => {
+    const minConfidence = sanitizeMinConfidence(args.min_confidence);
+    const device = await bootedTarget("ios_sim_find_text", args.udid);
+    const snapshot = await readOcr(device, extra.signal);
+    const items = filterOcrItems(snapshot.items, args.query, minConfidence).map((item) => pointsItem(item, snapshot));
+    const capped = capList(items);
+    return jsonResult({
+      device: deviceSummary(device),
+      size: { width: round22(snapshot.pointSize.width), height: round22(snapshot.pointSize.height) },
+      count: capped.items.length,
+      items: capped.items,
+      ...capped.truncated ? { truncated: true, hint: "The item list exceeded the 40 KB output cap and the lowest-confidence items were dropped. Narrow with query or raise min_confidence." } : {},
+      ...snapshot.note === void 0 ? {} : { note: snapshot.note }
+    });
+  }));
+  server.registerTool("ios_sim_wait_for", {
+    title: "Wait for text to appear or disappear",
+    description: 'Poll screen OCR of a booted simulator until text appears (mode "appear", default) or disappears (mode "disappear"), or timeout_ms runs out. A timeout is a normal matched:false answer, not an error. Use it to wait for a load, an animation or a network round trip in one call instead of a find_text loop. On an appear match, item carries the text, confidence and rect in device points.',
+    inputSchema: {
+      udid: UDID_PARAM,
+      text: external_exports.string().trim().min(1).describe("Text to wait for (exact first, then case-insensitive substring)"),
+      mode: external_exports.enum(["appear", "disappear"]).optional(),
+      timeout_ms: external_exports.number().int().min(0).max(6e4).optional().describe("How long to poll, ms (default 8000, max 60000)"),
+      min_confidence: MIN_CONFIDENCE_PARAM
+    },
+    annotations: { readOnlyHint: true }
+  }, async (args, extra) => runTool("ios_sim_wait_for", async () => {
+    const minConfidence = sanitizeMinConfidence(args.min_confidence);
+    const mode = args.mode ?? "appear";
+    const device = await bootedTarget("ios_sim_wait_for", args.udid);
+    let last;
+    const outcome = await pollForText(async () => {
+      last = await readOcr(device, extra.signal);
+      return last.items;
+    }, args.text, mode, args.timeout_ms ?? 8e3, deps.pollIntervalMs, minConfidence, extra.signal);
+    return jsonResult({
+      device: deviceSummary(device),
+      matched: outcome.matched,
+      waitedMs: outcome.waitedMs,
+      text: args.text,
+      mode,
+      ...outcome.item !== void 0 && last !== void 0 ? { item: pointsItem(outcome.item, last) } : {}
+    });
+  }));
+  server.registerTool("ios_sim_tap_text", {
+    title: "Tap text on screen (OCR)",
+    description: "OCR the CURRENT screen and tap the center of the matching text, with ios_sim_tap_element's rules: exact match first, then case-insensitive substring; several distinct matches fail with the candidates listed, and a match that only exists below min_confidence is named. The tap goes through the live serve-sim stream (started when needed; never boots a device) and the effect screenshot comes back as an image. To CONFIRM the tap worked pass expect_text or expect_gone \u2014 screen OCR is polled and reported as expected.matched. Prefer this or ios_sim_tap_element over raw ios_sim_interact coordinates.",
+    inputSchema: {
+      udid: UDID_PARAM,
+      query: external_exports.string().trim().min(1).describe('Text to tap, e.g. "\u7EE7\u7EED" or "Continue"'),
+      min_confidence: MIN_CONFIDENCE_PARAM,
+      expect_text: EXPECT_TEXT_PARAM,
+      expect_gone: EXPECT_GONE_PARAM,
+      screenshot: SCREENSHOT_PARAM
+    }
+  }, async (args, extra) => runTool("ios_sim_tap_text", async () => {
+    const minConfidence = sanitizeMinConfidence(args.min_confidence);
+    const expectation = tapExpectation(args);
+    assertMac(deps.platform);
+    assertStreamAvailable(deps.host);
+    const device = await resolveTargetDevice(deps, args.udid);
+    requireBooted("ios_sim_tap_text", device);
+    const info = await ensureStreamFor(deps.host, device);
+    const snapshot = await readOcr(device, extra.signal);
+    const { item, matchedBy } = resolveOcrTextTarget(
+      filterOcrItems(snapshot.items, args.query, minConfidence),
+      args.query,
+      snapshot.items,
+      minConfidence
+    );
+    const normalized = pixelRectToNormalizedCenter(item.rect, snapshot.pixelSize);
+    const tapArgs = {
+      action: "tap",
+      x: Math.round(normalized.x * 1e4) / 1e4,
+      y: Math.round(normalized.y * 1e4) / 1e4
+    };
+    let framebufferArgs = tapArgs;
+    let warning;
+    if (snapshot.pixelSize.width > snapshot.pixelSize.height) {
+      const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? "portrait";
+      if (isLandscape(orientation)) framebufferArgs = toFramebufferArgs(orientation, tapArgs);
+      else warning = IMAGE_LANDSCAPE_UNSYNCED_WARNING;
+    }
+    try {
+      await performSimInteract(deps.host, device.udid, framebufferArgs, interactControlArgs(framebufferArgs));
+    } catch (error62) {
+      throw new Error(`serve-sim tap failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
+    }
+    await sleep3(deps.settleMs);
+    const expected = await runExpectation(device, expectation, extra.signal);
+    const pointRect = pixelRectToPoints(item.rect, snapshot.pixelSize, snapshot.pointSize);
+    return withScreenshot(device, {
+      action: "tap-text",
+      text: item.text,
+      confidence: round22(item.confidence),
+      matchedBy,
+      rect: roundFrame(pointRect),
+      center: frameCenter(pointRect),
+      tap: { x: tapArgs.x, y: tapArgs.y },
+      device: deviceSummary(device),
+      ...expected === void 0 ? {} : { expected },
+      ...warning === void 0 ? {} : { warning },
+      ...snapshot.note === void 0 ? {} : { note: snapshot.note }
+    }, args.screenshot, extra.signal);
+  }));
+  const outputRow = (row) => ({
+    index: row.index,
+    type: row.type,
+    frame: row.frame,
+    ...row.label === void 0 ? {} : { label: row.label },
+    counts: row.counts.map((count) => ({ key: count.key, value: round22(count.value) })),
+    ...row.group === void 0 ? {} : { group: row.group }
+  });
+  server.registerTool("ios_sim_ui_rows", {
+    title: "Read list rows",
+    description: `Read the visible rows of a list or feed on a booted simulator (AXe): each row's 0-based index, frame in points, aggregated label, and the counters parsed from that label (number + classifier, e.g. "57 \u56DE\u590D" \u2192 \u56DE\u590D=57, \u4E2D\u6587 or English). Feed apps fold one whole item into a single cell whose label holds the summary and its counters, with NO child buttons to match \u2014 so reach controls inside a row with ios_sim_tap_row. Counter keys round-trip: pass one exactly as listed to ios_sim_tap_row.expect_count. Off-screen rows are excluded and counted as omittedOffscreen; with no rows, hint says why.`,
+    inputSchema: { udid: UDID_PARAM },
+    annotations: { readOnlyHint: true }
+  }, async (args, extra) => runTool("ios_sim_ui_rows", async () => {
+    const device = await bootedTarget("ios_sim_ui_rows", args.udid);
+    const roots = await readTree(device, extra.signal);
+    const size = screenBounds(roots);
+    const detected = detectListRows(roots, { bounds: size });
+    const hint = detected.rows.length > 0 ? void 0 : hasLabeledNode(roots) ? "No repeated rows detected: this screen may not be a list, or its rows use a shape this pass does not recognize. Its labeled elements are in ios_sim_ui_tree \u2014 drive those with ios_sim_tap_element." : OCR_FALLBACK_HINT;
+    return jsonResult({
+      device: deviceSummary(device),
+      size: { width: round22(size.width), height: round22(size.height) },
+      rowCount: detected.rows.length,
+      repeatedGroups: detected.repeatedGroups,
+      omittedOffscreen: detected.omittedOffscreen,
+      rows: detected.rows.map(outputRow),
+      ...hint === void 0 ? {} : { hint },
+      note: "Counters are parsed heuristically from row labels; pass a key exactly as listed to ios_sim_tap_row.expect_count."
+    });
+  }));
+  server.registerTool("ios_sim_tap_row", {
+    title: "Tap inside a list row",
+    description: "Tap at a RELATIVE position inside one visible list row of a booted simulator (AXe): row is the 0-based index ios_sim_ui_rows reports, x/y are fractions of that row's frame (0 = left/top, 1 = right/bottom, default 0.5; a right-side action button is often near x=0.9). The row is re-located in a FRESH tree read and an out-of-range index fails instead of clamping. With expect_count {key, delta: +1 or -1} the row is re-read after the tap and countCheck.verified says whether that counter moved by exactly delta; a key the row does not carry is refused BEFORE tapping \u2014 never probe an unidentified control. The effect screenshot comes back as an image.",
+    inputSchema: {
+      udid: UDID_PARAM,
+      row: external_exports.number().int().min(0).describe("0-based row index exactly as ios_sim_ui_rows reported it"),
+      x: external_exports.number().min(0).max(1).optional().describe("Horizontal fraction of the row frame (default 0.5)"),
+      y: external_exports.number().min(0).max(1).optional().describe("Vertical fraction of the row frame (default 0.5)"),
+      expect_count: external_exports.object({
+        key: external_exports.string().trim().min(1).describe("Counter key exactly as ios_sim_ui_rows listed it"),
+        delta: external_exports.number().int().describe("Expected change: +1 or -1")
+      }).optional(),
+      screenshot: SCREENSHOT_PARAM
+    }
+  }, async (args, extra) => runTool("ios_sim_tap_row", async () => {
+    const expectation = args.expect_count === void 0 ? void 0 : { key: args.expect_count.key, delta: sanitizeCountDelta(args.expect_count.delta) };
+    const device = await bootedTarget("ios_sim_tap_row", args.udid);
+    const roots = await readTree(device, extra.signal);
+    const bounds = screenBounds(roots);
+    const plan = planRowTap(detectListRows(roots, { bounds }).rows, args.row, args.x ?? 0.5, args.y ?? 0.5, bounds);
+    const before = expectation === void 0 ? void 0 : requireCountKey(plan.row, expectation.key);
+    try {
+      await deps.axe.tap(device.udid, plan.tap.x, plan.tap.y, extra.signal);
+    } catch (error62) {
+      throw new Error(`AXe tap at (${plan.tap.x}, ${plan.tap.y}) failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
+    }
+    let countCheck;
+    if (expectation !== void 0) {
+      await sleep3(deps.rowSettleMs);
+      const afterRoots = await readTree(device, extra.signal);
+      const afterRow = detectListRows(afterRoots, { bounds: screenBounds(afterRoots) }).rows.find((row) => row.index === plan.row.index);
+      countCheck = afterRow === void 0 ? { key: expectation.key, delta: expectation.delta, before, verified: false, changed: false, reason: "the re-read tree no longer contains the row (the screen changed)" } : verifyCountChange(plan.row, afterRow, expectation.key, expectation.delta);
+    } else {
+      await sleep3(deps.settleMs);
+    }
+    return withScreenshot(device, {
+      action: "tap-row",
+      row: outputRow(plan.row),
+      inRow: plan.inRow,
+      tap: plan.tap,
+      device: deviceSummary(device),
+      ...countCheck === void 0 ? { note: "No expect_count was given, so nothing was verified \u2014 re-run ios_sim_ui_rows and compare the counters if it matters." } : { countCheck }
+    }, args.screenshot, extra.signal);
+  }));
+}
+
+// src/uitree-backend.ts
+import { execFile as execFile7 } from "node:child_process";
+import { createHash as createHash2 } from "node:crypto";
+import { chmodSync, existsSync as existsSync4, mkdirSync as mkdirSync4, readFileSync as readFileSync4, rmSync as rmSync2, statSync as statSync6, writeFileSync as writeFileSync2 } from "node:fs";
+import { delimiter as delimiter3, join as join12 } from "node:path";
+var AXE_VERSION = "1.8.0";
+var AXE_RELEASE_URL = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz";
+var AXE_RELEASE_SHA256 = "7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834";
+var AXE_INSTALL_HINT = 'install the AXe accessibility CLI with "brew install cameroncooke/axe/axe", or let the plugin download the pinned release into its cache (needs network access to github.com); set IOS_SIM_AXE_BIN to an existing axe executable to override resolution';
+var AXE_DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1e3;
+var AXE_EXEC_TIMEOUT_MS = 6e4;
+var AXE_MAX_BUFFER_BYTES = 32 * 1024 * 1024;
+var DIGEST_FILE2 = ".ios-simulator-axe.sha256";
+var BREW_BIN_CANDIDATES = ["/opt/homebrew/bin/axe", "/usr/local/bin/axe"];
+function isExecutableFile3(path) {
+  try {
+    const info = statSync6(path);
+    return info.isFile() && (info.mode & 73) !== 0;
+  } catch {
+    return false;
+  }
+}
+function findOnPath3(command, env) {
+  for (const dir of (env.PATH ?? "").split(delimiter3)) {
+    if (dir === "") continue;
+    const candidate = join12(dir, command);
+    if (isExecutableFile3(candidate)) return candidate;
+  }
+  return void 0;
+}
+function sha256File2(path) {
+  return createHash2("sha256").update(readFileSync4(path)).digest("hex");
+}
+function run2(command, args, timeoutMs, signal) {
+  return new Promise((resolve4, reject) => {
+    execFile7(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
+      if (error62 !== null) {
+        reject(Object.assign(error62, { stdout, stderr }));
+        return;
+      }
+      resolve4({ stdout, stderr });
+    });
+  });
+}
+var AxeHelper = class {
+  #cacheDir;
+  #platform;
+  #env;
+  #downloading;
+  constructor(options) {
+    this.#cacheDir = options.cacheDir;
+    this.#platform = options.platform ?? process.platform;
+    this.#env = options.env ?? process.env;
+  }
+  #installDir() {
+    return join12(this.#cacheDir, AXE_VERSION);
+  }
+  #validCached() {
+    const binary = join12(this.#installDir(), "axe");
+    if (!isExecutableFile3(binary)) return void 0;
+    try {
+      const expected = readFileSync4(join12(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
+      if (!/^[0-9a-f]{64}$/u.test(expected)) return void 0;
+      return sha256File2(binary) === expected ? binary : void 0;
+    } catch {
+      return void 0;
+    }
+  }
+  /** Resolve without network access: env override → PATH → Homebrew → cache. */
+  resolve() {
+    if (this.#platform !== "darwin") {
+      return { available: false, source: "unavailable", reason: "AXe only runs on macOS with Xcode" };
+    }
+    const explicit = this.#env.IOS_SIM_AXE_BIN?.trim();
+    if (explicit !== void 0 && explicit !== "") {
+      if (isExecutableFile3(explicit)) return { available: true, source: "path", command: explicit };
+      return {
+        available: false,
+        source: "unavailable",
+        reason: `IOS_SIM_AXE_BIN points at a missing or non-executable file: ${explicit}`
+      };
+    }
+    const onPath = findOnPath3("axe", this.#env) ?? BREW_BIN_CANDIDATES.find(isExecutableFile3);
+    if (onPath !== void 0) return { available: true, source: "path", command: onPath };
+    const cached2 = this.#validCached();
+    if (cached2 !== void 0) return { available: true, source: "cache", command: cached2 };
+    if (existsSync4(this.#installDir())) {
+      return {
+        available: false,
+        source: "unavailable",
+        reason: `the cached axe install under ${this.#installDir()} failed integrity verification`
+      };
+    }
+    return { available: false, source: "unavailable", reason: "no axe binary found on PATH, in Homebrew, or in the plugin cache" };
+  }
+  /** Resolve, downloading the pinned release when absent. Never throws. */
+  async ensure() {
+    const resolved = this.resolve();
+    if (resolved.available || this.#platform !== "darwin") return resolved;
+    if (this.#env.IOS_SIM_AXE_OFFLINE === "1") return resolved;
+    if (this.#env.IOS_SIM_AXE_BIN?.trim()) return resolved;
+    if (this.#downloading === void 0) {
+      this.#downloading = this.#download().finally(() => {
+        this.#downloading = void 0;
+      });
+    }
+    try {
+      await this.#downloading;
+    } catch (error62) {
+      return {
+        available: false,
+        source: "unavailable",
+        reason: `axe download failed (${error62 instanceof Error ? error62.message : String(error62)})`
+      };
+    }
+    return this.resolve();
+  }
+  /**
+   * curl the pinned tarball (system curl, so proxy variables apply), verify
+   * its SHA-256, extract it, sanity-check `axe --version`, record the digest.
+   */
+  async #download() {
+    const installDir = this.#installDir();
+    mkdirSync4(this.#cacheDir, { recursive: true });
+    const archive = join12(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
+    try {
+      try {
+        await run2("curl", [
+          "-fsSL",
+          "--retry",
+          "3",
+          "--retry-delay",
+          "1",
+          "--connect-timeout",
+          "30",
+          "--max-time",
+          "240",
+          "-o",
+          archive,
+          AXE_RELEASE_URL
+        ], AXE_DOWNLOAD_TIMEOUT_MS);
+      } catch (error62) {
+        throw new Error(`curl download failed (${error62 instanceof Error && error62.message.includes("ETIMEDOUT") ? "timeout" : "HTTP or network error"})`);
+      }
+      const digest = sha256File2(archive);
+      if (digest !== AXE_RELEASE_SHA256) {
+        throw new Error(`download integrity check failed: expected sha256 ${AXE_RELEASE_SHA256} but got ${digest}`);
+      }
+      rmSync2(installDir, { recursive: true, force: true });
+      mkdirSync4(installDir, { recursive: true });
+      await run2("tar", ["-xzf", archive, "-C", installDir], AXE_DOWNLOAD_TIMEOUT_MS);
+      const binary = join12(installDir, "axe");
+      if (!isExecutableFile3(binary)) chmodSync(binary, 493);
+      const version2 = await run2(binary, ["--version"], AXE_EXEC_TIMEOUT_MS);
+      if (!version2.stdout.includes(AXE_VERSION)) {
+        throw new Error(`downloaded axe reports an unexpected version: ${version2.stdout.trim()}`);
+      }
+      writeFileSync2(join12(installDir, DIGEST_FILE2), `${sha256File2(binary)}
+`, "utf8");
+      return binary;
+    } finally {
+      rmSync2(archive, { force: true });
+    }
+  }
+  async #require() {
+    const binary = await this.ensure();
+    if (!binary.available || binary.command === void 0) {
+      throw new Error(`the AXe accessibility helper is unavailable${binary.reason === void 0 ? "" : ` (${binary.reason})`}; ${AXE_INSTALL_HINT}`);
+    }
+    return { ...binary, command: binary.command };
+  }
+  /**
+   * Run one axe subcommand. A non-zero exit raises with the tool output (axe
+   * prints its errors on stdout), as does an "Error:" prefix on stdout.
+   */
+  async exec(args, signal) {
+    const binary = await this.#require();
+    let stdout;
+    try {
+      stdout = (await run2(binary.command, args, AXE_EXEC_TIMEOUT_MS, signal)).stdout;
+    } catch (error62) {
+      const { stdout: out, stderr } = error62;
+      const detail = out?.trim() || stderr?.trim() || "";
+      throw new Error(`axe ${args.join(" ")} failed${detail === "" ? "" : `: ${detail}`}`);
+    }
+    if (stdout.trimStart().startsWith("Error:")) throw new Error(`axe ${args.join(" ")} failed: ${stdout.trim()}`);
+    return stdout;
+  }
+  /** The sanitized accessibility tree of a booted simulator. */
+  async describeUi(udid, signal) {
+    return parseDescribeUi(await this.exec(["describe-ui", "--udid", udid], signal));
+  }
+  /** HID tap at device-point coordinates. */
+  async tap(udid, x, y, signal) {
+    await this.exec(["tap", "-x", String(x), "-y", String(y), "--udid", udid], signal);
+  }
+};
+function finiteNumber(value) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return void 0;
+  return value === 0 ? 0 : value;
+}
+function optionalString(value) {
+  if (typeof value !== "string") return void 0;
+  const trimmed = value.trim();
+  return trimmed === "" ? void 0 : trimmed;
+}
+function sanitizeAxeNode(raw) {
+  const rawFrame = raw.frame;
+  const children = [];
+  if (Array.isArray(raw.children)) {
+    for (const child of raw.children) {
+      if (typeof child === "object" && child !== null) children.push(sanitizeAxeNode(child));
+    }
+  }
+  const node2 = {
+    type: typeof raw.type === "string" && raw.type !== "" ? raw.type : "Element",
+    frame: {
+      x: finiteNumber(rawFrame?.x) ?? 0,
+      y: finiteNumber(rawFrame?.y) ?? 0,
+      w: finiteNumber(rawFrame?.width ?? rawFrame?.w) ?? 0,
+      h: finiteNumber(rawFrame?.height ?? rawFrame?.h) ?? 0
+    },
+    children
+  };
+  const label = optionalString(raw.AXLabel ?? raw.label);
+  const identifier = optionalString(raw.AXUniqueId ?? raw.identifier);
+  const value = optionalString(raw.AXValue ?? raw.value);
+  if (label !== void 0) node2.label = label;
+  if (identifier !== void 0) node2.identifier = identifier;
+  if (value !== void 0) node2.value = value;
+  if (typeof raw.enabled === "boolean") node2.enabled = raw.enabled;
+  if (typeof raw.visible === "boolean") node2.visible = raw.visible;
+  if (typeof raw.selected === "boolean") node2.selected = raw.selected;
+  if (raw.secure === true) node2.secure = true;
+  else if (raw.subrole === "AXSecureTextField" || raw.role === "AXSecureTextField") node2.secure = true;
+  else if (typeof raw.type === "string" && raw.type.includes("Secure")) node2.secure = true;
+  if (typeof raw.focused === "boolean") node2.focused = raw.focused;
+  const pid = finiteNumber(raw.pid);
+  if (pid !== void 0 && Number.isSafeInteger(pid) && pid >= 0) node2.pid = pid;
+  return node2;
+}
+function parseDescribeUi(stdout) {
+  let parsed;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch (error62) {
+    throw new Error(`axe describe-ui returned non-JSON output: ${error62 instanceof Error ? error62.message : String(error62)}`);
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error("axe describe-ui returned an unexpected payload (expected a JSON array of application roots)");
+  }
+  const roots = [];
+  for (const entry of parsed) {
+    if (typeof entry === "object" && entry !== null) roots.push(sanitizeAxeNode(entry));
+  }
+  if (roots.length === 0) throw new Error("axe describe-ui returned an empty element tree");
+  return roots;
+}
+
 // src/server.ts
 async function main() {
   const root = cacheRoot();
   const host = new SimHostController();
   host.startKeepAlive();
   const stream = new SimStreamSource(host);
-  const screenshots = new ScreenshotStore({ dir: join11(root, "screenshots"), takeScreenshot });
-  const recorder = new Recorder({ dir: join11(root, "recordings") });
+  const screenshots = new ScreenshotStore({ dir: join13(root, "screenshots"), takeScreenshot });
+  const recorder = new Recorder({ dir: join13(root, "recordings") });
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
-    staticDir: join11(dirname4(fileURLToPath2(import.meta.url)), "panel"),
+    staticDir: join13(dirname5(fileURLToPath3(import.meta.url)), "panel"),
     preferredPort: preferredPanelPort(),
     host,
     stream,
@@ -44059,14 +45515,19 @@ async function main() {
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
+    axe: new AxeHelper({ cacheDir: join13(root, "bin", "axe") }),
+    ocr: new OcrHelper({ cacheDir: join13(root, "bin", "ocr") }),
     cacheRoot: root,
     platform: process.platform,
-    settleMs: INTERACT_SETTLE_MS
+    settleMs: INTERACT_SETTLE_MS,
+    pollIntervalMs: OCR_POLL_INTERVAL_MS,
+    rowSettleMs: ROW_VERIFY_SETTLE_MS
   };
   const server = new McpServer({ name: PLUGIN_NAME, version: SERVER_VERSION });
   registerCoreTools(server, deps);
   registerAppTools(server, deps);
   registerEnvTools(server, deps);
+  registerUiTools(server, deps);
   let shuttingDown = false;
   const logFailure = (step) => (error62) => {
     process.stderr.write(`${PLUGIN_NAME}: shutdown: ${step} failed: ${error62 instanceof Error ? error62.message : String(error62)}
