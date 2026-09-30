@@ -272,7 +272,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | 面板 | DSH 内嵌（侧栏停靠、对话卡片等） | 独立的本地网页，可在 Code 标签页或任意浏览器打开 |
 | 面板安全 | HMAC 签名 + 回环检查 | 独占 origin，沿用回环 / Host / Origin 检查 |
 | 新增工具 | — | `open_url`、`push`、`location`、`appearance`、`record` |
-| 真机 / OCR / 日志等 | 已支持 | 分期移植中，见 [路线图](#路线图) |
+| UI 自动化（无障碍树 / OCR）、日志调试、SwiftUI 预览、USB 真机 | 已支持 | **尚未支持**，计划分期移植，见 [路线图](#路线图) |
 
 移植的文件在第一行注明了来源（`Ported from dsh-ios (MIT) @ d9a9731 — src/<file>`），完整清单见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
@@ -351,13 +351,16 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 
 ## 路线图
 
+> [!IMPORTANT]
+> 目前只完成了第 ① 期。第 ② – ⑤ 期**都还没有开始**，下表列出的工具现在都不能用，仅供了解后续规划。
+
 | 期 | 内容 | 状态 |
 |---|---|---|
-| ① 基础 | 插件骨架、MCP 服务、serve-sim 视频流与触控、实时面板、16 个工具、Skill | ✅ 当前版本 |
-| ② UI 自动化 | AXe 无障碍树 + Vision OCR：`ui_tree`、`tap_element`、`find_text`、`tap_text`、`wait_for` 等 | 🚧 计划中 |
-| ③ 日志与调试 | `logs`、`processes`、`backtrace`、`leaks`、`app_info` | 🗓️ 计划中 |
-| ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | 🗓️ 计划中 |
-| ⑤ USB 真机 | WebDriverAgent + usbmux + devicectl，同一面板驱动真实 iPhone | 🗓️ 计划中 |
+| ① 基础 | 插件骨架、MCP 服务、serve-sim 视频流与触控、实时面板、16 个工具、Skill | ✅ 已完成（当前版本） |
+| ② UI 自动化 | AXe 无障碍树 + Vision OCR：`ui_tree`、`tap_element`、`find_text`、`tap_text`、`wait_for` 等 | ⏳ 未开始 |
+| ③ 日志与调试 | `logs`、`processes`、`backtrace`、`leaks`、`app_info` | ⏳ 未开始 |
+| ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | ⏳ 未开始 |
+| ⑤ USB 真机 | WebDriverAgent + usbmux + devicectl，同一面板驱动真实 iPhone | ⏳ 未开始 |
 
 ---
 
