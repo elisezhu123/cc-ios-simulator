@@ -73,7 +73,7 @@ export async function toolHarness(
     ocr: fakeOcr().api,
     devtools: fakeDevtools().api,
     realDevices: fakeRealDevices().api,
-    wda: fakeWda({ notRunning: 'test: WebDriverAgent is not running' }).api,
+    wda: fakeWda({ notRunning: 'WebDriverAgent is not running on the device — run ios_real_start_wda first' }).api,
     preview: {
       start: async () => { throw new Error('test: no preview controller') },
       status: () => ({ running: false }),

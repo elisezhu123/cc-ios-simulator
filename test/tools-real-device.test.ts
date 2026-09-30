@@ -90,10 +90,12 @@ test('ios_sim_processes and ios_sim_app_info read the iPhone through devicectl',
 
 test('simulator-only tools name the tools that work on a real device; an unknown udid keeps the simulator error', async () => {
   const h = await realHarness()
-  for (const [tool, args] of [['ios_sim_screenshot', {}], ['ios_sim_ui_tree', {}], ['ios_sim_backtrace', { pid: 1 }]] as const) {
+  for (const [tool, args] of [['ios_sim_backtrace', { pid: 1 }], ['ios_sim_uninstall_app', { bundleId: 'com.example.MyApp' }]] as const) {
     const result = await h.call(tool, { udid: 'Test iPhone', ...args })
-    assert.match(textOf(result), /connected iPhone\/iPad.*ios_sim_list_apps, ios_sim_launch_app/)
+    assert.match(textOf(result), /connected iPhone\/iPad.*ios_sim_list_apps, ios_sim_launch_app.*ios_real_start_wda.*ios_sim_screenshot/)
   }
+  // Screen and UI tools reach the iPhone through WebDriverAgent, which is not running here.
+  assert.match(textOf(await h.call('ios_sim_ui_tree', { udid: 'Test iPhone' })), /^ios_sim_ui_tree: .*run ios_real_start_wda first/)
   assert.match(textOf(await h.call('ios_sim_list_apps', { udid: 'Nope' })), /unknown simulator "Nope"/)
   await h.close()
 })

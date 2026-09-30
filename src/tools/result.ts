@@ -10,7 +10,8 @@ import type { ModelImage } from '../screenshot.js'
 import type { SimulatorDevice } from '../simctl.js'
 
 export const UDID_PARAM = z.string().optional()
-  .describe('Simulator udid or device name. Default: the streamed device, else the newest-runtime booted iPhone.')
+  .describe('Simulator udid or device name (tools that support it also take a connected iPhone/iPad from '
+    + 'ios_sim_devices.realDevices). Default: the streamed device, else the newest-runtime booted iPhone.')
 
 export interface DeviceSummary {
   udid: string
