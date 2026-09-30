@@ -6,6 +6,7 @@
 
 import type { InstalledApp } from './app-list.js'
 import type { BuildRunOptions, BuildRunResult, ProjectTarget } from './build-run.js'
+import type { RealDeviceApi } from './devicectl.js'
 import type { DevToolsApi } from './devtools.js'
 import type { OcrItem } from './ocr-backend.js'
 import type { PreviewStatus } from './preview-host.js'
@@ -98,6 +99,8 @@ export interface ToolDeps {
   /** simctl / lldb / leaks / sample / log runner for the log and debug tools. */
   devtools: DevToolsApi
   preview: PreviewApi
+  /** Connected iPhones and iPads (devicectl). */
+  realDevices: RealDeviceApi
   cacheRoot: string
   platform: NodeJS.Platform
   /** Delay before the effect screenshot of ios_sim_interact and the tap tools, ms. */

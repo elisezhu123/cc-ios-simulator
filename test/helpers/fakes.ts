@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { PassThrough } from 'node:stream'
 import type { ServeSimBinary, SimHostController, SimHostStatus, SimStreamInfo } from '../../src/sim-host.js'
 import type { AxeApi, OcrApi, SimctlApi } from '../../src/deps.js'
+import type { RealApp, RealDevice, RealDeviceApi, RealProcess } from '../../src/devicectl.js'
 import type { DebugToolName, DevToolsApi, RunOptions, RunOutcome } from '../../src/devtools.js'
 import type { OcrItem } from '../../src/ocr-backend.js'
 import type { AxeElement } from '../../src/uitree-backend.js'
@@ -343,4 +344,46 @@ export function fakeDevtools(options: {
     },
   }
   return { api, simctlArgs: simctlCalls, runs, resumeChecks }
+}
+
+export const IPHONE: RealDevice = {
+  udid: '11111111-2222-3333-4444-555555555555',
+  hardwareUdid: '00008150-000A1B2C3D4E5F6G',
+  name: 'Test iPhone',
+  osVersion: '26.0',
+  model: 'iPhone 17 Pro',
+  state: 'available (paired)',
+  connection: 'wired',
+  pairingState: 'paired',
+  developerMode: 'enabled',
+}
+
+/** A devicectl stand-in over fixed devices, apps and processes; records every mutation. */
+export function fakeRealDevices(options: { devices?: RealDevice[]; apps?: RealApp[]; processes?: RealProcess[]; failApps?: string } = {}): {
+  api: RealDeviceApi
+  calls: string[]
+} {
+  const devices = options.devices ?? []
+  const calls: string[] = []
+  const find = (reference: string): RealDevice | undefined => devices.find(device =>
+    device.udid === reference.trim() || device.hardwareUdid === reference.trim() || device.name.toLowerCase() === reference.trim().toLowerCase())
+  const api: RealDeviceApi = {
+    listDevices: async () => devices.map(device => ({ ...device })),
+    getDevice: async reference => {
+      const device = find(reference)
+      if (device === undefined) throw new Error(`no connected iPhone or iPad matches "${reference}"`)
+      return { ...device }
+    },
+    matches: async reference => find(reference) !== undefined,
+    listApps: async () => {
+      if (options.failApps !== undefined) throw new Error(options.failApps)
+      return structuredClone(options.apps ?? [])
+    },
+    getApp: async (_udid, bundleId) => (options.apps ?? []).find(app => app.bundleId === bundleId),
+    listProcesses: async () => structuredClone(options.processes ?? []),
+    launchApp: async (udid, bundleId) => { calls.push(`launch ${udid} ${bundleId}`); return { pid: 777 } },
+    terminateApp: async (udid, bundleId) => { calls.push(`terminate ${udid} ${bundleId}`); return { pids: [777] } },
+    installApp: async (udid, appPath) => { calls.push(`install ${udid} ${appPath}`) },
+  }
+  return { api, calls }
 }

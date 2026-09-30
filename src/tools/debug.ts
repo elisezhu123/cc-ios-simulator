@@ -30,7 +30,7 @@ import {
   type ThreadSection,
 } from '../devtools.js'
 import type { SimulatorDevice } from '../simctl.js'
-import { assertMac, requireBooted, resolveTargetDevice } from '../target.js'
+import { assertMac, realDeviceSummary, requireBooted, resolveTargetDevice, resolveToolTarget } from '../target.js'
 import { deviceSummary, jsonResult, runTool, UDID_PARAM } from './result.js'
 
 const MAX_LOG_LINES = 300
@@ -190,16 +190,28 @@ export function registerDebugTools(server: McpServer, deps: ToolDeps): void {
   server.registerTool('ios_sim_processes', {
     title: 'List running app processes',
     description: 'List the running app processes of a booted simulator (pid, process name, bundle id) from the '
-      + 'simulator\'s own launchd. The pids are host pids and feed ios_sim_backtrace and ios_sim_leaks. filter '
-      + 'is a case-insensitive substring over the name and bundle id.',
+      + 'simulator\'s own launchd. The pids are host pids and feed ios_sim_backtrace and ios_sim_leaks. On a connected '
+      + 'iPhone/iPad (pass its udid or name) it lists every running process through devicectl; those pids live on the '
+      + 'device, and only processes inside an installed app carry a bundle id. filter is a case-insensitive substring '
+      + 'over the name and bundle id.',
     inputSchema: { udid: UDID_PARAM, filter: z.string().optional() },
     annotations: { readOnlyHint: true },
   }, async (args, extra) => runTool('ios_sim_processes', async () => {
-    const device = await bootedTarget('ios_sim_processes', args.udid)
+    assertMac(deps.platform)
+    const target = await resolveToolTarget(deps, args.udid)
+    if (target.kind === 'simulator') requireBooted('ios_sim_processes', target.device)
     const needle = args.filter?.trim().toLowerCase() ?? ''
-    const processes = (await listProcesses(device, extra.signal)).filter(entry => needle === ''
+    const all: SimAppProcess[] = target.kind === 'real'
+      ? await deps.realDevices.listProcesses(target.device.udid, extra.signal)
+      : await listProcesses(target.device, extra.signal)
+    const processes = all.filter(entry => needle === ''
       || entry.name.toLowerCase().includes(needle) || entry.bundleId?.toLowerCase().includes(needle) === true)
-    return jsonResult({ device: deviceSummary(device), count: processes.length, processes: processes.map(processSummary) })
+    return jsonResult({
+      device: target.kind === 'real' ? realDeviceSummary(target.device) : deviceSummary(target.device),
+      count: processes.length,
+      processes: processes.map(processSummary),
+      ...(target.kind === 'real' ? { note: 'these pids live on the device: ios_sim_backtrace and ios_sim_leaks work on simulators only' } : {}),
+    })
   }))
 
   server.registerTool('ios_sim_backtrace', {
@@ -363,16 +375,35 @@ export function registerDebugTools(server: McpServer, deps: ToolDeps): void {
     title: 'Show an installed app\'s paths and Info.plist',
     description: 'Installed-app facts for one bundle id on a booted simulator: the .app path, the writable data '
       + 'container (Documents, Library, …), and Info.plist values (display name, executable, version), via simctl '
-      + 'appinfo with a get_app_container fallback. A bundle id that is not installed returns installed:false '
-      + 'with a note — list the apps instead of guessing ids.',
+      + 'appinfo with a get_app_container fallback. On a connected iPhone/iPad (pass its udid or name) it reports the '
+      + 'on-device .app path, name, version and whether it is a system app (containers are not exposed there). A '
+      + 'bundle id that is not installed returns installed:false with a note — list the apps instead of guessing ids.',
     inputSchema: {
       udid: UDID_PARAM,
       bundle_id: z.string().trim().min(1).describe('Bundle id of the installed app, e.g. com.apple.Preferences'),
     },
     annotations: { readOnlyHint: true },
   }, async (args, extra) => runTool('ios_sim_app_info', async () => {
-    const device = await bootedTarget('ios_sim_app_info', args.udid)
+    assertMac(deps.platform)
+    const target = await resolveToolTarget(deps, args.udid)
     const bundleId = args.bundle_id
+    if (target.kind === 'real') {
+      const summary = realDeviceSummary(target.device)
+      const app = await deps.realDevices.getApp(target.device.udid, bundleId, extra.signal)
+      if (app === undefined) return jsonResult({ device: summary, bundleId, installed: false, note: `${bundleId} is not installed on ${target.device.name} — ${APP_LIST_HINT}` })
+      return jsonResult({
+        device: summary,
+        bundleId,
+        installed: true,
+        ...(app.path === undefined ? {} : { appPath: app.path }),
+        name: app.name,
+        ...(app.bundleVersion === undefined ? {} : { version: app.bundleVersion }),
+        ...(app.version === undefined ? {} : { shortVersion: app.version }),
+        applicationType: app.defaultApp === true || (app.appType ?? '').toLowerCase() === 'system' ? 'System' : 'User',
+      })
+    }
+    requireBooted('ios_sim_app_info', target.device)
+    const device = target.device
     const container = async (kind: 'app' | 'data'): Promise<string | undefined> => {
       try {
         const path = (await deps.devtools.simctl(['get_app_container', device.udid, bundleId, kind], extra.signal)).trim()

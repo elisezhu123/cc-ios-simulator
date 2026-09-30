@@ -21,6 +21,7 @@ import {
   SERVER_VERSION,
 } from './config.js'
 import type { ToolDeps } from './deps.js'
+import { Devicectl, devicectlRunner } from './devicectl.js'
 import { DevTools } from './devtools.js'
 import { OcrHelper } from './ocr-backend.js'
 import { PreviewHostController, xcrunToolchain } from './preview-host.js'
@@ -74,6 +75,7 @@ async function main(): Promise<void> {
     ocr: new OcrHelper({ cacheDir: join(root, 'bin', 'ocr') }),
     devtools,
     preview,
+    realDevices: new Devicectl({ run: devicectlRunner(options => devtools.run(options)) }),
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,

@@ -10,7 +10,7 @@ import { Recorder } from '../../src/recorder.js'
 import { ScreenshotStore } from '../../src/screenshot.js'
 import type { SimulatorDevice } from '../../src/simctl.js'
 import { SimStreamSource } from '../../src/stream-source.js'
-import { fakeAxe, fakeDevtools, fakeHost, fakeOcr, fakeRecordSpawn, fakeSimctl, type FakeHostOptions } from './fakes.js'
+import { fakeAxe, fakeDevtools, fakeHost, fakeOcr, fakeRealDevices, fakeRecordSpawn, fakeSimctl, type FakeHostOptions } from './fakes.js'
 
 export interface Harness {
   deps: ToolDeps
@@ -71,6 +71,7 @@ export async function toolHarness(
     axe: fakeAxe().api,
     ocr: fakeOcr().api,
     devtools: fakeDevtools().api,
+    realDevices: fakeRealDevices().api,
     preview: {
       start: async () => { throw new Error('test: no preview controller') },
       status: () => ({ running: false }),
