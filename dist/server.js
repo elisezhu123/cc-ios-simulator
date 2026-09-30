@@ -10889,7 +10889,7 @@ var require_websocket_server = __commonJS({
 });
 
 // src/server.ts
-import { dirname as dirname6, join as join20 } from "node:path";
+import { dirname as dirname6, join as join21 } from "node:path";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
@@ -41486,10 +41486,108 @@ var Devicectl = class {
   }
 };
 
+// src/annotations.ts
+import { mkdirSync, readdirSync as readdirSync2, readFileSync as readFileSync2, statSync as statSync2, unlinkSync, writeFileSync } from "node:fs";
+import { join as join5 } from "node:path";
+var FILE_PATTERN = /^annotation-(\d+)\.png$/u;
+var PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+var MAX_ANNOTATION_BYTES = 24 * 1024 * 1024;
+function isAnnotationFileName(name) {
+  return FILE_PATTERN.test(name);
+}
+function pngSize(png) {
+  if (png.length < 24 || png.readUInt32BE(12) !== 1229472850) return void 0;
+  return { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
+}
+var AnnotationStore = class {
+  dir;
+  #keep;
+  #next;
+  constructor(options) {
+    this.dir = options.dir;
+    this.#keep = options.keep ?? 30;
+  }
+  /** Store one annotated PNG (throws on anything that is not a PNG, or too large). */
+  save(png, device) {
+    if (png.length > MAX_ANNOTATION_BYTES) throw new Error(`the annotated image is larger than ${MAX_ANNOTATION_BYTES / 1024 / 1024} MB`);
+    if (png.length < PNG_SIGNATURE.length || !png.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+      throw new Error("the annotated image is not a PNG");
+    }
+    mkdirSync(this.dir, { recursive: true });
+    this.#next ??= Math.max(0, ...this.#indexes().map((index2) => index2 + 1));
+    const index = this.#next;
+    this.#next += 1;
+    const id = `annotation-${index}`;
+    const path = join5(this.dir, `${id}.png`);
+    writeFileSync(path, png);
+    const size = pngSize(png);
+    const record3 = {
+      id,
+      path,
+      bytes: png.length,
+      ...size === void 0 ? {} : size,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      ...device === void 0 ? {} : { device },
+      seen: false
+    };
+    writeFileSync(join5(this.dir, `${id}.json`), JSON.stringify(record3));
+    this.#prune();
+    return record3;
+  }
+  /** Newest first. */
+  list() {
+    return this.#indexes().sort((a, b) => b - a).map((index) => this.#read(index)).filter((record3) => record3 !== void 0);
+  }
+  /** Mark records as returned to Claude. */
+  markSeen(ids) {
+    for (const record3 of this.list()) {
+      if (!ids.includes(record3.id) || record3.seen) continue;
+      writeFileSync(join5(this.dir, `${record3.id}.json`), JSON.stringify({ ...record3, seen: true }));
+    }
+  }
+  unseenCount() {
+    return this.list().filter((record3) => !record3.seen).length;
+  }
+  #indexes() {
+    let names;
+    try {
+      names = readdirSync2(this.dir);
+    } catch {
+      return [];
+    }
+    return names.map((name) => FILE_PATTERN.exec(name)?.[1]).filter((index) => index !== void 0).map(Number);
+  }
+  #read(index) {
+    const id = `annotation-${index}`;
+    const path = join5(this.dir, `${id}.png`);
+    try {
+      const record3 = JSON.parse(readFileSync2(join5(this.dir, `${id}.json`), "utf8"));
+      return { ...record3, id, path };
+    } catch {
+      try {
+        const stat = statSync2(path);
+        return { id, path, bytes: stat.size, createdAt: stat.mtime.toISOString(), seen: false };
+      } catch {
+        return void 0;
+      }
+    }
+  }
+  #prune() {
+    for (const index of this.#indexes().sort((a, b) => b - a).slice(this.#keep)) {
+      for (const suffix of [".png", ".json"]) {
+        try {
+          unlinkSync(join5(this.dir, `annotation-${index}${suffix}`));
+        } catch {
+        }
+      }
+    }
+  }
+};
+
 // src/devtools.ts
 import { execFile as execFile3, execFileSync, spawn as spawn2 } from "node:child_process";
-import { statSync as statSync2 } from "node:fs";
-import { delimiter, join as join5 } from "node:path";
+import { statSync as statSync3 } from "node:fs";
+import { delimiter, join as join6 } from "node:path";
 var MAX_CHILD_CAPTURE_BYTES = 2 * 1024 * 1024;
 var KILL_GRACE_MS = 2e3;
 var RESUME_POLL_MS = 300;
@@ -41643,9 +41741,9 @@ function defaultProcessStat(pid) {
 function findOnPath(command, env) {
   for (const dir of (env.PATH ?? "").split(delimiter)) {
     if (dir === "") continue;
-    const candidate = join5(dir, command);
+    const candidate = join6(dir, command);
     try {
-      const info = statSync2(candidate);
+      const info = statSync3(candidate);
       if (info.isFile() && (info.mode & 73) !== 0) return candidate;
     } catch {
     }
@@ -41815,7 +41913,7 @@ import { spawn as spawn4 } from "node:child_process";
 import { existsSync as existsSync4 } from "node:fs";
 import { connect, createServer as createServer3 } from "node:net";
 import { homedir as homedir3 } from "node:os";
-import { delimiter as delimiter3, join as join9 } from "node:path";
+import { delimiter as delimiter3, join as join10 } from "node:path";
 
 // src/usbmux.ts
 import { existsSync as existsSync2 } from "node:fs";
@@ -42159,9 +42257,9 @@ async function createUsbmuxForward(options) {
 import { request as httpRequest2 } from "node:http";
 
 // src/stream-source.ts
-import { readFileSync as readFileSync3, unlinkSync } from "node:fs";
+import { readFileSync as readFileSync4, unlinkSync as unlinkSync2 } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join7 } from "node:path";
+import { join as join8 } from "node:path";
 
 // src/device-actions.ts
 import { execFile as execFile4 } from "node:child_process";
@@ -42281,11 +42379,11 @@ import {
   execFile as execFile5,
   spawn as spawn3
 } from "node:child_process";
-import { readFileSync as readFileSync2, statSync as statSync3 } from "node:fs";
+import { readFileSync as readFileSync3, statSync as statSync4 } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
 import { createServer as createServer2 } from "node:net";
-import { delimiter as delimiter2, dirname as dirname2, join as join6 } from "node:path";
+import { delimiter as delimiter2, dirname as dirname2, join as join7 } from "node:path";
 import { fileURLToPath } from "node:url";
 var SERVE_SIM_PACKAGE = "serve-sim";
 var STREAM_PORT_RANGE_START = 3181;
@@ -42309,7 +42407,7 @@ function sleep2(milliseconds) {
 }
 function isExecutableFile(path) {
   try {
-    const info = statSync3(path);
+    const info = statSync4(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
@@ -42317,7 +42415,7 @@ function isExecutableFile(path) {
 }
 function isFile(path) {
   try {
-    return statSync3(path).isFile();
+    return statSync4(path).isFile();
   } catch {
     return false;
   }
@@ -42325,7 +42423,7 @@ function isFile(path) {
 function findOnPath2(command) {
   for (const dir of (process.env.PATH ?? "").split(delimiter2)) {
     if (dir === "") continue;
-    const candidate = join6(dir, command);
+    const candidate = join7(dir, command);
     if (isExecutableFile(candidate)) return candidate;
   }
   return void 0;
@@ -42337,7 +42435,7 @@ function resolvePackageManifest(packageName) {
   }
   let current = dirname2(fileURLToPath(import.meta.url));
   for (; ; ) {
-    const candidate = join6(current, "node_modules", packageName, "package.json");
+    const candidate = join7(current, "node_modules", packageName, "package.json");
     if (isFile(candidate)) return candidate;
     const parent = dirname2(current);
     if (parent === current) return void 0;
@@ -42348,7 +42446,7 @@ function tryResolvePackageBin() {
   const manifestPath = resolvePackageManifest(SERVE_SIM_PACKAGE);
   if (manifestPath === void 0) return void 0;
   try {
-    const manifest = JSON.parse(readFileSync2(manifestPath, "utf8"));
+    const manifest = JSON.parse(readFileSync3(manifestPath, "utf8"));
     const bin = manifest.bin;
     let binPath;
     if (typeof bin === "string") binPath = bin;
@@ -42357,7 +42455,7 @@ function tryResolvePackageBin() {
       if (typeof candidate === "string") binPath = candidate;
     }
     if (binPath === void 0) return void 0;
-    const resolved = join6(dirname2(manifestPath), binPath);
+    const resolved = join7(dirname2(manifestPath), binPath);
     return isExecutableFile(resolved) ? resolved : void 0;
   } catch {
     return void 0;
@@ -43149,17 +43247,17 @@ var SimStreamSource = class {
     ),
     screenshot: async () => {
       const udid = this.#requireDevice();
-      const path = join7(tmpdir2(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
+      const path = join8(tmpdir2(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
       try {
         await takeScreenshot(udid, path);
-        const pngBase64 = readFileSync3(path).toString("base64");
+        const pngBase64 = readFileSync4(path).toString("base64");
         const size = pngDimensionsFromBase64(pngBase64);
         return { pngBase64, ...size === void 0 ? {} : size };
       } catch (error62) {
         throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage4(error62)}`);
       } finally {
         try {
-          unlinkSync(path);
+          unlinkSync2(path);
         } catch {
         }
       }
@@ -43632,7 +43730,7 @@ import { execFile as execFile6 } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync as existsSync3 } from "node:fs";
 import { chmod, lstat, mkdir, readdir, readFile as readFile3, rename, rm, writeFile } from "node:fs/promises";
-import { join as join8, relative, resolve as resolve2 } from "node:path";
+import { join as join9, relative, resolve as resolve2 } from "node:path";
 function parseSigningIdentities(stdout) {
   const identities = [];
   for (const match of stdout.matchAll(/^\s*\d+\)\s+([0-9A-Fa-f]{40})\s+"(Apple Development(?:[^"]*))"/gmu)) {
@@ -43709,7 +43807,7 @@ async function resolveSigningTeam(options) {
     "json",
     "-o",
     "-",
-    join8(options.home, "Library", "Preferences", "com.apple.dt.Xcode.plist")
+    join9(options.home, "Library", "Preferences", "com.apple.dt.Xcode.plist")
   ], options.signal).then(parseXcodeTeams, () => []);
   const identities = await run("security", ["find-identity", "-v", "-p", "codesigning"], options.signal).then(parseSigningIdentities, () => []);
   return chooseSigningTeam({ xcodeTeams, identities });
@@ -43738,8 +43836,8 @@ async function copyTree(source, destination) {
   await mkdir(destination, { recursive: true });
   for (const entry of await readdir(source, { withFileTypes: true })) {
     if (SKIPPED.has(entry.name)) continue;
-    const from = join8(source, entry.name);
-    const to = join8(destination, entry.name);
+    const from = join9(source, entry.name);
+    const to = join9(destination, entry.name);
     const info = await lstat(from);
     if (info.isSymbolicLink()) throw new Error(`symbolic links are not allowed in the WDA checkout: ${relative(source, from)}`);
     if (info.isDirectory()) await copyTree(from, to);
@@ -43754,7 +43852,7 @@ async function treeDigest(root) {
   const walk = async (dir) => {
     for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
       if (SKIPPED.has(entry.name) || entry.name === MANIFEST) continue;
-      const path = join8(dir, entry.name);
+      const path = join9(dir, entry.name);
       const info = await lstat(path);
       if (info.isSymbolicLink()) throw new Error(`symbolic links are not allowed in the WDA checkout: ${relative(root, path)}`);
       if (info.isDirectory()) {
@@ -43770,14 +43868,14 @@ async function treeDigest(root) {
 }
 async function stageWdaSource(sourceDir, stateDir, patches = WDA_SAFETY_PATCHES) {
   const source = resolve2(sourceDir);
-  if (!existsSync3(join8(source, "WebDriverAgent.xcodeproj"))) {
+  if (!existsSync3(join9(source, "WebDriverAgent.xcodeproj"))) {
     throw new Error(`no WebDriverAgent checkout at ${source} \u2014 clone it there first: git clone https://github.com/appium/WebDriverAgent.git "${source}" (or set IOS_SIM_WDA_DIR to an existing checkout)`);
   }
   const sourceDigest = await treeDigest(source);
   const patchDigest = createHash("sha256").update(JSON.stringify(patches)).digest("hex");
-  const staged = join8(resolve2(stateDir), `wda-${sourceDigest.slice(0, 12)}-${patchDigest.slice(0, 12)}`);
+  const staged = join9(resolve2(stateDir), `wda-${sourceDigest.slice(0, 12)}-${patchDigest.slice(0, 12)}`);
   try {
-    const manifest = JSON.parse(await readFile3(join8(staged, MANIFEST), "utf8"));
+    const manifest = JSON.parse(await readFile3(join9(staged, MANIFEST), "utf8"));
     if (manifest.stagedDigest === await treeDigest(staged)) return staged;
   } catch {
   }
@@ -43785,7 +43883,7 @@ async function stageWdaSource(sourceDir, stateDir, patches = WDA_SAFETY_PATCHES)
   try {
     await copyTree(source, temporary);
     for (const patch of patches) {
-      const file2 = join8(temporary, ...patch.file.split("/"));
+      const file2 = join9(temporary, ...patch.file.split("/"));
       const text = await readFile3(file2, "utf8").catch(() => {
         throw new Error(`the WDA checkout has no ${patch.file} \u2014 this WebDriverAgent version is not supported (safety patch ${patch.id})`);
       });
@@ -43795,7 +43893,7 @@ async function stageWdaSource(sourceDir, stateDir, patches = WDA_SAFETY_PATCHES)
       }
       await writeFile(file2, text.replace(patch.oldText, patch.newText), "utf8");
     }
-    await writeFile(join8(temporary, MANIFEST), JSON.stringify({ sourceDir: source, patches: patches.map((patch) => patch.id), stagedDigest: await treeDigest(temporary) }, null, 2));
+    await writeFile(join9(temporary, MANIFEST), JSON.stringify({ sourceDir: source, patches: patches.map((patch) => patch.id), stagedDigest: await treeDigest(temporary) }, null, 2));
     await rm(staged, { recursive: true, force: true });
     await rename(temporary, staged);
     return staged;
@@ -44065,7 +44163,7 @@ function hardwareUdidOf(device) {
 }
 function findOnPath3(command) {
   for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
-    if (dir !== "" && existsSync4(join9(dir, command))) return join9(dir, command);
+    if (dir !== "" && existsSync4(join10(dir, command))) return join10(dir, command);
   }
   return void 0;
 }
@@ -44150,11 +44248,11 @@ async function openRealTunnel(hardwareUdid, devicePort) {
 }
 function realWdaSeams(options) {
   const env = options.env ?? process.env;
-  const sourceDir = (env.IOS_SIM_WDA_DIR?.trim() ?? "") !== "" ? env.IOS_SIM_WDA_DIR.trim() : join9(options.cacheRoot, "WebDriverAgent");
+  const sourceDir = (env.IOS_SIM_WDA_DIR?.trim() ?? "") !== "" ? env.IOS_SIM_WDA_DIR.trim() : join10(options.cacheRoot, "WebDriverAgent");
   return {
     platform: options.platform ?? process.platform,
     resolveTeam: (signal) => resolveSigningTeam({ ...env.IOS_SIM_TEAM_ID === void 0 ? {} : { env: env.IOS_SIM_TEAM_ID }, home: homedir3(), ...signal === void 0 ? {} : { signal } }),
-    stageSource: () => stageWdaSource(sourceDir, join9(options.cacheRoot, "wda")),
+    stageSource: () => stageWdaSource(sourceDir, join10(options.cacheRoot, "wda")),
     bundleId: (teamId) => wdaBundleId(teamId, env.IOS_SIM_WDA_BUNDLE_ID),
     spawnRunner: (args, cwd) => spawnGroup("xcodebuild", args, cwd),
     openTunnel: openRealTunnel,
@@ -44167,8 +44265,8 @@ function realWdaSeams(options) {
 // src/ocr-backend.ts
 import { execFile as execFile7 } from "node:child_process";
 import { createHash as createHash2 } from "node:crypto";
-import { mkdirSync, readFileSync as readFileSync4, renameSync, rmSync as rmSync2, statSync as statSync4, writeFileSync } from "node:fs";
-import { delimiter as delimiter4, dirname as dirname3, join as join10 } from "node:path";
+import { mkdirSync as mkdirSync2, readFileSync as readFileSync5, renameSync, rmSync as rmSync2, statSync as statSync5, writeFileSync as writeFileSync2 } from "node:fs";
+import { delimiter as delimiter4, dirname as dirname3, join as join11 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 var OCR_INSTALL_HINT = 'the plugin compiles its bundled Vision OCR helper with swiftc on first use \u2014 install Xcode (or the Command Line Tools: run "xcode-select --install") so ios_sim_find_text / ios_sim_tap_text / ios_sim_wait_for can run';
 var SWIFTC_CANDIDATES = ["/usr/bin/swiftc", "/usr/local/bin/swiftc"];
@@ -44178,7 +44276,7 @@ var OCR_MAX_BUFFER_BYTES = 8 * 1024 * 1024;
 var DIGEST_FILE = ".ios-simulator-ocr.sha256";
 function isExecutableFile2(path) {
   try {
-    const info = statSync4(path);
+    const info = statSync5(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
@@ -44186,7 +44284,7 @@ function isExecutableFile2(path) {
 }
 function isFile2(path) {
   try {
-    return statSync4(path).isFile();
+    return statSync5(path).isFile();
   } catch {
     return false;
   }
@@ -44194,13 +44292,13 @@ function isFile2(path) {
 function findOnPath4(command, env) {
   for (const dir of (env.PATH ?? "").split(delimiter4)) {
     if (dir === "") continue;
-    const candidate = join10(dir, command);
+    const candidate = join11(dir, command);
     if (isExecutableFile2(candidate)) return candidate;
   }
   return void 0;
 }
 function sha256File(path) {
-  return createHash2("sha256").update(readFileSync4(path)).digest("hex");
+  return createHash2("sha256").update(readFileSync5(path)).digest("hex");
 }
 function run2(command, args, timeoutMs, signal) {
   return new Promise((resolve7, reject) => {
@@ -44214,7 +44312,7 @@ function run2(command, args, timeoutMs, signal) {
   });
 }
 function defaultOcrSourcePath() {
-  return join10(dirname3(fileURLToPath2(import.meta.url)), "..", "assets", "ocr.swift");
+  return join11(dirname3(fileURLToPath2(import.meta.url)), "..", "assets", "ocr.swift");
 }
 var OcrHelper = class {
   #cacheDir;
@@ -44242,14 +44340,14 @@ var OcrHelper = class {
     return { reason: "swiftc (the Swift compiler) was not found on PATH \u2014 install Xcode or the Command Line Tools" };
   }
   #slot(sourceSha256) {
-    return join10(this.#cacheDir, sourceSha256.slice(0, 16));
+    return join11(this.#cacheDir, sourceSha256.slice(0, 16));
   }
   /** A cached compile whose recorded digest still matches the binary's bytes. */
   #validCached(sourceSha256) {
-    const binary = join10(this.#slot(sourceSha256), "ocr");
+    const binary = join11(this.#slot(sourceSha256), "ocr");
     if (!isExecutableFile2(binary)) return void 0;
     try {
-      const recorded = readFileSync4(join10(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
+      const recorded = readFileSync5(join11(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(recorded)) return void 0;
       return recorded === sha256File(binary) ? binary : void 0;
     } catch {
@@ -44299,8 +44397,8 @@ var OcrHelper = class {
     const cached2 = this.#validCached(sourceSha256);
     if (cached2 !== void 0) return cached2;
     const slot = this.#slot(sourceSha256);
-    mkdirSync(slot, { recursive: true });
-    const tmp = join10(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
+    mkdirSync2(slot, { recursive: true });
+    const tmp = join11(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
     try {
       try {
         await run2(swiftc.command, ["-O", this.#sourcePath, "-o", tmp], OCR_COMPILE_TIMEOUT_MS);
@@ -44315,9 +44413,9 @@ var OcrHelper = class {
           throw new Error(`the compiled OCR helper failed its sanity launch: ${error62 instanceof Error ? error62.message : String(error62)}`);
         }
       }
-      const binary = join10(slot, "ocr");
+      const binary = join11(slot, "ocr");
       renameSync(tmp, binary);
-      writeFileSync(join10(slot, DIGEST_FILE), `${sha256File(binary)}
+      writeFileSync2(join11(slot, DIGEST_FILE), `${sha256File(binary)}
 `, "utf8");
       return binary;
     } finally {
@@ -44404,13 +44502,13 @@ function pixelRectToNormalizedCenter(rect, pixelSize) {
 
 // src/preview-host.ts
 import { execFile as execFile8, spawn as spawn5 } from "node:child_process";
-import { copyFileSync, existsSync as existsSync6, mkdirSync as mkdirSync2, readdirSync as readdirSync3, readFileSync as readFileSync6, renameSync as renameSync2, rmSync as rmSync3, statSync as statSync5, watch, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname as dirname4, join as join12, resolve as resolve4 } from "node:path";
+import { copyFileSync, existsSync as existsSync6, mkdirSync as mkdirSync3, readdirSync as readdirSync4, readFileSync as readFileSync7, renameSync as renameSync2, rmSync as rmSync3, statSync as statSync6, watch, writeFileSync as writeFileSync3 } from "node:fs";
+import { dirname as dirname4, join as join13, resolve as resolve4 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // src/preview-source.ts
-import { existsSync as existsSync5, readdirSync as readdirSync2, readFileSync as readFileSync5 } from "node:fs";
-import { join as join11, resolve as resolve3, sep } from "node:path";
+import { existsSync as existsSync5, readdirSync as readdirSync3, readFileSync as readFileSync6 } from "node:fs";
+import { join as join12, resolve as resolve3, sep } from "node:path";
 var PREVIEW_HOST_BUNDLE_ID = "dev.ios-simulator.preview-host";
 var HOST_TARGET_NAME = "IosSimPreviewHost";
 var DYLIB_TARGET_NAME = "IosSimPreviewDylib";
@@ -44443,9 +44541,9 @@ function extractCallArguments(text, selector) {
   return found;
 }
 function readPackageManifest(packageDir) {
-  const manifestPath = join11(packageDir, "Package.swift");
+  const manifestPath = join12(packageDir, "Package.swift");
   if (!existsSync5(manifestPath)) throw new Error(`no Package.swift found in ${packageDir}`);
-  const text = stripStringsAndComments(readFileSync5(manifestPath, "utf8"), { keepStrings: true });
+  const text = stripStringsAndComments(readFileSync6(manifestPath, "utf8"), { keepStrings: true });
   const name = /name\s*:\s*"([^"]+)"/u.exec(text)?.[1] ?? "Package";
   const iosVersionMatch = /\.iOS\(\s*\.v(\d+)/u.exec(text);
   const libraryTargets = [];
@@ -44455,7 +44553,7 @@ function readPackageManifest(packageDir) {
     if (targetName === void 0 || targetDirs.has(targetName)) continue;
     const path = /path\s*:\s*"([^"]+)"/u.exec(args)?.[1];
     libraryTargets.push(targetName);
-    targetDirs.set(targetName, path === void 0 ? join11(packageDir, "Sources", targetName) : resolve3(packageDir, path));
+    targetDirs.set(targetName, path === void 0 ? join12(packageDir, "Sources", targetName) : resolve3(packageDir, path));
   }
   const productNames = extractCallArguments(text, "library").flatMap((args) => /name\s*:\s*"([^"]+)"/u.exec(args)?.slice(1) ?? []);
   return {
@@ -44551,13 +44649,13 @@ function scanProviderPreviews(original) {
 function walkSwiftFiles(root, depth = 0) {
   let entries;
   try {
-    entries = readdirSync2(root, { withFileTypes: true });
+    entries = readdirSync3(root, { withFileTypes: true });
   } catch {
     return [];
   }
   const files = [];
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-    const path = join11(root, entry.name);
+    const path = join12(root, entry.name);
     if (entry.isDirectory()) {
       if (depth < 12 && !IGNORED_DIRS.has(entry.name)) files.push(...walkSwiftFiles(path, depth + 1));
     } else if (entry.isFile() && entry.name.endsWith(".swift") && !entry.name.startsWith(".")) {
@@ -44572,7 +44670,7 @@ function scanPackagePreviews(manifest) {
     for (const file2 of walkSwiftFiles(dir)) {
       let text;
       try {
-        text = readFileSync5(file2, "utf8");
+        text = readFileSync6(file2, "utf8");
       } catch {
         continue;
       }
@@ -44744,20 +44842,20 @@ function sleep5(milliseconds) {
 }
 function readJsonObject(path) {
   try {
-    const parsed = JSON.parse(readFileSync6(path, "utf8"));
+    const parsed = JSON.parse(readFileSync7(path, "utf8"));
     return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
   } catch {
     return {};
   }
 }
 function writeJsonAtomic(path, value) {
-  mkdirSync2(dirname4(path), { recursive: true });
+  mkdirSync3(dirname4(path), { recursive: true });
   const temporary = `${path}.tmp-${process.pid}`;
-  writeFileSync2(temporary, JSON.stringify(value));
+  writeFileSync3(temporary, JSON.stringify(value));
   renameSync2(temporary, path);
 }
 function defaultPreviewAssetsDir() {
-  return join12(dirname4(fileURLToPath3(import.meta.url)), "..", "assets", "preview-host");
+  return join13(dirname4(fileURLToPath3(import.meta.url)), "..", "assets", "preview-host");
 }
 var PreviewHostController = class {
   #options;
@@ -44782,7 +44880,7 @@ var PreviewHostController = class {
       throw new Error(`a preview session is already running for ${this.#session?.packagePath ?? "another package"} \u2014 only one at a time; stop it first (action "stop") or inspect it (action "status")`);
     }
     const packagePath = resolve4(options.packagePath);
-    if (!existsSync6(join12(packagePath, "Package.swift")) || !statSync5(packagePath).isDirectory()) {
+    if (!existsSync6(join13(packagePath, "Package.swift")) || !statSync6(packagePath).isDirectory()) {
       throw new Error(`packagePath must be a Swift package directory containing Package.swift: ${packagePath}`);
     }
     const manifest = readPackageManifest(packagePath);
@@ -44798,7 +44896,7 @@ var PreviewHostController = class {
     this.#starting = true;
     const platformVersion = Math.max(DEFAULT_IOS_PLATFORM_VERSION, manifest.iosVersion ?? DEFAULT_IOS_PLATFORM_VERSION);
     const arch = this.#options.arch ?? (process.arch === "x64" ? "x86_64" : "arm64");
-    const sessionDir = join12(this.#options.cacheDir, projectSlug(packagePath));
+    const sessionDir = join13(this.#options.cacheDir, projectSlug(packagePath));
     const session = {
       packagePath,
       packageName: manifest.name,
@@ -44806,7 +44904,7 @@ var PreviewHostController = class {
       pid: "",
       ...filter === void 0 ? {} : { filter },
       dropDir: "",
-      dylibPackageDir: join12(sessionDir, "dylib-package"),
+      dylibPackageDir: join13(sessionDir, "dylib-package"),
       triple: `${arch}-apple-ios${platformVersion}.0-simulator`,
       platformVersion,
       sdk: "",
@@ -44829,7 +44927,7 @@ var PreviewHostController = class {
       await this.#options.simctl.installApp(udid, appPath, options.signal);
       const launched = await this.#options.simctl.launchApp(udid, PREVIEW_HOST_BUNDLE_ID, options.signal);
       session.pid = /:\s*(\d+)\s*$/u.exec(launched.trim())?.[1] ?? "";
-      session.dropDir = join12(await this.#options.simctl.getAppContainer(udid, PREVIEW_HOST_BUNDLE_ID, options.signal), "Documents", DROP_DIR_NAME);
+      session.dropDir = join13(await this.#options.simctl.getAppContainer(udid, PREVIEW_HOST_BUNDLE_ID, options.signal), "Documents", DROP_DIR_NAME);
       this.#writeDylibPackage(session, manifest.productNames, platformVersion, matching, manifest.libraryTargets);
       const build = await this.#options.toolchain.swiftBuild(session.dylibPackageDir, session.triple, session.sdk, options.signal);
       if (build.exitCode !== 0) {
@@ -44897,58 +44995,58 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
     await this.#options.simctl.uninstallApp(udid, PREVIEW_HOST_BUNDLE_ID, signal).catch(() => void 0);
   }
   async #buildHostApp(sessionDir, session, platformVersion, signal) {
-    const packageDir = join12(sessionDir, "host-package");
-    const sources = join12(packageDir, "Sources", HOST_TARGET_NAME);
-    mkdirSync2(sources, { recursive: true });
+    const packageDir = join13(sessionDir, "host-package");
+    const sources = join13(packageDir, "Sources", HOST_TARGET_NAME);
+    mkdirSync3(sources, { recursive: true });
     const assetsDir = this.#options.assetsDir ?? defaultPreviewAssetsDir();
     for (const name of HOST_SOURCES) {
-      if (!existsSync6(join12(assetsDir, name))) throw new Error(`the preview host sources are missing (${join12(assetsDir, name)}) \u2014 reinstall the plugin`);
-      copyFileSync(join12(assetsDir, name), join12(sources, name));
+      if (!existsSync6(join13(assetsDir, name))) throw new Error(`the preview host sources are missing (${join13(assetsDir, name)}) \u2014 reinstall the plugin`);
+      copyFileSync(join13(assetsDir, name), join13(sources, name));
     }
-    writeFileSync2(join12(packageDir, "Package.swift"), generateHostPackageSwift(platformVersion));
+    writeFileSync3(join13(packageDir, "Package.swift"), generateHostPackageSwift(platformVersion));
     const build = await this.#options.toolchain.swiftBuild(packageDir, session.triple, session.sdk, signal);
     if (build.exitCode !== 0) {
       throw new Error(`swift build failed (exit ${String(build.exitCode)}) for the preview host:
 ${filterSwiftBuildErrors(build.lines).join("\n")}`);
     }
-    const executable = join12(await this.#options.toolchain.binPath(packageDir, session.triple, session.sdk, signal), HOST_TARGET_NAME);
+    const executable = join13(await this.#options.toolchain.binPath(packageDir, session.triple, session.sdk, signal), HOST_TARGET_NAME);
     if (!existsSync6(executable)) throw new Error(`the built preview host executable is missing: ${executable}`);
-    const appDir = join12(sessionDir, `${HOST_TARGET_NAME}.app`);
+    const appDir = join13(sessionDir, `${HOST_TARGET_NAME}.app`);
     rmSync3(appDir, { recursive: true, force: true });
-    mkdirSync2(appDir, { recursive: true });
-    copyFileSync(executable, join12(appDir, HOST_TARGET_NAME));
-    writeFileSync2(join12(appDir, "Info.plist"), generateInfoPlist(platformVersion));
+    mkdirSync3(appDir, { recursive: true });
+    copyFileSync(executable, join13(appDir, HOST_TARGET_NAME));
+    writeFileSync3(join13(appDir, "Info.plist"), generateInfoPlist(platformVersion));
     await this.#options.toolchain.codesign(appDir, signal);
     return appDir;
   }
   /** Write the dylib package (kept between rebuilds so SwiftPM builds incrementally). */
   #writeDylibPackage(session, productNames, platformVersion, previews, modules) {
-    const entryDir = join12(session.dylibPackageDir, "Sources", "PreviewEntry");
-    mkdirSync2(entryDir, { recursive: true });
-    const manifestPath = join12(session.dylibPackageDir, "Package.swift");
+    const entryDir = join13(session.dylibPackageDir, "Sources", "PreviewEntry");
+    mkdirSync3(entryDir, { recursive: true });
+    const manifestPath = join13(session.dylibPackageDir, "Package.swift");
     const manifestText = generateDylibPackageSwift(session.packagePath, session.packageName, productNames, platformVersion);
-    if (!existsSync6(manifestPath) || readFileSync6(manifestPath, "utf8") !== manifestText) writeFileSync2(manifestPath, manifestText);
-    const entryPath = join12(entryDir, "Entry.swift");
+    if (!existsSync6(manifestPath) || readFileSync7(manifestPath, "utf8") !== manifestText) writeFileSync3(manifestPath, manifestText);
+    const entryPath = join13(entryDir, "Entry.swift");
     const entryText = generateEntrySwift(previews, modules);
-    if (!existsSync6(entryPath) || readFileSync6(entryPath, "utf8") !== entryText) writeFileSync2(entryPath, entryText);
+    if (!existsSync6(entryPath) || readFileSync7(entryPath, "utf8") !== entryText) writeFileSync3(entryPath, entryText);
   }
   async #pushGeneration(session, previews, signal) {
-    const dylib = join12(await this.#options.toolchain.binPath(session.dylibPackageDir, session.triple, session.sdk, signal), DYLIB_LIBRARY_NAME);
+    const dylib = join13(await this.#options.toolchain.binPath(session.dylibPackageDir, session.triple, session.sdk, signal), DYLIB_LIBRARY_NAME);
     if (!existsSync6(dylib)) throw new Error(`the built preview dylib is missing: ${dylib}`);
     const generation = session.generation + 1;
-    mkdirSync2(session.dropDir, { recursive: true });
-    const target = join12(session.dropDir, `preview_${generation}.dylib`);
+    mkdirSync3(session.dropDir, { recursive: true });
+    const target = join13(session.dropDir, `preview_${generation}.dylib`);
     copyFileSync(dylib, target);
     await this.#options.toolchain.codesign(target, signal);
     session.generation = generation;
-    writeJsonAtomic(join12(session.dropDir, "manifest.json"), {
+    writeJsonAtomic(join13(session.dropDir, "manifest.json"), {
       generation,
       dylib: `preview_${generation}.dylib`,
       previews: previews.map((preview) => preview.name)
     });
-    for (const entry of readdirSync3(session.dropDir)) {
+    for (const entry of readdirSync4(session.dropDir)) {
       const old = /^preview_(\d+)\.dylib$/u.exec(entry);
-      if (old !== null && Number(old[1]) <= generation - KEPT_DYLIB_GENERATIONS) rmSync3(join12(session.dropDir, entry), { force: true });
+      if (old !== null && Number(old[1]) <= generation - KEPT_DYLIB_GENERATIONS) rmSync3(join13(session.dropDir, entry), { force: true });
     }
   }
   async #waitForHost(session, generation, timeoutMs) {
@@ -44961,7 +45059,7 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
     }
   }
   #hostResult(session) {
-    return session.dropDir === "" ? {} : readJsonObject(join12(session.dropDir, "result.json"));
+    return session.dropDir === "" ? {} : readJsonObject(join13(session.dropDir, "result.json"));
   }
   #scheduleRebuild(session) {
     if (session.disposed) return;
@@ -45032,12 +45130,12 @@ function watchPackageTree(root, onChange) {
       }));
       let entries;
       try {
-        entries = readdirSync3(dir, { withFileTypes: true });
+        entries = readdirSync4(dir, { withFileTypes: true });
       } catch {
         return;
       }
       for (const entry of entries) {
-        if (entry.isDirectory() && !IGNORED_DIRS.has(entry.name)) attach(join12(dir, entry.name));
+        if (entry.isDirectory() && !IGNORED_DIRS.has(entry.name)) attach(join13(dir, entry.name));
       }
     };
     attach(root);
@@ -45111,7 +45209,7 @@ var xcrunToolchain = {
 import { createReadStream, lstatSync, realpathSync } from "node:fs";
 import { readFile as readFile5 } from "node:fs/promises";
 import { createServer as createServer4, get as httpGet } from "node:http";
-import { basename as basename2, join as join15, sep as sep2 } from "node:path";
+import { basename as basename2, join as join16, sep as sep2 } from "node:path";
 import { pipeline } from "node:stream";
 
 // node_modules/ws/wrapper.mjs
@@ -45824,8 +45922,8 @@ function capList(items, capBytes = OUTPUT_CAP_BYTES) {
 // src/uitree-backend.ts
 import { execFile as execFile9 } from "node:child_process";
 import { createHash as createHash3 } from "node:crypto";
-import { chmodSync, existsSync as existsSync7, mkdirSync as mkdirSync3, readFileSync as readFileSync7, rmSync as rmSync4, statSync as statSync6, writeFileSync as writeFileSync3 } from "node:fs";
-import { delimiter as delimiter5, join as join13 } from "node:path";
+import { chmodSync, existsSync as existsSync7, mkdirSync as mkdirSync4, readFileSync as readFileSync8, rmSync as rmSync4, statSync as statSync7, writeFileSync as writeFileSync4 } from "node:fs";
+import { delimiter as delimiter5, join as join14 } from "node:path";
 var AXE_VERSION = "1.8.0";
 var AXE_RELEASE_URL = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz";
 var AXE_RELEASE_SHA256 = "7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834";
@@ -45837,7 +45935,7 @@ var DIGEST_FILE2 = ".ios-simulator-axe.sha256";
 var BREW_BIN_CANDIDATES = ["/opt/homebrew/bin/axe", "/usr/local/bin/axe"];
 function isExecutableFile3(path) {
   try {
-    const info = statSync6(path);
+    const info = statSync7(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
@@ -45846,13 +45944,13 @@ function isExecutableFile3(path) {
 function findOnPath5(command, env) {
   for (const dir of (env.PATH ?? "").split(delimiter5)) {
     if (dir === "") continue;
-    const candidate = join13(dir, command);
+    const candidate = join14(dir, command);
     if (isExecutableFile3(candidate)) return candidate;
   }
   return void 0;
 }
 function sha256File2(path) {
-  return createHash3("sha256").update(readFileSync7(path)).digest("hex");
+  return createHash3("sha256").update(readFileSync8(path)).digest("hex");
 }
 function run3(command, args, timeoutMs, signal) {
   return new Promise((resolve7, reject) => {
@@ -45876,13 +45974,13 @@ var AxeHelper = class {
     this.#env = options.env ?? process.env;
   }
   #installDir() {
-    return join13(this.#cacheDir, AXE_VERSION);
+    return join14(this.#cacheDir, AXE_VERSION);
   }
   #validCached() {
-    const binary = join13(this.#installDir(), "axe");
+    const binary = join14(this.#installDir(), "axe");
     if (!isExecutableFile3(binary)) return void 0;
     try {
-      const expected = readFileSync7(join13(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
+      const expected = readFileSync8(join14(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(expected)) return void 0;
       return sha256File2(binary) === expected ? binary : void 0;
     } catch {
@@ -45944,8 +46042,8 @@ var AxeHelper = class {
    */
   async #download() {
     const installDir = this.#installDir();
-    mkdirSync3(this.#cacheDir, { recursive: true });
-    const archive = join13(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
+    mkdirSync4(this.#cacheDir, { recursive: true });
+    const archive = join14(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
     try {
       try {
         await run3("curl", [
@@ -45970,15 +46068,15 @@ var AxeHelper = class {
         throw new Error(`download integrity check failed: expected sha256 ${AXE_RELEASE_SHA256} but got ${digest}`);
       }
       rmSync4(installDir, { recursive: true, force: true });
-      mkdirSync3(installDir, { recursive: true });
+      mkdirSync4(installDir, { recursive: true });
       await run3("tar", ["-xzf", archive, "-C", installDir], AXE_DOWNLOAD_TIMEOUT_MS);
-      const binary = join13(installDir, "axe");
+      const binary = join14(installDir, "axe");
       if (!isExecutableFile3(binary)) chmodSync(binary, 493);
       const version2 = await run3(binary, ["--version"], AXE_EXEC_TIMEOUT_MS);
       if (!version2.stdout.includes(AXE_VERSION)) {
         throw new Error(`downloaded axe reports an unexpected version: ${version2.stdout.trim()}`);
       }
-      writeFileSync3(join13(installDir, DIGEST_FILE2), `${sha256File2(binary)}
+      writeFileSync4(join14(installDir, DIGEST_FILE2), `${sha256File2(binary)}
 `, "utf8");
       return binary;
     } finally {
@@ -46418,13 +46516,13 @@ async function runWdaInteract(client, plan) {
 
 // src/screenshot.ts
 import { execFile as execFile10 } from "node:child_process";
-import { closeSync, existsSync as existsSync8, mkdirSync as mkdirSync4, openSync, readSync, readdirSync as readdirSync4, statSync as statSync7, unlinkSync as unlinkSync2, writeFileSync as writeFileSync4 } from "node:fs";
+import { closeSync, existsSync as existsSync8, mkdirSync as mkdirSync5, openSync, readSync, readdirSync as readdirSync5, statSync as statSync8, unlinkSync as unlinkSync3, writeFileSync as writeFileSync5 } from "node:fs";
 import { readFile as readFile4, rm as rm2 } from "node:fs/promises";
-import { join as join14 } from "node:path";
-var FILE_PATTERN = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
+import { join as join15 } from "node:path";
+var FILE_PATTERN2 = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
 var SIPS_TIMEOUT_MS = 3e4;
 function isScreenshotFileName(name) {
-  return FILE_PATTERN.test(name);
+  return FILE_PATTERN2.test(name);
 }
 function readPngSize(path) {
   try {
@@ -46496,22 +46594,22 @@ var ScreenshotStore = class {
    * names already on disk are skipped so concurrent writers never collide.
    */
   nextPath(udid) {
-    mkdirSync4(this.dir, { recursive: true });
+    mkdirSync5(this.dir, { recursive: true });
     const safe = udid.replace(/[^A-Za-z0-9_-]/g, "_");
     let next = this.#next.get(safe);
     if (next === void 0) {
       next = 0;
       const prefix = `screenshot-${safe}-`;
-      for (const entry of readdirSync4(this.dir)) {
+      for (const entry of readdirSync5(this.dir)) {
         if (!entry.startsWith(prefix) || !entry.endsWith(".png")) continue;
         const index = Number(entry.slice(prefix.length, -4));
         if (Number.isInteger(index) && index >= next) next = index + 1;
       }
     }
-    let path = join14(this.dir, `screenshot-${safe}-${next}.png`);
+    let path = join15(this.dir, `screenshot-${safe}-${next}.png`);
     while (existsSync8(path)) {
       next += 1;
-      path = join14(this.dir, `screenshot-${safe}-${next}.png`);
+      path = join15(this.dir, `screenshot-${safe}-${next}.png`);
     }
     this.#next.set(safe, next + 1);
     return path;
@@ -46520,7 +46618,7 @@ var ScreenshotStore = class {
   async capture(udid, signal) {
     const path = this.nextPath(udid);
     await this.#take(udid, path, signal);
-    const bytes = statSync7(path).size;
+    const bytes = statSync8(path).size;
     const size = readPngSize(path);
     this.prune();
     return { path, bytes, ...size === void 0 ? {} : size };
@@ -46528,7 +46626,7 @@ var ScreenshotStore = class {
   /** Store a PNG taken elsewhere (a real device's WebDriverAgent) like a capture, then prune. */
   save(udid, png) {
     const path = this.nextPath(udid);
-    writeFileSync4(path, png);
+    writeFileSync5(path, png);
     const size = readPngSize(path);
     this.prune();
     return { path, bytes: png.length, ...size === void 0 ? {} : size };
@@ -46537,24 +46635,24 @@ var ScreenshotStore = class {
   prune() {
     let names;
     try {
-      names = readdirSync4(this.dir).filter(isScreenshotFileName);
+      names = readdirSync5(this.dir).filter(isScreenshotFileName);
     } catch {
       return;
     }
     if (names.length <= this.#keep) return;
     const entries = names.map((name) => {
-      const path = join14(this.dir, name);
+      const path = join15(this.dir, name);
       let mtime = 0;
       try {
-        mtime = statSync7(path).mtimeMs;
+        mtime = statSync8(path).mtimeMs;
       } catch {
       }
-      return { path, mtime, index: Number(FILE_PATTERN.exec(name)?.[1] ?? 0) };
+      return { path, mtime, index: Number(FILE_PATTERN2.exec(name)?.[1] ?? 0) };
     });
     entries.sort((a, b) => b.mtime - a.mtime || b.index - a.index);
     for (const entry of entries.slice(this.#keep)) {
       try {
-        unlinkSync2(entry.path);
+        unlinkSync3(entry.path);
       } catch {
       }
     }
@@ -46824,13 +46922,13 @@ function toBuffer(data) {
   if (Array.isArray(data)) return Buffer.concat(data);
   return Buffer.from(data);
 }
-async function readJsonBody(req) {
+async function readJsonBody(req, maxBytes = MAX_BODY_BYTES2) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     const buffer = chunk;
     size += buffer.length;
-    if (size > MAX_BODY_BYTES2) throw new HttpError(413, "request body too large");
+    if (size > maxBytes) throw new HttpError(413, "request body too large");
     chunks.push(buffer);
   }
   if (size === 0) return {};
@@ -46959,6 +47057,10 @@ var PanelServer = class {
       if (method === "GET" && staticFile !== void 0) return await this.#serveStatic(res, staticFile);
       if (method === "GET" && path === "/stream") return await this.#serveStream(res);
       if (method === "GET" && path.startsWith("/shots/")) return this.#serveShot(res, path.slice("/shots/".length));
+      if (method === "GET" && path.startsWith("/annotations/")) return this.#serveAnnotation(res, path.slice("/annotations/".length));
+      if (method === "POST" && path === "/api/annotations") {
+        return sendJson(res, 200, await this.#saveAnnotation(await readJsonBody(req, Math.ceil(MAX_ANNOTATION_BYTES * 4 / 3) + 1024)));
+      }
       if (method === "GET" && path === "/api/status") return sendJson(res, 200, await this.#status());
       if (method === "GET" && path === "/api/devices") return sendJson(res, 200, await this.#devices());
       if (method === "POST" && path === "/api/switch-device") {
@@ -46981,7 +47083,7 @@ var PanelServer = class {
     }
   }
   async #serveStatic(res, entry) {
-    const body = await readFile5(join15(this.#options.staticDir, entry.file));
+    const body = await readFile5(join16(this.#options.staticDir, entry.file));
     const port = this.#port;
     res.writeHead(200, {
       "content-type": entry.type,
@@ -47078,10 +47180,43 @@ var PanelServer = class {
   }
   #serveShot(res, name) {
     if (!isScreenshotFileName(name)) throw new HttpError(404, "not found");
-    const dir = this.#options.screenshots.dir;
+    this.#servePng(res, this.#options.screenshots.dir, name);
+  }
+  #serveAnnotation(res, name) {
+    const dir = this.#options.annotations?.dir;
+    if (dir === void 0 || !isAnnotationFileName(name)) throw new HttpError(404, "not found");
+    this.#servePng(res, dir, name);
+  }
+  /** "Add to chat": store the annotated PNG (a data URL) with the device it shows. */
+  async #saveAnnotation(body) {
+    const store = this.#options.annotations;
+    if (store === void 0) throw new HttpError(501, "annotations are not enabled");
+    const match = typeof body.image === "string" ? /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/u.exec(body.image) : null;
+    if (match === null) throw new HttpError(400, "image must be a data:image/png;base64 URL");
+    let device;
+    if (this.#real !== void 0) {
+      device = { udid: this.#real.udid, name: this.#real.name };
+    } else {
+      const current = await this.#currentDevice().catch(() => void 0);
+      if (current !== void 0) device = { udid: current.udid, name: current.name };
+    }
+    let record3;
+    try {
+      record3 = store.save(Buffer.from(match[1], "base64"), device);
+    } catch (error62) {
+      throw new HttpError(400, errorMessage11(error62));
+    }
+    return {
+      ok: true,
+      id: record3.id,
+      url: `/annotations/${basename2(record3.path)}`,
+      ...record3.width === void 0 ? {} : { width: record3.width, height: record3.height }
+    };
+  }
+  #servePng(res, dir, name) {
     let real;
     try {
-      const path = join15(dir, name);
+      const path = join16(dir, name);
       const stat = lstatSync(path);
       if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, "not found");
       real = realpathSync(path);
@@ -47325,8 +47460,8 @@ var PanelServer = class {
 
 // src/recorder.ts
 import { spawn as spawn6 } from "node:child_process";
-import { mkdirSync as mkdirSync5, statSync as statSync8 } from "node:fs";
-import { dirname as dirname5, join as join16 } from "node:path";
+import { mkdirSync as mkdirSync6, statSync as statSync9 } from "node:fs";
+import { dirname as dirname5, join as join17 } from "node:path";
 function recordVideoArgs(udid, path) {
   return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
 }
@@ -47336,7 +47471,7 @@ function safeName(udid) {
 }
 function fileSize(path) {
   try {
-    return statSync8(path).size;
+    return statSync9(path).size;
   } catch {
     return 0;
   }
@@ -47363,7 +47498,7 @@ var Recorder = class {
   }
   defaultPath(udid) {
     const stamp = new Date(this.#now()).toISOString().replace(/[:.]/g, "-");
-    return join16(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
+    return join17(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
   }
   async start(udid, outputPath) {
     const running = this.#active.get(udid);
@@ -47378,7 +47513,7 @@ var Recorder = class {
       const requested = outputPath?.trim() ?? "";
       const path = requested === "" ? this.defaultPath(udid) : requested;
       if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`);
-      mkdirSync5(dirname5(path), { recursive: true });
+      mkdirSync6(dirname5(path), { recursive: true });
       const child = this.#spawnRecord(udid, path);
       const exited = new Promise((resolve7) => {
         child.once("exit", (code) => resolve7(code));
@@ -47481,7 +47616,7 @@ var Recorder = class {
 
 // src/tools/apps.ts
 import { existsSync as existsSync9 } from "node:fs";
-import { join as join17, resolve as resolve5 } from "node:path";
+import { join as join18, resolve as resolve5 } from "node:path";
 
 // src/tools/result.ts
 var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name (tools that support it also take a connected iPhone/iPad from ios_sim_devices.realDevices). Default: the streamed device, else the newest-runtime booted iPhone.");
@@ -47652,7 +47787,7 @@ function registerAppTools(server, deps) {
   }, async (args, extra) => runTool("ios_sim_install_app", async () => {
     assertMac(deps.platform);
     const appPath = resolve5(args.appPath);
-    if (!existsSync9(join17(appPath, "Info.plist"))) {
+    if (!existsSync9(join18(appPath, "Info.plist"))) {
       throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`);
     }
     const target = await targetOf("ios_sim_install_app", args.udid);
@@ -47806,6 +47941,10 @@ function resyncFailedWarning(orientation, error62) {
   const message = error62 instanceof Error ? error62.message : String(error62);
   return `the screen looks landscape, but its orientation could not be resynced with the live stream (${message}); taps, scrolls and gestures retry the resync first and fail while it keeps failing \u2014 send ios_sim_interact {action: "rotate", orientation: "${orientation}"} (or the landscape orientation the screen shows), then retry`;
 }
+function annotationHint(deps) {
+  const unseen = deps.annotations.unseenCount();
+  return unseen === 0 ? {} : { userAnnotations: `the user added ${unseen} annotated screenshot${unseen === 1 ? "" : "s"} in the panel \u2014 ios_sim_annotation shows them` };
+}
 function registerCoreTools(server, deps) {
   const lastImageLandscape = /* @__PURE__ */ new Map();
   const rememberedLandscape = /* @__PURE__ */ new Map();
@@ -47948,7 +48087,8 @@ function registerCoreTools(server, deps) {
         bytes: capture2.bytes,
         ...capture2.width === void 0 ? {} : { width: capture2.width, height: capture2.height },
         image: { width: image2.width, height: image2.height },
-        device: realDeviceSummary(target.device)
+        device: realDeviceSummary(target.device),
+        ...annotationHint(deps)
       }, image2);
     }
     const device = target.device;
@@ -47964,7 +48104,42 @@ function registerCoreTools(server, deps) {
       bytes: capture.bytes,
       ...capture.width === void 0 ? {} : { width: capture.width, height: capture.height },
       image: { width: image.width, height: image.height },
-      device: deviceSummary(device)
+      device: deviceSummary(device),
+      ...annotationHint(deps)
+    }, image);
+  }));
+  server.registerTool("ios_sim_annotation", {
+    title: "See what the user annotated",
+    description: `Return a screenshot the user annotated in the live panel (pencil button \u2192 pen, arrows, boxes, text \u2192 "Add to chat") as an image, newest first. The marks show what the user means ("this button", "this gap is wrong"): read them together with the user's message. index 1 is the one before the newest, and so on; list:true lists them without images. Screenshot results carry userAnnotations when there are new ones.`,
+    inputSchema: {
+      index: external_exports.number().int().min(0).optional().describe("0 = the newest (default)"),
+      list: external_exports.boolean().optional().describe("List the stored annotations (newest first) without returning an image")
+    },
+    annotations: { readOnlyHint: true }
+  }, async (args) => runTool("ios_sim_annotation", async () => {
+    const records = deps.annotations.list();
+    if (args.list === true) {
+      return jsonResult({
+        count: records.length,
+        annotations: records.map(({ id, createdAt, device, width, height, seen }) => ({ id, createdAt, ...device === void 0 ? {} : { device }, width, height, seen }))
+      });
+    }
+    const index = args.index ?? 0;
+    const record3 = records[index];
+    if (record3 === void 0) {
+      throw new Error(records.length === 0 ? 'the user has not annotated anything yet \u2014 in the live panel (ios_sim_panel) the pencil button opens the annotation tools, and "Add to chat" stores the result here' : `there are only ${records.length} annotations (index 0..${records.length - 1})`);
+    }
+    const image = await deps.screenshots.toModelImage(record3);
+    deps.annotations.markSeen([record3.id]);
+    return jsonResult({
+      id: record3.id,
+      createdAt: record3.createdAt,
+      ...record3.device === void 0 ? {} : { device: record3.device },
+      path: record3.path,
+      ...record3.width === void 0 ? {} : { width: record3.width, height: record3.height },
+      image: { width: image.width, height: image.height },
+      total: records.length,
+      unseen: deps.annotations.unseenCount()
     }, image);
   }));
   server.registerTool("ios_sim_interact", {
@@ -48106,8 +48281,8 @@ function registerCoreTools(server, deps) {
 }
 
 // src/tools/debug.ts
-import { mkdirSync as mkdirSync6, statSync as statSync9, existsSync as existsSync10, readFileSync as readFileSync8 } from "node:fs";
-import { join as join18 } from "node:path";
+import { mkdirSync as mkdirSync7, statSync as statSync10, existsSync as existsSync10, readFileSync as readFileSync9 } from "node:fs";
+import { join as join19 } from "node:path";
 var MAX_LOG_LINES = 300;
 var MAX_LOG_BYTES = 30 * 1024;
 var SNAPSHOT_TIMEOUT_MS = 8 * 60 * 1e3;
@@ -48296,9 +48471,9 @@ function registerDebugTools(server, deps) {
       if (sample === void 0) {
         throw new Error(`LLDB capture is unavailable${note === void 0 ? "" : ` (${note})`} and Xcode's sample tool is not installed \u2014 install Xcode or the Command Line Tools`);
       }
-      const dir = join18(deps.cacheRoot, "samples");
-      mkdirSync6(dir, { recursive: true });
-      reportPath = join18(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
+      const dir = join19(deps.cacheRoot, "samples");
+      mkdirSync7(dir, { recursive: true });
+      reportPath = join19(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
       const outcome = await deps.devtools.run({
         command: sample,
         args: [String(target.pid), "1", "1", "-file", reportPath],
@@ -48310,7 +48485,7 @@ function registerDebugTools(server, deps) {
         const detail = tailDiagnostic(outcome.stderr === "" ? outcome.stdout : outcome.stderr, 3);
         throw new Error(`sample of pid ${target.pid} produced no report${detail === "" ? "" : `: ${detail}`}`);
       }
-      threads = parseSampleThreads(readFileSync8(reportPath, "utf8"));
+      threads = parseSampleThreads(readFileSync9(reportPath, "utf8"));
       if (threads.length === 0) throw new Error(`sample of pid ${target.pid} produced no thread sections (report: ${reportPath})`);
     }
     const kept = orderThreads(threads, allThreads);
@@ -48350,9 +48525,9 @@ function registerDebugTools(server, deps) {
     const unavailable = (fatal2) => new Error(`leaks could not analyze pid ${target.pid}: ${fatal2} \u2014 ${DEVELOPER_MODE_HINT}`);
     const base = { device: deviceSummary(device), ...processSummary(target), mode };
     if (mode === "memgraph") {
-      const dir = join18(deps.cacheRoot, "memgraphs");
-      mkdirSync6(dir, { recursive: true });
-      const path = join18(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
+      const dir = join19(deps.cacheRoot, "memgraphs");
+      mkdirSync7(dir, { recursive: true });
+      const path = join19(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
       const outcome2 = await deps.devtools.run({
         command: leaks,
         args: [`--outputGraph=${path}`, String(target.pid)],
@@ -48371,7 +48546,7 @@ function registerDebugTools(server, deps) {
       return jsonResult({
         ...base,
         path,
-        bytes: statSync9(path).size,
+        bytes: statSync10(path).size,
         resumed: resumed2,
         ...resumed2 ? {} : { note: "the app was not observed running after the capture \u2014 check ios_sim_processes" }
       });
@@ -48462,7 +48637,7 @@ function registerDebugTools(server, deps) {
 // src/tools/env.ts
 import { randomUUID } from "node:crypto";
 import { mkdir as mkdir2, rm as rm3, writeFile as writeFile2 } from "node:fs/promises";
-import { join as join19, resolve as resolve6 } from "node:path";
+import { join as join20, resolve as resolve6 } from "node:path";
 function registerEnvTools(server, deps) {
   const bootedDevice = async (tool, udid) => {
     assertMac(deps.platform);
@@ -48494,9 +48669,9 @@ function registerEnvTools(server, deps) {
     }
     const bundleId = args.bundleId.trim();
     const device = await bootedDevice("ios_sim_push", args.udid);
-    const dir = join19(deps.cacheRoot, "tmp");
+    const dir = join20(deps.cacheRoot, "tmp");
     await mkdir2(dir, { recursive: true });
-    const file2 = join19(dir, `push-${randomUUID()}.json`);
+    const file2 = join20(dir, `push-${randomUUID()}.json`);
     await writeFile2(file2, JSON.stringify(args.payload), { mode: 384 });
     try {
       await deps.simctl.sendPush(device.udid, bundleId, file2, extra.signal);
@@ -49251,28 +49426,30 @@ async function main() {
   const host = new SimHostController();
   host.startKeepAlive();
   const stream = new SimStreamSource(host);
-  const screenshots = new ScreenshotStore({ dir: join20(root, "screenshots"), takeScreenshot });
+  const screenshots = new ScreenshotStore({ dir: join21(root, "screenshots"), takeScreenshot });
   const devtools = new DevTools();
   const preview = new PreviewHostController({
-    cacheDir: join20(root, "preview"),
+    cacheDir: join21(root, "preview"),
     simctl: simctl_exports,
     toolchain: xcrunToolchain,
     log: (line) => process.stderr.write(`${line}
 `)
   });
   const wda = new WdaController(realWdaSeams({ cacheRoot: root }));
+  const annotations = new AnnotationStore({ dir: join21(root, "annotations") });
   const realDevices = new Devicectl({ run: devicectlRunner((options) => devtools.run(options)) });
-  const recorder = new Recorder({ dir: join20(root, "recordings") });
+  const recorder = new Recorder({ dir: join21(root, "recordings") });
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
-    staticDir: join20(dirname6(fileURLToPath4(import.meta.url)), "panel"),
+    staticDir: join21(dirname6(fileURLToPath4(import.meta.url)), "panel"),
     preferredPort: preferredPanelPort(),
     host,
     stream,
     simctl: simctl_exports,
     screenshots,
     wda,
-    realDevices
+    realDevices,
+    annotations
   });
   const deps = {
     host,
@@ -49283,11 +49460,12 @@ async function main() {
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
-    axe: new AxeHelper({ cacheDir: join20(root, "bin", "axe") }),
-    ocr: new OcrHelper({ cacheDir: join20(root, "bin", "ocr") }),
+    axe: new AxeHelper({ cacheDir: join21(root, "bin", "axe") }),
+    ocr: new OcrHelper({ cacheDir: join21(root, "bin", "ocr") }),
     devtools,
     preview,
     realDevices,
+    annotations,
     wda,
     cacheRoot: root,
     platform: process.platform,

@@ -37,6 +37,18 @@ export interface PanelCopy {
   realDevice: string
   /** Placeholder when the shown iPhone has no running WebDriverAgent. */
   noWda: string
+  annotate: string
+  annotateTools: Record<'pen' | 'line' | 'arrow' | 'rect' | 'ellipse' | 'text', string>
+  /** Names of ANNOTATE_COLORS, in order. */
+  annotateColors: string[]
+  undo: string
+  redo: string
+  clear: string
+  close: string
+  addToChat: string
+  annotationAdded: string
+  annotationAddedCopied: string
+  annotationFailed: string
 }
 
 /** The device actions WebDriverAgent can run on a real device. */
@@ -76,6 +88,17 @@ const EN: PanelCopy = {
   realDevices: 'iPhone / iPad (WebDriverAgent)',
   realDevice: 'real device',
   noWda: 'WebDriverAgent is not running on this iPhone — start it with ios_real_start_wda, or pick a simulator above.',
+  annotate: 'Annotate a screenshot',
+  annotateTools: { pen: 'Pen', line: 'Line', arrow: 'Arrow', rect: 'Box', ellipse: 'Ellipse', text: 'Text' },
+  annotateColors: ['Red', 'Blue', 'Green', 'Black', 'White'],
+  undo: 'Undo',
+  redo: 'Redo',
+  clear: 'Clear',
+  close: 'Close',
+  addToChat: 'Add to chat',
+  annotationAdded: 'Added — ask Claude to look at it (ios_sim_annotation)',
+  annotationAddedCopied: 'Added and copied — paste it into the chat, or ask Claude to look at it (ios_sim_annotation)',
+  annotationFailed: 'Could not add the annotation',
 }
 
 const ZH: PanelCopy = {
@@ -112,6 +135,17 @@ const ZH: PanelCopy = {
   realDevices: 'iPhone / iPad（WebDriverAgent）',
   realDevice: '真机',
   noWda: '这台 iPhone 上的 WebDriverAgent 没有运行——用 ios_real_start_wda 启动，或在上方选择模拟器。',
+  annotate: '标注截图',
+  annotateTools: { pen: '画笔', line: '直线', arrow: '箭头', rect: '矩形', ellipse: '椭圆', text: '文字' },
+  annotateColors: ['红', '蓝', '绿', '黑', '白'],
+  undo: '撤销',
+  redo: '重做',
+  clear: '清空',
+  close: '关闭',
+  addToChat: '添加到对话',
+  annotationAdded: '已添加——让 Claude 查看（ios_sim_annotation）',
+  annotationAddedCopied: '已添加并复制——可直接粘贴到对话，或让 Claude 查看（ios_sim_annotation）',
+  annotationFailed: '添加标注失败',
 }
 
 export function copyFor(language: string | undefined): PanelCopy {

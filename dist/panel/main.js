@@ -1,3 +1,422 @@
+// src/panel/client/annotate.ts
+var ANNOTATE_TOOLS = ["pen", "line", "arrow", "rect", "ellipse", "text"];
+var ANNOTATE_COLORS = ["#e5484d", "#3b82f6", "#46a758", "#1d1d1f", "#ffffff"];
+function markSizes(image) {
+  const longEdge = Math.max(image.width, image.height, 1);
+  return { stroke: Math.max(2, Math.round(longEdge * 5e-3)), text: Math.max(12, Math.round(longEdge * 0.022)) };
+}
+var AnnotationDoc = class {
+  #shapes = [];
+  #past = [];
+  #future = [];
+  get shapes() {
+    return this.#shapes;
+  }
+  get canUndo() {
+    return this.#past.length > 0;
+  }
+  get canRedo() {
+    return this.#future.length > 0;
+  }
+  add(shape) {
+    this.#commit([...this.#shapes, shape]);
+  }
+  clear() {
+    if (this.#shapes.length > 0) this.#commit([]);
+  }
+  undo() {
+    const previous = this.#past.pop();
+    if (previous === void 0) return;
+    this.#future.push(this.#shapes);
+    this.#shapes = previous;
+  }
+  redo() {
+    const next = this.#future.pop();
+    if (next === void 0) return;
+    this.#past.push(this.#shapes);
+    this.#shapes = next;
+  }
+  #commit(shapes) {
+    this.#past.push(this.#shapes);
+    this.#future = [];
+    this.#shapes = shapes;
+  }
+};
+function shapeFor(tool, color, width, from, to, points = [from, to]) {
+  return tool === "pen" ? { kind: "pen", color, width, points } : { kind: tool, color, width, from, to };
+}
+function isNegligible(shape, minimum) {
+  if (shape.kind === "text") return shape.text.trim() === "";
+  if (shape.kind === "pen") return shape.points.length < 2;
+  return Math.hypot(shape.to.x - shape.from.x, shape.to.y - shape.from.y) < minimum;
+}
+function arrowHead(from, to, length) {
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  const spread = Math.PI / 7;
+  return [
+    { x: to.x - length * Math.cos(angle - spread), y: to.y - length * Math.sin(angle - spread) },
+    { x: to.x - length * Math.cos(angle + spread), y: to.y - length * Math.sin(angle + spread) }
+  ];
+}
+var FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif';
+function drawShapes(ctx, shapes, scale) {
+  for (const shape of shapes) {
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    if (shape.kind === "text") {
+      const size = shape.size * scale;
+      ctx.font = `600 ${size}px ${FONT_FAMILY}`;
+      ctx.textBaseline = "top";
+      ctx.lineWidth = Math.max(2, size * 0.16);
+      ctx.strokeStyle = shape.color === "#ffffff" ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.9)";
+      ctx.fillStyle = shape.color;
+      let y = shape.at.y * scale;
+      for (const line of shape.text.split("\n")) {
+        ctx.strokeText(line, shape.at.x * scale, y);
+        ctx.fillText(line, shape.at.x * scale, y);
+        y += size * 1.2;
+      }
+      ctx.restore();
+      continue;
+    }
+    ctx.strokeStyle = shape.color;
+    ctx.lineWidth = shape.width * scale;
+    ctx.beginPath();
+    if (shape.kind === "pen") {
+      const [first, ...rest] = shape.points;
+      if (first !== void 0) {
+        ctx.moveTo(first.x * scale, first.y * scale);
+        for (const point of rest) ctx.lineTo(point.x * scale, point.y * scale);
+      }
+      ctx.stroke();
+    } else if (shape.kind === "rect") {
+      ctx.strokeRect(
+        Math.min(shape.from.x, shape.to.x) * scale,
+        Math.min(shape.from.y, shape.to.y) * scale,
+        Math.abs(shape.to.x - shape.from.x) * scale,
+        Math.abs(shape.to.y - shape.from.y) * scale
+      );
+    } else if (shape.kind === "ellipse") {
+      ctx.ellipse(
+        (shape.from.x + shape.to.x) / 2 * scale,
+        (shape.from.y + shape.to.y) / 2 * scale,
+        Math.abs(shape.to.x - shape.from.x) / 2 * scale,
+        Math.abs(shape.to.y - shape.from.y) / 2 * scale,
+        0,
+        0,
+        Math.PI * 2
+      );
+      ctx.stroke();
+    } else {
+      ctx.moveTo(shape.from.x * scale, shape.from.y * scale);
+      ctx.lineTo(shape.to.x * scale, shape.to.y * scale);
+      if (shape.kind === "arrow") {
+        const [left, right] = arrowHead(shape.from, shape.to, shape.width * 5.5);
+        ctx.moveTo(left.x * scale, left.y * scale);
+        ctx.lineTo(shape.to.x * scale, shape.to.y * scale);
+        ctx.lineTo(right.x * scale, right.y * scale);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+// src/panel/client/annotate-ui.ts
+var SVG = 'viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+var PENCIL_ICON = `<svg ${SVG}><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/><path d="m14.5 5.5 3 3"/></svg>`;
+var TOOL_ICONS = {
+  pen: PENCIL_ICON,
+  line: `<svg ${SVG}><path d="M5 19 19 5"/></svg>`,
+  arrow: `<svg ${SVG}><path d="M5 19 19 5"/><path d="M9 5h10v10"/></svg>`,
+  rect: `<svg ${SVG}><rect x="4" y="4" width="16" height="16" rx="1"/></svg>`,
+  ellipse: `<svg ${SVG}><circle cx="12" cy="12" r="8"/></svg>`,
+  text: `<svg ${SVG}><path d="M5 5h14"/><path d="M12 5v14"/><path d="M9 19h6"/></svg>`
+};
+var UNDO_ICON = `<svg ${SVG}><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>`;
+var REDO_ICON = `<svg ${SVG}><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>`;
+var TRASH_ICON = `<svg ${SVG}><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg>`;
+function button(html, label, className = "annotate-button") {
+  const node = document.createElement("button");
+  node.type = "button";
+  node.className = className;
+  node.innerHTML = html;
+  node.title = label;
+  node.setAttribute("aria-label", label);
+  return node;
+}
+function separator() {
+  const node = document.createElement("span");
+  node.className = "annotate-separator";
+  return node;
+}
+var Annotator = class {
+  #options;
+  #overlay = document.createElement("div");
+  #canvas = document.createElement("canvas");
+  #bar = document.createElement("div");
+  #toolButtons = /* @__PURE__ */ new Map();
+  #colorButtons = /* @__PURE__ */ new Map();
+  #undo;
+  #redo;
+  #add;
+  #image;
+  #doc = new AnnotationDoc();
+  #tool = "pen";
+  #color = ANNOTATE_COLORS[0];
+  #draft;
+  #dragFrom;
+  #input;
+  #busy = false;
+  constructor(options) {
+    this.#options = options;
+    const { copy: copy2 } = options;
+    this.#overlay.className = "annotate-overlay";
+    this.#overlay.hidden = true;
+    this.#overlay.append(this.#canvas);
+    options.screen.append(this.#overlay);
+    this.#bar.className = "annotate-bar";
+    this.#bar.hidden = true;
+    for (const tool of ANNOTATE_TOOLS) {
+      const node = button(TOOL_ICONS[tool], copy2.annotateTools[tool]);
+      node.addEventListener("click", () => this.#setTool(tool));
+      this.#toolButtons.set(tool, node);
+      this.#bar.append(node);
+    }
+    this.#bar.append(separator());
+    for (const color of ANNOTATE_COLORS) {
+      const node = button("", copy2.annotateColors[ANNOTATE_COLORS.indexOf(color)] ?? color, "annotate-color");
+      node.style.setProperty("--swatch", color);
+      node.addEventListener("click", () => this.#setColor(color));
+      this.#colorButtons.set(color, node);
+      this.#bar.append(node);
+    }
+    this.#bar.append(separator());
+    this.#undo = button(UNDO_ICON, copy2.undo);
+    this.#redo = button(REDO_ICON, copy2.redo);
+    const clear = button(TRASH_ICON, copy2.clear);
+    this.#undo.addEventListener("click", () => {
+      this.#doc.undo();
+      this.#render();
+    });
+    this.#redo.addEventListener("click", () => {
+      this.#doc.redo();
+      this.#render();
+    });
+    clear.addEventListener("click", () => {
+      this.#doc.clear();
+      this.#render();
+    });
+    const close = button(copy2.close, copy2.close, "annotate-text-button");
+    close.addEventListener("click", () => this.close());
+    this.#add = button(copy2.addToChat, copy2.addToChat, "annotate-primary");
+    this.#add.addEventListener("click", () => {
+      void this.#submit();
+    });
+    this.#bar.append(this.#undo, this.#redo, clear, close, this.#add);
+    document.body.append(this.#bar);
+    this.#overlay.addEventListener("pointerdown", (event) => this.#down(event));
+    this.#overlay.addEventListener("pointermove", (event) => this.#move(event));
+    this.#overlay.addEventListener("pointerup", (event) => this.#up(event));
+    this.#overlay.addEventListener("pointercancel", (event) => this.#up(event));
+    window.addEventListener("keydown", (event) => this.#key(event));
+    new ResizeObserver(() => this.#render()).observe(this.#overlay);
+    this.#setTool("pen");
+    this.#setColor(this.#color);
+  }
+  get isOpen() {
+    return !this.#overlay.hidden;
+  }
+  /** Freeze a fresh screenshot and show the tools. */
+  async open() {
+    if (this.isOpen || this.#busy) return;
+    this.#busy = true;
+    try {
+      const { url } = await this.#options.capture();
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      this.#image = image;
+      this.#doc = new AnnotationDoc();
+      this.#overlay.hidden = false;
+      this.#bar.hidden = false;
+      document.body.classList.add("annotating");
+      this.#render();
+    } finally {
+      this.#busy = false;
+    }
+  }
+  close() {
+    this.#commitText();
+    this.#overlay.hidden = true;
+    this.#bar.hidden = true;
+    document.body.classList.remove("annotating");
+    this.#image = void 0;
+    this.#draft = void 0;
+  }
+  #setTool(tool) {
+    this.#commitText();
+    this.#tool = tool;
+    for (const [name, node] of this.#toolButtons) node.classList.toggle("active", name === tool);
+    this.#overlay.dataset.tool = tool;
+  }
+  #setColor(color) {
+    this.#color = color;
+    for (const [name, node] of this.#colorButtons) node.classList.toggle("active", name === color);
+    if (this.#input !== void 0) this.#input.style.color = color;
+  }
+  /** Image pixels per overlay (CSS) pixel. */
+  #imageScale() {
+    const width = this.#overlay.clientWidth;
+    return this.#image === void 0 || width === 0 ? 1 : this.#image.naturalWidth / width;
+  }
+  #imagePoint(event) {
+    const box = this.#overlay.getBoundingClientRect();
+    const scale = this.#imageScale();
+    return { x: (event.clientX - box.left) * scale, y: (event.clientY - box.top) * scale };
+  }
+  #sizes() {
+    return markSizes(this.#image === void 0 ? { width: 1, height: 1 } : { width: this.#image.naturalWidth, height: this.#image.naturalHeight });
+  }
+  #down(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    if (this.#image === void 0 || event.button !== 0) return;
+    const point = this.#imagePoint(event);
+    if (this.#tool === "text") {
+      this.#commitText();
+      this.#openText(event, point);
+      return;
+    }
+    this.#overlay.setPointerCapture(event.pointerId);
+    this.#dragFrom = point;
+    this.#draft = shapeFor(this.#tool, this.#color, this.#sizes().stroke, point, point, [point]);
+  }
+  #move(event) {
+    event.stopPropagation();
+    const from = this.#dragFrom;
+    const draft = this.#draft;
+    if (from === void 0 || draft === void 0 || this.#tool === "text") return;
+    const point = this.#imagePoint(event);
+    this.#draft = draft.kind === "pen" ? { ...draft, points: [...draft.points, point] } : shapeFor(this.#tool, this.#color, draft.kind === "text" ? 1 : draft.width, from, point);
+    this.#render();
+  }
+  #up(event) {
+    event.stopPropagation();
+    const draft = this.#draft;
+    this.#draft = void 0;
+    this.#dragFrom = void 0;
+    if (draft !== void 0 && !isNegligible(draft, this.#sizes().stroke * 2)) this.#doc.add(draft);
+    this.#render();
+  }
+  #openText(event, at) {
+    const box = this.#overlay.getBoundingClientRect();
+    const input = document.createElement("textarea");
+    input.className = "annotate-input";
+    input.rows = 1;
+    input.style.left = `${event.clientX - box.left}px`;
+    input.style.top = `${event.clientY - box.top}px`;
+    input.style.color = this.#color;
+    input.style.fontSize = `${this.#sizes().text / this.#imageScale()}px`;
+    input.dataset.x = String(at.x);
+    input.dataset.y = String(at.y);
+    input.addEventListener("pointerdown", (stop) => stop.stopPropagation());
+    input.addEventListener("keydown", (key) => {
+      key.stopPropagation();
+      if (key.key === "Enter" && !key.shiftKey) {
+        key.preventDefault();
+        this.#commitText();
+      } else if (key.key === "Escape") {
+        input.value = "";
+        this.#commitText();
+      }
+    });
+    input.addEventListener("blur", () => this.#commitText());
+    this.#overlay.append(input);
+    this.#input = input;
+    input.focus();
+  }
+  #commitText() {
+    const input = this.#input;
+    if (input === void 0) return;
+    this.#input = void 0;
+    const text = input.value.replace(/\s+$/u, "");
+    input.remove();
+    if (text.trim() !== "") {
+      this.#doc.add({ kind: "text", color: this.#color, size: this.#sizes().text, at: { x: Number(input.dataset.x), y: Number(input.dataset.y) }, text });
+      this.#render();
+    }
+  }
+  #key(event) {
+    if (!this.isOpen || this.#input !== void 0) return;
+    const mod = event.metaKey || event.ctrlKey;
+    if (event.key === "Escape") {
+      this.close();
+    } else if (mod && event.key.toLowerCase() === "z") {
+      event.preventDefault();
+      if (event.shiftKey) this.#doc.redo();
+      else this.#doc.undo();
+      this.#render();
+    } else if (mod && event.key === "Enter") {
+      event.preventDefault();
+      void this.#submit();
+    }
+  }
+  #render() {
+    this.#undo.disabled = !this.#doc.canUndo;
+    this.#redo.disabled = !this.#doc.canRedo;
+    const image = this.#image;
+    if (image === void 0 || this.#overlay.hidden) return;
+    const ratio = window.devicePixelRatio || 1;
+    const width = this.#overlay.clientWidth;
+    const height = this.#overlay.clientHeight;
+    this.#canvas.width = Math.max(1, Math.round(width * ratio));
+    this.#canvas.height = Math.max(1, Math.round(height * ratio));
+    const ctx = this.#canvas.getContext("2d");
+    if (ctx === null) return;
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.drawImage(image, 0, 0, width, height);
+    const shapes = this.#draft === void 0 ? this.#doc.shapes : [...this.#doc.shapes, this.#draft];
+    drawShapes(ctx, shapes, 1 / this.#imageScale());
+  }
+  /** "Add to chat": the composite at full resolution → the server, and the clipboard. */
+  async #submit() {
+    this.#commitText();
+    const image = this.#image;
+    if (image === void 0 || this.#busy) return;
+    this.#busy = true;
+    this.#add.disabled = true;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx === null) throw new Error("canvas is unavailable");
+      ctx.drawImage(image, 0, 0);
+      drawShapes(ctx, this.#doc.shapes, 1);
+      const dataUrl = canvas.toDataURL("image/png");
+      await this.#options.save(dataUrl);
+      let copied = false;
+      try {
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        if (blob !== null && typeof ClipboardItem !== "undefined") {
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+          copied = true;
+        }
+      } catch {
+      }
+      this.close();
+      this.#options.notify(copied ? this.#options.copy.annotationAddedCopied : this.#options.copy.annotationAdded, "ok");
+    } catch (error) {
+      this.#options.notify(`${this.#options.copy.annotationFailed}: ${error instanceof Error ? error.message : String(error)}`, "error");
+    } finally {
+      this.#busy = false;
+      this.#add.disabled = false;
+    }
+  }
+};
+
 // src/panel/client/copy.ts
 var REAL_DEVICE_ACTION_IDS = ["lock", "unlock", "siri"];
 var EN = {
@@ -33,7 +452,18 @@ var EN = {
   actionFailed: "Action failed",
   realDevices: "iPhone / iPad (WebDriverAgent)",
   realDevice: "real device",
-  noWda: "WebDriverAgent is not running on this iPhone \u2014 start it with ios_real_start_wda, or pick a simulator above."
+  noWda: "WebDriverAgent is not running on this iPhone \u2014 start it with ios_real_start_wda, or pick a simulator above.",
+  annotate: "Annotate a screenshot",
+  annotateTools: { pen: "Pen", line: "Line", arrow: "Arrow", rect: "Box", ellipse: "Ellipse", text: "Text" },
+  annotateColors: ["Red", "Blue", "Green", "Black", "White"],
+  undo: "Undo",
+  redo: "Redo",
+  clear: "Clear",
+  close: "Close",
+  addToChat: "Add to chat",
+  annotationAdded: "Added \u2014 ask Claude to look at it (ios_sim_annotation)",
+  annotationAddedCopied: "Added and copied \u2014 paste it into the chat, or ask Claude to look at it (ios_sim_annotation)",
+  annotationFailed: "Could not add the annotation"
 };
 var ZH = {
   language: "zh",
@@ -68,7 +498,18 @@ var ZH = {
   actionFailed: "\u64CD\u4F5C\u5931\u8D25",
   realDevices: "iPhone / iPad\uFF08WebDriverAgent\uFF09",
   realDevice: "\u771F\u673A",
-  noWda: "\u8FD9\u53F0 iPhone \u4E0A\u7684 WebDriverAgent \u6CA1\u6709\u8FD0\u884C\u2014\u2014\u7528 ios_real_start_wda \u542F\u52A8\uFF0C\u6216\u5728\u4E0A\u65B9\u9009\u62E9\u6A21\u62DF\u5668\u3002"
+  noWda: "\u8FD9\u53F0 iPhone \u4E0A\u7684 WebDriverAgent \u6CA1\u6709\u8FD0\u884C\u2014\u2014\u7528 ios_real_start_wda \u542F\u52A8\uFF0C\u6216\u5728\u4E0A\u65B9\u9009\u62E9\u6A21\u62DF\u5668\u3002",
+  annotate: "\u6807\u6CE8\u622A\u56FE",
+  annotateTools: { pen: "\u753B\u7B14", line: "\u76F4\u7EBF", arrow: "\u7BAD\u5934", rect: "\u77E9\u5F62", ellipse: "\u692D\u5706", text: "\u6587\u5B57" },
+  annotateColors: ["\u7EA2", "\u84DD", "\u7EFF", "\u9ED1", "\u767D"],
+  undo: "\u64A4\u9500",
+  redo: "\u91CD\u505A",
+  clear: "\u6E05\u7A7A",
+  close: "\u5173\u95ED",
+  addToChat: "\u6DFB\u52A0\u5230\u5BF9\u8BDD",
+  annotationAdded: "\u5DF2\u6DFB\u52A0\u2014\u2014\u8BA9 Claude \u67E5\u770B\uFF08ios_sim_annotation\uFF09",
+  annotationAddedCopied: "\u5DF2\u6DFB\u52A0\u5E76\u590D\u5236\u2014\u2014\u53EF\u76F4\u63A5\u7C98\u8D34\u5230\u5BF9\u8BDD\uFF0C\u6216\u8BA9 Claude \u67E5\u770B\uFF08ios_sim_annotation\uFF09",
+  annotationFailed: "\u6DFB\u52A0\u6807\u6CE8\u5931\u8D25"
 };
 function copyFor(language) {
   return (language ?? "").toLowerCase().startsWith("zh") ? ZH : EN;
@@ -219,6 +660,8 @@ var ui = {
   picker: element("device-picker"),
   status: element("status"),
   home: element("btn-home"),
+  annotate: element("btn-annotate"),
+  toast: element("toast"),
   shot: element("btn-screenshot"),
   rotate: element("btn-rotate"),
   action: element("device-action"),
@@ -361,6 +804,29 @@ async function postJson(path, body) {
   if (!response.ok) throw new Error(value.error ?? `HTTP ${response.status}`);
   return value;
 }
+var toastTimer;
+function notify(message, kind) {
+  window.clearTimeout(toastTimer);
+  ui.toast.textContent = message;
+  ui.toast.dataset.kind = kind;
+  ui.toast.hidden = false;
+  toastTimer = window.setTimeout(() => {
+    ui.toast.hidden = true;
+  }, kind === "ok" ? 5e3 : 8e3);
+}
+var annotator = new Annotator({
+  screen: ui.screen,
+  copy,
+  capture: () => postJson("/api/capture", {}),
+  save: async (image) => {
+    await postJson("/api/annotations", { image });
+  },
+  notify
+});
+ui.annotate.addEventListener("click", () => {
+  if (annotator.isOpen) annotator.close();
+  else void annotator.open().catch((error) => report(copy.captureFailed, error));
+});
 ui.home.addEventListener("click", () => send(simButtonFrame("home")));
 ui.home.addEventListener("dblclick", () => {
   void postJson("/api/device-action", { action: "app-switcher" }).catch((error) => report(copy.actionFailed, error));
@@ -474,14 +940,15 @@ function initControls() {
   document.documentElement.lang = copy.language;
   const buttons = [
     [ui.home, ICONS.home, copy.homeHint],
+    [ui.annotate, PENCIL_ICON, copy.annotate],
     [ui.shot, ICONS.screenshot, copy.screenshot],
     [ui.rotate, ICONS.rotate, copy.rotate],
     [ui.refresh, ICONS.refresh, copy.refresh]
   ];
-  for (const [button, icon, label] of buttons) {
-    button.innerHTML = icon;
-    button.title = label;
-    button.setAttribute("aria-label", label);
+  for (const [button2, icon, label] of buttons) {
+    button2.innerHTML = icon;
+    button2.title = label;
+    button2.setAttribute("aria-label", label);
   }
   fillDeviceActions();
   ui.size.replaceChildren(...SIZE_OPTIONS.map((entry) => option(entry.id, copy.language === "zh" ? entry.zh : entry.en)));
