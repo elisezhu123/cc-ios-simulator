@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { PassThrough } from 'node:stream'
 import type { ServeSimBinary, SimHostController, SimHostStatus, SimStreamInfo } from '../../src/sim-host.js'
 import type { AxeApi, OcrApi, SimctlApi } from '../../src/deps.js'
+import type { DebugToolName, DevToolsApi, RunOptions, RunOutcome } from '../../src/devtools.js'
 import type { OcrItem } from '../../src/ocr-backend.js'
 import type { AxeElement } from '../../src/uitree-backend.js'
 import type { SimulatorDevice } from '../../src/simctl.js'
@@ -302,4 +303,42 @@ export function fakeOcr(reads: OcrItem[][] = [[]]): { api: OcrApi; paths: string
     },
   }
   return { api, paths }
+}
+
+/**
+ * A DevTools stand-in: `simctl` answers by the joined argument string (a
+ * missing key rejects), `run` answers by command basename; every call is
+ * recorded.
+ */
+export function fakeDevtools(options: {
+  simctl?: Record<string, string>
+  run?: Record<string, Partial<RunOutcome> | ((run: RunOptions) => Partial<RunOutcome>)>
+  which?: Partial<Record<DebugToolName, string>>
+  running?: boolean
+} = {}): { api: DevToolsApi; simctlCalls: string[]; runs: RunOptions[]; resumeChecks: number[] } {
+  const simctlCalls: string[] = []
+  const runs: RunOptions[] = []
+  const resumeChecks: number[] = []
+  const api: DevToolsApi = {
+    simctl: async args => {
+      const key = args.join(' ')
+      simctlCalls.push(key)
+      const out = options.simctl?.[key]
+      if (out === undefined) throw new Error(`simctl ${key} failed: fake has no answer`)
+      return out
+    },
+    run: async run => {
+      runs.push(run)
+      const name = run.command.split('/').pop() ?? run.command
+      const answer = options.run?.[name]
+      const outcome = typeof answer === 'function' ? answer(run) : answer ?? {}
+      return { stdout: '', stderr: '', code: 0, killed: false, ...outcome }
+    },
+    which: name => options.which === undefined ? `/xcode/${name}` : options.which[name],
+    ensureRunning: async pid => {
+      resumeChecks.push(pid)
+      return options.running ?? true
+    },
+  }
+  return { api, simctlCalls, runs, resumeChecks }
 }
