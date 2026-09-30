@@ -42,10 +42,19 @@
 ## 效果预览
 
 <p align="center">
-  <img src="docs/images/panel.png" alt="实时面板" width="420">
+  <img src="docs/images/panel-in-claude-desktop.jpg" alt="Claude Code 桌面版内置浏览器里的实时面板" width="420">
 </p>
 
-<p align="center"><sub>实时面板（布局参照 Claude Code 桌面版的 iOS 模拟器）：顶部是设备选择、设备和调试菜单，画面上直接点击 / 拖动，底部工具条是回到桌面、标注、保存截图、录屏、旋转、关闭和断开。图中的主屏是测试用的假画面。</sub></p>
+<p align="center"><sub>在 Claude Code 桌面版的内置浏览器里打开的实时面板（布局参照桌面版自带的 iOS 模拟器）：顶部是设备选择、设备菜单、调试菜单；画面上直接点击 / 拖动；底部工具条依次是回到桌面、标注、保存截图、录屏、旋转、关闭模拟器、断开。</sub></p>
+
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/images/panel-devices.jpg" alt="设备选择"><br><sub><b>设备选择</b><br>按已启动 / 真机 / 未启动分组</sub></td>
+    <td align="center" width="25%"><img src="docs/images/panel-device-menu.jpg" alt="设备菜单"><br><sub><b>设备菜单</b><br>外观、键盘、旋转、设备操作</sub></td>
+    <td align="center" width="25%"><img src="docs/images/panel-debug-menu.jpg" alt="调试菜单"><br><sub><b>调试菜单</b><br>慢动画、显示大小、外框</sub></td>
+    <td align="center" width="25%"><img src="docs/images/panel-annotate.jpg" alt="截图标注"><br><sub><b>截图标注</b><br>画完点"添加到对话"</sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -53,7 +62,8 @@
 
 | 类别 | 支持什么 |
 |---|---|
-| 🎥 **实时画面** | 基于 serve-sim 的 MJPEG 视频流（不是轮询截图），浏览器里实时观看，断线按 1s → 2s → 5s 自动重连 |
+| 🎥 **实时画面** | 基于 serve-sim 的 MJPEG 视频流（不是轮询截图），断线按 1s → 2s → 5s 自动重连；面板第一次启动时自动打开——终端里用默认浏览器，Claude Code 桌面版里用内置浏览器 |
+| 🪟 **面板界面** | 布局参照 Claude Code 桌面版的 iOS 模拟器：设备选择、设备 / 调试菜单、真机外框，底部悬浮工具条（回到桌面、标注、保存截图、录屏、旋转、关闭、断开），悬停显示快捷键；图标用 Boxicons |
 | 👆 **交互** | 点击、拖动 / 滑动手势、按内容方向滚动、输入文字、硬件按键（Home、锁屏、Siri、音量…）、四向旋转 |
 | 🧩 **UI 自动化** | 读取无障碍树，按 identifier / label 点控件；Vision OCR 识别屏幕文字（中英文），按文字点击；等待文字出现 / 消失；点击后在同一次调用里确认结果 |
 | ⚡ **SwiftUI 预览热重载** | 把 Swift 包里的 `#Preview` / `PreviewProvider` 直接跑在模拟器里；保存文件后几秒内热替换，不用重启 App；编译出错时保留上一个能用的画面 |
@@ -228,7 +238,12 @@ claude --plugin-dir /path/to/cc-ios-simulator
 启动 iPhone 17 Pro 模拟器，并打开实时面板
 ```
 
-`ios_sim_boot` 会返回 `panelUrl`（默认 `http://127.0.0.1:3456/`）。在 Claude 桌面版的 Code 标签页里，Claude 会在浏览器面板中打开它；在终端里使用时，把地址复制到浏览器即可。
+`ios_sim_boot` 会启动面板并返回 `panelUrl`（默认 `http://127.0.0.1:3456/`）。面板第一次启动时会自动打开给你看：
+
+- **终端（Claude Code CLI）**：直接在默认浏览器打开。
+- **Claude Code 桌面版**：内置浏览器由 Claude 通过 `preview_start` 打开，它读的是项目里的 `.claude/launch.json`。所以工具结果里会带上现成的配置（`openInClaude`），Claude 按它把配置写进 launch.json 再调用 `preview_start`，面板就出现在右侧的内置浏览器里。这个配置启动的是一个小代理：它监听内置浏览器分配的端口，再转发到面板，不会去抢面板本身的端口。
+
+想换方式可以设置 `IOS_SIM_OPEN_PANEL`（见[环境变量](#环境变量)）。
 
 更多示例：
 
@@ -270,9 +285,7 @@ sequenceDiagram
 
 ## 实时面板
 
-面板是一个本地网页（`127.0.0.1:3456` 起，被占用时自动 +1，最多到 +20）：
-
-布局参照 Claude Code 桌面版自带的 iOS 模拟器：
+面板是一个本地网页（`127.0.0.1:3456` 起，被占用时自动 +1，最多到 +20），第一次启动时会自动打开（见[快速上手](#快速上手)）。布局参照 Claude Code 桌面版自带的 iOS 模拟器：
 
 - **画面上直接操作**：单击即点击，按住拖动即手势；坐标自动扣除黑边，横屏时按方向换算。
 - **标题栏**：连接状态（实时 / 连接中 / 离线）和全屏按钮。
@@ -339,7 +352,9 @@ src/
   preview-source.ts    # Package.swift 解析、预览扫描、生成 Swift 代码
   preview-host.ts      # 预览会话：构建宿主 App、热替换、文件监听
   recorder.ts          # 录屏进程管理
-  panel/               # 面板服务、安全边界 fence.ts、前端 client/
+  panel-open.ts        # 面板怎么给用户看：默认浏览器 / 桌面版内置浏览器（launch.json 配置）
+  panel/               # 面板服务、安全边界 fence.ts、桌面版预览代理 panel-proxy.ts、前端 client/（菜单、Boxicons 图标、标注）
+  annotations.ts       # "添加到对话"保存的标注图
 dist/                  # 打包产物（已提交）
 test/                  # node:test 单元 / 集成测试，test/live/ 为真机冒烟
 ```
@@ -377,6 +392,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | `IOS_SIM_AXE_BIN` | 指定 axe 可执行文件（路径无效时直接报错，不会退回其他查找方式） | 依次查找 PATH、Homebrew、插件缓存，都没有就下载 |
 | `IOS_SIM_AXE_OFFLINE` | 设为 `1` 时不自动下载 AXe | 未设置 |
 | `IOS_SIM_SWIFTC` | 指定编译 OCR 助手用的 swiftc | PATH 中的 `swiftc` |
+| `IOS_SIM_OPEN_PANEL` | 面板第一次启动时怎么打开：`browser`（默认浏览器）、`preview`（Claude Code 桌面版内置浏览器）、`none`（不自动打开） | 桌面版里是 `preview`，其他情况是 `browser` |
 | `IOS_SIM_TEAM_ID` | 构建 WebDriverAgent 用的签名团队 ID（10 位） | 从 Xcode 登录的账号和钥匙串里的开发证书自动选择；找不到就报错并说明怎么设置，**没有内置默认值** |
 | `IOS_SIM_WDA_BUNDLE_ID` | WebDriverAgent 的 bundle id | `dev.ios-simulator.wda.t<团队ID>` |
 | `IOS_SIM_WDA_DIR` | 已有的 WebDriverAgent 源码目录 | `<缓存目录>/WebDriverAgent` |
@@ -386,6 +402,15 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 ---
 
 ## 常见问题
+
+<details>
+<summary><b>桌面版里面板没出现在内置浏览器里？</b></summary>
+
+内置浏览器只能由 Claude 调用 `preview_start` 打开，它读的是项目里的 `.claude/launch.json`。`ios_sim_boot` / `ios_sim_panel` 的结果里有 `openInClaude.launchConfiguration`，让 Claude 把这一项加进 launch.json 的 `configurations`，再调用 `preview_start`（名称是 `ios-simulator-panel`）。这项配置运行的是插件自带的小代理（`dist/server.js --panel-proxy`），会监听内置浏览器分配的端口（`autoPort`），然后转发到面板。
+
+**不要结束占用 3456 端口的 node 进程**。那就是这个插件的 MCP 服务，结束它之后所有 ios_sim_* 工具都会失效。如果只是想看面板，也可以把 `panelUrl` 粘贴到任意浏览器。
+
+</details>
 
 <details>
 <summary><b>如何输入中文或 emoji？</b></summary>
@@ -513,4 +538,5 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 
 - **[dsh-ios](https://github.com/ZSeven-W/dsh-ios)**（MIT，© 2026 ZSeven—W）：DeepSeek Harness 的 iOS 插件，本项目的基础。serve-sim 生命周期、手势、设备操作、App 列表、构建流程、面板协议与布局都移植自这里，见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 - **[serve-sim](https://github.com/EvanBacon/serve-sim)**（Apache-2.0，Evan Bacon）：视频流与触控。
+- **[Boxicons](https://boxicons.com)**（MIT，© 2015-2021 Aniket Suvarna）：面板图标。
 - 许可：[MIT](LICENSE)
