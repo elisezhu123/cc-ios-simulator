@@ -121,6 +121,30 @@ test('ios_sim_leaks summarizes leaks and suggests MallocStackLogging', async () 
   await h.close()
 })
 
+test('real Mac output: lldb denied without Developer Mode falls back to sample; the leaks line parses', async () => {
+  // Captured on a Mac against Settings (pid 57643 there), Developer Mode off.
+  const h = await debugHarness({
+    run: {
+      lldb: {
+        stdout: '(lldb) process attach --pid 1200\n',
+        stderr: 'error: attach failed: attach failed (Not allowed to attach to process.  Look in the console messages (Console.app), near the debugserver entries, when the attach failed.  The subsystem that denied the attach permission will likely have logged an informative message about why it was denied.)\n',
+        code: 1,
+      },
+      sample: (run: RunOptions): Partial<RunOutcome> => {
+        writeFileSync(run.args[run.args.indexOf('-file') + 1]!, 'Call graph:\n    1 Thread_1   DispatchQueue_1: com.apple.main-thread\n    + 1 start\n')
+        return {}
+      },
+      leaks: { stdout: 'Process 1200: 73 leaks for 2336 total leaked bytes.\n', code: 1 },
+    },
+  })
+  const trace = h.json(await h.call('ios_sim_backtrace', { bundle_id: 'com.example.MyApp' })) as { engine: string; note: string }
+  assert.equal(trace.engine, 'sample')
+  assert.match(trace.note, /Not allowed to attach.*sudo DevToolsSecurity -enable/)
+  const leaks = h.json(await h.call('ios_sim_leaks', { bundle_id: 'com.example.MyApp' })) as { leaks: number; leakedBytes: number }
+  assert.deepEqual([leaks.leaks, leaks.leakedBytes], [73, 2336])
+  await h.close()
+})
+
 test('ios_sim_leaks memgraph writes the artifact; a fatal leaks line names Developer Mode', async () => {
   const h = await debugHarness({
     run: {
