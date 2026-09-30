@@ -28,6 +28,8 @@ import { realWdaSeams, WdaController } from './wda-host.js'
 import { OcrHelper } from './ocr-backend.js'
 import { PreviewHostController, xcrunToolchain } from './preview-host.js'
 import { PanelServer } from './panel/panel-server.js'
+import { startPanelProxy } from './panel/panel-proxy.js'
+import { PanelOpener, panelOpenMode } from './panel-open.js'
 import { Recorder } from './recorder.js'
 import { ScreenshotStore } from './screenshot.js'
 import { SimHostController } from './sim-host.js'
@@ -43,6 +45,7 @@ import { AxeHelper } from './uitree-backend.js'
 
 async function main(): Promise<void> {
   const root = cacheRoot()
+  const stateFile = join(root, 'panel.json')
   const host = new SimHostController()
   host.startKeepAlive()
   const stream = new SimStreamSource(host)
@@ -70,13 +73,29 @@ async function main(): Promise<void> {
     realDevices,
     annotations,
     recorder,
+    stateFile,
   })
+  const opener = new PanelOpener({ mode: panelOpenMode(), platform: process.platform, serverScript: fileURLToPath(import.meta.url), stateFile })
+  const panelHandle = {
+    ensureStarted: async () => {
+      const url = await panel.ensureStarted()
+      opener.afterStart(url)
+      return url
+    },
+    showRealDevice: async (device: Parameters<PanelServer['showRealDevice']>[0]) => {
+      const url = await panel.showRealDevice(device)
+      opener.afterStart(url)
+      return url
+    },
+    showSimulator: () => panel.showSimulator(),
+    openHint: (url: string) => opener.hint(url),
+  }
   const deps: ToolDeps = {
     host,
     stream,
     simctl,
     screenshots,
-    panel,
+    panel: panelHandle,
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
@@ -139,7 +158,16 @@ async function main(): Promise<void> {
   process.stderr.write(`${PLUGIN_NAME} MCP server ready (serve-sim: ${host.status().serveSimSource})\n`)
 }
 
-main().catch((error: unknown) => {
+/** `server.js --panel-proxy --state <file>`: the preview-pane proxy (see src/panel-open.ts), not the MCP server. */
+async function proxyMain(): Promise<void> {
+  const index = process.argv.indexOf('--state')
+  const stateFile = index > 0 && process.argv[index + 1] !== undefined ? process.argv[index + 1]! : join(cacheRoot(), 'panel.json')
+  const proxy = await startPanelProxy({ port: Number(process.env.PORT ?? 3457), stateFile })
+  process.stderr.write(`${PLUGIN_NAME} panel proxy on http://127.0.0.1:${proxy.port}/ (panel state: ${stateFile})\n`)
+  for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP'] as const) process.on(signal, () => { void proxy.close().then(() => process.exit(0)) })
+}
+
+;(process.argv.includes('--panel-proxy') ? proxyMain() : main()).catch((error: unknown) => {
   process.stderr.write(`${PLUGIN_NAME}: fatal: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`)
   process.exit(1)
 })

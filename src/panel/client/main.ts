@@ -7,8 +7,9 @@
  * @module ios-simulator/panel/client/main
  */
 
-import { Annotator, PENCIL_ICON } from './annotate-ui.js'
+import { Annotator } from './annotate-ui.js'
 import { copyFor, type DeviceActionId } from './copy.js'
+import { icon } from './icons.js'
 import {
   FALLBACK_BASE,
   FRAME_STYLES,
@@ -54,17 +55,17 @@ const SHORTCUTS = {
   rotateLeft: keys(false, '←'),
   keyboard: keys(false, 'K'),
 }
-const SVG_ATTRS = 'viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"'
 const ICONS = {
-  home: `<svg ${SVG_ATTRS}><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>`,
-  screenshot: `<svg ${SVG_ATTRS}><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>`,
-  record: `<svg ${SVG_ATTRS}><rect x="3" y="7" width="12.5" height="10" rx="1.5"/><path d="m15.5 11 5-3v8l-5-3"/></svg>`,
-  recording: `<svg ${SVG_ATTRS}><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>`,
-  rotate: `<svg ${SVG_ATTRS}><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v5h-5"/></svg>`,
-  power: `<svg ${SVG_ATTRS}><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>`,
-  detach: `<svg ${SVG_ATTRS}><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5"/><path d="M14 8l4 4-4 4"/><path d="M18 12H9"/></svg>`,
-  fullscreen: `<svg ${SVG_ATTRS}><path d="M14 4h6v6"/><path d="m20 4-6 6"/><path d="M10 20H4v-6"/><path d="m4 20 6-6"/></svg>`,
-  chevron: '<svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+  home: icon('home'),
+  screenshot: icon('camera'),
+  record: icon('video'),
+  recording: icon('stop'),
+  rotate: icon('rotate'),
+  power: icon('power'),
+  // log-out turned half a turn: the box on the left, the arrow leaving it to the right.
+  detach: icon('detach', 20, 180),
+  fullscreen: icon('fullscreen'),
+  chevron: `<span class="chevron">${icon('chevronDown', 16)}</span>`,
 }
 
 function element<T extends HTMLElement>(id: string): T {
@@ -410,7 +411,7 @@ function dockButton(button: HTMLButtonElement, icon: string, label: string, shor
 function renderDock(): void {
   const simulator = state.kind === 'simulator'
   dockButton(ui.home, ICONS.home, copy.home, SHORTCUTS.home)
-  dockButton(ui.annotate, PENCIL_ICON, copy.annotate)
+  dockButton(ui.annotate, icon('pencil'), copy.annotate)
   dockButton(ui.shot, ICONS.screenshot, copy.saveScreenshot, SHORTCUTS.screenshot)
   dockButton(ui.record, state.recording ? ICONS.recording : ICONS.record, simulator ? (state.recording ? copy.stopRecording : copy.recordVideo) : copy.simulatorOnly, SHORTCUTS.record)
   dockButton(ui.rotate, ICONS.rotate, copy.rotateRight, SHORTCUTS.rotateRight)

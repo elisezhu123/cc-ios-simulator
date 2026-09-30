@@ -12,8 +12,11 @@ The loop is **observe once → act with an assertion → observe again only if t
 1. `ios_sim_devices` lists simulators, booted first. Use a udid or the exact name ("iPhone 17 Pro").
 2. `ios_sim_boot` boots it and starts the live stream; the result carries `panelUrl`.
    - No `panelUrl` means a degraded boot, and a `note` says why. With `streaming: false`, serve-sim is unavailable (an Intel Mac, no npx): the device is booted, and screenshots, apps, `open_url`, `push`, `location`, `appearance`, `record` and the AXe / OCR tools (`ui_tree`, `tap_element`, `ui_rows`, `tap_row`, `find_text`, `wait_for`) still work, but `ios_sim_interact`, `ios_sim_tap_text` and the panel do not — tell the user rather than retrying. With `streaming: true`, only the panel could not start; `ios_sim_panel` retries it.
-3. Open the panel for the user **once per session**: in the Claude desktop app call the browser tool `preview_start` with `{ "url": "<panelUrl>" }`; in a terminal-only session, print the URL for the user. `ios_sim_panel` returns the URL again later and never boots a device.
-4. The user can tap, drag, press Home, rotate and take screenshots in the panel; your tool calls and their clicks drive the same simulator.
+3. Getting the panel in front of the user, **once per session**:
+   - From the terminal the panel opens in the default browser by itself the first time it starts (the result says `opened`).
+   - In Claude Code desktop the result carries `openInClaude`: make sure `.claude/launch.json` has its `launchConfiguration` (add it to `configurations` if missing, keep the other entries), then call `preview_start` with that configuration's name. It starts a small proxy on the port the preview assigns; **never stop the process that owns the panel's own port** — that is this MCP server, and killing it ends every ios_sim_* tool.
+   - Otherwise give the user `panelUrl`. `ios_sim_panel` returns it again later and never boots a device.
+4. The user can tap, drag, press Home, rotate, annotate, save screenshots and record in the panel; your tool calls and their clicks drive the same simulator.
 5. `ios_sim_shutdown` shuts a simulator down when you are done; it stops that device's recording and live stream first.
 
 ## Reading the screen

@@ -7,11 +7,11 @@
  * @module ios-simulator/panel/panel-server
  */
 
-import { createReadStream, lstatSync, realpathSync } from 'node:fs'
+import { createReadStream, lstatSync, mkdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { createServer, get as httpGet, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import { basename, join, sep } from 'node:path'
+import { basename, dirname, join, sep } from 'node:path'
 import { pipeline, type Duplex } from 'node:stream'
 import { WebSocket, WebSocketServer, type RawData } from 'ws'
 import { PANEL_PORT_ATTEMPTS, PLUGIN_NAME } from '../config.js'
@@ -42,6 +42,8 @@ export interface PanelServerOptions {
   realDevices?: Pick<RealDeviceApi, 'getDevice'>
   /** Screen recording of the shown simulator (the dock's record button). */
   recorder?: RecorderApi
+  /** Written while listening ({url, port, pid}) so `server.js --panel-proxy` can find the panel. */
+  stateFile?: string
   /** Where "Add to chat" stores annotated screenshots for ios_sim_annotation. */
   annotations?: Pick<AnnotationStore, 'save' | 'dir'>
 }
@@ -181,6 +183,7 @@ export class PanelServer {
   /** Close every stream proxy and relay, then the listener. */
   async dispose(): Promise<void> {
     this.#disposed = true
+    if (this.#options.stateFile !== undefined) rmSync(this.#options.stateFile, { force: true })
     for (const teardown of [...this.#teardowns]) teardown()
     this.#wss.close()
     const server = this.#server
@@ -219,9 +222,22 @@ export class PanelServer {
       })
       this.#server = server
       this.#port = (server.address() as AddressInfo).port
+      this.#writeState()
       return `http://127.0.0.1:${this.#port}/`
     }
     throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage(lastError)}`)
+  }
+
+  /** Best effort: the proxy just shows its waiting page without it. */
+  #writeState(): void {
+    const file = this.#options.stateFile
+    if (file === undefined) return
+    try {
+      mkdirSync(dirname(file), { recursive: true })
+      writeFileSync(file, JSON.stringify({ url: `http://127.0.0.1:${this.#port}/`, port: this.#port, pid: process.pid }))
+    } catch {
+      // A read-only cache folder only costs the desktop preview its proxy.
+    }
   }
 
   #allowed(req: IncomingMessage, kind: FenceKind): boolean {

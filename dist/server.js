@@ -9996,7 +9996,7 @@ var require_websocket = __commonJS({
       }
       const defaultPort = isSecure ? 443 : 80;
       const key = randomBytes(16).toString("base64");
-      const request = isSecure ? https.request : http.request;
+      const request2 = isSecure ? https.request : http.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
       opts.createConnection = opts.createConnection || (isSecure ? tlsConnect : netConnect);
@@ -10073,12 +10073,12 @@ var require_websocket = __commonJS({
         if (opts.auth && !options.headers.authorization) {
           options.headers.authorization = "Basic " + Buffer.from(opts.auth).toString("base64");
         }
-        req = websocket._req = request(opts);
+        req = websocket._req = request2(opts);
         if (websocket._redirects) {
           websocket.emit("redirect", websocket.url, req);
         }
       } else {
-        req = websocket._req = request(opts);
+        req = websocket._req = request2(opts);
       }
       if (opts.timeout) {
         req.on("timeout", () => {
@@ -10889,7 +10889,7 @@ var require_websocket_server = __commonJS({
 });
 
 // src/server.ts
-import { dirname as dirname6, join as join21 } from "node:path";
+import { dirname as dirname7, join as join21 } from "node:path";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
@@ -36055,17 +36055,17 @@ var CompleteRequestSchema = RequestSchema.extend({
   method: literal("completion/complete"),
   params: CompleteRequestParamsSchema
 });
-function assertCompleteRequestPrompt(request) {
-  if (request.params.ref.type !== "ref/prompt") {
-    throw new TypeError(`Expected CompleteRequestPrompt, but got ${request.params.ref.type}`);
+function assertCompleteRequestPrompt(request2) {
+  if (request2.params.ref.type !== "ref/prompt") {
+    throw new TypeError(`Expected CompleteRequestPrompt, but got ${request2.params.ref.type}`);
   }
-  void request;
+  void request2;
 }
-function assertCompleteRequestResourceTemplate(request) {
-  if (request.params.ref.type !== "ref/resource") {
-    throw new TypeError(`Expected CompleteRequestResourceTemplate, but got ${request.params.ref.type}`);
+function assertCompleteRequestResourceTemplate(request2) {
+  if (request2.params.ref.type !== "ref/resource") {
+    throw new TypeError(`Expected CompleteRequestResourceTemplate, but got ${request2.params.ref.type}`);
   }
-  void request;
+  void request2;
 }
 var CompleteResultSchema = ResultSchema.extend({
   completion: looseObject({
@@ -37572,8 +37572,8 @@ var Protocol = class {
     this._taskStore = _options?.taskStore;
     this._taskMessageQueue = _options?.taskMessageQueue;
     if (this._taskStore) {
-      this.setRequestHandler(GetTaskRequestSchema, async (request, extra) => {
-        const task = await this._taskStore.getTask(request.params.taskId, extra.sessionId);
+      this.setRequestHandler(GetTaskRequestSchema, async (request2, extra) => {
+        const task = await this._taskStore.getTask(request2.params.taskId, extra.sessionId);
         if (!task) {
           throw new McpError(ErrorCode.InvalidParams, "Failed to retrieve task: Task not found");
         }
@@ -37581,9 +37581,9 @@ var Protocol = class {
           ...task
         };
       });
-      this.setRequestHandler(GetTaskPayloadRequestSchema, async (request, extra) => {
+      this.setRequestHandler(GetTaskPayloadRequestSchema, async (request2, extra) => {
         const handleTaskResult = async () => {
-          const taskId = request.params.taskId;
+          const taskId = request2.params.taskId;
           if (this._taskMessageQueue) {
             let queuedMessage;
             while (queuedMessage = await this._taskMessageQueue.dequeue(taskId, extra.sessionId)) {
@@ -37634,9 +37634,9 @@ var Protocol = class {
         };
         return await handleTaskResult();
       });
-      this.setRequestHandler(ListTasksRequestSchema, async (request, extra) => {
+      this.setRequestHandler(ListTasksRequestSchema, async (request2, extra) => {
         try {
-          const { tasks, nextCursor } = await this._taskStore.listTasks(request.params?.cursor, extra.sessionId);
+          const { tasks, nextCursor } = await this._taskStore.listTasks(request2.params?.cursor, extra.sessionId);
           return {
             tasks,
             nextCursor,
@@ -37646,20 +37646,20 @@ var Protocol = class {
           throw new McpError(ErrorCode.InvalidParams, `Failed to list tasks: ${error62 instanceof Error ? error62.message : String(error62)}`);
         }
       });
-      this.setRequestHandler(CancelTaskRequestSchema, async (request, extra) => {
+      this.setRequestHandler(CancelTaskRequestSchema, async (request2, extra) => {
         try {
-          const task = await this._taskStore.getTask(request.params.taskId, extra.sessionId);
+          const task = await this._taskStore.getTask(request2.params.taskId, extra.sessionId);
           if (!task) {
-            throw new McpError(ErrorCode.InvalidParams, `Task not found: ${request.params.taskId}`);
+            throw new McpError(ErrorCode.InvalidParams, `Task not found: ${request2.params.taskId}`);
           }
           if (isTerminal(task.status)) {
             throw new McpError(ErrorCode.InvalidParams, `Cannot cancel task in terminal status: ${task.status}`);
           }
-          await this._taskStore.updateTaskStatus(request.params.taskId, "cancelled", "Client cancelled task execution.", extra.sessionId);
-          this._clearTaskQueue(request.params.taskId);
-          const cancelledTask = await this._taskStore.getTask(request.params.taskId, extra.sessionId);
+          await this._taskStore.updateTaskStatus(request2.params.taskId, "cancelled", "Client cancelled task execution.", extra.sessionId);
+          this._clearTaskQueue(request2.params.taskId);
+          const cancelledTask = await this._taskStore.getTask(request2.params.taskId, extra.sessionId);
           if (!cancelledTask) {
-            throw new McpError(ErrorCode.InvalidParams, `Task not found after cancellation: ${request.params.taskId}`);
+            throw new McpError(ErrorCode.InvalidParams, `Task not found after cancellation: ${request2.params.taskId}`);
           }
           return {
             _meta: {},
@@ -37780,14 +37780,14 @@ var Protocol = class {
     }
     Promise.resolve().then(() => handler(notification)).catch((error62) => this._onerror(new Error(`Uncaught error in notification handler: ${error62}`)));
   }
-  _onrequest(request, extra) {
-    const handler = this._requestHandlers.get(request.method) ?? this.fallbackRequestHandler;
+  _onrequest(request2, extra) {
+    const handler = this._requestHandlers.get(request2.method) ?? this.fallbackRequestHandler;
     const capturedTransport = this._transport;
-    const relatedTaskId = request.params?._meta?.[RELATED_TASK_META_KEY]?.taskId;
+    const relatedTaskId = request2.params?._meta?.[RELATED_TASK_META_KEY]?.taskId;
     if (handler === void 0) {
       const errorResponse = {
         jsonrpc: "2.0",
-        id: request.id,
+        id: request2.id,
         error: {
           code: ErrorCode.MethodNotFound,
           message: "Method not found"
@@ -37805,17 +37805,17 @@ var Protocol = class {
       return;
     }
     const abortController = new AbortController();
-    this._requestHandlerAbortControllers.set(request.id, abortController);
-    const taskCreationParams = isTaskAugmentedRequestParams(request.params) ? request.params.task : void 0;
-    const taskStore = this._taskStore ? this.requestTaskStore(request, capturedTransport?.sessionId) : void 0;
+    this._requestHandlerAbortControllers.set(request2.id, abortController);
+    const taskCreationParams = isTaskAugmentedRequestParams(request2.params) ? request2.params.task : void 0;
+    const taskStore = this._taskStore ? this.requestTaskStore(request2, capturedTransport?.sessionId) : void 0;
     const fullExtra = {
       signal: abortController.signal,
       sessionId: capturedTransport?.sessionId,
-      _meta: request.params?._meta,
+      _meta: request2.params?._meta,
       sendNotification: async (notification) => {
         if (abortController.signal.aborted)
           return;
-        const notificationOptions = { relatedRequestId: request.id };
+        const notificationOptions = { relatedRequestId: request2.id };
         if (relatedTaskId) {
           notificationOptions.relatedTask = { taskId: relatedTaskId };
         }
@@ -37825,7 +37825,7 @@ var Protocol = class {
         if (abortController.signal.aborted) {
           throw new McpError(ErrorCode.ConnectionClosed, "Request was cancelled");
         }
-        const requestOptions = { ...options, relatedRequestId: request.id };
+        const requestOptions = { ...options, relatedRequestId: request2.id };
         if (relatedTaskId && !requestOptions.relatedTask) {
           requestOptions.relatedTask = { taskId: relatedTaskId };
         }
@@ -37836,7 +37836,7 @@ var Protocol = class {
         return await this.request(r, resultSchema, requestOptions);
       },
       authInfo: extra?.authInfo,
-      requestId: request.id,
+      requestId: request2.id,
       requestInfo: extra?.requestInfo,
       taskId: relatedTaskId,
       taskStore,
@@ -37846,16 +37846,16 @@ var Protocol = class {
     };
     Promise.resolve().then(() => {
       if (taskCreationParams) {
-        this.assertTaskHandlerCapability(request.method);
+        this.assertTaskHandlerCapability(request2.method);
       }
-    }).then(() => handler(request, fullExtra)).then(async (result) => {
+    }).then(() => handler(request2, fullExtra)).then(async (result) => {
       if (abortController.signal.aborted) {
         return;
       }
       const response = {
         result,
         jsonrpc: "2.0",
-        id: request.id
+        id: request2.id
       };
       if (relatedTaskId && this._taskMessageQueue) {
         await this._enqueueTaskMessage(relatedTaskId, {
@@ -37872,7 +37872,7 @@ var Protocol = class {
       }
       const errorResponse = {
         jsonrpc: "2.0",
-        id: request.id,
+        id: request2.id,
         error: {
           code: Number.isSafeInteger(error62["code"]) ? error62["code"] : ErrorCode.InternalError,
           message: error62.message ?? "Internal error",
@@ -37889,8 +37889,8 @@ var Protocol = class {
         await capturedTransport?.send(errorResponse);
       }
     }).catch((error62) => this._onerror(new Error(`Failed to send response: ${error62}`))).finally(() => {
-      if (this._requestHandlerAbortControllers.get(request.id) === abortController) {
-        this._requestHandlerAbortControllers.delete(request.id);
+      if (this._requestHandlerAbortControllers.get(request2.id) === abortController) {
+        this._requestHandlerAbortControllers.delete(request2.id);
       }
     });
   }
@@ -37994,11 +37994,11 @@ var Protocol = class {
    *
    * @experimental Use `client.experimental.tasks.requestStream()` to access this method.
    */
-  async *requestStream(request, resultSchema, options) {
+  async *requestStream(request2, resultSchema, options) {
     const { task } = options ?? {};
     if (!task) {
       try {
-        const result = await this.request(request, resultSchema, options);
+        const result = await this.request(request2, resultSchema, options);
         yield { type: "result", result };
       } catch (error62) {
         yield {
@@ -38010,7 +38010,7 @@ var Protocol = class {
     }
     let taskId;
     try {
-      const createResult = await this.request(request, CreateTaskResultSchema, options);
+      const createResult = await this.request(request2, CreateTaskResultSchema, options);
       if (createResult.task) {
         taskId = createResult.task.taskId;
         yield { type: "taskCreated", task: createResult.task };
@@ -38058,7 +38058,7 @@ var Protocol = class {
    *
    * Do not use this method to emit notifications! Use notification() instead.
    */
-  request(request, resultSchema, options) {
+  request(request2, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
     return new Promise((resolve7, reject) => {
       const earlyReject = (error62) => {
@@ -38070,9 +38070,9 @@ var Protocol = class {
       }
       if (this._options?.enforceStrictCapabilities === true) {
         try {
-          this.assertCapabilityForMethod(request.method);
+          this.assertCapabilityForMethod(request2.method);
           if (task) {
-            this.assertTaskCapability(request.method);
+            this.assertTaskCapability(request2.method);
           }
         } catch (e) {
           earlyReject(e);
@@ -38082,16 +38082,16 @@ var Protocol = class {
       options?.signal?.throwIfAborted();
       const messageId = this._requestMessageId++;
       const jsonrpcRequest = {
-        ...request,
+        ...request2,
         jsonrpc: "2.0",
         id: messageId
       };
       if (options?.onprogress) {
         this._progressHandlers.set(messageId, options.onprogress);
         jsonrpcRequest.params = {
-          ...request.params,
+          ...request2.params,
           _meta: {
-            ...request.params?._meta || {},
+            ...request2.params?._meta || {},
             progressToken: messageId
           }
         };
@@ -38295,8 +38295,8 @@ var Protocol = class {
   setRequestHandler(requestSchema, handler) {
     const method = getMethodLiteral(requestSchema);
     this.assertRequestHandlerCapability(method);
-    this._requestHandlers.set(method, (request, extra) => {
-      const parsed = parseWithCompat(requestSchema, request);
+    this._requestHandlers.set(method, (request2, extra) => {
+      const parsed = parseWithCompat(requestSchema, request2);
       return Promise.resolve(handler(parsed, extra));
     });
   }
@@ -38411,19 +38411,19 @@ var Protocol = class {
       }, { once: true });
     });
   }
-  requestTaskStore(request, sessionId) {
+  requestTaskStore(request2, sessionId) {
     const taskStore = this._taskStore;
     if (!taskStore) {
       throw new Error("No task store configured");
     }
     return {
       createTask: async (taskParams) => {
-        if (!request) {
+        if (!request2) {
           throw new Error("No request provided");
         }
-        return await taskStore.createTask(taskParams, request.id, {
-          method: request.method,
-          params: request.params
+        return await taskStore.createTask(taskParams, request2.id, {
+          method: request2.method,
+          params: request2.params
         }, sessionId);
       },
       getTask: async (taskId) => {
@@ -38584,8 +38584,8 @@ var ExperimentalServerTasks = class {
    *
    * @experimental
    */
-  requestStream(request, resultSchema, options) {
-    return this._server.requestStream(request, resultSchema, options);
+  requestStream(request2, resultSchema, options) {
+    return this._server.requestStream(request2, resultSchema, options);
   }
   /**
    * Sends a sampling request and returns an AsyncGenerator that yields response messages.
@@ -38830,12 +38830,12 @@ var Server = class extends Protocol {
     this._capabilities = options?.capabilities ?? {};
     this._instructions = options?.instructions;
     this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator();
-    this.setRequestHandler(InitializeRequestSchema, (request) => this._oninitialize(request));
+    this.setRequestHandler(InitializeRequestSchema, (request2) => this._oninitialize(request2));
     this.setNotificationHandler(InitializedNotificationSchema, () => this.oninitialized?.());
     if (this._capabilities.logging) {
-      this.setRequestHandler(SetLevelRequestSchema, async (request, extra) => {
+      this.setRequestHandler(SetLevelRequestSchema, async (request2, extra) => {
         const transportSessionId = extra.sessionId || extra.requestInfo?.headers["mcp-session-id"] || void 0;
-        const { level } = request.params;
+        const { level } = request2.params;
         const parseResult = LoggingLevelSchema.safeParse(level);
         if (parseResult.success) {
           this._loggingLevels.set(transportSessionId, parseResult.data);
@@ -38885,14 +38885,14 @@ var Server = class extends Protocol {
     }
     const method = methodValue;
     if (method === "tools/call") {
-      const wrappedHandler = async (request, extra) => {
-        const validatedRequest = safeParse2(CallToolRequestSchema, request);
+      const wrappedHandler = async (request2, extra) => {
+        const validatedRequest = safeParse2(CallToolRequestSchema, request2);
         if (!validatedRequest.success) {
           const errorMessage12 = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
           throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage12}`);
         }
         const { params } = validatedRequest.data;
-        const result = await Promise.resolve(handler(request, extra));
+        const result = await Promise.resolve(handler(request2, extra));
         if (params.task) {
           const taskValidationResult = safeParse2(CreateTaskResultSchema, result);
           if (!taskValidationResult.success) {
@@ -39023,10 +39023,10 @@ var Server = class extends Protocol {
     }
     assertToolsCallTaskCapability(this._capabilities.tasks?.requests, method, "Server");
   }
-  async _oninitialize(request) {
-    const requestedVersion = request.params.protocolVersion;
-    this._clientCapabilities = request.params.capabilities;
-    this._clientVersion = request.params.clientInfo;
+  async _oninitialize(request2) {
+    const requestedVersion = request2.params.protocolVersion;
+    this._clientCapabilities = request2.params.capabilities;
+    this._clientVersion = request2.params.clientInfo;
     const protocolVersion = SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion) ? requestedVersion : LATEST_PROTOCOL_VERSION;
     return {
       protocolVersion,
@@ -39353,33 +39353,33 @@ var McpServer = class {
         return toolDefinition;
       })
     }));
-    this.server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request2, extra) => {
       try {
-        const tool = this._registeredTools[request.params.name];
+        const tool = this._registeredTools[request2.params.name];
         if (!tool) {
-          throw new McpError(ErrorCode.InvalidParams, `Tool ${request.params.name} not found`);
+          throw new McpError(ErrorCode.InvalidParams, `Tool ${request2.params.name} not found`);
         }
         if (!tool.enabled) {
-          throw new McpError(ErrorCode.InvalidParams, `Tool ${request.params.name} disabled`);
+          throw new McpError(ErrorCode.InvalidParams, `Tool ${request2.params.name} disabled`);
         }
-        const isTaskRequest = !!request.params.task;
+        const isTaskRequest = !!request2.params.task;
         const taskSupport = tool.execution?.taskSupport;
         const isTaskHandler = "createTask" in tool.handler;
         if ((taskSupport === "required" || taskSupport === "optional") && !isTaskHandler) {
-          throw new McpError(ErrorCode.InternalError, `Tool ${request.params.name} has taskSupport '${taskSupport}' but was not registered with registerToolTask`);
+          throw new McpError(ErrorCode.InternalError, `Tool ${request2.params.name} has taskSupport '${taskSupport}' but was not registered with registerToolTask`);
         }
         if (taskSupport === "required" && !isTaskRequest) {
-          throw new McpError(ErrorCode.MethodNotFound, `Tool ${request.params.name} requires task augmentation (taskSupport: 'required')`);
+          throw new McpError(ErrorCode.MethodNotFound, `Tool ${request2.params.name} requires task augmentation (taskSupport: 'required')`);
         }
         if (taskSupport === "optional" && !isTaskRequest && isTaskHandler) {
-          return await this.handleAutomaticTaskPolling(tool, request, extra);
+          return await this.handleAutomaticTaskPolling(tool, request2, extra);
         }
-        const args = await this.validateToolInput(tool, request.params.arguments, request.params.name);
+        const args = await this.validateToolInput(tool, request2.params.arguments, request2.params.name);
         const result = await this.executeToolHandler(tool, args, extra);
         if (isTaskRequest) {
           return result;
         }
-        await this.validateToolOutput(tool, result, request.params.name);
+        await this.validateToolOutput(tool, result, request2.params.name);
         return result;
       } catch (error62) {
         if (error62 instanceof McpError) {
@@ -39480,11 +39480,11 @@ var McpServer = class {
   /**
    * Handles automatic task polling for tools with taskSupport 'optional'.
    */
-  async handleAutomaticTaskPolling(tool, request, extra) {
+  async handleAutomaticTaskPolling(tool, request2, extra) {
     if (!extra.taskStore) {
       throw new Error("No task store provided for task-capable tool.");
     }
-    const args = await this.validateToolInput(tool, request.params.arguments, request.params.name);
+    const args = await this.validateToolInput(tool, request2.params.arguments, request2.params.name);
     const handler = tool.handler;
     const taskExtra = { ...extra, taskStore: extra.taskStore };
     const createTaskResult = args ? await Promise.resolve(handler.createTask(args, taskExtra)) : (
@@ -39512,21 +39512,21 @@ var McpServer = class {
     this.server.registerCapabilities({
       completions: {}
     });
-    this.server.setRequestHandler(CompleteRequestSchema, async (request) => {
-      switch (request.params.ref.type) {
+    this.server.setRequestHandler(CompleteRequestSchema, async (request2) => {
+      switch (request2.params.ref.type) {
         case "ref/prompt":
-          assertCompleteRequestPrompt(request);
-          return this.handlePromptCompletion(request, request.params.ref);
+          assertCompleteRequestPrompt(request2);
+          return this.handlePromptCompletion(request2, request2.params.ref);
         case "ref/resource":
-          assertCompleteRequestResourceTemplate(request);
-          return this.handleResourceCompletion(request, request.params.ref);
+          assertCompleteRequestResourceTemplate(request2);
+          return this.handleResourceCompletion(request2, request2.params.ref);
         default:
-          throw new McpError(ErrorCode.InvalidParams, `Invalid completion reference: ${request.params.ref}`);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid completion reference: ${request2.params.ref}`);
       }
     });
     this._completionHandlerInitialized = true;
   }
-  async handlePromptCompletion(request, ref) {
+  async handlePromptCompletion(request2, ref) {
     const prompt = this._registeredPrompts[ref.name];
     if (!prompt) {
       throw new McpError(ErrorCode.InvalidParams, `Prompt ${ref.name} not found`);
@@ -39538,7 +39538,7 @@ var McpServer = class {
       return EMPTY_COMPLETION_RESULT;
     }
     const promptShape = getObjectShape(prompt.argsSchema);
-    const field = promptShape?.[request.params.argument.name];
+    const field = promptShape?.[request2.params.argument.name];
     if (!isCompletable(field)) {
       return EMPTY_COMPLETION_RESULT;
     }
@@ -39546,22 +39546,22 @@ var McpServer = class {
     if (!completer) {
       return EMPTY_COMPLETION_RESULT;
     }
-    const suggestions = await completer(request.params.argument.value, request.params.context);
+    const suggestions = await completer(request2.params.argument.value, request2.params.context);
     return createCompletionResult(suggestions);
   }
-  async handleResourceCompletion(request, ref) {
+  async handleResourceCompletion(request2, ref) {
     const template = Object.values(this._registeredResourceTemplates).find((t) => t.resourceTemplate.uriTemplate.toString() === ref.uri);
     if (!template) {
       if (this._registeredResources[ref.uri]) {
         return EMPTY_COMPLETION_RESULT;
       }
-      throw new McpError(ErrorCode.InvalidParams, `Resource template ${request.params.ref.uri} not found`);
+      throw new McpError(ErrorCode.InvalidParams, `Resource template ${request2.params.ref.uri} not found`);
     }
-    const completer = template.resourceTemplate.completeCallback(request.params.argument.name);
+    const completer = template.resourceTemplate.completeCallback(request2.params.argument.name);
     if (!completer) {
       return EMPTY_COMPLETION_RESULT;
     }
-    const suggestions = await completer(request.params.argument.value, request.params.context);
+    const suggestions = await completer(request2.params.argument.value, request2.params.context);
     return createCompletionResult(suggestions);
   }
   setResourceRequestHandlers() {
@@ -39576,7 +39576,7 @@ var McpServer = class {
         listChanged: true
       }
     });
-    this.server.setRequestHandler(ListResourcesRequestSchema, async (request, extra) => {
+    this.server.setRequestHandler(ListResourcesRequestSchema, async (request2, extra) => {
       const resources = Object.entries(this._registeredResources).filter(([_, resource]) => resource.enabled).map(([uri, resource]) => ({
         uri,
         name: resource.name,
@@ -39606,8 +39606,8 @@ var McpServer = class {
       }));
       return { resourceTemplates };
     });
-    this.server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
-      const uri = new URL(request.params.uri);
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request2, extra) => {
+      const uri = new URL(request2.params.uri);
       const resource = this._registeredResources[uri.toString()];
       if (resource) {
         if (!resource.enabled) {
@@ -39646,21 +39646,21 @@ var McpServer = class {
         };
       })
     }));
-    this.server.setRequestHandler(GetPromptRequestSchema, async (request, extra) => {
-      const prompt = this._registeredPrompts[request.params.name];
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request2, extra) => {
+      const prompt = this._registeredPrompts[request2.params.name];
       if (!prompt) {
-        throw new McpError(ErrorCode.InvalidParams, `Prompt ${request.params.name} not found`);
+        throw new McpError(ErrorCode.InvalidParams, `Prompt ${request2.params.name} not found`);
       }
       if (!prompt.enabled) {
-        throw new McpError(ErrorCode.InvalidParams, `Prompt ${request.params.name} disabled`);
+        throw new McpError(ErrorCode.InvalidParams, `Prompt ${request2.params.name} disabled`);
       }
       if (prompt.argsSchema) {
         const argsObj = normalizeObjectSchema(prompt.argsSchema);
-        const parseResult = await safeParseAsync2(argsObj, request.params.arguments);
+        const parseResult = await safeParseAsync2(argsObj, request2.params.arguments);
         if (!parseResult.success) {
           const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
           const errorMessage12 = getParseErrorMessage(error62);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage12}`);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request2.params.name}: ${errorMessage12}`);
         }
         const args = parseResult.data;
         const cb = prompt.callback;
@@ -45215,10 +45215,10 @@ var xcrunToolchain = {
 };
 
 // src/panel/panel-server.ts
-import { createReadStream, lstatSync, realpathSync } from "node:fs";
+import { createReadStream, lstatSync, mkdirSync as mkdirSync6, realpathSync, rmSync as rmSync5, writeFileSync as writeFileSync6 } from "node:fs";
 import { readFile as readFile5 } from "node:fs/promises";
 import { createServer as createServer4, get as httpGet } from "node:http";
-import { basename as basename2, join as join16, sep as sep2 } from "node:path";
+import { basename as basename2, dirname as dirname5, join as join16, sep as sep2 } from "node:path";
 import { pipeline } from "node:stream";
 
 // node_modules/ws/wrapper.mjs
@@ -45278,25 +45278,25 @@ function normalizeSteps(steps, fallback) {
   }
   return Math.floor(steps);
 }
-function simScrollPath(request) {
-  const { direction, amount, anchorX, anchorY } = request;
+function simScrollPath(request2) {
+  const { direction, amount, anchorX, anchorY } = request2;
   const vertical = direction === "up" || direction === "down";
   const anchor2 = vertical ? anchorY : anchorX;
   const delta = (direction === "down" || direction === "right" ? -1 : 1) * amount;
   const from = clampBand(anchor2);
   const to = clampBand(from + delta);
-  const steps = normalizeSteps(request.steps, SIM_SCROLL_STEPS);
+  const steps = normalizeSteps(request2.steps, SIM_SCROLL_STEPS);
   return vertical ? tracePoints({ x: anchorX, y: from }, { x: anchorX, y: to }, steps) : tracePoints({ x: from, y: anchorY }, { x: to, y: anchorY }, steps);
 }
-function simDragPath(request, stepMs = SIM_GESTURE_STEP_MS) {
+function simDragPath(request2, stepMs = SIM_GESTURE_STEP_MS) {
   const durationMs = Math.min(
     SIM_DRAG_MAX_MS,
-    Math.max(SIM_DRAG_MIN_MS, Math.round((request.duration ?? 0.3) * 1e3))
+    Math.max(SIM_DRAG_MIN_MS, Math.round((request2.duration ?? 0.3) * 1e3))
   );
   const steps = Math.max(2, Math.round(durationMs / Math.max(1, stepMs)));
   return tracePoints(
-    { x: clamp01(request.fromX), y: clamp01(request.fromY) },
-    { x: clamp01(request.toX), y: clamp01(request.toY) },
+    { x: clamp01(request2.fromX), y: clamp01(request2.fromY) },
+    { x: clamp01(request2.toX), y: clamp01(request2.toY) },
     steps
   );
 }
@@ -46791,20 +46791,20 @@ function isLoopbackRemoteAddress(address) {
   const hexadecimal = /^([a-f0-9]{1,4}):([a-f0-9]{1,4})$/u.exec(mapped);
   return hexadecimal !== null && Number.parseInt(hexadecimal[1] ?? "0", 16) >>> 8 === 127;
 }
-function header(request, name) {
-  const value = request.headers[name];
+function header(request2, name) {
+  const value = request2.headers[name];
   return typeof value === "string" ? value : void 0;
 }
 function allowedAuthorities(port) {
   return [`127.0.0.1:${port}`, `localhost:${port}`];
 }
-function checkRequest(request, port, kind) {
-  if (!isLoopbackRemoteAddress(request.remoteAddress)) return { ok: false, reason: "peer" };
+function checkRequest(request2, port, kind) {
+  if (!isLoopbackRemoteAddress(request2.remoteAddress)) return { ok: false, reason: "peer" };
   const authorities = allowedAuthorities(port);
-  const host = header(request, "host")?.toLowerCase();
+  const host = header(request2, "host")?.toLowerCase();
   if (host === void 0 || !authorities.includes(host)) return { ok: false, reason: "host" };
-  const site = header(request, "sec-fetch-site");
-  const origin = header(request, "origin");
+  const site = header(request2, "sec-fetch-site");
+  const origin = header(request2, "origin");
   const originOk = origin !== void 0 && origin.toLowerCase() === `http://${host}`;
   if (kind === "read") {
     if (site !== void 0 && site !== "same-origin" && site !== "none") return { ok: false, reason: "fetch-site" };
@@ -46814,7 +46814,7 @@ function checkRequest(request, port, kind) {
   if (!originOk) return { ok: false, reason: "origin" };
   if (site !== void 0 && site !== "same-origin") return { ok: false, reason: "fetch-site" };
   if (kind === "mutate") {
-    const type = header(request, "content-type");
+    const type = header(request2, "content-type");
     if (type === void 0 || !/^application\/json\s*(;|$)/iu.test(type)) return { ok: false, reason: "content-type" };
   }
   return { ok: true };
@@ -47007,6 +47007,7 @@ var PanelServer = class {
   /** Close every stream proxy and relay, then the listener. */
   async dispose() {
     this.#disposed = true;
+    if (this.#options.stateFile !== void 0) rmSync5(this.#options.stateFile, { force: true });
     for (const teardown of [...this.#teardowns]) teardown();
     this.#wss.close();
     const server = this.#server;
@@ -47047,9 +47048,20 @@ var PanelServer = class {
       });
       this.#server = server;
       this.#port = server.address().port;
+      this.#writeState();
       return `http://127.0.0.1:${this.#port}/`;
     }
     throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage11(lastError)}`);
+  }
+  /** Best effort: the proxy just shows its waiting page without it. */
+  #writeState() {
+    const file2 = this.#options.stateFile;
+    if (file2 === void 0) return;
+    try {
+      mkdirSync6(dirname5(file2), { recursive: true });
+      writeFileSync6(file2, JSON.stringify({ url: `http://127.0.0.1:${this.#port}/`, port: this.#port, pid: process.pid }));
+    } catch {
+    }
   }
   #allowed(req, kind) {
     return checkRequest({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, this.#port, kind).ok;
@@ -47533,10 +47545,188 @@ var PanelServer = class {
   }
 };
 
+// src/panel/panel-proxy.ts
+import { readFileSync as readFileSync9 } from "node:fs";
+import { createServer as createServer5, request } from "node:http";
+function readPanelState(stateFile) {
+  try {
+    const state = JSON.parse(readFileSync9(stateFile, "utf8"));
+    return typeof state.port === "number" && typeof state.url === "string" && typeof state.pid === "number" ? { url: state.url, port: state.port, pid: state.pid } : void 0;
+  } catch {
+    return void 0;
+  }
+}
+var WAITING_PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="3">
+<title>iOS Simulator</title></head><body style="font:15px -apple-system,BlinkMacSystemFont,sans-serif;color:#6e6e73;
+display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center">
+<p>The iOS Simulator panel is not running yet.<br>Ask Claude to boot a simulator (ios_sim_boot) or open the panel (ios_sim_panel).<br>
+This page retries every 3 seconds.</p></body></html>`;
+function rewriteHeaders(headers, panelPort) {
+  const rewritten = { ...headers, host: `127.0.0.1:${panelPort}` };
+  if (headers.origin !== void 0) rewritten.origin = `http://127.0.0.1:${panelPort}`;
+  return rewritten;
+}
+function fenceKind(req) {
+  return req.method === "GET" || req.method === "HEAD" ? "read" : "mutate";
+}
+async function startPanelProxy(options) {
+  let ownPort = 0;
+  const allowed = (req, kind) => checkRequest({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, ownPort, kind).ok;
+  const server = createServer5((req, res) => {
+    if (!allowed(req, fenceKind(req))) {
+      res.writeHead(403, { "content-type": "text/plain" }).end("forbidden");
+      return;
+    }
+    const state = readPanelState(options.stateFile);
+    const waiting = () => {
+      if (res.headersSent) {
+        res.destroy();
+        return;
+      }
+      res.writeHead(503, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }).end(WAITING_PAGE);
+    };
+    if (state === void 0) return waiting();
+    const upstream = request({
+      host: "127.0.0.1",
+      port: state.port,
+      method: req.method,
+      path: req.url,
+      headers: rewriteHeaders(req.headers, state.port)
+    }, (response) => {
+      res.writeHead(response.statusCode ?? 502, response.headers);
+      response.pipe(res);
+    });
+    upstream.on("error", waiting);
+    res.on("close", () => upstream.destroy());
+    req.pipe(upstream);
+  });
+  server.on("upgrade", (req, socket, head) => {
+    socket.on("error", () => socket.destroy());
+    const state = readPanelState(options.stateFile);
+    if (!allowed(req, "upgrade") || state === void 0) {
+      socket.end(`HTTP/1.1 ${state === void 0 ? "503 Service Unavailable" : "403 Forbidden"}\r
+Connection: close\r
+Content-Length: 0\r
+\r
+`);
+      return;
+    }
+    const upstream = request({
+      host: "127.0.0.1",
+      port: state.port,
+      method: req.method,
+      path: req.url,
+      headers: rewriteHeaders(req.headers, state.port)
+    });
+    upstream.on("upgrade", (response, upstreamSocket, upstreamHead) => {
+      const lines = [`HTTP/1.1 ${response.statusCode ?? 101} ${response.statusMessage ?? "Switching Protocols"}`];
+      for (let index = 0; index < response.rawHeaders.length; index += 2) {
+        lines.push(`${response.rawHeaders[index]}: ${response.rawHeaders[index + 1]}`);
+      }
+      socket.write(`${lines.join("\r\n")}\r
+\r
+`);
+      if (upstreamHead.length > 0) socket.write(upstreamHead);
+      if (head.length > 0) upstreamSocket.write(head);
+      upstreamSocket.on("error", () => socket.destroy());
+      socket.on("close", () => upstreamSocket.destroy());
+      upstreamSocket.on("close", () => socket.destroy());
+      upstreamSocket.pipe(socket).pipe(upstreamSocket);
+    });
+    upstream.on("response", (response) => {
+      socket.end(`HTTP/1.1 ${response.statusCode ?? 502} ${response.statusMessage ?? ""}\r
+Connection: close\r
+Content-Length: 0\r
+\r
+`);
+      response.resume();
+    });
+    upstream.on("error", () => socket.destroy());
+    upstream.end();
+  });
+  await new Promise((resolve7, reject) => {
+    server.once("error", reject);
+    server.listen(options.port, options.host ?? "127.0.0.1", () => {
+      server.off("error", reject);
+      resolve7();
+    });
+  });
+  ownPort = server.address().port;
+  return {
+    port: ownPort,
+    close: () => new Promise((resolve7) => {
+      server.closeAllConnections();
+      server.close(() => resolve7());
+    })
+  };
+}
+
+// src/panel-open.ts
+import { execFile as execFile11 } from "node:child_process";
+var PREVIEW_CONFIGURATION = "ios-simulator-panel";
+function panelOpenMode(env = process.env) {
+  const explicit = env.IOS_SIM_OPEN_PANEL?.trim().toLowerCase();
+  if (explicit === "browser" || explicit === "preview" || explicit === "none") return explicit;
+  return /desktop/iu.test(env.CLAUDE_CODE_ENTRYPOINT ?? "") ? "preview" : "browser";
+}
+function browserOpenCommand(platform, url2) {
+  if (platform === "darwin") return ["open", [url2]];
+  if (platform === "linux") return ["xdg-open", [url2]];
+  if (platform === "win32") return ["cmd", ["/c", "start", "", url2]];
+  return void 0;
+}
+function previewLaunchConfiguration(serverScript, stateFile) {
+  return {
+    name: PREVIEW_CONFIGURATION,
+    runtimeExecutable: "node",
+    runtimeArgs: [serverScript, "--panel-proxy", "--state", stateFile],
+    port: 3457,
+    autoPort: true
+  };
+}
+var PanelOpener = class {
+  #options;
+  #opened = false;
+  constructor(options) {
+    this.#options = options;
+  }
+  get mode() {
+    return this.#options.mode;
+  }
+  /** After the panel starts: open it in the browser, once per server process. */
+  afterStart(url2) {
+    if (this.#opened || this.#options.mode !== "browser") return;
+    const command = browserOpenCommand(this.#options.platform, url2);
+    if (command === void 0) return;
+    this.#opened = true;
+    const run4 = this.#options.run ?? ((file2, args) => {
+      execFile11(file2, args, { timeout: 1e4 }, () => {
+      });
+    });
+    run4(command[0], command[1]);
+  }
+  /** What a tool result adds so the user gets to see the panel. */
+  hint(url2) {
+    switch (this.#options.mode) {
+      case "browser":
+        return this.#opened ? { opened: "the panel opened in the default browser when it first started" } : {};
+      case "none":
+        return {};
+      case "preview":
+        return {
+          openInClaude: {
+            how: `Show panelUrl in Claude Code's built-in browser pane: make sure .claude/launch.json has the configuration below (add it to "configurations" if missing, keep the others), then call preview_start with "${PREVIEW_CONFIGURATION}". It runs a small proxy on the port the preview assigns (autoPort) and forwards to the panel, so never stop the process that owns ${new URL(url2).host} \u2014 that is this MCP server.`,
+            launchConfiguration: previewLaunchConfiguration(this.#options.serverScript, this.#options.stateFile)
+          }
+        };
+    }
+  }
+};
+
 // src/recorder.ts
 import { spawn as spawn6 } from "node:child_process";
-import { mkdirSync as mkdirSync6, statSync as statSync9 } from "node:fs";
-import { dirname as dirname5, join as join17 } from "node:path";
+import { mkdirSync as mkdirSync7, statSync as statSync9 } from "node:fs";
+import { dirname as dirname6, join as join17 } from "node:path";
 function recordVideoArgs(udid, path) {
   return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
 }
@@ -47588,7 +47778,7 @@ var Recorder = class {
       const requested = outputPath?.trim() ?? "";
       const path = requested === "" ? this.defaultPath(udid) : requested;
       if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`);
-      mkdirSync6(dirname5(path), { recursive: true });
+      mkdirSync7(dirname6(path), { recursive: true });
       const child = this.#spawnRecord(udid, path);
       const exited = new Promise((resolve7) => {
         child.once("exit", (code) => resolve7(code));
@@ -48093,7 +48283,8 @@ function registerCoreTools(server, deps) {
     deps.panel.showSimulator();
     let panel;
     try {
-      panel = { panelUrl: await deps.panel.ensureStarted() };
+      const panelUrl = await deps.panel.ensureStarted();
+      panel = { panelUrl, ...deps.panel.openHint(panelUrl) };
     } catch (error62) {
       const message = error62 instanceof Error ? error62.message : String(error62);
       panel = { note: `booted and streaming, but the live panel could not start (${message}) \u2014 ios_sim_panel retries it` };
@@ -48117,7 +48308,7 @@ function registerCoreTools(server, deps) {
   }));
   server.registerTool("ios_sim_panel", {
     title: "Open the live panel",
-    description: "Make sure the live stream runs for a booted simulator and return panelUrl, the live panel (video, tap/drag, Home, rotate, screenshot). Open it with preview_start {url: panelUrl} in the browser pane; in a terminal-only session give the URL to the user. Never boots a device. Given a connected iPhone/iPad on which ios_real_start_wda is running, the panel shows that phone instead (WebDriverAgent live view and touch).",
+    description: "Make sure the live stream runs for a booted simulator and return panelUrl, the live panel (video, tap/drag, Home, annotate, screenshot, record, rotate). In the terminal the panel opens in the default browser the first time it starts; in Claude Code desktop the result says how to show it in the built-in browser pane (openInClaude). Never boots a device. Given a connected iPhone/iPad on which ios_real_start_wda is running, the panel shows that phone instead (WebDriverAgent live view and touch).",
     inputSchema: { udid: UDID_PARAM }
   }, async ({ udid }) => runTool("ios_sim_panel", async () => {
     assertMac(deps.platform);
@@ -48130,7 +48321,8 @@ function registerCoreTools(server, deps) {
       return jsonResult({
         panelUrl: panelUrl2,
         device: realDeviceSummary(target.device),
-        hint: "Open panelUrl in the browser pane (preview_start with this url); in a terminal-only session give the URL to the user. The live view comes from WebDriverAgent; taps and drags in it go to the phone."
+        ...deps.panel.openHint(panelUrl2),
+        hint: "The live view comes from WebDriverAgent; taps and drags in it go to the phone. If the user cannot see the panel, give them panelUrl."
       });
     }
     assertStreamAvailable(deps.host);
@@ -48142,7 +48334,8 @@ function registerCoreTools(server, deps) {
     return jsonResult({
       panelUrl,
       device: deviceSummary(device),
-      hint: "Open panelUrl in the browser pane (preview_start with this url); in a terminal-only session give the URL to the user."
+      ...deps.panel.openHint(panelUrl),
+      hint: "If the user cannot see the panel, give them panelUrl."
     });
   }));
   server.registerTool("ios_sim_screenshot", {
@@ -48356,7 +48549,7 @@ function registerCoreTools(server, deps) {
 }
 
 // src/tools/debug.ts
-import { mkdirSync as mkdirSync7, statSync as statSync10, existsSync as existsSync10, readFileSync as readFileSync9 } from "node:fs";
+import { mkdirSync as mkdirSync8, statSync as statSync10, existsSync as existsSync10, readFileSync as readFileSync10 } from "node:fs";
 import { join as join19 } from "node:path";
 var MAX_LOG_LINES = 300;
 var MAX_LOG_BYTES = 30 * 1024;
@@ -48547,7 +48740,7 @@ function registerDebugTools(server, deps) {
         throw new Error(`LLDB capture is unavailable${note === void 0 ? "" : ` (${note})`} and Xcode's sample tool is not installed \u2014 install Xcode or the Command Line Tools`);
       }
       const dir = join19(deps.cacheRoot, "samples");
-      mkdirSync7(dir, { recursive: true });
+      mkdirSync8(dir, { recursive: true });
       reportPath = join19(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
       const outcome = await deps.devtools.run({
         command: sample,
@@ -48560,7 +48753,7 @@ function registerDebugTools(server, deps) {
         const detail = tailDiagnostic(outcome.stderr === "" ? outcome.stdout : outcome.stderr, 3);
         throw new Error(`sample of pid ${target.pid} produced no report${detail === "" ? "" : `: ${detail}`}`);
       }
-      threads = parseSampleThreads(readFileSync9(reportPath, "utf8"));
+      threads = parseSampleThreads(readFileSync10(reportPath, "utf8"));
       if (threads.length === 0) throw new Error(`sample of pid ${target.pid} produced no thread sections (report: ${reportPath})`);
     }
     const kept = orderThreads(threads, allThreads);
@@ -48601,7 +48794,7 @@ function registerDebugTools(server, deps) {
     const base = { device: deviceSummary(device), ...processSummary(target), mode };
     if (mode === "memgraph") {
       const dir = join19(deps.cacheRoot, "memgraphs");
-      mkdirSync7(dir, { recursive: true });
+      mkdirSync8(dir, { recursive: true });
       const path = join19(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
       const outcome2 = await deps.devtools.run({
         command: leaks,
@@ -49498,6 +49691,7 @@ function registerUiTools(server, deps) {
 // src/server.ts
 async function main() {
   const root = cacheRoot();
+  const stateFile = join21(root, "panel.json");
   const host = new SimHostController();
   host.startKeepAlive();
   const stream = new SimStreamSource(host);
@@ -49516,7 +49710,7 @@ async function main() {
   const recorder = new Recorder({ dir: join21(root, "recordings") });
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
-    staticDir: join21(dirname6(fileURLToPath4(import.meta.url)), "panel"),
+    staticDir: join21(dirname7(fileURLToPath4(import.meta.url)), "panel"),
     preferredPort: preferredPanelPort(),
     host,
     stream,
@@ -49525,14 +49719,30 @@ async function main() {
     wda,
     realDevices,
     annotations,
-    recorder
+    recorder,
+    stateFile
   });
+  const opener = new PanelOpener({ mode: panelOpenMode(), platform: process.platform, serverScript: fileURLToPath4(import.meta.url), stateFile });
+  const panelHandle = {
+    ensureStarted: async () => {
+      const url2 = await panel.ensureStarted();
+      opener.afterStart(url2);
+      return url2;
+    },
+    showRealDevice: async (device) => {
+      const url2 = await panel.showRealDevice(device);
+      opener.afterStart(url2);
+      return url2;
+    },
+    showSimulator: () => panel.showSimulator(),
+    openHint: (url2) => opener.hint(url2)
+  };
   const deps = {
     host,
     stream,
     simctl: simctl_exports,
     screenshots,
-    panel,
+    panel: panelHandle,
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
@@ -49596,7 +49806,17 @@ async function main() {
   process.stderr.write(`${PLUGIN_NAME} MCP server ready (serve-sim: ${host.status().serveSimSource})
 `);
 }
-main().catch((error62) => {
+async function proxyMain() {
+  const index = process.argv.indexOf("--state");
+  const stateFile = index > 0 && process.argv[index + 1] !== void 0 ? process.argv[index + 1] : join21(cacheRoot(), "panel.json");
+  const proxy = await startPanelProxy({ port: Number(process.env.PORT ?? 3457), stateFile });
+  process.stderr.write(`${PLUGIN_NAME} panel proxy on http://127.0.0.1:${proxy.port}/ (panel state: ${stateFile})
+`);
+  for (const signal of ["SIGTERM", "SIGINT", "SIGHUP"]) process.on(signal, () => {
+    void proxy.close().then(() => process.exit(0));
+  });
+}
+(process.argv.includes("--panel-proxy") ? proxyMain() : main()).catch((error62) => {
   process.stderr.write(`${PLUGIN_NAME}: fatal: ${error62 instanceof Error ? error62.stack ?? error62.message : String(error62)}
 `);
   process.exit(1);

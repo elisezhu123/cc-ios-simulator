@@ -45,6 +45,7 @@ test('ios_sim_boot still reports a booted, streaming device when the live panel 
         ensureStarted: async () => { throw new Error('could not start the panel server on 127.0.0.1:3456+: listen EADDRINUSE') },
         showRealDevice: async () => { throw new Error('unused') },
         showSimulator: () => {},
+        openHint: () => ({}),
       },
     },
   })
