@@ -19,20 +19,16 @@ import {
   type Shape,
 } from './annotate.js'
 import type { PanelCopy } from './copy.js'
+import { icon } from './icons.js'
 
-const SVG = 'viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"'
-export const PENCIL_ICON = `<svg ${SVG}><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/><path d="m14.5 5.5 3 3"/></svg>`
 const TOOL_ICONS: Record<AnnotateTool, string> = {
-  pen: PENCIL_ICON,
-  line: `<svg ${SVG}><path d="M5 19 19 5"/></svg>`,
-  arrow: `<svg ${SVG}><path d="M5 19 19 5"/><path d="M9 5h10v10"/></svg>`,
-  rect: `<svg ${SVG}><rect x="4" y="4" width="16" height="16" rx="1"/></svg>`,
-  ellipse: `<svg ${SVG}><circle cx="12" cy="12" r="8"/></svg>`,
-  text: `<svg ${SVG}><path d="M5 5h14"/><path d="M12 5v14"/><path d="M9 19h6"/></svg>`,
+  pen: icon('pencil', 20),
+  line: icon('line', 20, -45),
+  arrow: icon('arrow', 20, 45),
+  rect: icon('square', 20),
+  ellipse: icon('circle', 20),
+  text: icon('text', 20),
 }
-const UNDO_ICON = `<svg ${SVG}><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>`
-const REDO_ICON = `<svg ${SVG}><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>`
-const TRASH_ICON = `<svg ${SVG}><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg>`
 
 export interface AnnotatorOptions {
   /** The live screen box the overlay covers. */
@@ -106,9 +102,9 @@ export class Annotator {
       this.#bar.append(node)
     }
     this.#bar.append(separator())
-    this.#undo = button(UNDO_ICON, copy.undo)
-    this.#redo = button(REDO_ICON, copy.redo)
-    const clear = button(TRASH_ICON, copy.clear)
+    this.#undo = button(icon('undo', 20), copy.undo)
+    this.#redo = button(icon('redo', 20), copy.redo)
+    const clear = button(icon('trash', 20), copy.clear)
     this.#undo.addEventListener('click', () => { this.#doc.undo(); this.#render() })
     this.#redo.addEventListener('click', () => { this.#doc.redo(); this.#render() })
     clear.addEventListener('click', () => { this.#doc.clear(); this.#render() })

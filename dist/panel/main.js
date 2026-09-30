@@ -123,20 +123,43 @@ function drawShapes(ctx, shapes, scale) {
   }
 }
 
-// src/panel/client/annotate-ui.ts
-var SVG = 'viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
-var PENCIL_ICON = `<svg ${SVG}><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/><path d="m14.5 5.5 3 3"/></svg>`;
-var TOOL_ICONS = {
-  pen: PENCIL_ICON,
-  line: `<svg ${SVG}><path d="M5 19 19 5"/></svg>`,
-  arrow: `<svg ${SVG}><path d="M5 19 19 5"/><path d="M9 5h10v10"/></svg>`,
-  rect: `<svg ${SVG}><rect x="4" y="4" width="16" height="16" rx="1"/></svg>`,
-  ellipse: `<svg ${SVG}><circle cx="12" cy="12" r="8"/></svg>`,
-  text: `<svg ${SVG}><path d="M5 5h14"/><path d="M12 5v14"/><path d="M9 19h6"/></svg>`
+// src/panel/client/icons.ts
+var PATHS = {
+  home: '<path d="M12.71 2.29a1 1 0 0 0-1.42 0l-9 9a1 1 0 0 0 0 1.42A1 1 0 0 0 3 13h1v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7h1a1 1 0 0 0 1-1 1 1 0 0 0-.29-.71zM6 20v-9.59l6-6 6 6V20z"/>',
+  pencil: '<path d="M4 21a1 1 0 0 0 .24 0l4-1a1 1 0 0 0 .47-.26L21 7.41a2 2 0 0 0 0-2.82L19.42 3a2 2 0 0 0-2.83 0L4.3 15.29a1.06 1.06 0 0 0-.27.47l-1 4A1 1 0 0 0 3.76 21 1 1 0 0 0 4 21zM18 4.41 19.59 6 18 7.59 16.42 6zM5.91 16.51 15 7.41 16.59 9l-9.1 9.1-2.11.52z"/>',
+  camera: '<path d="M12 8c-2.168 0-4 1.832-4 4s1.832 4 4 4 4-1.832 4-4-1.832-4-4-4zm0 6c-1.065 0-2-.935-2-2s.935-2 2-2 2 .935 2 2-.935 2-2 2z"/><path d="M20 5h-2.586l-2.707-2.707A.996.996 0 0 0 14 2h-4a.996.996 0 0 0-.707.293L6.586 5H4c-1.103 0-2 .897-2 2v11c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V7c0-1.103-.897-2-2-2zM4 18V7h3c.266 0 .52-.105.707-.293L10.414 4h3.172l2.707 2.707A.996.996 0 0 0 17 7h3l.002 11H4z"/>',
+  video: '<path d="M18 7c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-3.333L22 17V7l-4 3.333V7zm-1.998 10H4V7h12l.001 4.999L16 12l.001.001.001 4.999z"/>',
+  stop: '<path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="M9 9h6v6H9z"/>',
+  rotate: '<path d="M19.89 10.105a8.696 8.696 0 0 0-.789-1.456l-1.658 1.119a6.606 6.606 0 0 1 .987 2.345 6.659 6.659 0 0 1 0 2.648 6.495 6.495 0 0 1-.384 1.231 6.404 6.404 0 0 1-.603 1.112 6.654 6.654 0 0 1-1.776 1.775 6.606 6.606 0 0 1-2.343.987 6.734 6.734 0 0 1-2.646 0 6.55 6.55 0 0 1-3.317-1.788 6.605 6.605 0 0 1-1.408-2.088 6.613 6.613 0 0 1-.382-1.23 6.627 6.627 0 0 1 .382-3.877A6.551 6.551 0 0 1 7.36 8.797 6.628 6.628 0 0 1 9.446 7.39c.395-.167.81-.296 1.23-.382.107-.022.216-.032.324-.049V10l5-4-5-4v2.938a8.805 8.805 0 0 0-.725.111 8.512 8.512 0 0 0-3.063 1.29A8.566 8.566 0 0 0 4.11 16.77a8.535 8.535 0 0 0 1.835 2.724 8.614 8.614 0 0 0 2.721 1.833 8.55 8.55 0 0 0 5.061.499 8.576 8.576 0 0 0 6.162-5.056c.22-.52.389-1.061.5-1.608a8.643 8.643 0 0 0 0-3.45 8.684 8.684 0 0 0-.499-1.607z"/>',
+  power: '<path d="M12 21c4.411 0 8-3.589 8-8 0-3.35-2.072-6.221-5-7.411v2.223A6 6 0 0 1 18 13c0 3.309-2.691 6-6 6s-6-2.691-6-6a5.999 5.999 0 0 1 3-5.188V5.589C6.072 6.779 4 9.65 4 13c0 4.411 3.589 8 8 8z"/><path d="M11 2h2v10h-2z"/>',
+  detach: '<path d="M16 13v-2H7V8l-5 4 5 4v-3z"/><path d="M20 3h-9c-1.103 0-2 .897-2 2v4h2V5h9v14h-9v-4H9v4c0 1.103.897 2 2 2h9c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2z"/>',
+  fullscreen: '<path d="M5 5h5V3H3v7h2zm5 14H5v-5H3v7h7zm11-5h-2v5h-5v2h7zm-2-4h2V3h-7v2h5z"/>',
+  chevronDown: '<path d="M16.293 9.293 12 13.586 7.707 9.293l-1.414 1.414L12 16.414l5.707-5.707z"/>',
+  chevronRight: '<path d="M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z"/>',
+  check: '<path d="m10 15.586-3.293-3.293-1.414 1.414L10 18.414l9.707-9.707-1.414-1.414z"/>',
+  line: '<path d="M5 11h14v2H5z"/>',
+  arrow: '<path d="M11 8.414V18h2V8.414l4.293 4.293 1.414-1.414L12 4.586l-6.707 6.707 1.414 1.414z"/>',
+  square: '<path d="M20 3H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm-1 16H5V5h14v14z"/>',
+  circle: '<path d="M12 2C6.486 2 2 6.486 2 12c.001 5.515 4.487 10.001 10 10.001 5.514 0 10-4.486 10.001-10.001 0-5.514-4.486-10-10.001-10zm0 18.001c-4.41 0-7.999-3.589-8-8.001 0-4.411 3.589-8 8-8 4.412 0 8.001 3.589 8.001 8-.001 4.412-3.59 8.001-8.001 8.001z"/>',
+  text: '<path d="M5 8h2V6h3.252L7.68 18H5v2h8v-2h-2.252L13.32 6H17v2h2V4H5z"/>',
+  undo: '<path d="M9 10h6c1.654 0 3 1.346 3 3s-1.346 3-3 3h-3v2h3c2.757 0 5-2.243 5-5s-2.243-5-5-5H9V5L4 9l5 4v-3z"/>',
+  redo: '<path d="M9 18h3v-2H9c-1.654 0-3-1.346-3-3s1.346-3 3-3h6v3l5-4-5-4v3H9c-2.757 0-5 2.243-5 5s2.243 5 5 5z"/>',
+  trash: '<path d="M5 20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8h2V6h-4V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2H3v2h2zM9 4h6v2H9zM8 8h9v12H7V8z"/><path d="M9 10h2v8H9zm4 0h2v8h-2z"/>'
 };
-var UNDO_ICON = `<svg ${SVG}><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>`;
-var REDO_ICON = `<svg ${SVG}><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>`;
-var TRASH_ICON = `<svg ${SVG}><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg>`;
+function icon(name, size = 20, rotate2 = 0) {
+  const paths = rotate2 === 0 ? PATHS[name] : `<g transform="rotate(${rotate2} 12 12)">${PATHS[name]}</g>`;
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" aria-hidden="true">${paths}</svg>`;
+}
+
+// src/panel/client/annotate-ui.ts
+var TOOL_ICONS = {
+  pen: icon("pencil", 20),
+  line: icon("line", 20, -45),
+  arrow: icon("arrow", 20, 45),
+  rect: icon("square", 20),
+  ellipse: icon("circle", 20),
+  text: icon("text", 20)
+};
 function button(html, label, className = "annotate-button") {
   const node = document.createElement("button");
   node.type = "button";
@@ -193,9 +216,9 @@ var Annotator = class {
       this.#bar.append(node);
     }
     this.#bar.append(separator());
-    this.#undo = button(UNDO_ICON, copy2.undo);
-    this.#redo = button(REDO_ICON, copy2.redo);
-    const clear = button(TRASH_ICON, copy2.clear);
+    this.#undo = button(icon("undo", 20), copy2.undo);
+    this.#redo = button(icon("redo", 20), copy2.redo);
+    const clear = button(icon("trash", 20), copy2.clear);
     this.#undo.addEventListener("click", () => {
       this.#doc.undo();
       this.#render();
@@ -633,8 +656,8 @@ function screenRadius(width, height) {
 }
 
 // src/panel/client/menu.ts
-var CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
-var CHEVRON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+var CHECK = icon("check", 18);
+var CHEVRON = icon("chevronRight", 16);
 var openMenu;
 function closeMenus() {
   openMenu?.close();
@@ -839,17 +862,17 @@ var SHORTCUTS = {
   rotateLeft: keys(false, "\u2190"),
   keyboard: keys(false, "K")
 };
-var SVG_ATTRS = 'viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
 var ICONS = {
-  home: `<svg ${SVG_ATTRS}><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>`,
-  screenshot: `<svg ${SVG_ATTRS}><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>`,
-  record: `<svg ${SVG_ATTRS}><rect x="3" y="7" width="12.5" height="10" rx="1.5"/><path d="m15.5 11 5-3v8l-5-3"/></svg>`,
-  recording: `<svg ${SVG_ATTRS}><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>`,
-  rotate: `<svg ${SVG_ATTRS}><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v5h-5"/></svg>`,
-  power: `<svg ${SVG_ATTRS}><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>`,
-  detach: `<svg ${SVG_ATTRS}><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5"/><path d="M14 8l4 4-4 4"/><path d="M18 12H9"/></svg>`,
-  fullscreen: `<svg ${SVG_ATTRS}><path d="M14 4h6v6"/><path d="m20 4-6 6"/><path d="M10 20H4v-6"/><path d="m4 20 6-6"/></svg>`,
-  chevron: '<svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'
+  home: icon("home"),
+  screenshot: icon("camera"),
+  record: icon("video"),
+  recording: icon("stop"),
+  rotate: icon("rotate"),
+  power: icon("power"),
+  // log-out turned half a turn: the box on the left, the arrow leaving it to the right.
+  detach: icon("detach", 20, 180),
+  fullscreen: icon("fullscreen"),
+  chevron: `<span class="chevron">${icon("chevronDown", 16)}</span>`
 };
 function element(id) {
   const node = document.getElementById(id);
@@ -1111,15 +1134,15 @@ function toggleAnnotate() {
   if (annotator.isOpen) annotator.close();
   else void annotator.open().catch((error) => report(copy.captureFailed, error));
 }
-function dockButton(button2, icon, label, shortcut) {
-  button2.innerHTML = `${icon}<span class="tip" role="tooltip">${label}${shortcut === void 0 ? "" : `<kbd>${shortcut}</kbd>`}</span>`;
+function dockButton(button2, icon2, label, shortcut) {
+  button2.innerHTML = `${icon2}<span class="tip" role="tooltip">${label}${shortcut === void 0 ? "" : `<kbd>${shortcut}</kbd>`}</span>`;
   button2.setAttribute("aria-label", label);
   if (shortcut !== void 0) button2.setAttribute("aria-keyshortcuts", shortcut);
 }
 function renderDock() {
   const simulator = state.kind === "simulator";
   dockButton(ui.home, ICONS.home, copy.home, SHORTCUTS.home);
-  dockButton(ui.annotate, PENCIL_ICON, copy.annotate);
+  dockButton(ui.annotate, icon("pencil"), copy.annotate);
   dockButton(ui.shot, ICONS.screenshot, copy.saveScreenshot, SHORTCUTS.screenshot);
   dockButton(ui.record, state.recording ? ICONS.recording : ICONS.record, simulator ? state.recording ? copy.stopRecording : copy.recordVideo : copy.simulatorOnly, SHORTCUTS.record);
   dockButton(ui.rotate, ICONS.rotate, copy.rotateRight, SHORTCUTS.rotateRight);

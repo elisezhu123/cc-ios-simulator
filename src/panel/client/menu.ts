@@ -5,6 +5,8 @@
  * @module ios-simulator/panel/client/menu
  */
 
+import { icon } from './icons.js'
+
 export interface MenuItem {
   label: string
   /** Second, dimmer line (a runtime under a device name). */
@@ -18,8 +20,8 @@ export interface MenuItem {
 
 export type MenuEntry = MenuItem | { separator: true } | { section: string; dot?: boolean }
 
-const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>'
-const CHEVRON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>'
+const CHECK = icon('check', 18)
+const CHEVRON = icon('chevronRight', 16)
 
 let openMenu: Menu | undefined
 

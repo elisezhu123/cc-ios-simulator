@@ -11,6 +11,7 @@
   --line: #e4e4e7;
   --text: #1d1d1f;
   --muted: #86868b;
+  --icon: #48484a;
   --hover: rgb(0 0 0 / 6%);
   --popover: #ffffff;
   --popover-line: rgb(0 0 0 / 10%);
@@ -30,6 +31,7 @@
     --line: #2f2f33;
     --text: #f5f5f7;
     --muted: #98989d;
+    --icon: #d1d1d6;
     --hover: rgb(255 255 255 / 8%);
     --popover: #2a2a2d;
     --popover-line: rgb(255 255 255 / 10%);
@@ -117,7 +119,7 @@ button:disabled { cursor: default; }
 .menu-button:hover, .menu-button.open { background: var(--hover); }
 #menu-devices { overflow: hidden; }
 #device-name { overflow: hidden; text-overflow: ellipsis; }
-.chevron { flex: none; color: var(--muted); }
+.chevron { display: inline-flex; flex: none; color: var(--muted); }
 
 /* ── menus ──────────────────────────────────────────────────────────────── */
 .menu-popover {
@@ -249,7 +251,9 @@ body.annotating .dock { display: none; }
   justify-content: center;
   width: 40px;
   height: 40px;
+  color: var(--icon);
   border-radius: 12px;
+  transition: background-color 120ms ease, color 120ms ease;
 }
 .dock button:hover:not(:disabled) { background: var(--hover); }
 .dock button:disabled { opacity: 0.35; }
@@ -310,7 +314,8 @@ body.annotating .dock { display: none; }
   box-shadow: 0 8px 30px rgb(0 0 0 / 25%);
 }
 .annotate-bar[hidden] { display: none; }
-.annotate-button { width: 34px; height: 34px; padding: 0; border-color: transparent; border-radius: 8px; }
+.annotate-button, .annotate-color, .annotate-separator { flex: none; }
+.annotate-button { width: 36px; height: 36px; padding: 0; color: var(--icon); border-color: transparent; border-radius: 10px; }
 .annotate-button.active { background: rgb(59 130 246 / 18%); color: #3b82f6; }
 .annotate-button:disabled { opacity: 0.35; cursor: default; }
 .annotate-color {
@@ -343,3 +348,10 @@ body.annotating #btn-annotate { background: rgb(59 130 246 / 18%); color: #3b82f
   box-shadow: 0 6px 20px rgb(0 0 0 / 25%);
 }
 .toast[data-kind="error"] { background: rgb(255 69 58 / 92%); }
+@media (max-width: 640px) {
+  .annotate-bar { gap: 2px; padding: 5px 6px; }
+  .annotate-button { width: 32px; height: 32px; }
+  .annotate-color { width: 20px; height: 20px; }
+  .annotate-text-button { padding: 6px 8px; }
+  .annotate-primary { padding: 6px 10px; }
+}
