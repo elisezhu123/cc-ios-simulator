@@ -112,3 +112,13 @@ test('without a running WDA the real-device tools say to run ios_real_start_wda'
   }
   await h.close()
 })
+
+test('ios_sim_panel shows an iPhone once WDA runs on it, and says to start WDA before that', async () => {
+  const h = await wdaHarness()
+  assert.match(textOf(await h.call('ios_sim_panel', { udid: 'Test iPhone' })), /^ios_sim_panel: WebDriverAgent is not running on "Test iPhone" — run ios_real_start_wda first/)
+  await h.call('ios_real_start_wda', { udid: 'Test iPhone' })
+  const body = h.json(await h.call('ios_sim_panel', { udid: 'Test iPhone' })) as { panelUrl: string; device: { udid: string }; hint: string }
+  assert.deepEqual([body.panelUrl, body.device.udid], ['http://127.0.0.1:3999/', IPHONE.udid])
+  assert.match(body.hint, /taps and drags in it go to the phone/)
+  await h.close()
+})

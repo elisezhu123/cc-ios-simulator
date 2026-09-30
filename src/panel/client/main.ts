@@ -5,7 +5,7 @@
  * @module ios-simulator/panel/client/main
  */
 
-import { copyFor, type DeviceActionId } from './copy.js'
+import { copyFor, REAL_DEVICE_ACTION_IDS, type DeviceActionId } from './copy.js'
 import {
   FALLBACK_BASE,
   FRAME_STYLES,
@@ -67,7 +67,15 @@ const ui = {
 }
 
 interface PanelState {
+  /** What the panel shows: a simulator (serve-sim) or a real device (WebDriverAgent). */
+  kind: 'simulator' | 'real'
+  /**
+   * Layout orientation. A simulator streams its portrait framebuffer, rotated
+   * here; WebDriverAgent frames are already upright, so a real device stays
+   * 'portrait' and its own orientation is tracked in realOrientation.
+   */
   orientation: string
+  realOrientation: string
   sizeMode: SizeMode
   frameStyle: FrameStyle
   deviceName: string
@@ -79,7 +87,9 @@ interface PanelState {
 }
 
 const state: PanelState = {
+  kind: 'simulator',
   orientation: 'portrait',
+  realOrientation: 'portrait',
   sizeMode: sizeModeOf(localStorage.getItem('ios-sim.size')),
   frameStyle: frameStyleOf(localStorage.getItem('ios-sim.frame')),
   deviceName: '',
@@ -153,7 +163,7 @@ ui.img.addEventListener('error', () => {
   state.streamFailures += 1
   setStatus('offline')
   ui.placeholder.hidden = false
-  ui.placeholder.textContent = copy.noDevice
+  ui.placeholder.textContent = state.kind === 'real' ? copy.noWda : copy.noDevice
   reconnectTimer = window.setTimeout(() => { void refreshStatus().finally(startStream) }, delay)
 })
 
@@ -164,6 +174,7 @@ function connectWs(): void {
   ws.binaryType = 'arraybuffer'
   state.ws = ws
   ws.addEventListener('message', event => {
+    if (state.kind === 'real') return
     const config = parseSimConfigFrame(event.data)
     if (config === undefined || config.orientation === state.orientation) return
     state.orientation = config.orientation
@@ -239,6 +250,11 @@ ui.shot.addEventListener('click', () => {
     .catch(error => report(copy.captureFailed, error))
 })
 ui.rotate.addEventListener('click', () => {
+  if (state.kind === 'real') {
+    state.realOrientation = nextSimRotateOrientation(state.realOrientation)
+    send(simRotateFrame(state.realOrientation))
+    return
+  }
   const next = nextSimRotateOrientation(state.orientation)
   send(simRotateFrame(next))
   state.orientation = next
@@ -268,7 +284,11 @@ ui.picker.addEventListener('change', () => {
   setStatus('connecting', copy.switching)
   void postJson('/api/switch-device', { udid: ui.picker.value })
     .then(() => refreshStatus())
-    .then(startStream)
+    .then(() => {
+      // The control socket is bound to the device shown when it opened.
+      state.ws?.close()
+      startStream()
+    })
     .catch(error => report(copy.actionFailed, error))
 })
 
@@ -296,13 +316,27 @@ function option(value: string, label: string): HTMLOptionElement {
 async function loadDevices(): Promise<void> {
   const response = await fetch('/api/devices')
   if (!response.ok) return
-  const { devices, streaming } = await response.json() as { devices: DeviceRow[]; streaming?: string }
-  const rows = devices.map(device => {
+  const { devices, realDevices = [], streaming } = await response.json() as {
+    devices: DeviceRow[]
+    realDevices?: Array<{ udid: string; name: string }>
+    streaming?: string
+  }
+  const rows: HTMLElement[] = devices.map(device => {
     const node = option(device.udid, `${device.name} · ${runtimeLabel(device.runtime)}${device.state === 'Booted' ? ` · ${copy.booted}` : ''}`)
     node.selected = device.udid === streaming
     return node
   })
-  if (!devices.some(device => device.udid === streaming)) {
+  if (realDevices.length > 0) {
+    const group = document.createElement('optgroup')
+    group.label = copy.realDevices
+    for (const device of realDevices) {
+      const node = option(device.udid, `${device.name} · ${copy.realDevice}`)
+      node.selected = device.udid === streaming
+      group.append(node)
+    }
+    rows.push(group)
+  }
+  if (![...devices, ...realDevices].some(device => device.udid === streaming)) {
     // With no row selected the browser shows the first device, and picking it fires no
     // `change`: a selected, disabled placeholder makes every device a real choice.
     const placeholder = option('', copy.pickDevice)
@@ -316,12 +350,30 @@ async function loadDevices(): Promise<void> {
 async function refreshStatus(): Promise<void> {
   const response = await fetch('/api/status')
   if (!response.ok) return
-  const status = await response.json() as { running: boolean; deviceName?: string }
+  const status = await response.json() as { kind?: 'simulator' | 'real'; running: boolean; deviceName?: string }
   state.deviceName = status.deviceName ?? ''
+  const kind = status.kind ?? 'simulator'
+  if (kind !== state.kind) {
+    // Switched by a tool (ios_sim_panel / ios_sim_boot) or another tab: follow it.
+    state.kind = kind
+    state.orientation = 'portrait'
+    state.realOrientation = 'portrait'
+    fillDeviceActions()
+    applyLayout()
+    state.ws?.close()
+    startStream()
+  }
+  ui.placeholder.textContent = kind === 'real' ? copy.noWda : copy.noDevice
   if (!status.running && ui.status.dataset.kind === 'live') setStatus('offline')
 }
 
 // ── start ─────────────────────────────────────────────────────────────────────
+
+/** A real device supports fewer device actions (lock, unlock, Siri). */
+function fillDeviceActions(): void {
+  const ids = state.kind === 'real' ? REAL_DEVICE_ACTION_IDS : DEVICE_ACTION_IDS
+  ui.action.replaceChildren(option('', copy.deviceActions), ...ids.map(id => option(id, copy.actions[id])))
+}
 
 function initControls(): void {
   document.title = copy.title
@@ -337,7 +389,7 @@ function initControls(): void {
     button.title = label
     button.setAttribute('aria-label', label)
   }
-  ui.action.replaceChildren(option('', copy.deviceActions), ...DEVICE_ACTION_IDS.map(id => option(id, copy.actions[id])))
+  fillDeviceActions()
   ui.size.replaceChildren(...SIZE_OPTIONS.map(entry => option(entry.id, copy.language === 'zh' ? entry.zh : entry.en)))
   ui.size.value = sizeModeId(state.sizeMode)
   ui.frameStyle.replaceChildren(...FRAME_STYLES.map(style => option(style, copy.frameStyles[style])))

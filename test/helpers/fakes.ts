@@ -402,13 +402,17 @@ export function fakeWda(options: {
   notRunning?: string
   /** What mjpegUrl() answers (default: it fails). */
   mjpegUrl?: string
+  /** Start out running on this device. */
+  running?: RealDevice
 } = {}): { api: WdaApi; client: WdaSessionClient; calls: string[] } {
   const calls: string[] = []
   const sources = options.sources ?? ['<XCUIElementTypeApplication type="XCUIElementTypeApplication" name="Settings" label="Settings" x="0" y="0" width="402" height="874"/>']
   const windowSize = options.windowSize ?? { width: 402, height: 874 }
   const pixelSize = options.pixelSize ?? { width: 1206, height: 2622 }
   let reads = 0
-  let status: WdaStatus = { phase: 'idle' }
+  let status: WdaStatus = options.running === undefined
+    ? { phase: 'idle' }
+    : { phase: 'running', device: { udid: options.running.udid, name: options.running.name }, controlPort: 50100, tunnel: 'usbmux', adopted: true }
   const client: WdaSessionClient = {
     health: async () => ({ ready: true }),
     ensureSession: async () => 'session-1',
