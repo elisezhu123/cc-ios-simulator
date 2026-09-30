@@ -48,7 +48,7 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 | drag or swipe | `ios_sim_interact {action:"gesture", json:{fromX, fromY, toX, toY, duration}}` |
 | go home | `ios_sim_interact {action:"button", name:"home"}` (other buttons: `lock`, `siri`, `volume-up`, …; an unknown name returns the full list) |
 | rotate | `ios_sim_interact {action:"rotate", orientation:"landscape_left"}` |
-| app switcher, lock, unlock, shake, Siri, Action button, re-center the window | `ios_sim_interact {action:"device_action", name}` with `name` one of `app-switcher`, `lock`, `unlock`, `shake`, `siri`, `action-button`, `re-center` |
+| app switcher, lock, unlock, shake, Siri, Action button, re-center the window, on-screen keyboard, slow animations | `ios_sim_interact {action:"device_action", name}` with `name` one of `app-switcher`, `lock`, `unlock`, `shake`, `siri`, `action-button`, `re-center`, `toggle-keyboard` (on-screen keyboard), `slow-animations` |
 | wait for a load or animation | `ios_sim_wait_for {text, mode:"appear" or "disappear"}` |
 
 - `ios_sim_tap_element` refuses off-screen and disabled matches and tells you what to do; scroll the element into view rather than passing `allow_offscreen` by reflex. An ambiguous selector fails with every candidate listed — pick a more specific one.
