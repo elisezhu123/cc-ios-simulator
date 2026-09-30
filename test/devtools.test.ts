@@ -40,6 +40,22 @@ Process 1200 stopped
 (lldb) detach
 Process 1200 detached`
 
+test('parseLaunchctlApps reads a real iOS simulator launchd listing (captured on a Mac)', () => {
+  // `xcrun simctl spawn booted launchctl list`, after `simctl launch` reported com.apple.Preferences: 57643.
+  const stdout = [
+    '57643\t0\tUIKitApplication:com.apple.Preferences[5551][rb-legacy]',
+    '57472\t0\tUIKitApplication:com.apple.Spotlight[de03][rb-legacy]',
+    '57466\t0\tUIKitApplication:com.apple.chrono.WidgetRenderer-Default[da23][rb-legacy]',
+    '-\t0\tcom.apple.SafariHistoryServiceAgent',
+    '-\t-9\tcom.apple.knowledgeconstructiond',
+  ].join('\n')
+  assert.deepEqual(parseLaunchctlApps(stdout), [
+    { pid: 57466, name: 'WidgetRenderer-Default', bundleId: 'com.apple.chrono.WidgetRenderer-Default' },
+    { pid: 57472, name: 'Spotlight', bundleId: 'com.apple.Spotlight' },
+    { pid: 57643, name: 'Preferences', bundleId: 'com.apple.Preferences' },
+  ])
+})
+
 test('parseLldbThreads splits thread sections and orderThreads puts the main thread first', () => {
   const threads = parseLldbThreads(LLDB_OUTPUT)
   // The attach banner's stop line is a header of its own, then the real backtrace.
