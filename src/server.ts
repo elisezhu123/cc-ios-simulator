@@ -11,8 +11,17 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { listSimulatorApps } from './app-list.js'
 import { buildRun, detectProject, readBundleIdentifier } from './build-run.js'
-import { cacheRoot, INTERACT_SETTLE_MS, PLUGIN_NAME, preferredPanelPort, SERVER_VERSION } from './config.js'
+import {
+  cacheRoot,
+  INTERACT_SETTLE_MS,
+  OCR_POLL_INTERVAL_MS,
+  PLUGIN_NAME,
+  preferredPanelPort,
+  ROW_VERIFY_SETTLE_MS,
+  SERVER_VERSION,
+} from './config.js'
 import type { ToolDeps } from './deps.js'
+import { OcrHelper } from './ocr-backend.js'
 import { PanelServer } from './panel/panel-server.js'
 import { Recorder } from './recorder.js'
 import { ScreenshotStore } from './screenshot.js'
@@ -22,6 +31,8 @@ import { SimStreamSource } from './stream-source.js'
 import { registerAppTools } from './tools/apps.js'
 import { registerCoreTools } from './tools/core.js'
 import { registerEnvTools } from './tools/env.js'
+import { registerUiTools } from './tools/ui.js'
+import { AxeHelper } from './uitree-backend.js'
 
 async function main(): Promise<void> {
   const root = cacheRoot()
@@ -48,14 +59,19 @@ async function main(): Promise<void> {
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
+    axe: new AxeHelper({ cacheDir: join(root, 'bin', 'axe') }),
+    ocr: new OcrHelper({ cacheDir: join(root, 'bin', 'ocr') }),
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
+    pollIntervalMs: OCR_POLL_INTERVAL_MS,
+    rowSettleMs: ROW_VERIFY_SETTLE_MS,
   }
   const server = new McpServer({ name: PLUGIN_NAME, version: SERVER_VERSION })
   registerCoreTools(server, deps)
   registerAppTools(server, deps)
   registerEnvTools(server, deps)
+  registerUiTools(server, deps)
 
   let shuttingDown = false
   /** A failed shutdown step gets one stderr line and never blocks the exit. */
