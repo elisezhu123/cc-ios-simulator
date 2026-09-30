@@ -49,6 +49,8 @@ import { resolveSigningTeam, stageWdaSource, wdaBundleId, type SigningTeamResolu
 
 /** The WDA HTTP port on the device. */
 export const WDA_DEVICE_PORT = 8100
+/** WDA's MJPEG screen broadcaster on the device (the panel's live view). */
+export const WDA_MJPEG_DEVICE_PORT = 9100
 /** How long `start` waits for `ServerURLHere` (a cold build can take minutes). */
 export const WDA_START_TIMEOUT_MS = 300_000
 /** How long `start` waits for `GET /status` to report ready after launch. */
@@ -114,6 +116,13 @@ interface Running {
   runner?: WdaChild
   adopted: boolean
   signingTeam?: string
+  /** The MJPEG tunnel, opened the first time the panel asks for the live view. */
+  mjpeg?: Promise<WdaTunnel>
+}
+
+async function closeTunnels(running: Running): Promise<void> {
+  await running.tunnel.close().catch(() => undefined)
+  if (running.mjpeg !== undefined) await (await running.mjpeg.catch(() => undefined))?.close().catch(() => undefined)
 }
 
 function errorMessage(error: unknown): string {
@@ -238,13 +247,31 @@ export class WdaController {
       + (failure === undefined ? '' : `; the last start failed: ${failure.detail}`))
   }
 
+  /**
+   * The local URL of WDA's MJPEG stream for the running device (the panel's
+   * live view). The tunnel is opened once and closed with the session.
+   */
+  async mjpegUrl(device: RealDevice): Promise<string> {
+    const running = this.#running
+    if (running === undefined || running.device.udid !== device.udid) {
+      throw new WdaError('wda-not-ready', `WebDriverAgent is not running on "${device.name}" — run ios_real_start_wda first`)
+    }
+    running.mjpeg ??= this.#seams.openTunnel(hardwareUdidOf(device), WDA_MJPEG_DEVICE_PORT)
+    try {
+      return `http://127.0.0.1:${(await running.mjpeg).localPort}/`
+    } catch (error) {
+      running.mjpeg = undefined
+      throw error
+    }
+  }
+
   /** Stop the runner this controller launched and close its tunnel. An adopted WDA keeps running on the device. */
   async stop(): Promise<{ stopped: boolean; device?: { udid: string; name: string } }> {
     const running = this.#running
     if (running === undefined) return { stopped: false }
     this.#running = undefined
     running.runner?.kill()
-    await running.tunnel.close().catch(() => undefined)
+    await closeTunnels(running)
     return { stopped: true, device: { udid: running.device.udid, name: running.device.name } }
   }
 
@@ -302,7 +329,7 @@ export class WdaController {
       void runner.exited.then(() => {
         if (this.#running === running) {
           this.#running = undefined
-          void running.tunnel.close().catch(() => undefined)
+          void closeTunnels(running)
           this.#failure = { device, reason: 'wda-not-ready', detail: 'the WebDriverAgent runner (xcodebuild) exited — run ios_real_start_wda again' }
         }
       })

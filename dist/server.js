@@ -20220,8 +20220,8 @@ var error3 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
-          const unit2 = getBelarusianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435"} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.maximum.toString()} ${unit2}`;
+          const unit3 = getBelarusianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435"} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.maximum.toString()} ${unit3}`;
         }
         return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435"} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 \u0431\u044B\u0446\u044C ${adj}${issue2.maximum.toString()}`;
       }
@@ -20230,8 +20230,8 @@ var error3 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const minValue = Number(issue2.minimum);
-          const unit2 = getBelarusianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.minimum.toString()} ${unit2}`;
+          const unit3 = getBelarusianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.minimum.toString()} ${unit3}`;
         }
         return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 \u0431\u044B\u0446\u044C ${adj}${issue2.minimum.toString()}`;
       }
@@ -22858,8 +22858,8 @@ var error24 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
-          const unit2 = getArmenianPlural(maxValue, sizing.unit.one, sizing.unit.many);
-          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584")} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.maximum.toString()} ${unit2}`;
+          const unit3 = getArmenianPlural(maxValue, sizing.unit.one, sizing.unit.many);
+          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584")} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.maximum.toString()} ${unit3}`;
         }
         return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584")} \u056C\u056B\u0576\u056B ${adj}${issue2.maximum.toString()}`;
       }
@@ -22868,8 +22868,8 @@ var error24 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const minValue = Number(issue2.minimum);
-          const unit2 = getArmenianPlural(minValue, sizing.unit.one, sizing.unit.many);
-          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin)} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.minimum.toString()} ${unit2}`;
+          const unit3 = getArmenianPlural(minValue, sizing.unit.one, sizing.unit.many);
+          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin)} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.minimum.toString()} ${unit3}`;
         }
         return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin)} \u056C\u056B\u0576\u056B ${adj}${issue2.minimum.toString()}`;
       }
@@ -23783,18 +23783,18 @@ var error32 = () => {
         const adj = issue2.inclusive ? "\uC774\uD558" : "\uBBF8\uB9CC";
         const suffix = adj === "\uBBF8\uB9CC" ? "\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4" : "\uC5EC\uC57C \uD569\uB2C8\uB2E4";
         const sizing = getSizing(issue2.origin);
-        const unit2 = sizing?.unit ?? "\uC694\uC18C";
+        const unit3 = sizing?.unit ?? "\uC694\uC18C";
         if (sizing)
-          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ${issue2.maximum.toString()}${unit2} ${adj}${suffix}`;
+          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ${issue2.maximum.toString()}${unit3} ${adj}${suffix}`;
         return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ${issue2.maximum.toString()} ${adj}${suffix}`;
       }
       case "too_small": {
         const adj = issue2.inclusive ? "\uC774\uC0C1" : "\uCD08\uACFC";
         const suffix = adj === "\uC774\uC0C1" ? "\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4" : "\uC5EC\uC57C \uD569\uB2C8\uB2E4";
         const sizing = getSizing(issue2.origin);
-        const unit2 = sizing?.unit ?? "\uC694\uC18C";
+        const unit3 = sizing?.unit ?? "\uC694\uC18C";
         if (sizing) {
-          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ${issue2.minimum.toString()}${unit2} ${adj}${suffix}`;
+          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ${issue2.minimum.toString()}${unit3} ${adj}${suffix}`;
         }
         return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ${issue2.minimum.toString()} ${adj}${suffix}`;
       }
@@ -25607,8 +25607,8 @@ var error46 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
-          const unit2 = getRussianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435"} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.maximum.toString()} ${unit2}`;
+          const unit3 = getRussianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435"} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.maximum.toString()} ${unit3}`;
         }
         return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435"} \u0431\u0443\u0434\u0435\u0442 ${adj}${issue2.maximum.toString()}`;
       }
@@ -25617,8 +25617,8 @@ var error46 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const minValue = Number(issue2.minimum);
-          const unit2 = getRussianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.minimum.toString()} ${unit2}`;
+          const unit3 = getRussianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.minimum.toString()} ${unit3}`;
         }
         return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin} \u0431\u0443\u0434\u0435\u0442 ${adj}${issue2.minimum.toString()}`;
       }
@@ -43806,11 +43806,16 @@ async function stageWdaSource(sourceDir, stateDir, patches = WDA_SAFETY_PATCHES)
 
 // src/wda-host.ts
 var WDA_DEVICE_PORT = 8100;
+var WDA_MJPEG_DEVICE_PORT = 9100;
 var WDA_START_TIMEOUT_MS = 3e5;
 var WDA_READY_TIMEOUT_MS = 3e4;
 var ADOPT_PROBE_TIMEOUT_MS = 3e3;
 var READY_POLL_MS = 1e3;
 var MAX_OUTPUT_BYTES = 64 * 1024;
+async function closeTunnels(running) {
+  await running.tunnel.close().catch(() => void 0);
+  if (running.mjpeg !== void 0) await (await running.mjpeg.catch(() => void 0))?.close().catch(() => void 0);
+}
 function errorMessage6(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
@@ -43922,13 +43927,30 @@ var WdaController = class {
       `WebDriverAgent is not running on "${device.name}" \u2014 run ios_real_start_wda first (a cold build can take minutes)` + (failure2 === void 0 ? "" : `; the last start failed: ${failure2.detail}`)
     );
   }
+  /**
+   * The local URL of WDA's MJPEG stream for the running device (the panel's
+   * live view). The tunnel is opened once and closed with the session.
+   */
+  async mjpegUrl(device) {
+    const running = this.#running;
+    if (running === void 0 || running.device.udid !== device.udid) {
+      throw new WdaError("wda-not-ready", `WebDriverAgent is not running on "${device.name}" \u2014 run ios_real_start_wda first`);
+    }
+    running.mjpeg ??= this.#seams.openTunnel(hardwareUdidOf(device), WDA_MJPEG_DEVICE_PORT);
+    try {
+      return `http://127.0.0.1:${(await running.mjpeg).localPort}/`;
+    } catch (error62) {
+      running.mjpeg = void 0;
+      throw error62;
+    }
+  }
   /** Stop the runner this controller launched and close its tunnel. An adopted WDA keeps running on the device. */
   async stop() {
     const running = this.#running;
     if (running === void 0) return { stopped: false };
     this.#running = void 0;
     running.runner?.kill();
-    await running.tunnel.close().catch(() => void 0);
+    await closeTunnels(running);
     return { stopped: true, device: { udid: running.device.udid, name: running.device.name } };
   }
   async dispose() {
@@ -43980,7 +44002,7 @@ var WdaController = class {
       void runner2.exited.then(() => {
         if (this.#running === running) {
           this.#running = void 0;
-          void running.tunnel.close().catch(() => void 0);
+          void closeTunnels(running);
           this.#failure = { device, reason: "wda-not-ready", detail: "the WebDriverAgent runner (xcodebuild) exited \u2014 run ios_real_start_wda again" };
         }
       });
@@ -45089,7 +45111,7 @@ var xcrunToolchain = {
 import { createReadStream, lstatSync, realpathSync } from "node:fs";
 import { readFile as readFile5 } from "node:fs/promises";
 import { createServer as createServer4, get as httpGet } from "node:http";
-import { basename as basename2, join as join14, sep as sep2 } from "node:path";
+import { basename as basename2, join as join15, sep as sep2 } from "node:path";
 import { pipeline } from "node:stream";
 
 // node_modules/ws/wrapper.mjs
@@ -45101,1075 +45123,6 @@ var import_sender = __toESM(require_sender(), 1);
 var import_subprotocol = __toESM(require_subprotocol(), 1);
 var import_websocket = __toESM(require_websocket(), 1);
 var import_websocket_server = __toESM(require_websocket_server(), 1);
-
-// src/screenshot.ts
-import { execFile as execFile9 } from "node:child_process";
-import { closeSync, existsSync as existsSync7, mkdirSync as mkdirSync3, openSync, readSync, readdirSync as readdirSync4, statSync as statSync6, unlinkSync as unlinkSync2, writeFileSync as writeFileSync3 } from "node:fs";
-import { readFile as readFile4, rm as rm2 } from "node:fs/promises";
-import { join as join13 } from "node:path";
-var FILE_PATTERN = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
-var SIPS_TIMEOUT_MS = 3e4;
-function isScreenshotFileName(name) {
-  return FILE_PATTERN.test(name);
-}
-function readPngSize(path) {
-  try {
-    const fd = openSync(path, "r");
-    try {
-      const header2 = Buffer.alloc(24);
-      if (readSync(fd, header2, 0, 24, 0) !== 24) return void 0;
-      const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-      const isPng = header2.subarray(0, 8).equals(pngSignature);
-      const isIhdr = header2.subarray(12, 16).toString("ascii") === "IHDR";
-      if (!isPng || !isIhdr) return void 0;
-      return { width: header2.readUInt32BE(16), height: header2.readUInt32BE(20) };
-    } finally {
-      closeSync(fd);
-    }
-  } catch {
-    return void 0;
-  }
-}
-function jpegSize(buffer) {
-  if (buffer.length < 4 || buffer[0] !== 255 || buffer[1] !== 216) return void 0;
-  let offset = 2;
-  while (offset + 9 < buffer.length) {
-    if (buffer[offset] !== 255) {
-      offset += 1;
-      continue;
-    }
-    const marker = buffer[offset + 1] ?? 0;
-    if (marker === 255 || marker === 1 || marker >= 208 && marker <= 216) {
-      offset += marker === 255 ? 1 : 2;
-      continue;
-    }
-    const length = buffer.readUInt16BE(offset + 2);
-    const isStartOfFrame = marker >= 192 && marker <= 207 && marker !== 196 && marker !== 200 && marker !== 204;
-    if (isStartOfFrame) {
-      return { height: buffer.readUInt16BE(offset + 5), width: buffer.readUInt16BE(offset + 7) };
-    }
-    offset += 2 + length;
-  }
-  return void 0;
-}
-function runSips(args) {
-  return new Promise((resolve7, reject) => {
-    execFile9("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
-      if (error62 === null) {
-        resolve7();
-        return;
-      }
-      reject(new Error(`sips failed: ${stderr.trim() === "" ? error62.message : stderr.trim()}`));
-    });
-  });
-}
-var ScreenshotStore = class {
-  dir;
-  #take;
-  #keep;
-  #maxEdge;
-  #quality;
-  #next = /* @__PURE__ */ new Map();
-  constructor(options) {
-    this.dir = options.dir;
-    this.#take = options.takeScreenshot;
-    this.#keep = options.keep ?? SCREENSHOT_KEEP;
-    this.#maxEdge = options.maxEdge ?? MODEL_IMAGE_MAX_EDGE;
-    this.#quality = options.quality ?? MODEL_IMAGE_JPEG_QUALITY;
-  }
-  /**
-   * `<dir>/screenshot-<udid>-<n>.png` with a monotonically increasing index;
-   * names already on disk are skipped so concurrent writers never collide.
-   */
-  nextPath(udid) {
-    mkdirSync3(this.dir, { recursive: true });
-    const safe = udid.replace(/[^A-Za-z0-9_-]/g, "_");
-    let next = this.#next.get(safe);
-    if (next === void 0) {
-      next = 0;
-      const prefix = `screenshot-${safe}-`;
-      for (const entry of readdirSync4(this.dir)) {
-        if (!entry.startsWith(prefix) || !entry.endsWith(".png")) continue;
-        const index = Number(entry.slice(prefix.length, -4));
-        if (Number.isInteger(index) && index >= next) next = index + 1;
-      }
-    }
-    let path = join13(this.dir, `screenshot-${safe}-${next}.png`);
-    while (existsSync7(path)) {
-      next += 1;
-      path = join13(this.dir, `screenshot-${safe}-${next}.png`);
-    }
-    this.#next.set(safe, next + 1);
-    return path;
-  }
-  /** Capture a fresh full-size PNG, then prune the cache. */
-  async capture(udid, signal) {
-    const path = this.nextPath(udid);
-    await this.#take(udid, path, signal);
-    const bytes = statSync6(path).size;
-    const size = readPngSize(path);
-    this.prune();
-    return { path, bytes, ...size === void 0 ? {} : size };
-  }
-  /** Store a PNG taken elsewhere (a real device's WebDriverAgent) like a capture, then prune. */
-  save(udid, png) {
-    const path = this.nextPath(udid);
-    writeFileSync3(path, png);
-    const size = readPngSize(path);
-    this.prune();
-    return { path, bytes: png.length, ...size === void 0 ? {} : size };
-  }
-  /** Keep the newest `keep` screenshots (by mtime, then index). */
-  prune() {
-    let names;
-    try {
-      names = readdirSync4(this.dir).filter(isScreenshotFileName);
-    } catch {
-      return;
-    }
-    if (names.length <= this.#keep) return;
-    const entries = names.map((name) => {
-      const path = join13(this.dir, name);
-      let mtime = 0;
-      try {
-        mtime = statSync6(path).mtimeMs;
-      } catch {
-      }
-      return { path, mtime, index: Number(FILE_PATTERN.exec(name)?.[1] ?? 0) };
-    });
-    entries.sort((a, b) => b.mtime - a.mtime || b.index - a.index);
-    for (const entry of entries.slice(this.#keep)) {
-      try {
-        unlinkSync2(entry.path);
-      } catch {
-      }
-    }
-  }
-  /** The JPEG the model sees: quality 80, long edge at most `maxEdge`. */
-  async toModelImage(capture) {
-    const out = capture.path.replace(/\.png$/u, ".model.jpg");
-    const args = ["-s", "format", "jpeg", "-s", "formatOptions", String(this.#quality)];
-    const longEdge = Math.max(capture.width ?? 0, capture.height ?? 0);
-    if (longEdge === 0 || longEdge > this.#maxEdge) args.push("--resampleHeightWidthMax", String(this.#maxEdge));
-    args.push(capture.path, "--out", out);
-    try {
-      await runSips(args);
-      const buffer = await readFile4(out);
-      const size = jpegSize(buffer);
-      if (size === void 0) throw new Error(`sips produced an unreadable JPEG for ${capture.path}`);
-      return { data: buffer.toString("base64"), mimeType: "image/jpeg", ...size };
-    } finally {
-      await rm2(out, { force: true });
-    }
-  }
-};
-
-// src/target.ts
-function assertMac(platform) {
-  if (platform !== "darwin") {
-    throw new Error(`${SIMULATOR_UNAVAILABLE} \u2014 this host runs ${platform}, so no simulator tools can run here`);
-  }
-}
-function assertStreamAvailable(host) {
-  if (!host.binary.available) {
-    throw new Error(
-      `serve-sim is unavailable (${host.binary.reason ?? "unknown reason"}) \u2014 touch input and the live panel need it; the simctl-only tools (ios_sim_screenshot, ios_sim_list_apps, ios_sim_launch_app, ios_sim_open_url, ios_sim_push, ios_sim_location, ios_sim_appearance, ios_sim_record) still work, and so do the AXe and OCR tools (ios_sim_ui_tree, ios_sim_tap_element, ios_sim_ui_rows, ios_sim_tap_row, ios_sim_find_text, ios_sim_wait_for)`
-    );
-  }
-}
-function sortDevices(devices) {
-  return [...devices].sort((a, b) => {
-    const booted = Number(b.state === "Booted") - Number(a.state === "Booted");
-    if (booted !== 0) return booted;
-    const runtime = compareRuntimesDesc(a.runtime, b.runtime);
-    return runtime !== 0 ? runtime : a.name.localeCompare(b.name);
-  });
-}
-function pickPreferred(devices) {
-  const iphones = devices.filter((device) => device.name.toLowerCase().startsWith("iphone"));
-  const pool = [...iphones.length > 0 ? iphones : devices];
-  const picked = pool.sort((a, b) => compareRuntimesDesc(a.runtime, b.runtime))[0];
-  if (picked === void 0) throw new Error("No simulator devices are installed \u2014 install an iOS Simulator runtime in Xcode, then retry");
-  return picked;
-}
-var REAL_DEVICE_TOOLS = "ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes, ios_sim_app_info, and \u2014 once ios_real_start_wda has started WebDriverAgent \u2014 ios_sim_screenshot, ios_sim_interact, ios_sim_ui_tree, ios_sim_tap_element, ios_sim_find_text, ios_sim_tap_text, ios_sim_wait_for, ios_sim_ui_rows and ios_sim_tap_row";
-async function resolveTargetDevice(deps, reference, options = {}) {
-  if (reference !== void 0 && reference.trim() !== "") {
-    try {
-      return await deps.simctl.getDevice(reference);
-    } catch (error62) {
-      if (deps.realDevices !== void 0 && await deps.realDevices.matches(reference)) {
-        throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only \u2014 on a real device use ${REAL_DEVICE_TOOLS}`);
-      }
-      throw error62;
-    }
-  }
-  const status = deps.host.status();
-  if (status.running && status.device !== void 0) {
-    try {
-      return await deps.simctl.getDevice(status.device);
-    } catch {
-    }
-  }
-  const devices = await deps.simctl.listDevices();
-  const booted = devices.filter((device) => device.state === "Booted");
-  if (booted.length > 0) return pickPreferred(booted);
-  if (options.bootFallback === true) {
-    const picked = pickPreferred(devices);
-    await deps.simctl.bootDevice(picked.udid);
-    return { ...picked, state: "Booted" };
-  }
-  throw new Error("No booted simulator and no live stream \u2014 call ios_sim_boot first, then retry");
-}
-function requireBooted(tool, device) {
-  if (device.state !== "Booted") {
-    throw new Error(`${tool}: ${device.name} is ${device.state} \u2014 boot it first with ios_sim_boot (this tool never boots a device)`);
-  }
-}
-async function ensureStreamFor(host, device) {
-  assertStreamAvailable(host);
-  const info = host.streamInfo;
-  if (info !== void 0 && info.device === device.udid) return info;
-  return host.ensureRunning({ udid: device.udid });
-}
-async function resolveToolTarget(deps, reference) {
-  if (reference === void 0 || reference.trim() === "") return { kind: "simulator", device: await resolveTargetDevice(deps, reference) };
-  let simulatorError;
-  try {
-    return { kind: "simulator", device: await deps.simctl.getDevice(reference) };
-  } catch (error62) {
-    simulatorError = error62;
-  }
-  let device;
-  try {
-    device = await deps.realDevices.getDevice(reference);
-  } catch {
-    throw simulatorError;
-  }
-  if (device.pairingState !== "paired" || device.state === "unavailable") {
-    throw new Error(`${device.name} is not available (${device.state}) \u2014 connect it over USB, unlock it, tap "Trust This Computer", and check \`xcrun devicectl list devices\``);
-  }
-  return { kind: "real", device };
-}
-function realDeviceSummary(device) {
-  return { udid: device.udid, name: device.name, runtime: device.osVersion === void 0 ? "iOS" : `iOS ${device.osVersion}`, state: device.state };
-}
-
-// src/panel/fence.ts
-function isIpv4LoopbackAddress(address) {
-  const parts = address.split(".");
-  return parts.length === 4 && parts[0] === "127" && parts.every((part) => /^\d{1,3}$/u.test(part) && Number(part) <= 255);
-}
-function isLoopbackRemoteAddress(address) {
-  if (address === void 0) return false;
-  const normalized = address.toLowerCase().split("%", 1)[0] ?? "";
-  if (normalized === "::1" || isIpv4LoopbackAddress(normalized)) return true;
-  if (!normalized.startsWith("::ffff:")) return false;
-  const mapped = normalized.slice("::ffff:".length);
-  if (isIpv4LoopbackAddress(mapped)) return true;
-  const hexadecimal = /^([a-f0-9]{1,4}):([a-f0-9]{1,4})$/u.exec(mapped);
-  return hexadecimal !== null && Number.parseInt(hexadecimal[1] ?? "0", 16) >>> 8 === 127;
-}
-function header(request, name) {
-  const value = request.headers[name];
-  return typeof value === "string" ? value : void 0;
-}
-function allowedAuthorities(port) {
-  return [`127.0.0.1:${port}`, `localhost:${port}`];
-}
-function checkRequest(request, port, kind) {
-  if (!isLoopbackRemoteAddress(request.remoteAddress)) return { ok: false, reason: "peer" };
-  const authorities = allowedAuthorities(port);
-  const host = header(request, "host")?.toLowerCase();
-  if (host === void 0 || !authorities.includes(host)) return { ok: false, reason: "host" };
-  const site = header(request, "sec-fetch-site");
-  const origin = header(request, "origin");
-  const originOk = origin !== void 0 && origin.toLowerCase() === `http://${host}`;
-  if (kind === "read") {
-    if (site !== void 0 && site !== "same-origin" && site !== "none") return { ok: false, reason: "fetch-site" };
-    if (origin !== void 0 && !originOk) return { ok: false, reason: "origin" };
-    return { ok: true };
-  }
-  if (!originOk) return { ok: false, reason: "origin" };
-  if (site !== void 0 && site !== "same-origin") return { ok: false, reason: "fetch-site" };
-  if (kind === "mutate") {
-    const type = header(request, "content-type");
-    if (type === void 0 || !/^application\/json\s*(;|$)/iu.test(type)) return { ok: false, reason: "content-type" };
-  }
-  return { ok: true };
-}
-
-// src/panel/panel-server.ts
-var STATIC_FILES = {
-  "/": { file: "index.html", type: "text/html; charset=utf-8" },
-  "/index.html": { file: "index.html", type: "text/html; charset=utf-8" },
-  "/main.js": { file: "main.js", type: "text/javascript; charset=utf-8" },
-  "/styles.css": { file: "styles.css", type: "text/css; charset=utf-8" }
-};
-var MAX_BODY_BYTES2 = 16 * 1024;
-var MAX_PENDING_WS_FRAMES = 64;
-var WEBSOCKET_KEY_PATTERN = /^[A-Za-z0-9+/]{22}==$/u;
-var STATUS_TEXT = {
-  400: "Bad Request",
-  403: "Forbidden",
-  404: "Not Found",
-  502: "Bad Gateway",
-  503: "Service Unavailable"
-};
-var HttpError = class extends Error {
-  constructor(status, message) {
-    super(message);
-    this.status = status;
-  }
-  status;
-};
-function errorMessage8(error62) {
-  return error62 instanceof Error ? error62.message : String(error62);
-}
-function sendJson(res, status, value) {
-  const body = JSON.stringify(value);
-  res.writeHead(status, {
-    "content-type": "application/json; charset=utf-8",
-    "content-length": Buffer.byteLength(body),
-    "cache-control": "no-store",
-    "x-content-type-options": "nosniff"
-  });
-  res.end(body);
-}
-function rejectUpgrade(socket, status) {
-  if (socket.destroyed) return;
-  socket.write(`HTTP/1.1 ${status} ${STATUS_TEXT[status] ?? "Error"}\r
-Connection: close\r
-Content-Length: 0\r
-\r
-`);
-  socket.destroy();
-}
-function toBuffer(data) {
-  if (Buffer.isBuffer(data)) return data;
-  if (Array.isArray(data)) return Buffer.concat(data);
-  return Buffer.from(data);
-}
-async function readJsonBody(req) {
-  const chunks = [];
-  let size = 0;
-  for await (const chunk of req) {
-    const buffer = chunk;
-    size += buffer.length;
-    if (size > MAX_BODY_BYTES2) throw new HttpError(413, "request body too large");
-    chunks.push(buffer);
-  }
-  if (size === 0) return {};
-  let value;
-  try {
-    value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-  } catch {
-    throw new HttpError(400, "request body is not JSON");
-  }
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new HttpError(400, "request body must be a JSON object");
-  }
-  return value;
-}
-var PanelServer = class {
-  #options;
-  #wss = new import_websocket_server.default({ noServer: true, perMessageDeflate: false });
-  #teardowns = /* @__PURE__ */ new Set();
-  #server;
-  #port = 0;
-  #starting;
-  #disposed = false;
-  constructor(options) {
-    this.#options = options;
-  }
-  /** The panel URL once started. */
-  get url() {
-    return this.#server === void 0 ? void 0 : `http://127.0.0.1:${this.#port}/`;
-  }
-  /** Start listening (once) and resolve the panel URL. */
-  ensureStarted() {
-    if (this.#disposed) return Promise.reject(new Error("the panel server is disposed"));
-    this.#starting ??= this.#listen().catch((error62) => {
-      this.#starting = void 0;
-      throw error62;
-    });
-    return this.#starting;
-  }
-  /** Close every stream proxy and relay, then the listener. */
-  async dispose() {
-    this.#disposed = true;
-    for (const teardown of [...this.#teardowns]) teardown();
-    this.#wss.close();
-    const server = this.#server;
-    this.#server = void 0;
-    if (server !== void 0) {
-      server.closeAllConnections();
-      await new Promise((resolve7) => server.close(() => resolve7()));
-    }
-  }
-  async #listen() {
-    const attempts = this.#options.attempts ?? PANEL_PORT_ATTEMPTS;
-    let lastError;
-    for (let offset = 0; offset < attempts; offset += 1) {
-      const port = this.#options.preferredPort + offset;
-      if (port > 65535) break;
-      const server = createServer4((req, res) => {
-        void this.#handle(req, res);
-      });
-      server.on("upgrade", (req, socket, head) => {
-        void this.#handleUpgrade(req, socket, head);
-      });
-      try {
-        await new Promise((resolve7, reject) => {
-          server.once("error", reject);
-          server.listen(port, "127.0.0.1", () => {
-            server.off("error", reject);
-            resolve7();
-          });
-        });
-      } catch (error62) {
-        lastError = error62;
-        if (error62.code === "EADDRINUSE") continue;
-        break;
-      }
-      server.on("error", (error62) => {
-        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage8(error62)}
-`);
-      });
-      this.#server = server;
-      this.#port = server.address().port;
-      return `http://127.0.0.1:${this.#port}/`;
-    }
-    throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage8(lastError)}`);
-  }
-  #allowed(req, kind) {
-    return checkRequest({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, this.#port, kind).ok;
-  }
-  async #handle(req, res) {
-    try {
-      const method = req.method ?? "GET";
-      if (!this.#allowed(req, method === "GET" || method === "HEAD" ? "read" : "mutate")) {
-        sendJson(res, 403, { ok: false, error: "forbidden" });
-        return;
-      }
-      const path = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
-      const staticFile = STATIC_FILES[path];
-      if (method === "GET" && staticFile !== void 0) return await this.#serveStatic(res, staticFile);
-      if (method === "GET" && path === "/stream") return await this.#serveStream(res);
-      if (method === "GET" && path.startsWith("/shots/")) return this.#serveShot(res, path.slice("/shots/".length));
-      if (method === "GET" && path === "/api/status") return sendJson(res, 200, await this.#status());
-      if (method === "GET" && path === "/api/devices") return sendJson(res, 200, await this.#devices());
-      if (method === "POST" && path === "/api/switch-device") {
-        return sendJson(res, 200, await this.#switchDevice(await readJsonBody(req)));
-      }
-      if (method === "POST" && path === "/api/capture") {
-        await readJsonBody(req);
-        return sendJson(res, 200, await this.#capture());
-      }
-      if (method === "POST" && path === "/api/device-action") {
-        return sendJson(res, 200, await this.#deviceAction(await readJsonBody(req)));
-      }
-      sendJson(res, 404, { ok: false, error: "not found" });
-    } catch (error62) {
-      if (res.headersSent) {
-        res.destroy();
-        return;
-      }
-      sendJson(res, error62 instanceof HttpError ? error62.status : 500, { ok: false, error: errorMessage8(error62) });
-    }
-  }
-  async #serveStatic(res, entry) {
-    const body = await readFile5(join14(this.#options.staticDir, entry.file));
-    const port = this.#port;
-    res.writeHead(200, {
-      "content-type": entry.type,
-      "content-length": body.length,
-      "cache-control": "no-store",
-      "x-content-type-options": "nosniff",
-      "referrer-policy": "no-referrer",
-      "content-security-policy": `default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; connect-src 'self' ws://127.0.0.1:${port} ws://localhost:${port}`
-    });
-    res.end(body);
-  }
-  /** The streamed device, else the preferred booted one (never boots anything). */
-  async #currentDevice() {
-    const status = this.#options.host.status();
-    if (status.running && status.device !== void 0) {
-      try {
-        return await this.#options.simctl.getDevice(status.device);
-      } catch {
-      }
-    }
-    const booted = (await this.#options.simctl.listDevices()).filter((device) => device.state === "Booted");
-    return booted.length === 0 ? void 0 : pickPreferred(booted);
-  }
-  /** Only streams the device already running; never boots or switches one (spec §8.1: GET routes are side-effect free). */
-  async #serveStream(res) {
-    const status = this.#options.host.status();
-    if (!status.running || status.device === void 0) {
-      throw new HttpError(503, "no simulator is streaming \u2014 boot one with ios_sim_boot");
-    }
-    const release = this.#options.host.acquire();
-    let streamUrl;
-    try {
-      streamUrl = (await this.#options.host.ensureRunning({ udid: status.device })).streamUrl;
-    } catch (error62) {
-      release();
-      throw new HttpError(502, `the simulator stream failed to start: ${errorMessage8(error62)}`);
-    }
-    if (this.#disposed || res.destroyed) {
-      release();
-      return;
-    }
-    this.#proxy(streamUrl, res, release);
-  }
-  /** Pipe serve-sim's multipart body through unchanged; hold one consumer while open. */
-  #proxy(streamUrl, res, release) {
-    let closed = false;
-    const upstream = httpGet(streamUrl);
-    const teardown = () => {
-      if (closed) return;
-      closed = true;
-      this.#teardowns.delete(teardown);
-      upstream.destroy();
-      if (!res.writableEnded) res.destroy();
-      release();
-    };
-    this.#teardowns.add(teardown);
-    res.on("close", teardown);
-    res.on("error", teardown);
-    upstream.on("error", teardown);
-    upstream.on("response", (response) => {
-      if (closed) {
-        response.destroy();
-        return;
-      }
-      if (response.statusCode !== 200) {
-        response.resume();
-        sendJson(res, 502, { ok: false, error: `serve-sim stream returned HTTP ${String(response.statusCode)}` });
-        teardown();
-        return;
-      }
-      res.writeHead(200, {
-        "content-type": response.headers["content-type"] ?? "multipart/x-mixed-replace; boundary=frame",
-        "cache-control": "no-cache, no-store",
-        "x-content-type-options": "nosniff",
-        "cross-origin-resource-policy": "same-origin",
-        "referrer-policy": "no-referrer"
-      });
-      response.on("error", teardown);
-      response.pipe(res);
-    });
-  }
-  #serveShot(res, name) {
-    if (!isScreenshotFileName(name)) throw new HttpError(404, "not found");
-    const dir = this.#options.screenshots.dir;
-    let real;
-    try {
-      const path = join14(dir, name);
-      const stat = lstatSync(path);
-      if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, "not found");
-      real = realpathSync(path);
-      if (!real.startsWith(realpathSync(dir) + sep2)) throw new HttpError(404, "not found");
-    } catch (error62) {
-      throw error62 instanceof HttpError ? error62 : new HttpError(404, "not found");
-    }
-    res.writeHead(200, {
-      "content-type": "image/png",
-      "cache-control": "no-store",
-      "x-content-type-options": "nosniff",
-      "cross-origin-resource-policy": "same-origin"
-    });
-    pipeline(createReadStream(real), res, () => {
-    });
-  }
-  async #status() {
-    const status = this.#options.host.status();
-    let deviceName;
-    if (status.device !== void 0) {
-      try {
-        deviceName = (await this.#options.simctl.getDevice(status.device)).name;
-      } catch {
-        deviceName = void 0;
-      }
-    }
-    return {
-      running: status.running,
-      available: this.#options.host.binary.available,
-      ...status.device === void 0 ? {} : { device: status.device },
-      ...deviceName === void 0 ? {} : { deviceName },
-      panelUrl: `http://127.0.0.1:${this.#port}/`
-    };
-  }
-  async #devices() {
-    const devices = sortDevices(await this.#options.simctl.listDevices()).slice(0, 50);
-    const status = this.#options.host.status();
-    return {
-      devices: devices.map((device) => ({ udid: device.udid, name: device.name, runtime: device.runtime, state: device.state })),
-      ...status.running && status.device !== void 0 ? { streaming: status.device } : {}
-    };
-  }
-  /** Picking a device in the panel is an explicit user gesture, so it may boot it. */
-  async #switchDevice(body) {
-    const udid = typeof body.udid === "string" ? body.udid.trim() : "";
-    if (udid === "") throw new HttpError(400, "udid is required");
-    let device;
-    try {
-      device = await this.#options.simctl.getDevice(udid);
-    } catch (error62) {
-      throw new HttpError(409, errorMessage8(error62));
-    }
-    if (device.state !== "Booted") await this.#options.simctl.bootDevice(device.udid);
-    await this.#options.host.ensureRunning({ udid: device.udid });
-    return { ok: true, device: { udid: device.udid, name: device.name, runtime: device.runtime, state: "Booted" } };
-  }
-  async #capture() {
-    const device = await this.#currentDevice();
-    if (device === void 0) throw new HttpError(409, "no booted simulator to capture");
-    const shot = await this.#options.screenshots.capture(device.udid);
-    return {
-      ok: true,
-      url: `/shots/${basename2(shot.path)}`,
-      ...shot.width === void 0 ? {} : { width: shot.width, height: shot.height }
-    };
-  }
-  async #deviceAction(body) {
-    const action = body.action;
-    if (!isDeviceAction(action)) throw new HttpError(400, "unknown device action");
-    const device = await this.#currentDevice();
-    if (device === void 0) throw new HttpError(409, "no booted simulator");
-    await this.#options.host.ensureRunning({ udid: device.udid });
-    const run4 = this.#options.stream.control.deviceAction;
-    if (run4 === void 0) throw new HttpError(501, "device actions are not supported by this backend");
-    await run4(action);
-    return { ok: true, action };
-  }
-  async #handleUpgrade(req, socket, head) {
-    socket.on("error", () => socket.destroy());
-    try {
-      if (!this.#allowed(req, "upgrade")) return rejectUpgrade(socket, 403);
-      if (new URL(req.url ?? "/", "http://127.0.0.1").pathname !== "/ws") return rejectUpgrade(socket, 404);
-      const key = req.headers["sec-websocket-key"];
-      if (typeof key !== "string" || !WEBSOCKET_KEY_PATTERN.test(key)) return rejectUpgrade(socket, 400);
-      const status = this.#options.host.status();
-      if (!status.running || status.device === void 0) return rejectUpgrade(socket, 503);
-      const release = this.#options.host.acquire();
-      let wsUrl;
-      try {
-        wsUrl = (await this.#options.host.ensureRunning({ udid: status.device })).wsUrl;
-      } catch {
-        release();
-        return rejectUpgrade(socket, 502);
-      }
-      if (this.#disposed) {
-        release();
-        return rejectUpgrade(socket, 503);
-      }
-      this.#relay(req, socket, head, wsUrl, release);
-    } catch {
-      rejectUpgrade(socket, 502);
-    }
-  }
-  /** Relay binary HID frames between the panel and serve-sim's control socket. */
-  #relay(req, socket, head, wsUrl, release) {
-    let browser;
-    let upstream;
-    let finished = false;
-    const teardown = () => {
-      if (finished) return;
-      finished = true;
-      this.#teardowns.delete(teardown);
-      browser?.terminate();
-      upstream?.terminate();
-      socket.destroy();
-      release();
-    };
-    this.#teardowns.add(teardown);
-    socket.on("error", teardown);
-    socket.on("close", () => {
-      if (browser === void 0) teardown();
-    });
-    this.#wss.handleUpgrade(req, socket, head, (client) => {
-      if (finished) {
-        client.terminate();
-        return;
-      }
-      browser = client;
-      const target = new import_websocket.default(wsUrl, { perMessageDeflate: false });
-      upstream = target;
-      const pending = [];
-      client.on("error", teardown);
-      client.on("close", teardown);
-      target.on("error", teardown);
-      target.on("close", teardown);
-      target.on("open", () => {
-        for (const frame of pending) target.send(frame.data, { binary: frame.binary });
-        pending.length = 0;
-      });
-      client.on("message", (data, isBinary) => {
-        const frame = { data: toBuffer(data), binary: isBinary };
-        if (target.readyState === import_websocket.default.OPEN) target.send(frame.data, { binary: frame.binary });
-        else if (pending.length < MAX_PENDING_WS_FRAMES) pending.push(frame);
-      });
-      target.on("message", (data, isBinary) => {
-        if (client.readyState === import_websocket.default.OPEN) client.send(toBuffer(data), { binary: isBinary });
-      });
-    });
-  }
-};
-
-// src/recorder.ts
-import { spawn as spawn6 } from "node:child_process";
-import { mkdirSync as mkdirSync4, statSync as statSync7 } from "node:fs";
-import { dirname as dirname5, join as join15 } from "node:path";
-function recordVideoArgs(udid, path) {
-  return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
-}
-var spawnXcrunRecord = (udid, path) => spawn6("xcrun", recordVideoArgs(udid, path), { stdio: ["ignore", "ignore", "pipe"] });
-function safeName(udid) {
-  return udid.replace(/[^A-Za-z0-9_-]/g, "_");
-}
-function fileSize(path) {
-  try {
-    return statSync7(path).size;
-  } catch {
-    return 0;
-  }
-}
-var Recorder = class {
-  #dir;
-  #spawnRecord;
-  #startTimeoutMs;
-  #stopTimeoutMs;
-  #now;
-  #active = /* @__PURE__ */ new Map();
-  /** Recordings that ended on their own, kept until the next stop (or start) for that device reports them. */
-  #ended = /* @__PURE__ */ new Map();
-  #starting = /* @__PURE__ */ new Set();
-  constructor(options) {
-    this.#dir = options.dir;
-    this.#spawnRecord = options.spawnRecord ?? spawnXcrunRecord;
-    this.#startTimeoutMs = options.startTimeoutMs ?? RECORD_START_TIMEOUT_MS;
-    this.#stopTimeoutMs = options.stopTimeoutMs ?? RECORD_STOP_TIMEOUT_MS;
-    this.#now = options.now ?? Date.now;
-  }
-  active(udid) {
-    return this.#active.get(udid)?.info;
-  }
-  defaultPath(udid) {
-    const stamp = new Date(this.#now()).toISOString().replace(/[:.]/g, "-");
-    return join15(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
-  }
-  async start(udid, outputPath) {
-    const running = this.#active.get(udid);
-    if (running !== void 0) {
-      throw new Error(`a recording is already running for ${udid} (${running.info.path}) \u2014 stop it first with action "stop"`);
-    }
-    if (this.#starting.has(udid)) {
-      throw new Error(`a recording is already starting for ${udid} \u2014 wait for it to finish starting before trying again`);
-    }
-    this.#starting.add(udid);
-    try {
-      const requested = outputPath?.trim() ?? "";
-      const path = requested === "" ? this.defaultPath(udid) : requested;
-      if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`);
-      mkdirSync4(dirname5(path), { recursive: true });
-      const child = this.#spawnRecord(udid, path);
-      const exited = new Promise((resolve7) => {
-        child.once("exit", (code) => resolve7(code));
-        child.once("error", () => resolve7(null));
-      });
-      await this.#waitForStart(child, exited);
-      const info = { udid, path, startedAt: this.#now() };
-      const entry = { child, info, exited };
-      this.#ended.delete(udid);
-      this.#active.set(udid, entry);
-      void exited.then((code) => {
-        if (this.#active.get(udid) !== entry) return;
-        this.#active.delete(udid);
-        this.#ended.set(udid, { info, code, endedAt: this.#now() });
-      });
-      return info;
-    } finally {
-      this.#starting.delete(udid);
-    }
-  }
-  async stop(udid) {
-    const recording = this.#active.get(udid);
-    if (recording === void 0) return this.#reportEnded(udid);
-    this.#active.delete(udid);
-    recording.child.kill("SIGINT");
-    let timer;
-    const outcome = await Promise.race([
-      recording.exited.then((code) => ({ code })),
-      new Promise((resolve7) => {
-        timer = setTimeout(() => resolve7("timeout"), this.#stopTimeoutMs);
-      })
-    ]);
-    if (timer !== void 0) clearTimeout(timer);
-    if (outcome === "timeout") {
-      recording.child.kill("SIGKILL");
-      throw new Error(`recordVideo did not finish writing ${recording.info.path} within ${this.#stopTimeoutMs} ms`);
-    }
-    const bytes = fileSize(recording.info.path);
-    if (bytes === 0) {
-      throw new Error(`recordVideo exited (code ${String(outcome.code)}) without writing ${recording.info.path}`);
-    }
-    return { udid, path: recording.info.path, bytes, durationMs: this.#now() - recording.info.startedAt };
-  }
-  /** Finish every running recording (used on shutdown). */
-  async stopAll() {
-    await Promise.all([...this.#active.keys()].map((udid) => this.stop(udid).catch(() => void 0)));
-  }
-  /**
-   * Exit backstop for a process that exits without awaiting stopAll(): SIGINT
-   * every still-tracked recordVideo child so it finalizes its movie on its own.
-   * Synchronous, because 'exit' handlers cannot await.
-   */
-  interruptOnExit() {
-    for (const { child } of this.#active.values()) child.kill("SIGINT");
-  }
-  /** stop() for a device whose recording already ended on its own (or never started). */
-  #reportEnded(udid) {
-    const ended = this.#ended.get(udid);
-    if (ended === void 0) throw new Error(`no recording is running for ${udid} \u2014 start one with action "start"`);
-    this.#ended.delete(udid);
-    const why = `recordVideo exited with code ${String(ended.code)} \u2014 was the simulator shut down?`;
-    const bytes = fileSize(ended.info.path);
-    if (bytes === 0) throw new Error(`the recording for ${udid} ended on its own (${why}) without writing ${ended.info.path}`);
-    return {
-      udid,
-      path: ended.info.path,
-      bytes,
-      durationMs: ended.endedAt - ended.info.startedAt,
-      warning: `the recording ended on its own before stop (${why}), so it may be cut short`
-    };
-  }
-  #waitForStart(child, exited) {
-    return new Promise((resolve7, reject) => {
-      let stderr = "";
-      let settled = false;
-      const onData = (chunk) => {
-        stderr += chunk.toString("utf8");
-        if (stderr.includes("Recording started")) finish();
-      };
-      const finish = (error62) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        child.stderr?.off("data", onData);
-        if (error62 === void 0) resolve7();
-        else reject(error62);
-      };
-      const detail = () => stderr.trim() === "" ? "" : `: ${stderr.trim()}`;
-      const timer = setTimeout(() => {
-        child.kill("SIGINT");
-        finish(new Error(`recordVideo did not report "Recording started" within ${this.#startTimeoutMs} ms${detail()}`));
-      }, this.#startTimeoutMs);
-      child.stderr?.on("data", onData);
-      void exited.then((code) => {
-        finish(new Error(`recordVideo exited before recording (code ${String(code)})${detail()} \u2014 is the simulator booted?`));
-      });
-    });
-  }
-};
-
-// src/tools/apps.ts
-import { existsSync as existsSync8 } from "node:fs";
-import { join as join16, resolve as resolve5 } from "node:path";
-
-// src/tools/result.ts
-var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name (tools that support it also take a connected iPhone/iPad from ios_sim_devices.realDevices). Default: the streamed device, else the newest-runtime booted iPhone.");
-function deviceSummary(device, state = device.state) {
-  return { udid: device.udid, name: device.name, runtime: device.runtime, state };
-}
-function jsonResult(value, image) {
-  const content = [{ type: "text", text: JSON.stringify(value, null, 2) }];
-  if (image !== void 0) content.push({ type: "image", data: image.data, mimeType: image.mimeType });
-  return { content };
-}
-function errorResult(tool, error62) {
-  const message = error62 instanceof Error ? error62.message : String(error62);
-  return {
-    content: [{ type: "text", text: message.startsWith(`${tool}:`) ? message : `${tool}: ${message}` }],
-    isError: true
-  };
-}
-async function runTool(tool, body) {
-  try {
-    return await body();
-  } catch (error62) {
-    return errorResult(tool, error62);
-  }
-}
-function sleep6(milliseconds) {
-  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
-}
-
-// src/tools/apps.ts
-var NOT_AN_OPTION = /^(?!\s*-)/u;
-function installedAppFromRealApp(app) {
-  const system = app.defaultApp === true || (app.appType ?? "").toLowerCase() === "system";
-  return { bundleId: app.bundleId, name: app.name === "" ? app.bundleId : app.name, ...app.version === void 0 ? {} : { version: app.version }, system };
-}
-function registerAppTools(server, deps) {
-  const targetOf = async (tool, udid) => {
-    assertMac(deps.platform);
-    const resolved = await resolveToolTarget(deps, udid);
-    if (resolved.kind === "simulator") requireBooted(tool, resolved.device);
-    return resolved;
-  };
-  const summaryOf = (resolved) => resolved.kind === "real" ? realDeviceSummary(resolved.device) : deviceSummary(resolved.device);
-  const appsOf = async (resolved, signal) => resolved.kind === "real" ? (await deps.realDevices.listApps(resolved.device.udid, signal)).map(installedAppFromRealApp) : deps.listApps(resolved.device.udid, signal);
-  server.registerTool("ios_sim_list_apps", {
-    title: "List installed apps",
-    description: "List the apps INSTALLED on a booted simulator, or on a connected iPhone/iPad (pass its udid or name from ios_sim_devices.realDevices): bundle id, display name (on a simulator localized to its language, e.g. \u65E5\u5386 rather than Calendar; on a real device devicectl's base name), version and a system flag. Run it before opening a third-party app \u2014 never guess a bundle id. query matches the name, the base name and the bundle id (case-insensitive, CJK works); include_system adds the stock Apple apps. A failed listing is an error, so count 0 means no match.",
-    inputSchema: {
-      udid: UDID_PARAM,
-      query: external_exports.string().optional(),
-      include_system: external_exports.boolean().optional().describe("Include stock Apple apps (default false)")
-    },
-    annotations: { readOnlyHint: true }
-  }, async (args, extra) => runTool("ios_sim_list_apps", async () => {
-    const resolved = await targetOf("ios_sim_list_apps", args.udid);
-    const apps = await appsOf(resolved, extra.signal);
-    const query = args.query?.trim() ?? "";
-    const filtered = filterInstalledApps(apps, { ...query === "" ? {} : { query }, includeSystem: args.include_system === true });
-    const noMatch = filtered.length === 0 && query !== "";
-    const candidates = noMatch ? noMatchCandidateLines(apps) : [];
-    return jsonResult({
-      device: summaryOf(resolved),
-      count: filtered.length,
-      apps: filtered,
-      ...noMatch ? { hint: noMatchListingHint(resolved.kind, apps.length) } : {},
-      ...candidates.length > 0 ? { candidates } : {}
-    });
-  }));
-  server.registerTool("ios_sim_launch_app", {
-    title: "Launch an installed app",
-    description: "Launch an installed app on a booted simulator, or on a connected iPhone/iPad (pass its udid or name). Pass EITHER bundleId OR name (exactly one): name is a case-insensitive display-name substring (localized names work), resolved against the installed apps. Third-party bundle ids cannot be guessed \u2014 use name or ios_sim_list_apps. Stable Apple ids: Calendar com.apple.mobilecal, Safari com.apple.mobilesafari, Settings com.apple.Preferences, Photos com.apple.mobileslideshow, Messages com.apple.MobileSMS, Maps com.apple.Maps, Notes com.apple.mobilenotes. relaunch terminates a running instance first. To build from source use ios_sim_build_run.",
-    inputSchema: {
-      bundleId: external_exports.string().optional(),
-      name: external_exports.string().optional(),
-      udid: UDID_PARAM,
-      relaunch: external_exports.boolean().optional()
-    }
-  }, async (args, extra) => runTool("ios_sim_launch_app", async () => {
-    const requestedId = args.bundleId?.trim() ?? "";
-    const requestedName = args.name?.trim() ?? "";
-    if (requestedId !== "" && requestedName !== "") {
-      throw new Error(`pass either bundleId or name, not both (bundleId="${requestedId}", name="${requestedName}")`);
-    }
-    if (requestedId === "" && requestedName === "") {
-      throw new Error('bundleId is required, e.g. "com.apple.mobilecal" \u2014 or pass name to resolve one by display name; run ios_sim_list_apps to see what is installed');
-    }
-    const target = await targetOf("ios_sim_launch_app", args.udid);
-    const resolved = requestedName === "" ? void 0 : resolveAppByName("ios_sim_launch_app", await appsOf(target, extra.signal), requestedName, target.device.name, { physical: target.kind === "real" });
-    const bundleId = resolved?.bundleId ?? requestedId;
-    const notLaunched = (error62) => new Error(`could not launch ${bundleId} on ${target.device.name}: ${error62 instanceof Error ? error62.message : String(error62)} \u2014 the app may not be installed, or the bundle id may be wrong (a third-party bundle id cannot be guessed); run ios_sim_list_apps to see what is installed`);
-    if (target.kind === "real") {
-      if (args.relaunch === true) await deps.realDevices.terminateApp(target.device.udid, bundleId, extra.signal).catch(() => void 0);
-      let launched;
-      try {
-        launched = await deps.realDevices.launchApp(target.device.udid, bundleId, extra.signal);
-      } catch (error62) {
-        throw notLaunched(error62);
-      }
-      return jsonResult({
-        device: realDeviceSummary(target.device),
-        bundleId,
-        ...resolved === void 0 ? {} : { name: resolved.name },
-        launched: true,
-        ...launched.pid === void 0 ? {} : { pid: launched.pid },
-        ...args.relaunch === true ? { relaunched: true } : {}
-      });
-    }
-    const device = target.device;
-    if (args.relaunch === true) {
-      await deps.simctl.terminateApp(device.udid, bundleId, extra.signal).catch(() => void 0);
-    }
-    let stdout;
-    try {
-      stdout = await deps.simctl.launchApp(device.udid, bundleId, extra.signal);
-    } catch (error62) {
-      throw notLaunched(error62);
-    }
-    const pid = Number.parseInt(stdout.split(":").pop()?.trim() ?? "", 10);
-    return jsonResult({
-      device: deviceSummary(device),
-      bundleId,
-      ...resolved === void 0 ? {} : { name: resolved.name },
-      launched: true,
-      ...Number.isSafeInteger(pid) && pid > 0 ? { pid } : {},
-      ...args.relaunch === true ? { relaunched: true } : {}
-    });
-  }));
-  server.registerTool("ios_sim_build_run", {
-    title: "Build and run on the simulator",
-    description: "Build an Xcode project (.xcodeproj), workspace (.xcworkspace) or Swift package directory for the iOS Simulator, install the .app and launch it. Device: udid/name, else the streamed device, else a booted simulator, else the newest-runtime iPhone (booted for you). On failure the error carries the filtered xcodebuild tail with the compiler errors. A full build takes minutes \u2014 do not retry it in a loop.",
-    inputSchema: {
-      projectPath: external_exports.string().min(1).describe("Absolute path to a .xcodeproj, a .xcworkspace, or a Swift package directory"),
-      scheme: external_exports.string().regex(NOT_AN_OPTION, 'scheme must not start with "-"').optional(),
-      configuration: external_exports.string().regex(NOT_AN_OPTION, 'configuration must not start with "-"').optional().describe("Build configuration (default Debug)"),
-      udid: UDID_PARAM
-    }
-  }, async (args, extra) => runTool("ios_sim_build_run", async () => {
-    assertMac(deps.platform);
-    const target = deps.builder.detectProject(args.projectPath);
-    const configuration = args.configuration?.trim() || "Debug";
-    const device = await resolveTargetDevice(deps, args.udid, { bootFallback: true });
-    await deps.simctl.bootDevice(device.udid);
-    const booted = { ...device, state: "Booted" };
-    const started = Date.now();
-    const result = await deps.builder.buildRun({
-      target,
-      ...args.scheme === void 0 ? {} : { scheme: args.scheme },
-      configuration,
-      device: booted,
-      cacheDir: deps.cacheRoot,
-      signal: extra.signal
-    });
-    let panelUrl;
-    if (deps.host.binary.available) {
-      try {
-        await ensureStreamFor(deps.host, booted);
-        panelUrl = await deps.panel.ensureStarted();
-      } catch {
-        panelUrl = void 0;
-      }
-    }
-    return jsonResult({ ...result, durationMs: Date.now() - started, ...panelUrl === void 0 ? {} : { panelUrl } });
-  }));
-  server.registerTool("ios_sim_install_app", {
-    title: "Install a built app",
-    description: "Install a built .app bundle (a directory containing Info.plist) on a booted simulator and report its bundle id. It also installs on a connected iPhone/iPad (pass its udid or name), where the .app must be built for iphoneos and signed for that device. To build for a simulator from source use ios_sim_build_run.",
-    inputSchema: { appPath: external_exports.string().min(1), udid: UDID_PARAM }
-  }, async (args, extra) => runTool("ios_sim_install_app", async () => {
-    assertMac(deps.platform);
-    const appPath = resolve5(args.appPath);
-    if (!existsSync8(join16(appPath, "Info.plist"))) {
-      throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`);
-    }
-    const target = await targetOf("ios_sim_install_app", args.udid);
-    if (target.kind === "real") await deps.realDevices.installApp(target.device.udid, appPath, extra.signal);
-    else await deps.simctl.installApp(target.device.udid, appPath, extra.signal);
-    const bundleId = await deps.builder.readBundleIdentifier(appPath, extra.signal);
-    return jsonResult({ device: summaryOf(target), appPath, bundleId, installed: true });
-  }));
-  server.registerTool("ios_sim_uninstall_app", {
-    title: "Uninstall an app",
-    description: "Uninstall an app (and its data container) from a booted simulator by bundle id. Simulators only: on a real iPhone/iPad the app's data cannot be recovered, so uninstall it on the device yourself.",
-    inputSchema: { bundleId: external_exports.string().min(1), udid: UDID_PARAM },
-    annotations: { destructiveHint: true }
-  }, async (args, extra) => runTool("ios_sim_uninstall_app", async () => {
-    assertMac(deps.platform);
-    const bundleId = args.bundleId.trim();
-    const device = await resolveTargetDevice(deps, args.udid);
-    requireBooted("ios_sim_uninstall_app", device);
-    await deps.simctl.uninstallApp(device.udid, bundleId, extra.signal);
-    return jsonResult({ device: deviceSummary(device), bundleId, uninstalled: true });
-  }));
-}
 
 // src/sim-gesture.ts
 var SIM_TOUCH_TAG = 3;
@@ -46255,10 +45208,10 @@ function simDragRequestOf(payload) {
 function loadWs() {
   return { WebSocket: import_websocket.default };
 }
-function errorMessage9(error62) {
+function errorMessage8(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep7(milliseconds) {
+function sleep6(milliseconds) {
   return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 function gestureUnavailable(wsUrl, detail) {
@@ -46296,7 +45249,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
   let broken;
   let finished = false;
   socket.on("error", (error62) => {
-    broken ??= `the control socket errored (${errorMessage9(error62)})`;
+    broken ??= `the control socket errored (${errorMessage8(error62)})`;
   });
   socket.on("close", (code, reason) => {
     if (finished) return;
@@ -46308,7 +45261,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
     await openSocket(socket, connectTimeoutMs, url2, () => broken);
     for (const [index, point] of path.entries()) {
       if (broken !== void 0) throw gestureUnavailable(url2, broken);
-      if (index > 0 && stepMs > 0) await sleep7(stepMs);
+      if (index > 0 && stepMs > 0) await sleep6(stepMs);
       socket.send(encodeSimTouchFrame(index === 0 ? "begin" : "move", point.x, point.y));
     }
     if (broken !== void 0) throw gestureUnavailable(url2, broken);
@@ -46316,7 +45269,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
       const last = path[path.length - 1];
       socket.send(encodeSimTouchFrame("end", last.x, last.y), (error62) => {
         if (error62 === void 0 || error62 === null) resolve7();
-        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage9(error62)})`));
+        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage8(error62)})`));
       });
     });
     const elapsedMs = Date.now() - started;
@@ -46392,10 +45345,10 @@ var SERVE_SIM_BUTTONS = [
   "digital-crown",
   "left-side-button"
 ];
-function sleep8(milliseconds) {
+function sleep7(milliseconds) {
   return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
-function errorMessage10(error62) {
+function errorMessage9(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function scrollRequestOf(args) {
@@ -46482,7 +45435,7 @@ async function performSimInteractControl(host, deviceUdid, payloads) {
     if (command === void 0) continue;
     await host.control(serveSimControlArgs(command, deviceUdid, positionals));
     if (payloads.length > 1 && payload !== payloads[payloads.length - 1]) {
-      await sleep8(SCROLL_HOLD_MS);
+      await sleep7(SCROLL_HOLD_MS);
     }
   }
 }
@@ -46507,133 +45460,12 @@ async function performSimInteract(host, deviceUdid, args, payloads, options = {}
         const report = await sendSimGesture(wsUrl, points, { stepMs: options.stepMs ?? SIM_GESTURE_STEP_MS });
         return { channel: "ws", frames: report.frames, elapsedMs: report.elapsedMs };
       } catch (error62) {
-        wsError = errorMessage10(error62);
+        wsError = errorMessage9(error62);
       }
     }
   }
   await performSimInteractControl(host, deviceUdid, payloads);
   return { channel: "cli", ...wsError === void 0 ? {} : { wsError } };
-}
-
-// src/panel/client/layout.ts
-var SIZE_OPTIONS = [
-  { id: "fit", mode: { kind: "fit" }, en: "Fit", zh: "\u9002\u5E94" },
-  ...[50, 75, 100, 125].map((value) => ({ id: `percent-${value}`, mode: { kind: "percent", value }, en: `${value}%`, zh: `${value}%` })),
-  { id: "preset-S", mode: { kind: "preset", width: 240 }, en: "S \xB7 240px", zh: "S\uFF08240px\uFF09" },
-  { id: "preset-M", mode: { kind: "preset", width: 320 }, en: "M \xB7 320px", zh: "M\uFF08320px\uFF09" },
-  { id: "preset-L", mode: { kind: "preset", width: 420 }, en: "L \xB7 420px", zh: "L\uFF08420px\uFF09" }
-];
-function framebufferPoint(orientation, displayed) {
-  switch (orientation) {
-    case "landscape_left":
-      return { x: displayed.y, y: 1 - displayed.x };
-    case "landscape_right":
-      return { x: 1 - displayed.y, y: displayed.x };
-    case "portrait_upside_down":
-      return { x: 1 - displayed.x, y: 1 - displayed.y };
-    default:
-      return { x: displayed.x, y: displayed.y };
-  }
-}
-
-// src/panel/client/protocol.ts
-var SIM_CONFIG_TAG = 130;
-function isRecord(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-function messageBytes(data) {
-  if (data instanceof ArrayBuffer) return new Uint8Array(data);
-  if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  return void 0;
-}
-function parseSimConfigFrame(data) {
-  const bytes = messageBytes(data);
-  if (bytes === void 0 || bytes.length < 2 || bytes[0] !== SIM_CONFIG_TAG) return void 0;
-  try {
-    const value = JSON.parse(new TextDecoder().decode(bytes.subarray(1)));
-    if (isRecord(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
-      return { width: value.width, height: value.height, orientation: value.orientation };
-    }
-  } catch {
-  }
-  return void 0;
-}
-
-// src/orientation.ts
-function isLandscape(orientation) {
-  return orientation === "landscape_left" || orientation === "landscape_right";
-}
-var timeoutsInARow = /* @__PURE__ */ new Map();
-var givenUpAt = /* @__PURE__ */ new Map();
-var SILENT_AFTER_READS = 2;
-var SILENT_RETRY_MS = 6e4;
-function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
-  const since = givenUpAt.get(wsUrl);
-  if (since !== void 0 && now() - since < SILENT_RETRY_MS) return Promise.resolve(void 0);
-  return new Promise((resolve7) => {
-    let settled = false;
-    const socket = new import_websocket.default(wsUrl, { perMessageDeflate: false });
-    const finish = (config2) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      socket.terminate();
-      resolve7(config2);
-    };
-    const timer = setTimeout(() => {
-      const timeouts = (timeoutsInARow.get(wsUrl) ?? 0) + 1;
-      timeoutsInARow.set(wsUrl, timeouts);
-      if (timeouts >= SILENT_AFTER_READS) givenUpAt.set(wsUrl, now());
-      finish(void 0);
-    }, timeoutMs);
-    socket.on("message", (data) => {
-      const config2 = parseSimConfigFrame(data);
-      if (config2 === void 0) return;
-      timeoutsInARow.delete(wsUrl);
-      givenUpAt.delete(wsUrl);
-      finish(config2);
-    });
-    socket.on("error", () => finish(void 0));
-    socket.on("close", () => finish(void 0));
-  });
-}
-var SCROLL_DIRECTIONS2 = {
-  landscape_left: { down: "right", up: "left", right: "up", left: "down" },
-  landscape_right: { down: "left", up: "right", right: "down", left: "up" }
-};
-function toFramebufferArgs(orientation, args) {
-  if (!isLandscape(orientation)) return args;
-  const map2 = (x, y) => framebufferPoint(orientation, { x, y });
-  switch (args.action) {
-    case "tap": {
-      if (typeof args.x !== "number" || typeof args.y !== "number") return args;
-      const point = map2(args.x, args.y);
-      return { ...args, x: point.x, y: point.y };
-    }
-    case "scroll": {
-      const anchor2 = map2(args.x ?? 0.5, args.y ?? 0.5);
-      const direction = args.direction === void 0 ? void 0 : SCROLL_DIRECTIONS2[orientation][args.direction];
-      return { ...args, x: anchor2.x, y: anchor2.y, ...direction === void 0 ? {} : { direction } };
-    }
-    case "gesture": {
-      const json2 = args.json;
-      if (typeof json2 !== "object" || json2 === null || Array.isArray(json2)) return args;
-      const record3 = json2;
-      const drag = simDragRequestOf(record3);
-      if (drag !== void 0) {
-        const from = map2(drag.fromX, drag.fromY);
-        const to = map2(drag.toX, drag.toY);
-        return { ...args, json: { ...record3, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y } };
-      }
-      if (typeof record3.x === "number" && typeof record3.y === "number") {
-        const point = map2(record3.x, record3.y);
-        return { ...args, json: { ...record3, x: point.x, y: point.y } };
-      }
-      return args;
-    }
-    default:
-      return args;
-  }
 }
 
 // src/uitree.ts
@@ -46990,10 +45822,10 @@ function capList(items, capBytes = OUTPUT_CAP_BYTES) {
 }
 
 // src/uitree-backend.ts
-import { execFile as execFile10 } from "node:child_process";
+import { execFile as execFile9 } from "node:child_process";
 import { createHash as createHash3 } from "node:crypto";
-import { chmodSync, existsSync as existsSync9, mkdirSync as mkdirSync5, readFileSync as readFileSync7, rmSync as rmSync4, statSync as statSync8, writeFileSync as writeFileSync4 } from "node:fs";
-import { delimiter as delimiter5, join as join17 } from "node:path";
+import { chmodSync, existsSync as existsSync7, mkdirSync as mkdirSync3, readFileSync as readFileSync7, rmSync as rmSync4, statSync as statSync6, writeFileSync as writeFileSync3 } from "node:fs";
+import { delimiter as delimiter5, join as join13 } from "node:path";
 var AXE_VERSION = "1.8.0";
 var AXE_RELEASE_URL = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz";
 var AXE_RELEASE_SHA256 = "7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834";
@@ -47005,7 +45837,7 @@ var DIGEST_FILE2 = ".ios-simulator-axe.sha256";
 var BREW_BIN_CANDIDATES = ["/opt/homebrew/bin/axe", "/usr/local/bin/axe"];
 function isExecutableFile3(path) {
   try {
-    const info = statSync8(path);
+    const info = statSync6(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
@@ -47014,7 +45846,7 @@ function isExecutableFile3(path) {
 function findOnPath5(command, env) {
   for (const dir of (env.PATH ?? "").split(delimiter5)) {
     if (dir === "") continue;
-    const candidate = join17(dir, command);
+    const candidate = join13(dir, command);
     if (isExecutableFile3(candidate)) return candidate;
   }
   return void 0;
@@ -47024,7 +45856,7 @@ function sha256File2(path) {
 }
 function run3(command, args, timeoutMs, signal) {
   return new Promise((resolve7, reject) => {
-    execFile10(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
+    execFile9(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
       if (error62 !== null) {
         reject(Object.assign(error62, { stdout, stderr }));
         return;
@@ -47044,13 +45876,13 @@ var AxeHelper = class {
     this.#env = options.env ?? process.env;
   }
   #installDir() {
-    return join17(this.#cacheDir, AXE_VERSION);
+    return join13(this.#cacheDir, AXE_VERSION);
   }
   #validCached() {
-    const binary = join17(this.#installDir(), "axe");
+    const binary = join13(this.#installDir(), "axe");
     if (!isExecutableFile3(binary)) return void 0;
     try {
-      const expected = readFileSync7(join17(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
+      const expected = readFileSync7(join13(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(expected)) return void 0;
       return sha256File2(binary) === expected ? binary : void 0;
     } catch {
@@ -47075,7 +45907,7 @@ var AxeHelper = class {
     if (onPath !== void 0) return { available: true, source: "path", command: onPath };
     const cached2 = this.#validCached();
     if (cached2 !== void 0) return { available: true, source: "cache", command: cached2 };
-    if (existsSync9(this.#installDir())) {
+    if (existsSync7(this.#installDir())) {
       return {
         available: false,
         source: "unavailable",
@@ -47112,8 +45944,8 @@ var AxeHelper = class {
    */
   async #download() {
     const installDir = this.#installDir();
-    mkdirSync5(this.#cacheDir, { recursive: true });
-    const archive = join17(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
+    mkdirSync3(this.#cacheDir, { recursive: true });
+    const archive = join13(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
     try {
       try {
         await run3("curl", [
@@ -47138,15 +45970,15 @@ var AxeHelper = class {
         throw new Error(`download integrity check failed: expected sha256 ${AXE_RELEASE_SHA256} but got ${digest}`);
       }
       rmSync4(installDir, { recursive: true, force: true });
-      mkdirSync5(installDir, { recursive: true });
+      mkdirSync3(installDir, { recursive: true });
       await run3("tar", ["-xzf", archive, "-C", installDir], AXE_DOWNLOAD_TIMEOUT_MS);
-      const binary = join17(installDir, "axe");
+      const binary = join13(installDir, "axe");
       if (!isExecutableFile3(binary)) chmodSync(binary, 493);
       const version2 = await run3(binary, ["--version"], AXE_EXEC_TIMEOUT_MS);
       if (!version2.stdout.includes(AXE_VERSION)) {
         throw new Error(`downloaded axe reports an unexpected version: ${version2.stdout.trim()}`);
       }
-      writeFileSync4(join17(installDir, DIGEST_FILE2), `${sha256File2(binary)}
+      writeFileSync3(join13(installDir, DIGEST_FILE2), `${sha256File2(binary)}
 `, "utf8");
       return binary;
     } finally {
@@ -47436,7 +46268,7 @@ function wdaSourceToElements(xml) {
 // src/real-ui.ts
 var DEEPEN_SNAPSHOT_DEPTH = 40;
 var ROW_SNAPSHOT_DEPTH = 60;
-function errorMessage11(error62) {
+function errorMessage10(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 async function wdaTree(client, deviceName, depth) {
@@ -47446,12 +46278,12 @@ async function wdaTree(client, deviceName, depth) {
     try {
       xml = await client.source();
     } catch (error62) {
-      throw new Error(`the WebDriverAgent source read failed for ${deviceName}: ${errorMessage11(error62)}`);
+      throw new Error(`the WebDriverAgent source read failed for ${deviceName}: ${errorMessage10(error62)}`);
     }
     try {
       return wdaSourceToElements(xml);
     } catch (error62) {
-      throw new Error(`could not parse the accessibility tree of ${deviceName}: ${errorMessage11(error62)}`);
+      throw new Error(`could not parse the accessibility tree of ${deviceName}: ${errorMessage10(error62)}`);
     }
   };
   if (depth !== void 0) return { roots: await snapshotAt(depth), sampledDepth: depth, deepened: false };
@@ -47464,7 +46296,7 @@ async function captureWda(client, screenshots, udid, deviceName) {
   try {
     pngBase64 = (await client.screenshot()).pngBase64;
   } catch (error62) {
-    throw new Error(`the WebDriverAgent screenshot failed for ${deviceName}: ${errorMessage11(error62)}`);
+    throw new Error(`the WebDriverAgent screenshot failed for ${deviceName}: ${errorMessage10(error62)}`);
   }
   return screenshots.save(udid, Buffer.from(pngBase64, "base64"));
 }
@@ -47584,6 +46416,1387 @@ async function runWdaInteract(client, plan) {
   }
 }
 
+// src/screenshot.ts
+import { execFile as execFile10 } from "node:child_process";
+import { closeSync, existsSync as existsSync8, mkdirSync as mkdirSync4, openSync, readSync, readdirSync as readdirSync4, statSync as statSync7, unlinkSync as unlinkSync2, writeFileSync as writeFileSync4 } from "node:fs";
+import { readFile as readFile4, rm as rm2 } from "node:fs/promises";
+import { join as join14 } from "node:path";
+var FILE_PATTERN = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
+var SIPS_TIMEOUT_MS = 3e4;
+function isScreenshotFileName(name) {
+  return FILE_PATTERN.test(name);
+}
+function readPngSize(path) {
+  try {
+    const fd = openSync(path, "r");
+    try {
+      const header2 = Buffer.alloc(24);
+      if (readSync(fd, header2, 0, 24, 0) !== 24) return void 0;
+      const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+      const isPng = header2.subarray(0, 8).equals(pngSignature);
+      const isIhdr = header2.subarray(12, 16).toString("ascii") === "IHDR";
+      if (!isPng || !isIhdr) return void 0;
+      return { width: header2.readUInt32BE(16), height: header2.readUInt32BE(20) };
+    } finally {
+      closeSync(fd);
+    }
+  } catch {
+    return void 0;
+  }
+}
+function jpegSize(buffer) {
+  if (buffer.length < 4 || buffer[0] !== 255 || buffer[1] !== 216) return void 0;
+  let offset = 2;
+  while (offset + 9 < buffer.length) {
+    if (buffer[offset] !== 255) {
+      offset += 1;
+      continue;
+    }
+    const marker = buffer[offset + 1] ?? 0;
+    if (marker === 255 || marker === 1 || marker >= 208 && marker <= 216) {
+      offset += marker === 255 ? 1 : 2;
+      continue;
+    }
+    const length = buffer.readUInt16BE(offset + 2);
+    const isStartOfFrame = marker >= 192 && marker <= 207 && marker !== 196 && marker !== 200 && marker !== 204;
+    if (isStartOfFrame) {
+      return { height: buffer.readUInt16BE(offset + 5), width: buffer.readUInt16BE(offset + 7) };
+    }
+    offset += 2 + length;
+  }
+  return void 0;
+}
+function runSips(args) {
+  return new Promise((resolve7, reject) => {
+    execFile10("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
+      if (error62 === null) {
+        resolve7();
+        return;
+      }
+      reject(new Error(`sips failed: ${stderr.trim() === "" ? error62.message : stderr.trim()}`));
+    });
+  });
+}
+var ScreenshotStore = class {
+  dir;
+  #take;
+  #keep;
+  #maxEdge;
+  #quality;
+  #next = /* @__PURE__ */ new Map();
+  constructor(options) {
+    this.dir = options.dir;
+    this.#take = options.takeScreenshot;
+    this.#keep = options.keep ?? SCREENSHOT_KEEP;
+    this.#maxEdge = options.maxEdge ?? MODEL_IMAGE_MAX_EDGE;
+    this.#quality = options.quality ?? MODEL_IMAGE_JPEG_QUALITY;
+  }
+  /**
+   * `<dir>/screenshot-<udid>-<n>.png` with a monotonically increasing index;
+   * names already on disk are skipped so concurrent writers never collide.
+   */
+  nextPath(udid) {
+    mkdirSync4(this.dir, { recursive: true });
+    const safe = udid.replace(/[^A-Za-z0-9_-]/g, "_");
+    let next = this.#next.get(safe);
+    if (next === void 0) {
+      next = 0;
+      const prefix = `screenshot-${safe}-`;
+      for (const entry of readdirSync4(this.dir)) {
+        if (!entry.startsWith(prefix) || !entry.endsWith(".png")) continue;
+        const index = Number(entry.slice(prefix.length, -4));
+        if (Number.isInteger(index) && index >= next) next = index + 1;
+      }
+    }
+    let path = join14(this.dir, `screenshot-${safe}-${next}.png`);
+    while (existsSync8(path)) {
+      next += 1;
+      path = join14(this.dir, `screenshot-${safe}-${next}.png`);
+    }
+    this.#next.set(safe, next + 1);
+    return path;
+  }
+  /** Capture a fresh full-size PNG, then prune the cache. */
+  async capture(udid, signal) {
+    const path = this.nextPath(udid);
+    await this.#take(udid, path, signal);
+    const bytes = statSync7(path).size;
+    const size = readPngSize(path);
+    this.prune();
+    return { path, bytes, ...size === void 0 ? {} : size };
+  }
+  /** Store a PNG taken elsewhere (a real device's WebDriverAgent) like a capture, then prune. */
+  save(udid, png) {
+    const path = this.nextPath(udid);
+    writeFileSync4(path, png);
+    const size = readPngSize(path);
+    this.prune();
+    return { path, bytes: png.length, ...size === void 0 ? {} : size };
+  }
+  /** Keep the newest `keep` screenshots (by mtime, then index). */
+  prune() {
+    let names;
+    try {
+      names = readdirSync4(this.dir).filter(isScreenshotFileName);
+    } catch {
+      return;
+    }
+    if (names.length <= this.#keep) return;
+    const entries = names.map((name) => {
+      const path = join14(this.dir, name);
+      let mtime = 0;
+      try {
+        mtime = statSync7(path).mtimeMs;
+      } catch {
+      }
+      return { path, mtime, index: Number(FILE_PATTERN.exec(name)?.[1] ?? 0) };
+    });
+    entries.sort((a, b) => b.mtime - a.mtime || b.index - a.index);
+    for (const entry of entries.slice(this.#keep)) {
+      try {
+        unlinkSync2(entry.path);
+      } catch {
+      }
+    }
+  }
+  /** The JPEG the model sees: quality 80, long edge at most `maxEdge`. */
+  async toModelImage(capture) {
+    const out = capture.path.replace(/\.png$/u, ".model.jpg");
+    const args = ["-s", "format", "jpeg", "-s", "formatOptions", String(this.#quality)];
+    const longEdge = Math.max(capture.width ?? 0, capture.height ?? 0);
+    if (longEdge === 0 || longEdge > this.#maxEdge) args.push("--resampleHeightWidthMax", String(this.#maxEdge));
+    args.push(capture.path, "--out", out);
+    try {
+      await runSips(args);
+      const buffer = await readFile4(out);
+      const size = jpegSize(buffer);
+      if (size === void 0) throw new Error(`sips produced an unreadable JPEG for ${capture.path}`);
+      return { data: buffer.toString("base64"), mimeType: "image/jpeg", ...size };
+    } finally {
+      await rm2(out, { force: true });
+    }
+  }
+};
+
+// src/target.ts
+function assertMac(platform) {
+  if (platform !== "darwin") {
+    throw new Error(`${SIMULATOR_UNAVAILABLE} \u2014 this host runs ${platform}, so no simulator tools can run here`);
+  }
+}
+function assertStreamAvailable(host) {
+  if (!host.binary.available) {
+    throw new Error(
+      `serve-sim is unavailable (${host.binary.reason ?? "unknown reason"}) \u2014 touch input and the live panel need it; the simctl-only tools (ios_sim_screenshot, ios_sim_list_apps, ios_sim_launch_app, ios_sim_open_url, ios_sim_push, ios_sim_location, ios_sim_appearance, ios_sim_record) still work, and so do the AXe and OCR tools (ios_sim_ui_tree, ios_sim_tap_element, ios_sim_ui_rows, ios_sim_tap_row, ios_sim_find_text, ios_sim_wait_for)`
+    );
+  }
+}
+function sortDevices(devices) {
+  return [...devices].sort((a, b) => {
+    const booted = Number(b.state === "Booted") - Number(a.state === "Booted");
+    if (booted !== 0) return booted;
+    const runtime = compareRuntimesDesc(a.runtime, b.runtime);
+    return runtime !== 0 ? runtime : a.name.localeCompare(b.name);
+  });
+}
+function pickPreferred(devices) {
+  const iphones = devices.filter((device) => device.name.toLowerCase().startsWith("iphone"));
+  const pool = [...iphones.length > 0 ? iphones : devices];
+  const picked = pool.sort((a, b) => compareRuntimesDesc(a.runtime, b.runtime))[0];
+  if (picked === void 0) throw new Error("No simulator devices are installed \u2014 install an iOS Simulator runtime in Xcode, then retry");
+  return picked;
+}
+var REAL_DEVICE_TOOLS = "ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes, ios_sim_app_info, and \u2014 once ios_real_start_wda has started WebDriverAgent \u2014 ios_sim_screenshot, ios_sim_interact, ios_sim_ui_tree, ios_sim_tap_element, ios_sim_find_text, ios_sim_tap_text, ios_sim_wait_for, ios_sim_ui_rows and ios_sim_tap_row";
+async function resolveTargetDevice(deps, reference, options = {}) {
+  if (reference !== void 0 && reference.trim() !== "") {
+    try {
+      return await deps.simctl.getDevice(reference);
+    } catch (error62) {
+      if (deps.realDevices !== void 0 && await deps.realDevices.matches(reference)) {
+        throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only \u2014 on a real device use ${REAL_DEVICE_TOOLS}`);
+      }
+      throw error62;
+    }
+  }
+  const status = deps.host.status();
+  if (status.running && status.device !== void 0) {
+    try {
+      return await deps.simctl.getDevice(status.device);
+    } catch {
+    }
+  }
+  const devices = await deps.simctl.listDevices();
+  const booted = devices.filter((device) => device.state === "Booted");
+  if (booted.length > 0) return pickPreferred(booted);
+  if (options.bootFallback === true) {
+    const picked = pickPreferred(devices);
+    await deps.simctl.bootDevice(picked.udid);
+    return { ...picked, state: "Booted" };
+  }
+  throw new Error("No booted simulator and no live stream \u2014 call ios_sim_boot first, then retry");
+}
+function requireBooted(tool, device) {
+  if (device.state !== "Booted") {
+    throw new Error(`${tool}: ${device.name} is ${device.state} \u2014 boot it first with ios_sim_boot (this tool never boots a device)`);
+  }
+}
+async function ensureStreamFor(host, device) {
+  assertStreamAvailable(host);
+  const info = host.streamInfo;
+  if (info !== void 0 && info.device === device.udid) return info;
+  return host.ensureRunning({ udid: device.udid });
+}
+async function resolveToolTarget(deps, reference) {
+  if (reference === void 0 || reference.trim() === "") return { kind: "simulator", device: await resolveTargetDevice(deps, reference) };
+  let simulatorError;
+  try {
+    return { kind: "simulator", device: await deps.simctl.getDevice(reference) };
+  } catch (error62) {
+    simulatorError = error62;
+  }
+  let device;
+  try {
+    device = await deps.realDevices.getDevice(reference);
+  } catch {
+    throw simulatorError;
+  }
+  if (device.pairingState !== "paired" || device.state === "unavailable") {
+    throw new Error(`${device.name} is not available (${device.state}) \u2014 connect it over USB, unlock it, tap "Trust This Computer", and check \`xcrun devicectl list devices\``);
+  }
+  return { kind: "real", device };
+}
+function realDeviceSummary(device) {
+  return { udid: device.udid, name: device.name, runtime: device.osVersion === void 0 ? "iOS" : `iOS ${device.osVersion}`, state: device.state };
+}
+
+// src/panel/fence.ts
+function isIpv4LoopbackAddress(address) {
+  const parts = address.split(".");
+  return parts.length === 4 && parts[0] === "127" && parts.every((part) => /^\d{1,3}$/u.test(part) && Number(part) <= 255);
+}
+function isLoopbackRemoteAddress(address) {
+  if (address === void 0) return false;
+  const normalized = address.toLowerCase().split("%", 1)[0] ?? "";
+  if (normalized === "::1" || isIpv4LoopbackAddress(normalized)) return true;
+  if (!normalized.startsWith("::ffff:")) return false;
+  const mapped = normalized.slice("::ffff:".length);
+  if (isIpv4LoopbackAddress(mapped)) return true;
+  const hexadecimal = /^([a-f0-9]{1,4}):([a-f0-9]{1,4})$/u.exec(mapped);
+  return hexadecimal !== null && Number.parseInt(hexadecimal[1] ?? "0", 16) >>> 8 === 127;
+}
+function header(request, name) {
+  const value = request.headers[name];
+  return typeof value === "string" ? value : void 0;
+}
+function allowedAuthorities(port) {
+  return [`127.0.0.1:${port}`, `localhost:${port}`];
+}
+function checkRequest(request, port, kind) {
+  if (!isLoopbackRemoteAddress(request.remoteAddress)) return { ok: false, reason: "peer" };
+  const authorities = allowedAuthorities(port);
+  const host = header(request, "host")?.toLowerCase();
+  if (host === void 0 || !authorities.includes(host)) return { ok: false, reason: "host" };
+  const site = header(request, "sec-fetch-site");
+  const origin = header(request, "origin");
+  const originOk = origin !== void 0 && origin.toLowerCase() === `http://${host}`;
+  if (kind === "read") {
+    if (site !== void 0 && site !== "same-origin" && site !== "none") return { ok: false, reason: "fetch-site" };
+    if (origin !== void 0 && !originOk) return { ok: false, reason: "origin" };
+    return { ok: true };
+  }
+  if (!originOk) return { ok: false, reason: "origin" };
+  if (site !== void 0 && site !== "same-origin") return { ok: false, reason: "fetch-site" };
+  if (kind === "mutate") {
+    const type = header(request, "content-type");
+    if (type === void 0 || !/^application\/json\s*(;|$)/iu.test(type)) return { ok: false, reason: "content-type" };
+  }
+  return { ok: true };
+}
+
+// src/panel/real-control.ts
+var TOUCH_TAG = 3;
+var BUTTON_TAG = 4;
+var ROTATE_TAG = 7;
+var TAP_SLOP = 0.02;
+var MIN_DRAG_SECONDS = 0.05;
+var MAX_DRAG_SECONDS = 5;
+var BUTTONS = {
+  home: "home",
+  "volume-up": "volumeUp",
+  volume_up: "volumeUp",
+  "volume-down": "volumeDown",
+  volume_down: "volumeDown"
+};
+function decode3(frame) {
+  if (frame.length < 2) return void 0;
+  try {
+    const value = JSON.parse(new TextDecoder().decode(frame.subarray(1)));
+    if (typeof value !== "object" || value === null || Array.isArray(value)) return void 0;
+    return { tag: frame[0], payload: value };
+  } catch {
+    return void 0;
+  }
+}
+function unit2(value) {
+  return typeof value === "number" && Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : void 0;
+}
+var RealTouchTranslator = class {
+  #begin;
+  /** The operation a frame completes, if any; `now` is in milliseconds. */
+  feed(frame, now) {
+    const decoded = decode3(frame);
+    if (decoded === void 0) return void 0;
+    const { tag, payload } = decoded;
+    if (tag === BUTTON_TAG) {
+      if (payload.button === "lock") return { kind: "lock" };
+      const name = typeof payload.button === "string" ? BUTTONS[payload.button] : void 0;
+      return name === void 0 ? void 0 : { kind: "button", name };
+    }
+    if (tag === ROTATE_TAG) {
+      const orientation = typeof payload.orientation === "string" ? WDA_ORIENTATIONS[payload.orientation] : void 0;
+      return orientation === void 0 ? void 0 : { kind: "rotate", orientation };
+    }
+    if (tag !== TOUCH_TAG) return void 0;
+    const x = unit2(payload.x);
+    const y = unit2(payload.y);
+    if (x === void 0 || y === void 0) return void 0;
+    if (payload.type === "begin") {
+      this.#begin = { x, y, at: now };
+      return void 0;
+    }
+    if (payload.type !== "end" || this.#begin === void 0) return void 0;
+    const begin = this.#begin;
+    this.#begin = void 0;
+    if (Math.hypot(x - begin.x, y - begin.y) <= TAP_SLOP) return { kind: "tap", x: begin.x, y: begin.y };
+    const duration3 = Math.min(MAX_DRAG_SECONDS, Math.max(MIN_DRAG_SECONDS, (now - begin.at) / 1e3));
+    return { kind: "drag", fromX: begin.x, fromY: begin.y, toX: x, toY: y, duration: Math.round(duration3 * 100) / 100 };
+  }
+};
+
+// src/panel/panel-server.ts
+var STATIC_FILES = {
+  "/": { file: "index.html", type: "text/html; charset=utf-8" },
+  "/index.html": { file: "index.html", type: "text/html; charset=utf-8" },
+  "/main.js": { file: "main.js", type: "text/javascript; charset=utf-8" },
+  "/styles.css": { file: "styles.css", type: "text/css; charset=utf-8" }
+};
+var MAX_BODY_BYTES2 = 16 * 1024;
+var MAX_PENDING_WS_FRAMES = 64;
+var WEBSOCKET_KEY_PATTERN = /^[A-Za-z0-9+/]{22}==$/u;
+var STATUS_TEXT = {
+  400: "Bad Request",
+  403: "Forbidden",
+  404: "Not Found",
+  502: "Bad Gateway",
+  503: "Service Unavailable"
+};
+var HttpError = class extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+  status;
+};
+function errorMessage11(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+function sendJson(res, status, value) {
+  const body = JSON.stringify(value);
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": Buffer.byteLength(body),
+    "cache-control": "no-store",
+    "x-content-type-options": "nosniff"
+  });
+  res.end(body);
+}
+function rejectUpgrade(socket, status) {
+  if (socket.destroyed) return;
+  socket.write(`HTTP/1.1 ${status} ${STATUS_TEXT[status] ?? "Error"}\r
+Connection: close\r
+Content-Length: 0\r
+\r
+`);
+  socket.destroy();
+}
+function toBuffer(data) {
+  if (Buffer.isBuffer(data)) return data;
+  if (Array.isArray(data)) return Buffer.concat(data);
+  return Buffer.from(data);
+}
+async function readJsonBody(req) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    const buffer = chunk;
+    size += buffer.length;
+    if (size > MAX_BODY_BYTES2) throw new HttpError(413, "request body too large");
+    chunks.push(buffer);
+  }
+  if (size === 0) return {};
+  let value;
+  try {
+    value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    throw new HttpError(400, "request body is not JSON");
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new HttpError(400, "request body must be a JSON object");
+  }
+  return value;
+}
+var PanelServer = class {
+  #options;
+  #wss = new import_websocket_server.default({ noServer: true, perMessageDeflate: false });
+  #teardowns = /* @__PURE__ */ new Set();
+  #server;
+  #port = 0;
+  #starting;
+  #disposed = false;
+  /** The iPhone/iPad the panel shows instead of a simulator (picked in the panel or by ios_sim_panel). */
+  #real;
+  constructor(options) {
+    this.#options = options;
+  }
+  /** The panel URL once started. */
+  get url() {
+    return this.#server === void 0 ? void 0 : `http://127.0.0.1:${this.#port}/`;
+  }
+  /** Show a connected iPhone/iPad (WebDriverAgent must be running on it) and resolve the panel URL. */
+  async showRealDevice(device) {
+    this.#requireWda(device);
+    this.#real = device;
+    this.#closeRelays();
+    return this.ensureStarted();
+  }
+  /** Show simulators again (the streamed one). */
+  showSimulator() {
+    if (this.#real === void 0) return;
+    this.#real = void 0;
+    this.#closeRelays();
+  }
+  /** The WDA backend, or a 409 naming ios_real_start_wda when it is not running on `device`. */
+  #requireWda(device) {
+    const wda = this.#options.wda;
+    const status = wda?.status();
+    if (wda === void 0 || status?.phase !== "running" || status.device?.udid !== device.udid) {
+      throw new HttpError(409, `WebDriverAgent is not running on "${device.name}" \u2014 run ios_real_start_wda first`);
+    }
+    return wda;
+  }
+  /** Streams and sockets are bound to the device shown when they opened: drop them on a switch. */
+  #closeRelays() {
+    for (const teardown of [...this.#teardowns]) teardown();
+  }
+  /** Start listening (once) and resolve the panel URL. */
+  ensureStarted() {
+    if (this.#disposed) return Promise.reject(new Error("the panel server is disposed"));
+    this.#starting ??= this.#listen().catch((error62) => {
+      this.#starting = void 0;
+      throw error62;
+    });
+    return this.#starting;
+  }
+  /** Close every stream proxy and relay, then the listener. */
+  async dispose() {
+    this.#disposed = true;
+    for (const teardown of [...this.#teardowns]) teardown();
+    this.#wss.close();
+    const server = this.#server;
+    this.#server = void 0;
+    if (server !== void 0) {
+      server.closeAllConnections();
+      await new Promise((resolve7) => server.close(() => resolve7()));
+    }
+  }
+  async #listen() {
+    const attempts = this.#options.attempts ?? PANEL_PORT_ATTEMPTS;
+    let lastError;
+    for (let offset = 0; offset < attempts; offset += 1) {
+      const port = this.#options.preferredPort + offset;
+      if (port > 65535) break;
+      const server = createServer4((req, res) => {
+        void this.#handle(req, res);
+      });
+      server.on("upgrade", (req, socket, head) => {
+        void this.#handleUpgrade(req, socket, head);
+      });
+      try {
+        await new Promise((resolve7, reject) => {
+          server.once("error", reject);
+          server.listen(port, "127.0.0.1", () => {
+            server.off("error", reject);
+            resolve7();
+          });
+        });
+      } catch (error62) {
+        lastError = error62;
+        if (error62.code === "EADDRINUSE") continue;
+        break;
+      }
+      server.on("error", (error62) => {
+        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage11(error62)}
+`);
+      });
+      this.#server = server;
+      this.#port = server.address().port;
+      return `http://127.0.0.1:${this.#port}/`;
+    }
+    throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage11(lastError)}`);
+  }
+  #allowed(req, kind) {
+    return checkRequest({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, this.#port, kind).ok;
+  }
+  async #handle(req, res) {
+    try {
+      const method = req.method ?? "GET";
+      if (!this.#allowed(req, method === "GET" || method === "HEAD" ? "read" : "mutate")) {
+        sendJson(res, 403, { ok: false, error: "forbidden" });
+        return;
+      }
+      const path = new URL(req.url ?? "/", "http://127.0.0.1").pathname;
+      const staticFile = STATIC_FILES[path];
+      if (method === "GET" && staticFile !== void 0) return await this.#serveStatic(res, staticFile);
+      if (method === "GET" && path === "/stream") return await this.#serveStream(res);
+      if (method === "GET" && path.startsWith("/shots/")) return this.#serveShot(res, path.slice("/shots/".length));
+      if (method === "GET" && path === "/api/status") return sendJson(res, 200, await this.#status());
+      if (method === "GET" && path === "/api/devices") return sendJson(res, 200, await this.#devices());
+      if (method === "POST" && path === "/api/switch-device") {
+        return sendJson(res, 200, await this.#switchDevice(await readJsonBody(req)));
+      }
+      if (method === "POST" && path === "/api/capture") {
+        await readJsonBody(req);
+        return sendJson(res, 200, await this.#capture());
+      }
+      if (method === "POST" && path === "/api/device-action") {
+        return sendJson(res, 200, await this.#deviceAction(await readJsonBody(req)));
+      }
+      sendJson(res, 404, { ok: false, error: "not found" });
+    } catch (error62) {
+      if (res.headersSent) {
+        res.destroy();
+        return;
+      }
+      sendJson(res, error62 instanceof HttpError ? error62.status : 500, { ok: false, error: errorMessage11(error62) });
+    }
+  }
+  async #serveStatic(res, entry) {
+    const body = await readFile5(join15(this.#options.staticDir, entry.file));
+    const port = this.#port;
+    res.writeHead(200, {
+      "content-type": entry.type,
+      "content-length": body.length,
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "no-referrer",
+      "content-security-policy": `default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; connect-src 'self' ws://127.0.0.1:${port} ws://localhost:${port}`
+    });
+    res.end(body);
+  }
+  /** The streamed device, else the preferred booted one (never boots anything). */
+  async #currentDevice() {
+    const status = this.#options.host.status();
+    if (status.running && status.device !== void 0) {
+      try {
+        return await this.#options.simctl.getDevice(status.device);
+      } catch {
+      }
+    }
+    const booted = (await this.#options.simctl.listDevices()).filter((device) => device.state === "Booted");
+    return booted.length === 0 ? void 0 : pickPreferred(booted);
+  }
+  /** Only streams the device already running; never boots or switches one (spec §8.1: GET routes are side-effect free). */
+  async #serveStream(res) {
+    if (this.#real !== void 0) {
+      const wda = this.#requireWda(this.#real);
+      let streamUrl2;
+      try {
+        streamUrl2 = await wda.mjpegUrl(this.#real);
+      } catch (error62) {
+        throw new HttpError(502, `the WebDriverAgent stream failed to start: ${errorMessage11(error62)}`);
+      }
+      if (this.#disposed || res.destroyed) return;
+      this.#proxy(streamUrl2, res, () => {
+      });
+      return;
+    }
+    const status = this.#options.host.status();
+    if (!status.running || status.device === void 0) {
+      throw new HttpError(503, "no simulator is streaming \u2014 boot one with ios_sim_boot");
+    }
+    const release = this.#options.host.acquire();
+    let streamUrl;
+    try {
+      streamUrl = (await this.#options.host.ensureRunning({ udid: status.device })).streamUrl;
+    } catch (error62) {
+      release();
+      throw new HttpError(502, `the simulator stream failed to start: ${errorMessage11(error62)}`);
+    }
+    if (this.#disposed || res.destroyed) {
+      release();
+      return;
+    }
+    this.#proxy(streamUrl, res, release);
+  }
+  /** Pipe serve-sim's multipart body through unchanged; hold one consumer while open. */
+  #proxy(streamUrl, res, release) {
+    let closed = false;
+    const upstream = httpGet(streamUrl);
+    const teardown = () => {
+      if (closed) return;
+      closed = true;
+      this.#teardowns.delete(teardown);
+      upstream.destroy();
+      if (!res.writableEnded) res.destroy();
+      release();
+    };
+    this.#teardowns.add(teardown);
+    res.on("close", teardown);
+    res.on("error", teardown);
+    upstream.on("error", teardown);
+    upstream.on("response", (response) => {
+      if (closed) {
+        response.destroy();
+        return;
+      }
+      if (response.statusCode !== 200) {
+        response.resume();
+        sendJson(res, 502, { ok: false, error: `the device stream returned HTTP ${String(response.statusCode)}` });
+        teardown();
+        return;
+      }
+      res.writeHead(200, {
+        "content-type": response.headers["content-type"] ?? "multipart/x-mixed-replace; boundary=frame",
+        "cache-control": "no-cache, no-store",
+        "x-content-type-options": "nosniff",
+        "cross-origin-resource-policy": "same-origin",
+        "referrer-policy": "no-referrer"
+      });
+      response.on("error", teardown);
+      response.pipe(res);
+    });
+  }
+  #serveShot(res, name) {
+    if (!isScreenshotFileName(name)) throw new HttpError(404, "not found");
+    const dir = this.#options.screenshots.dir;
+    let real;
+    try {
+      const path = join15(dir, name);
+      const stat = lstatSync(path);
+      if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, "not found");
+      real = realpathSync(path);
+      if (!real.startsWith(realpathSync(dir) + sep2)) throw new HttpError(404, "not found");
+    } catch (error62) {
+      throw error62 instanceof HttpError ? error62 : new HttpError(404, "not found");
+    }
+    res.writeHead(200, {
+      "content-type": "image/png",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "cross-origin-resource-policy": "same-origin"
+    });
+    pipeline(createReadStream(real), res, () => {
+    });
+  }
+  async #status() {
+    if (this.#real !== void 0) {
+      const status2 = this.#options.wda?.status();
+      const running = status2?.phase === "running" && status2.device?.udid === this.#real.udid;
+      return {
+        kind: "real",
+        running,
+        available: true,
+        device: this.#real.udid,
+        deviceName: this.#real.name,
+        ...running ? {} : { error: `WebDriverAgent is not running on "${this.#real.name}" \u2014 run ios_real_start_wda` },
+        panelUrl: `http://127.0.0.1:${this.#port}/`
+      };
+    }
+    const status = this.#options.host.status();
+    let deviceName;
+    if (status.device !== void 0) {
+      try {
+        deviceName = (await this.#options.simctl.getDevice(status.device)).name;
+      } catch {
+        deviceName = void 0;
+      }
+    }
+    return {
+      kind: "simulator",
+      running: status.running,
+      available: this.#options.host.binary.available,
+      ...status.device === void 0 ? {} : { device: status.device },
+      ...deviceName === void 0 ? {} : { deviceName },
+      panelUrl: `http://127.0.0.1:${this.#port}/`
+    };
+  }
+  async #devices() {
+    const devices = sortDevices(await this.#options.simctl.listDevices()).slice(0, 50);
+    const status = this.#options.host.status();
+    const wda = this.#options.wda?.status();
+    const realDevices = wda?.phase === "running" && wda.device !== void 0 ? [{ udid: wda.device.udid, name: wda.device.name }] : [];
+    const streaming = this.#real !== void 0 ? this.#real.udid : status.running ? status.device : void 0;
+    return {
+      devices: devices.map((device) => ({ udid: device.udid, name: device.name, runtime: device.runtime, state: device.state })),
+      realDevices,
+      ...streaming === void 0 ? {} : { streaming }
+    };
+  }
+  /** Picking a device in the panel is an explicit user gesture, so it may boot it. */
+  async #switchDevice(body) {
+    const udid = typeof body.udid === "string" ? body.udid.trim() : "";
+    if (udid === "") throw new HttpError(400, "udid is required");
+    if (this.#options.wda?.status().device?.udid === udid && this.#options.realDevices !== void 0) {
+      let real;
+      try {
+        real = await this.#options.realDevices.getDevice(udid);
+      } catch (error62) {
+        throw new HttpError(409, errorMessage11(error62));
+      }
+      await this.showRealDevice(real);
+      return { ok: true, kind: "real", device: { udid: real.udid, name: real.name } };
+    }
+    let device;
+    try {
+      device = await this.#options.simctl.getDevice(udid);
+    } catch (error62) {
+      throw new HttpError(409, errorMessage11(error62));
+    }
+    if (device.state !== "Booted") await this.#options.simctl.bootDevice(device.udid);
+    await this.#options.host.ensureRunning({ udid: device.udid });
+    this.showSimulator();
+    return { ok: true, kind: "simulator", device: { udid: device.udid, name: device.name, runtime: device.runtime, state: "Booted" } };
+  }
+  async #capture() {
+    if (this.#real !== void 0) {
+      const client = await this.#requireWda(this.#real).control(this.#real);
+      const shot2 = await captureWda(client, this.#options.screenshots, this.#real.udid, this.#real.name);
+      return { ok: true, url: `/shots/${basename2(shot2.path)}`, ...shot2.width === void 0 ? {} : { width: shot2.width, height: shot2.height } };
+    }
+    const device = await this.#currentDevice();
+    if (device === void 0) throw new HttpError(409, "no booted simulator to capture");
+    const shot = await this.#options.screenshots.capture(device.udid);
+    return {
+      ok: true,
+      url: `/shots/${basename2(shot.path)}`,
+      ...shot.width === void 0 ? {} : { width: shot.width, height: shot.height }
+    };
+  }
+  async #deviceAction(body) {
+    const action = body.action;
+    if (!isDeviceAction(action)) throw new HttpError(400, "unknown device action");
+    if (this.#real !== void 0) {
+      let plan;
+      try {
+        plan = planWdaInteract("device_action", { name: action });
+      } catch (error62) {
+        throw new HttpError(400, errorMessage11(error62));
+      }
+      await runWdaInteract(await this.#requireWda(this.#real).control(this.#real), plan);
+      return { ok: true, action };
+    }
+    const device = await this.#currentDevice();
+    if (device === void 0) throw new HttpError(409, "no booted simulator");
+    await this.#options.host.ensureRunning({ udid: device.udid });
+    const run4 = this.#options.stream.control.deviceAction;
+    if (run4 === void 0) throw new HttpError(501, "device actions are not supported by this backend");
+    await run4(action);
+    return { ok: true, action };
+  }
+  async #handleUpgrade(req, socket, head) {
+    socket.on("error", () => socket.destroy());
+    try {
+      if (!this.#allowed(req, "upgrade")) return rejectUpgrade(socket, 403);
+      if (new URL(req.url ?? "/", "http://127.0.0.1").pathname !== "/ws") return rejectUpgrade(socket, 404);
+      const key = req.headers["sec-websocket-key"];
+      if (typeof key !== "string" || !WEBSOCKET_KEY_PATTERN.test(key)) return rejectUpgrade(socket, 400);
+      if (this.#real !== void 0) {
+        const real = this.#real;
+        const status2 = this.#options.wda?.status();
+        if (status2?.phase !== "running" || status2.device?.udid !== real.udid) return rejectUpgrade(socket, 503);
+        this.#realSocket(req, socket, head, real);
+        return;
+      }
+      const status = this.#options.host.status();
+      if (!status.running || status.device === void 0) return rejectUpgrade(socket, 503);
+      const release = this.#options.host.acquire();
+      let wsUrl;
+      try {
+        wsUrl = (await this.#options.host.ensureRunning({ udid: status.device })).wsUrl;
+      } catch {
+        release();
+        return rejectUpgrade(socket, 502);
+      }
+      if (this.#disposed) {
+        release();
+        return rejectUpgrade(socket, 503);
+      }
+      this.#relay(req, socket, head, wsUrl, release);
+    } catch {
+      rejectUpgrade(socket, 502);
+    }
+  }
+  /**
+   * A real device has no control socket: translate the panel's touch, button
+   * and rotate frames into WebDriverAgent calls, one at a time in order.
+   */
+  #realSocket(req, socket, head, device) {
+    let client;
+    let finished = false;
+    const teardown = () => {
+      if (finished) return;
+      finished = true;
+      this.#teardowns.delete(teardown);
+      client?.terminate();
+      socket.destroy();
+    };
+    this.#teardowns.add(teardown);
+    socket.on("error", teardown);
+    this.#wss.handleUpgrade(req, socket, head, (browser) => {
+      if (finished) {
+        browser.terminate();
+        return;
+      }
+      client = browser;
+      const translator = new RealTouchTranslator();
+      let queue = Promise.resolve();
+      browser.on("error", teardown);
+      browser.on("close", teardown);
+      browser.on("message", (data) => {
+        const plan = translator.feed(toBuffer(data), Date.now());
+        const wda = this.#options.wda;
+        if (plan === void 0 || wda === void 0) return;
+        queue = queue.then(async () => {
+          await runWdaInteract(await wda.control(device), plan);
+        }).catch((error62) => {
+          process.stderr.write(`${PLUGIN_NAME}: panel ${plan.kind} on ${device.name} failed: ${errorMessage11(error62)}
+`);
+        });
+      });
+    });
+  }
+  /** Relay binary HID frames between the panel and serve-sim's control socket. */
+  #relay(req, socket, head, wsUrl, release) {
+    let browser;
+    let upstream;
+    let finished = false;
+    const teardown = () => {
+      if (finished) return;
+      finished = true;
+      this.#teardowns.delete(teardown);
+      browser?.terminate();
+      upstream?.terminate();
+      socket.destroy();
+      release();
+    };
+    this.#teardowns.add(teardown);
+    socket.on("error", teardown);
+    socket.on("close", () => {
+      if (browser === void 0) teardown();
+    });
+    this.#wss.handleUpgrade(req, socket, head, (client) => {
+      if (finished) {
+        client.terminate();
+        return;
+      }
+      browser = client;
+      const target = new import_websocket.default(wsUrl, { perMessageDeflate: false });
+      upstream = target;
+      const pending = [];
+      client.on("error", teardown);
+      client.on("close", teardown);
+      target.on("error", teardown);
+      target.on("close", teardown);
+      target.on("open", () => {
+        for (const frame of pending) target.send(frame.data, { binary: frame.binary });
+        pending.length = 0;
+      });
+      client.on("message", (data, isBinary) => {
+        const frame = { data: toBuffer(data), binary: isBinary };
+        if (target.readyState === import_websocket.default.OPEN) target.send(frame.data, { binary: frame.binary });
+        else if (pending.length < MAX_PENDING_WS_FRAMES) pending.push(frame);
+      });
+      target.on("message", (data, isBinary) => {
+        if (client.readyState === import_websocket.default.OPEN) client.send(toBuffer(data), { binary: isBinary });
+      });
+    });
+  }
+};
+
+// src/recorder.ts
+import { spawn as spawn6 } from "node:child_process";
+import { mkdirSync as mkdirSync5, statSync as statSync8 } from "node:fs";
+import { dirname as dirname5, join as join16 } from "node:path";
+function recordVideoArgs(udid, path) {
+  return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
+}
+var spawnXcrunRecord = (udid, path) => spawn6("xcrun", recordVideoArgs(udid, path), { stdio: ["ignore", "ignore", "pipe"] });
+function safeName(udid) {
+  return udid.replace(/[^A-Za-z0-9_-]/g, "_");
+}
+function fileSize(path) {
+  try {
+    return statSync8(path).size;
+  } catch {
+    return 0;
+  }
+}
+var Recorder = class {
+  #dir;
+  #spawnRecord;
+  #startTimeoutMs;
+  #stopTimeoutMs;
+  #now;
+  #active = /* @__PURE__ */ new Map();
+  /** Recordings that ended on their own, kept until the next stop (or start) for that device reports them. */
+  #ended = /* @__PURE__ */ new Map();
+  #starting = /* @__PURE__ */ new Set();
+  constructor(options) {
+    this.#dir = options.dir;
+    this.#spawnRecord = options.spawnRecord ?? spawnXcrunRecord;
+    this.#startTimeoutMs = options.startTimeoutMs ?? RECORD_START_TIMEOUT_MS;
+    this.#stopTimeoutMs = options.stopTimeoutMs ?? RECORD_STOP_TIMEOUT_MS;
+    this.#now = options.now ?? Date.now;
+  }
+  active(udid) {
+    return this.#active.get(udid)?.info;
+  }
+  defaultPath(udid) {
+    const stamp = new Date(this.#now()).toISOString().replace(/[:.]/g, "-");
+    return join16(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
+  }
+  async start(udid, outputPath) {
+    const running = this.#active.get(udid);
+    if (running !== void 0) {
+      throw new Error(`a recording is already running for ${udid} (${running.info.path}) \u2014 stop it first with action "stop"`);
+    }
+    if (this.#starting.has(udid)) {
+      throw new Error(`a recording is already starting for ${udid} \u2014 wait for it to finish starting before trying again`);
+    }
+    this.#starting.add(udid);
+    try {
+      const requested = outputPath?.trim() ?? "";
+      const path = requested === "" ? this.defaultPath(udid) : requested;
+      if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`);
+      mkdirSync5(dirname5(path), { recursive: true });
+      const child = this.#spawnRecord(udid, path);
+      const exited = new Promise((resolve7) => {
+        child.once("exit", (code) => resolve7(code));
+        child.once("error", () => resolve7(null));
+      });
+      await this.#waitForStart(child, exited);
+      const info = { udid, path, startedAt: this.#now() };
+      const entry = { child, info, exited };
+      this.#ended.delete(udid);
+      this.#active.set(udid, entry);
+      void exited.then((code) => {
+        if (this.#active.get(udid) !== entry) return;
+        this.#active.delete(udid);
+        this.#ended.set(udid, { info, code, endedAt: this.#now() });
+      });
+      return info;
+    } finally {
+      this.#starting.delete(udid);
+    }
+  }
+  async stop(udid) {
+    const recording = this.#active.get(udid);
+    if (recording === void 0) return this.#reportEnded(udid);
+    this.#active.delete(udid);
+    recording.child.kill("SIGINT");
+    let timer;
+    const outcome = await Promise.race([
+      recording.exited.then((code) => ({ code })),
+      new Promise((resolve7) => {
+        timer = setTimeout(() => resolve7("timeout"), this.#stopTimeoutMs);
+      })
+    ]);
+    if (timer !== void 0) clearTimeout(timer);
+    if (outcome === "timeout") {
+      recording.child.kill("SIGKILL");
+      throw new Error(`recordVideo did not finish writing ${recording.info.path} within ${this.#stopTimeoutMs} ms`);
+    }
+    const bytes = fileSize(recording.info.path);
+    if (bytes === 0) {
+      throw new Error(`recordVideo exited (code ${String(outcome.code)}) without writing ${recording.info.path}`);
+    }
+    return { udid, path: recording.info.path, bytes, durationMs: this.#now() - recording.info.startedAt };
+  }
+  /** Finish every running recording (used on shutdown). */
+  async stopAll() {
+    await Promise.all([...this.#active.keys()].map((udid) => this.stop(udid).catch(() => void 0)));
+  }
+  /**
+   * Exit backstop for a process that exits without awaiting stopAll(): SIGINT
+   * every still-tracked recordVideo child so it finalizes its movie on its own.
+   * Synchronous, because 'exit' handlers cannot await.
+   */
+  interruptOnExit() {
+    for (const { child } of this.#active.values()) child.kill("SIGINT");
+  }
+  /** stop() for a device whose recording already ended on its own (or never started). */
+  #reportEnded(udid) {
+    const ended = this.#ended.get(udid);
+    if (ended === void 0) throw new Error(`no recording is running for ${udid} \u2014 start one with action "start"`);
+    this.#ended.delete(udid);
+    const why = `recordVideo exited with code ${String(ended.code)} \u2014 was the simulator shut down?`;
+    const bytes = fileSize(ended.info.path);
+    if (bytes === 0) throw new Error(`the recording for ${udid} ended on its own (${why}) without writing ${ended.info.path}`);
+    return {
+      udid,
+      path: ended.info.path,
+      bytes,
+      durationMs: ended.endedAt - ended.info.startedAt,
+      warning: `the recording ended on its own before stop (${why}), so it may be cut short`
+    };
+  }
+  #waitForStart(child, exited) {
+    return new Promise((resolve7, reject) => {
+      let stderr = "";
+      let settled = false;
+      const onData = (chunk) => {
+        stderr += chunk.toString("utf8");
+        if (stderr.includes("Recording started")) finish();
+      };
+      const finish = (error62) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        child.stderr?.off("data", onData);
+        if (error62 === void 0) resolve7();
+        else reject(error62);
+      };
+      const detail = () => stderr.trim() === "" ? "" : `: ${stderr.trim()}`;
+      const timer = setTimeout(() => {
+        child.kill("SIGINT");
+        finish(new Error(`recordVideo did not report "Recording started" within ${this.#startTimeoutMs} ms${detail()}`));
+      }, this.#startTimeoutMs);
+      child.stderr?.on("data", onData);
+      void exited.then((code) => {
+        finish(new Error(`recordVideo exited before recording (code ${String(code)})${detail()} \u2014 is the simulator booted?`));
+      });
+    });
+  }
+};
+
+// src/tools/apps.ts
+import { existsSync as existsSync9 } from "node:fs";
+import { join as join17, resolve as resolve5 } from "node:path";
+
+// src/tools/result.ts
+var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name (tools that support it also take a connected iPhone/iPad from ios_sim_devices.realDevices). Default: the streamed device, else the newest-runtime booted iPhone.");
+function deviceSummary(device, state = device.state) {
+  return { udid: device.udid, name: device.name, runtime: device.runtime, state };
+}
+function jsonResult(value, image) {
+  const content = [{ type: "text", text: JSON.stringify(value, null, 2) }];
+  if (image !== void 0) content.push({ type: "image", data: image.data, mimeType: image.mimeType });
+  return { content };
+}
+function errorResult(tool, error62) {
+  const message = error62 instanceof Error ? error62.message : String(error62);
+  return {
+    content: [{ type: "text", text: message.startsWith(`${tool}:`) ? message : `${tool}: ${message}` }],
+    isError: true
+  };
+}
+async function runTool(tool, body) {
+  try {
+    return await body();
+  } catch (error62) {
+    return errorResult(tool, error62);
+  }
+}
+function sleep8(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
+}
+
+// src/tools/apps.ts
+var NOT_AN_OPTION = /^(?!\s*-)/u;
+function installedAppFromRealApp(app) {
+  const system = app.defaultApp === true || (app.appType ?? "").toLowerCase() === "system";
+  return { bundleId: app.bundleId, name: app.name === "" ? app.bundleId : app.name, ...app.version === void 0 ? {} : { version: app.version }, system };
+}
+function registerAppTools(server, deps) {
+  const targetOf = async (tool, udid) => {
+    assertMac(deps.platform);
+    const resolved = await resolveToolTarget(deps, udid);
+    if (resolved.kind === "simulator") requireBooted(tool, resolved.device);
+    return resolved;
+  };
+  const summaryOf = (resolved) => resolved.kind === "real" ? realDeviceSummary(resolved.device) : deviceSummary(resolved.device);
+  const appsOf = async (resolved, signal) => resolved.kind === "real" ? (await deps.realDevices.listApps(resolved.device.udid, signal)).map(installedAppFromRealApp) : deps.listApps(resolved.device.udid, signal);
+  server.registerTool("ios_sim_list_apps", {
+    title: "List installed apps",
+    description: "List the apps INSTALLED on a booted simulator, or on a connected iPhone/iPad (pass its udid or name from ios_sim_devices.realDevices): bundle id, display name (on a simulator localized to its language, e.g. \u65E5\u5386 rather than Calendar; on a real device devicectl's base name), version and a system flag. Run it before opening a third-party app \u2014 never guess a bundle id. query matches the name, the base name and the bundle id (case-insensitive, CJK works); include_system adds the stock Apple apps. A failed listing is an error, so count 0 means no match.",
+    inputSchema: {
+      udid: UDID_PARAM,
+      query: external_exports.string().optional(),
+      include_system: external_exports.boolean().optional().describe("Include stock Apple apps (default false)")
+    },
+    annotations: { readOnlyHint: true }
+  }, async (args, extra) => runTool("ios_sim_list_apps", async () => {
+    const resolved = await targetOf("ios_sim_list_apps", args.udid);
+    const apps = await appsOf(resolved, extra.signal);
+    const query = args.query?.trim() ?? "";
+    const filtered = filterInstalledApps(apps, { ...query === "" ? {} : { query }, includeSystem: args.include_system === true });
+    const noMatch = filtered.length === 0 && query !== "";
+    const candidates = noMatch ? noMatchCandidateLines(apps) : [];
+    return jsonResult({
+      device: summaryOf(resolved),
+      count: filtered.length,
+      apps: filtered,
+      ...noMatch ? { hint: noMatchListingHint(resolved.kind, apps.length) } : {},
+      ...candidates.length > 0 ? { candidates } : {}
+    });
+  }));
+  server.registerTool("ios_sim_launch_app", {
+    title: "Launch an installed app",
+    description: "Launch an installed app on a booted simulator, or on a connected iPhone/iPad (pass its udid or name). Pass EITHER bundleId OR name (exactly one): name is a case-insensitive display-name substring (localized names work), resolved against the installed apps. Third-party bundle ids cannot be guessed \u2014 use name or ios_sim_list_apps. Stable Apple ids: Calendar com.apple.mobilecal, Safari com.apple.mobilesafari, Settings com.apple.Preferences, Photos com.apple.mobileslideshow, Messages com.apple.MobileSMS, Maps com.apple.Maps, Notes com.apple.mobilenotes. relaunch terminates a running instance first. To build from source use ios_sim_build_run.",
+    inputSchema: {
+      bundleId: external_exports.string().optional(),
+      name: external_exports.string().optional(),
+      udid: UDID_PARAM,
+      relaunch: external_exports.boolean().optional()
+    }
+  }, async (args, extra) => runTool("ios_sim_launch_app", async () => {
+    const requestedId = args.bundleId?.trim() ?? "";
+    const requestedName = args.name?.trim() ?? "";
+    if (requestedId !== "" && requestedName !== "") {
+      throw new Error(`pass either bundleId or name, not both (bundleId="${requestedId}", name="${requestedName}")`);
+    }
+    if (requestedId === "" && requestedName === "") {
+      throw new Error('bundleId is required, e.g. "com.apple.mobilecal" \u2014 or pass name to resolve one by display name; run ios_sim_list_apps to see what is installed');
+    }
+    const target = await targetOf("ios_sim_launch_app", args.udid);
+    const resolved = requestedName === "" ? void 0 : resolveAppByName("ios_sim_launch_app", await appsOf(target, extra.signal), requestedName, target.device.name, { physical: target.kind === "real" });
+    const bundleId = resolved?.bundleId ?? requestedId;
+    const notLaunched = (error62) => new Error(`could not launch ${bundleId} on ${target.device.name}: ${error62 instanceof Error ? error62.message : String(error62)} \u2014 the app may not be installed, or the bundle id may be wrong (a third-party bundle id cannot be guessed); run ios_sim_list_apps to see what is installed`);
+    if (target.kind === "real") {
+      if (args.relaunch === true) await deps.realDevices.terminateApp(target.device.udid, bundleId, extra.signal).catch(() => void 0);
+      let launched;
+      try {
+        launched = await deps.realDevices.launchApp(target.device.udid, bundleId, extra.signal);
+      } catch (error62) {
+        throw notLaunched(error62);
+      }
+      return jsonResult({
+        device: realDeviceSummary(target.device),
+        bundleId,
+        ...resolved === void 0 ? {} : { name: resolved.name },
+        launched: true,
+        ...launched.pid === void 0 ? {} : { pid: launched.pid },
+        ...args.relaunch === true ? { relaunched: true } : {}
+      });
+    }
+    const device = target.device;
+    if (args.relaunch === true) {
+      await deps.simctl.terminateApp(device.udid, bundleId, extra.signal).catch(() => void 0);
+    }
+    let stdout;
+    try {
+      stdout = await deps.simctl.launchApp(device.udid, bundleId, extra.signal);
+    } catch (error62) {
+      throw notLaunched(error62);
+    }
+    const pid = Number.parseInt(stdout.split(":").pop()?.trim() ?? "", 10);
+    return jsonResult({
+      device: deviceSummary(device),
+      bundleId,
+      ...resolved === void 0 ? {} : { name: resolved.name },
+      launched: true,
+      ...Number.isSafeInteger(pid) && pid > 0 ? { pid } : {},
+      ...args.relaunch === true ? { relaunched: true } : {}
+    });
+  }));
+  server.registerTool("ios_sim_build_run", {
+    title: "Build and run on the simulator",
+    description: "Build an Xcode project (.xcodeproj), workspace (.xcworkspace) or Swift package directory for the iOS Simulator, install the .app and launch it. Device: udid/name, else the streamed device, else a booted simulator, else the newest-runtime iPhone (booted for you). On failure the error carries the filtered xcodebuild tail with the compiler errors. A full build takes minutes \u2014 do not retry it in a loop.",
+    inputSchema: {
+      projectPath: external_exports.string().min(1).describe("Absolute path to a .xcodeproj, a .xcworkspace, or a Swift package directory"),
+      scheme: external_exports.string().regex(NOT_AN_OPTION, 'scheme must not start with "-"').optional(),
+      configuration: external_exports.string().regex(NOT_AN_OPTION, 'configuration must not start with "-"').optional().describe("Build configuration (default Debug)"),
+      udid: UDID_PARAM
+    }
+  }, async (args, extra) => runTool("ios_sim_build_run", async () => {
+    assertMac(deps.platform);
+    const target = deps.builder.detectProject(args.projectPath);
+    const configuration = args.configuration?.trim() || "Debug";
+    const device = await resolveTargetDevice(deps, args.udid, { bootFallback: true });
+    await deps.simctl.bootDevice(device.udid);
+    const booted = { ...device, state: "Booted" };
+    const started = Date.now();
+    const result = await deps.builder.buildRun({
+      target,
+      ...args.scheme === void 0 ? {} : { scheme: args.scheme },
+      configuration,
+      device: booted,
+      cacheDir: deps.cacheRoot,
+      signal: extra.signal
+    });
+    let panelUrl;
+    if (deps.host.binary.available) {
+      try {
+        await ensureStreamFor(deps.host, booted);
+        panelUrl = await deps.panel.ensureStarted();
+      } catch {
+        panelUrl = void 0;
+      }
+    }
+    return jsonResult({ ...result, durationMs: Date.now() - started, ...panelUrl === void 0 ? {} : { panelUrl } });
+  }));
+  server.registerTool("ios_sim_install_app", {
+    title: "Install a built app",
+    description: "Install a built .app bundle (a directory containing Info.plist) on a booted simulator and report its bundle id. It also installs on a connected iPhone/iPad (pass its udid or name), where the .app must be built for iphoneos and signed for that device. To build for a simulator from source use ios_sim_build_run.",
+    inputSchema: { appPath: external_exports.string().min(1), udid: UDID_PARAM }
+  }, async (args, extra) => runTool("ios_sim_install_app", async () => {
+    assertMac(deps.platform);
+    const appPath = resolve5(args.appPath);
+    if (!existsSync9(join17(appPath, "Info.plist"))) {
+      throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`);
+    }
+    const target = await targetOf("ios_sim_install_app", args.udid);
+    if (target.kind === "real") await deps.realDevices.installApp(target.device.udid, appPath, extra.signal);
+    else await deps.simctl.installApp(target.device.udid, appPath, extra.signal);
+    const bundleId = await deps.builder.readBundleIdentifier(appPath, extra.signal);
+    return jsonResult({ device: summaryOf(target), appPath, bundleId, installed: true });
+  }));
+  server.registerTool("ios_sim_uninstall_app", {
+    title: "Uninstall an app",
+    description: "Uninstall an app (and its data container) from a booted simulator by bundle id. Simulators only: on a real iPhone/iPad the app's data cannot be recovered, so uninstall it on the device yourself.",
+    inputSchema: { bundleId: external_exports.string().min(1), udid: UDID_PARAM },
+    annotations: { destructiveHint: true }
+  }, async (args, extra) => runTool("ios_sim_uninstall_app", async () => {
+    assertMac(deps.platform);
+    const bundleId = args.bundleId.trim();
+    const device = await resolveTargetDevice(deps, args.udid);
+    requireBooted("ios_sim_uninstall_app", device);
+    await deps.simctl.uninstallApp(device.udid, bundleId, extra.signal);
+    return jsonResult({ device: deviceSummary(device), bundleId, uninstalled: true });
+  }));
+}
+
+// src/panel/client/layout.ts
+var SIZE_OPTIONS = [
+  { id: "fit", mode: { kind: "fit" }, en: "Fit", zh: "\u9002\u5E94" },
+  ...[50, 75, 100, 125].map((value) => ({ id: `percent-${value}`, mode: { kind: "percent", value }, en: `${value}%`, zh: `${value}%` })),
+  { id: "preset-S", mode: { kind: "preset", width: 240 }, en: "S \xB7 240px", zh: "S\uFF08240px\uFF09" },
+  { id: "preset-M", mode: { kind: "preset", width: 320 }, en: "M \xB7 320px", zh: "M\uFF08320px\uFF09" },
+  { id: "preset-L", mode: { kind: "preset", width: 420 }, en: "L \xB7 420px", zh: "L\uFF08420px\uFF09" }
+];
+function framebufferPoint(orientation, displayed) {
+  switch (orientation) {
+    case "landscape_left":
+      return { x: displayed.y, y: 1 - displayed.x };
+    case "landscape_right":
+      return { x: 1 - displayed.y, y: displayed.x };
+    case "portrait_upside_down":
+      return { x: 1 - displayed.x, y: 1 - displayed.y };
+    default:
+      return { x: displayed.x, y: displayed.y };
+  }
+}
+
+// src/panel/client/protocol.ts
+var SIM_CONFIG_TAG = 130;
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function messageBytes(data) {
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  return void 0;
+}
+function parseSimConfigFrame(data) {
+  const bytes = messageBytes(data);
+  if (bytes === void 0 || bytes.length < 2 || bytes[0] !== SIM_CONFIG_TAG) return void 0;
+  try {
+    const value = JSON.parse(new TextDecoder().decode(bytes.subarray(1)));
+    if (isRecord(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
+      return { width: value.width, height: value.height, orientation: value.orientation };
+    }
+  } catch {
+  }
+  return void 0;
+}
+
+// src/orientation.ts
+function isLandscape(orientation) {
+  return orientation === "landscape_left" || orientation === "landscape_right";
+}
+var timeoutsInARow = /* @__PURE__ */ new Map();
+var givenUpAt = /* @__PURE__ */ new Map();
+var SILENT_AFTER_READS = 2;
+var SILENT_RETRY_MS = 6e4;
+function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
+  const since = givenUpAt.get(wsUrl);
+  if (since !== void 0 && now() - since < SILENT_RETRY_MS) return Promise.resolve(void 0);
+  return new Promise((resolve7) => {
+    let settled = false;
+    const socket = new import_websocket.default(wsUrl, { perMessageDeflate: false });
+    const finish = (config2) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.terminate();
+      resolve7(config2);
+    };
+    const timer = setTimeout(() => {
+      const timeouts = (timeoutsInARow.get(wsUrl) ?? 0) + 1;
+      timeoutsInARow.set(wsUrl, timeouts);
+      if (timeouts >= SILENT_AFTER_READS) givenUpAt.set(wsUrl, now());
+      finish(void 0);
+    }, timeoutMs);
+    socket.on("message", (data) => {
+      const config2 = parseSimConfigFrame(data);
+      if (config2 === void 0) return;
+      timeoutsInARow.delete(wsUrl);
+      givenUpAt.delete(wsUrl);
+      finish(config2);
+    });
+    socket.on("error", () => finish(void 0));
+    socket.on("close", () => finish(void 0));
+  });
+}
+var SCROLL_DIRECTIONS2 = {
+  landscape_left: { down: "right", up: "left", right: "up", left: "down" },
+  landscape_right: { down: "left", up: "right", right: "down", left: "up" }
+};
+function toFramebufferArgs(orientation, args) {
+  if (!isLandscape(orientation)) return args;
+  const map2 = (x, y) => framebufferPoint(orientation, { x, y });
+  switch (args.action) {
+    case "tap": {
+      if (typeof args.x !== "number" || typeof args.y !== "number") return args;
+      const point = map2(args.x, args.y);
+      return { ...args, x: point.x, y: point.y };
+    }
+    case "scroll": {
+      const anchor2 = map2(args.x ?? 0.5, args.y ?? 0.5);
+      const direction = args.direction === void 0 ? void 0 : SCROLL_DIRECTIONS2[orientation][args.direction];
+      return { ...args, x: anchor2.x, y: anchor2.y, ...direction === void 0 ? {} : { direction } };
+    }
+    case "gesture": {
+      const json2 = args.json;
+      if (typeof json2 !== "object" || json2 === null || Array.isArray(json2)) return args;
+      const record3 = json2;
+      const drag = simDragRequestOf(record3);
+      if (drag !== void 0) {
+        const from = map2(drag.fromX, drag.fromY);
+        const to = map2(drag.toX, drag.toY);
+        return { ...args, json: { ...record3, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y } };
+      }
+      if (typeof record3.x === "number" && typeof record3.y === "number") {
+        const point = map2(record3.x, record3.y);
+        return { ...args, json: { ...record3, x: point.x, y: point.y } };
+      }
+      return args;
+    }
+    default:
+      return args;
+  }
+}
+
 // src/tools/core.ts
 var ROTATE_ORIENTATIONS = ["portrait", "landscape_left", "portrait_upside_down", "landscape_right"];
 var XCODE27_TYPE_HINT = " \u2014 with Xcode 27, keyboard input needs Device Hub running with this simulator visible and frontmost, and the app that launched Claude enabled under System Settings \u25B8 Privacy & Security \u25B8 Accessibility; if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)";
@@ -47663,6 +47876,7 @@ function registerCoreTools(server, deps) {
       });
     }
     await deps.host.ensureRunning({ udid: device.udid });
+    deps.panel.showSimulator();
     let panel;
     try {
       panel = { panelUrl: await deps.panel.ensureStarted() };
@@ -47689,14 +47903,27 @@ function registerCoreTools(server, deps) {
   }));
   server.registerTool("ios_sim_panel", {
     title: "Open the live panel",
-    description: "Make sure the live stream runs for a booted simulator and return panelUrl, the live panel (video, tap/drag, Home, rotate, screenshot). Open it with preview_start {url: panelUrl} in the browser pane; in a terminal-only session give the URL to the user. Never boots a device.",
+    description: "Make sure the live stream runs for a booted simulator and return panelUrl, the live panel (video, tap/drag, Home, rotate, screenshot). Open it with preview_start {url: panelUrl} in the browser pane; in a terminal-only session give the URL to the user. Never boots a device. Given a connected iPhone/iPad on which ios_real_start_wda is running, the panel shows that phone instead (WebDriverAgent live view and touch).",
     inputSchema: { udid: UDID_PARAM }
   }, async ({ udid }) => runTool("ios_sim_panel", async () => {
     assertMac(deps.platform);
+    const target = await resolveToolTarget(deps, udid);
+    if (target.kind === "real") {
+      if (deps.wda.status().phase !== "running" || deps.wda.status().device?.udid !== target.device.udid) {
+        throw new Error(`WebDriverAgent is not running on "${target.device.name}" \u2014 run ios_real_start_wda first, then open the panel`);
+      }
+      const panelUrl2 = await deps.panel.showRealDevice(target.device);
+      return jsonResult({
+        panelUrl: panelUrl2,
+        device: realDeviceSummary(target.device),
+        hint: "Open panelUrl in the browser pane (preview_start with this url); in a terminal-only session give the URL to the user. The live view comes from WebDriverAgent; taps and drags in it go to the phone."
+      });
+    }
     assertStreamAvailable(deps.host);
-    const device = await resolveTargetDevice(deps, udid);
+    const device = target.device;
     requireBooted("ios_sim_panel", device);
     await ensureStreamFor(deps.host, device);
+    deps.panel.showSimulator();
     const panelUrl = await deps.panel.ensureStarted();
     return jsonResult({
       panelUrl,
@@ -47769,7 +47996,7 @@ function registerCoreTools(server, deps) {
         ...points === void 0 ? {} : { points }
       };
       if (args.screenshot === false) return jsonResult(result2);
-      await sleep6(deps.settleMs);
+      await sleep8(deps.settleMs);
       const capture2 = await captureWda(client, deps.screenshots, target.device.udid, target.device.name);
       const image2 = await deps.screenshots.toModelImage(capture2);
       return jsonResult({
@@ -47838,7 +48065,7 @@ function registerCoreTools(server, deps) {
       ...warning === void 0 ? {} : { warning }
     };
     if (args.screenshot === false) return jsonResult(result);
-    await sleep6(deps.settleMs);
+    await sleep8(deps.settleMs);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
     const image = await deps.screenshots.toModelImage(capture);
     lastImageLandscape.set(device.udid, image.width > image.height);
@@ -48813,7 +49040,7 @@ function registerUiTools(server, deps) {
     const { element, matchedBy } = resolveTapTarget(roots, args, { allowOffscreen: args.allow_offscreen === true });
     const center = frameCenter(element.frame);
     await device.tap(center.x, center.y, extra.signal);
-    await sleep6(deps.settleMs);
+    await sleep8(deps.settleMs);
     const expected = await runExpectation(device, expectation, extra.signal);
     return withScreenshot(device, {
       action: "tap-element",
@@ -48930,7 +49157,7 @@ function registerUiTools(server, deps) {
         throw new Error(`serve-sim tap failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
       }
     }
-    await sleep6(deps.settleMs);
+    await sleep8(deps.settleMs);
     const expected = await runExpectation(device, expectation, extra.signal);
     return withScreenshot(device, {
       action: "tap-text",
@@ -49000,12 +49227,12 @@ function registerUiTools(server, deps) {
     await device.tap(plan.tap.x, plan.tap.y, extra.signal);
     let countCheck;
     if (expectation !== void 0) {
-      await sleep6(deps.rowSettleMs);
+      await sleep8(deps.rowSettleMs);
       const { roots: afterRoots } = await device.readTree(extra.signal, ROW_SNAPSHOT_DEPTH);
       const afterRow = detectListRows(afterRoots, { bounds: screenBounds(afterRoots) }).rows.find((row) => row.index === plan.row.index);
       countCheck = afterRow === void 0 ? { key: expectation.key, delta: expectation.delta, before, verified: false, changed: false, reason: "the re-read tree no longer contains the row (the screen changed)" } : verifyCountChange(plan.row, afterRow, expectation.key, expectation.delta);
     } else {
-      await sleep6(deps.settleMs);
+      await sleep8(deps.settleMs);
     }
     return withScreenshot(device, {
       action: "tap-row",
@@ -49034,6 +49261,7 @@ async function main() {
 `)
   });
   const wda = new WdaController(realWdaSeams({ cacheRoot: root }));
+  const realDevices = new Devicectl({ run: devicectlRunner((options) => devtools.run(options)) });
   const recorder = new Recorder({ dir: join20(root, "recordings") });
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
@@ -49042,7 +49270,9 @@ async function main() {
     host,
     stream,
     simctl: simctl_exports,
-    screenshots
+    screenshots,
+    wda,
+    realDevices
   });
   const deps = {
     host,
@@ -49057,7 +49287,7 @@ async function main() {
     ocr: new OcrHelper({ cacheDir: join20(root, "bin", "ocr") }),
     devtools,
     preview,
-    realDevices: new Devicectl({ run: devicectlRunner((options) => devtools.run(options)) }),
+    realDevices,
     wda,
     cacheRoot: root,
     platform: process.platform,

@@ -400,13 +400,19 @@ export function fakeWda(options: {
   windowSize?: { width: number; height: number }
   pixelSize?: { width: number; height: number }
   notRunning?: string
+  /** What mjpegUrl() answers (default: it fails). */
+  mjpegUrl?: string
+  /** Start out running on this device. */
+  running?: RealDevice
 } = {}): { api: WdaApi; client: WdaSessionClient; calls: string[] } {
   const calls: string[] = []
   const sources = options.sources ?? ['<XCUIElementTypeApplication type="XCUIElementTypeApplication" name="Settings" label="Settings" x="0" y="0" width="402" height="874"/>']
   const windowSize = options.windowSize ?? { width: 402, height: 874 }
   const pixelSize = options.pixelSize ?? { width: 1206, height: 2622 }
   let reads = 0
-  let status: WdaStatus = { phase: 'idle' }
+  let status: WdaStatus = options.running === undefined
+    ? { phase: 'idle' }
+    : { phase: 'running', device: { udid: options.running.udid, name: options.running.name }, controlPort: 50100, tunnel: 'usbmux', adopted: true }
   const client: WdaSessionClient = {
     health: async () => ({ ready: true }),
     ensureSession: async () => 'session-1',
@@ -440,6 +446,11 @@ export function fakeWda(options: {
     control: async () => {
       if (options.notRunning !== undefined) throw new Error(options.notRunning)
       return client
+    },
+    mjpegUrl: async device => {
+      calls.push(`mjpeg ${device.udid}`)
+      if (options.mjpegUrl === undefined) throw new Error('test: no MJPEG stream')
+      return options.mjpegUrl
     },
     stop: async () => {
       calls.push('stop')

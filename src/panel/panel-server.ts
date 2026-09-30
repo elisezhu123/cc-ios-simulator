@@ -15,13 +15,16 @@ import { basename, join, sep } from 'node:path'
 import { pipeline, type Duplex } from 'node:stream'
 import { WebSocket, WebSocketServer, type RawData } from 'ws'
 import { PANEL_PORT_ATTEMPTS, PLUGIN_NAME } from '../config.js'
-import type { ScreenshotService, SimctlApi, StreamHost } from '../deps.js'
+import type { RealDevice, RealDeviceApi } from '../devicectl.js'
+import type { ScreenshotService, SimctlApi, StreamHost, WdaApi } from '../deps.js'
 import { isDeviceAction } from '../device-actions.js'
+import { captureWda, planWdaInteract, runWdaInteract } from '../real-ui.js'
 import { isScreenshotFileName } from '../screenshot.js'
 import type { SimulatorDevice } from '../simctl.js'
 import type { StreamSource } from '../stream-source.js'
 import { pickPreferred, sortDevices } from '../target.js'
 import { checkRequest, type FenceKind } from './fence.js'
+import { RealTouchTranslator } from './real-control.js'
 
 export interface PanelServerOptions {
   /** Directory holding index.html, main.js and styles.css. */
@@ -32,7 +35,10 @@ export interface PanelServerOptions {
   host: StreamHost
   stream: StreamSource
   simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'>
-  screenshots: Pick<ScreenshotService, 'capture' | 'dir'>
+  screenshots: Pick<ScreenshotService, 'capture' | 'dir' | 'save'>
+  /** WebDriverAgent: the live view and touch of a connected iPhone/iPad. */
+  wda?: WdaApi
+  realDevices?: Pick<RealDeviceApi, 'getDevice'>
 }
 
 const STATIC_FILES: Readonly<Record<string, { file: string; type: string }>> = {
@@ -115,6 +121,8 @@ export class PanelServer {
   #port = 0
   #starting: Promise<string> | undefined
   #disposed = false
+  /** The iPhone/iPad the panel shows instead of a simulator (picked in the panel or by ios_sim_panel). */
+  #real: RealDevice | undefined
 
   constructor(options: PanelServerOptions) {
     this.#options = options
@@ -123,6 +131,36 @@ export class PanelServer {
   /** The panel URL once started. */
   get url(): string | undefined {
     return this.#server === undefined ? undefined : `http://127.0.0.1:${this.#port}/`
+  }
+
+  /** Show a connected iPhone/iPad (WebDriverAgent must be running on it) and resolve the panel URL. */
+  async showRealDevice(device: RealDevice): Promise<string> {
+    this.#requireWda(device)
+    this.#real = device
+    this.#closeRelays()
+    return this.ensureStarted()
+  }
+
+  /** Show simulators again (the streamed one). */
+  showSimulator(): void {
+    if (this.#real === undefined) return
+    this.#real = undefined
+    this.#closeRelays()
+  }
+
+  /** The WDA backend, or a 409 naming ios_real_start_wda when it is not running on `device`. */
+  #requireWda(device: RealDevice): WdaApi {
+    const wda = this.#options.wda
+    const status = wda?.status()
+    if (wda === undefined || status?.phase !== 'running' || status.device?.udid !== device.udid) {
+      throw new HttpError(409, `WebDriverAgent is not running on "${device.name}" — run ios_real_start_wda first`)
+    }
+    return wda
+  }
+
+  /** Streams and sockets are bound to the device shown when they opened: drop them on a switch. */
+  #closeRelays(): void {
+    for (const teardown of [...this.#teardowns]) teardown()
   }
 
   /** Start listening (once) and resolve the panel URL. */
@@ -250,6 +288,18 @@ export class PanelServer {
 
   /** Only streams the device already running; never boots or switches one (spec §8.1: GET routes are side-effect free). */
   async #serveStream(res: ServerResponse): Promise<void> {
+    if (this.#real !== undefined) {
+      const wda = this.#requireWda(this.#real)
+      let streamUrl: string
+      try {
+        streamUrl = await wda.mjpegUrl(this.#real)
+      } catch (error) {
+        throw new HttpError(502, `the WebDriverAgent stream failed to start: ${errorMessage(error)}`)
+      }
+      if (this.#disposed || res.destroyed) return
+      this.#proxy(streamUrl, res, () => {})
+      return
+    }
     const status = this.#options.host.status()
     if (!status.running || status.device === undefined) {
       throw new HttpError(503, 'no simulator is streaming — boot one with ios_sim_boot')
@@ -292,7 +342,7 @@ export class PanelServer {
       }
       if (response.statusCode !== 200) {
         response.resume()
-        sendJson(res, 502, { ok: false, error: `serve-sim stream returned HTTP ${String(response.statusCode)}` })
+        sendJson(res, 502, { ok: false, error: `the device stream returned HTTP ${String(response.statusCode)}` })
         teardown()
         return
       }
@@ -334,6 +384,19 @@ export class PanelServer {
   }
 
   async #status(): Promise<Record<string, unknown>> {
+    if (this.#real !== undefined) {
+      const status = this.#options.wda?.status()
+      const running = status?.phase === 'running' && status.device?.udid === this.#real.udid
+      return {
+        kind: 'real',
+        running,
+        available: true,
+        device: this.#real.udid,
+        deviceName: this.#real.name,
+        ...(running ? {} : { error: `WebDriverAgent is not running on "${this.#real.name}" — run ios_real_start_wda` }),
+        panelUrl: `http://127.0.0.1:${this.#port}/`,
+      }
+    }
     const status = this.#options.host.status()
     let deviceName: string | undefined
     if (status.device !== undefined) {
@@ -344,6 +407,7 @@ export class PanelServer {
       }
     }
     return {
+      kind: 'simulator',
       running: status.running,
       available: this.#options.host.binary.available,
       ...(status.device === undefined ? {} : { device: status.device }),
@@ -355,9 +419,13 @@ export class PanelServer {
   async #devices(): Promise<Record<string, unknown>> {
     const devices = sortDevices(await this.#options.simctl.listDevices()).slice(0, 50)
     const status = this.#options.host.status()
+    const wda = this.#options.wda?.status()
+    const realDevices = wda?.phase === 'running' && wda.device !== undefined ? [{ udid: wda.device.udid, name: wda.device.name }] : []
+    const streaming = this.#real !== undefined ? this.#real.udid : status.running ? status.device : undefined
     return {
       devices: devices.map(device => ({ udid: device.udid, name: device.name, runtime: device.runtime, state: device.state })),
-      ...(status.running && status.device !== undefined ? { streaming: status.device } : {}),
+      realDevices,
+      ...(streaming === undefined ? {} : { streaming }),
     }
   }
 
@@ -365,6 +433,16 @@ export class PanelServer {
   async #switchDevice(body: Record<string, unknown>): Promise<Record<string, unknown>> {
     const udid = typeof body.udid === 'string' ? body.udid.trim() : ''
     if (udid === '') throw new HttpError(400, 'udid is required')
+    if (this.#options.wda?.status().device?.udid === udid && this.#options.realDevices !== undefined) {
+      let real: RealDevice
+      try {
+        real = await this.#options.realDevices.getDevice(udid)
+      } catch (error) {
+        throw new HttpError(409, errorMessage(error))
+      }
+      await this.showRealDevice(real)
+      return { ok: true, kind: 'real', device: { udid: real.udid, name: real.name } }
+    }
     let device: SimulatorDevice
     try {
       device = await this.#options.simctl.getDevice(udid)
@@ -373,10 +451,16 @@ export class PanelServer {
     }
     if (device.state !== 'Booted') await this.#options.simctl.bootDevice(device.udid)
     await this.#options.host.ensureRunning({ udid: device.udid })
-    return { ok: true, device: { udid: device.udid, name: device.name, runtime: device.runtime, state: 'Booted' } }
+    this.showSimulator()
+    return { ok: true, kind: 'simulator', device: { udid: device.udid, name: device.name, runtime: device.runtime, state: 'Booted' } }
   }
 
   async #capture(): Promise<Record<string, unknown>> {
+    if (this.#real !== undefined) {
+      const client = await this.#requireWda(this.#real).control(this.#real)
+      const shot = await captureWda(client, this.#options.screenshots, this.#real.udid, this.#real.name)
+      return { ok: true, url: `/shots/${basename(shot.path)}`, ...(shot.width === undefined ? {} : { width: shot.width, height: shot.height }) }
+    }
     const device = await this.#currentDevice()
     if (device === undefined) throw new HttpError(409, 'no booted simulator to capture')
     const shot = await this.#options.screenshots.capture(device.udid)
@@ -390,6 +474,16 @@ export class PanelServer {
   async #deviceAction(body: Record<string, unknown>): Promise<Record<string, unknown>> {
     const action = body.action
     if (!isDeviceAction(action)) throw new HttpError(400, 'unknown device action')
+    if (this.#real !== undefined) {
+      let plan
+      try {
+        plan = planWdaInteract('device_action', { name: action })
+      } catch (error) {
+        throw new HttpError(400, errorMessage(error))
+      }
+      await runWdaInteract(await this.#requireWda(this.#real).control(this.#real), plan)
+      return { ok: true, action }
+    }
     const device = await this.#currentDevice()
     if (device === undefined) throw new HttpError(409, 'no booted simulator')
     await this.#options.host.ensureRunning({ udid: device.udid })
@@ -410,6 +504,13 @@ export class PanelServer {
       if (new URL(req.url ?? '/', 'http://127.0.0.1').pathname !== '/ws') return rejectUpgrade(socket, 404)
       const key = req.headers['sec-websocket-key']
       if (typeof key !== 'string' || !WEBSOCKET_KEY_PATTERN.test(key)) return rejectUpgrade(socket, 400)
+      if (this.#real !== undefined) {
+        const real = this.#real
+        const status = this.#options.wda?.status()
+        if (status?.phase !== 'running' || status.device?.udid !== real.udid) return rejectUpgrade(socket, 503)
+        this.#realSocket(req, socket, head, real)
+        return
+      }
       const status = this.#options.host.status()
       if (!status.running || status.device === undefined) return rejectUpgrade(socket, 503)
       const release = this.#options.host.acquire()
@@ -428,6 +529,45 @@ export class PanelServer {
     } catch {
       rejectUpgrade(socket, 502)
     }
+  }
+
+  /**
+   * A real device has no control socket: translate the panel's touch, button
+   * and rotate frames into WebDriverAgent calls, one at a time in order.
+   */
+  #realSocket(req: IncomingMessage, socket: Duplex, head: Buffer, device: RealDevice): void {
+    let client: WebSocket | undefined
+    let finished = false
+    const teardown = (): void => {
+      if (finished) return
+      finished = true
+      this.#teardowns.delete(teardown)
+      client?.terminate()
+      socket.destroy()
+    }
+    this.#teardowns.add(teardown)
+    socket.on('error', teardown)
+    this.#wss.handleUpgrade(req, socket, head, browser => {
+      if (finished) {
+        browser.terminate()
+        return
+      }
+      client = browser
+      const translator = new RealTouchTranslator()
+      let queue = Promise.resolve()
+      browser.on('error', teardown)
+      browser.on('close', teardown)
+      browser.on('message', (data: RawData) => {
+        const plan = translator.feed(toBuffer(data), Date.now())
+        const wda = this.#options.wda
+        if (plan === undefined || wda === undefined) return
+        queue = queue
+          .then(async () => { await runWdaInteract(await wda.control(device), plan) })
+          .catch((error: unknown) => {
+            process.stderr.write(`${PLUGIN_NAME}: panel ${plan.kind} on ${device.name} failed: ${errorMessage(error)}\n`)
+          })
+      })
+    })
   }
 
   /** Relay binary HID frames between the panel and serve-sim's control socket. */

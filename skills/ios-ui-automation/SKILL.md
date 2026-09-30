@@ -103,6 +103,7 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 - On a phone, `type` accepts any text (it goes through the device keyboard); buttons are home, lock, volume-up and volume-down; `device_action` is limited to lock, unlock and siri.
 - WDA tree reads are capped in depth to stay fast (15 levels, one automatic retry at 40; rows read 60). When `ios_sim_ui_tree` misses something that is clearly on screen, pass a larger `max_depth` or use OCR.
 - `ios_real_start_wda` failures name the fix (unlock the phone, trust the developer certificate, sign in to Xcode or set IOS_SIM_TEAM_ID, clone WebDriverAgent). Pass them on to the user instead of retrying in a loop.
+- To let the user watch or drive the phone, call `ios_sim_panel {udid}` for it once WDA runs: the panel then shows the phone's live view.
 - Logs, backtraces and leaks work on simulators only and say so when handed a real device.
 - On a phone, app names are devicectl's base (usually English) names: a Chinese label from the screen will not match, so use the English name or the bundle id.
 - A real device is someone's phone: every launch or install happens for real. Do not uninstall apps there (the tool refuses: the data cannot be recovered).

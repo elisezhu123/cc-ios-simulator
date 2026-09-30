@@ -54,6 +54,7 @@ async function main(): Promise<void> {
     log: line => process.stderr.write(`${line}\n`),
   })
   const wda = new WdaController(realWdaSeams({ cacheRoot: root }))
+  const realDevices = new Devicectl({ run: devicectlRunner(options => devtools.run(options)) })
   const recorder = new Recorder({ dir: join(root, 'recordings') })
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
@@ -63,6 +64,8 @@ async function main(): Promise<void> {
     stream,
     simctl,
     screenshots,
+    wda,
+    realDevices,
   })
   const deps: ToolDeps = {
     host,
@@ -77,7 +80,7 @@ async function main(): Promise<void> {
     ocr: new OcrHelper({ cacheDir: join(root, 'bin', 'ocr') }),
     devtools,
     preview,
-    realDevices: new Devicectl({ run: devicectlRunner(options => devtools.run(options)) }),
+    realDevices,
     wda,
     cacheRoot: root,
     platform: process.platform,

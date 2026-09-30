@@ -31,7 +31,16 @@ export interface PanelCopy {
   switching: string
   captureFailed: string
   actionFailed: string
+  /** The picker group of connected iPhones/iPads (WebDriverAgent running). */
+  realDevices: string
+  /** Suffix of a real device in the picker. */
+  realDevice: string
+  /** Placeholder when the shown iPhone has no running WebDriverAgent. */
+  noWda: string
 }
+
+/** The device actions WebDriverAgent can run on a real device. */
+export const REAL_DEVICE_ACTION_IDS: readonly DeviceActionId[] = ['lock', 'unlock', 'siri']
 
 const EN: PanelCopy = {
   language: 'en',
@@ -64,6 +73,9 @@ const EN: PanelCopy = {
   switching: 'switching…',
   captureFailed: 'Screenshot failed',
   actionFailed: 'Action failed',
+  realDevices: 'iPhone / iPad (WebDriverAgent)',
+  realDevice: 'real device',
+  noWda: 'WebDriverAgent is not running on this iPhone — start it with ios_real_start_wda, or pick a simulator above.',
 }
 
 const ZH: PanelCopy = {
@@ -97,6 +109,9 @@ const ZH: PanelCopy = {
   switching: '切换中…',
   captureFailed: '截图失败',
   actionFailed: '操作失败',
+  realDevices: 'iPhone / iPad（WebDriverAgent）',
+  realDevice: '真机',
+  noWda: '这台 iPhone 上的 WebDriverAgent 没有运行——用 ios_real_start_wda 启动，或在上方选择模拟器。',
 }
 
 export function copyFor(language: string | undefined): PanelCopy {

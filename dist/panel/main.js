@@ -1,4 +1,5 @@
 // src/panel/client/copy.ts
+var REAL_DEVICE_ACTION_IDS = ["lock", "unlock", "siri"];
 var EN = {
   language: "en",
   title: "iOS Simulator",
@@ -29,7 +30,10 @@ var EN = {
   booted: "booted",
   switching: "switching\u2026",
   captureFailed: "Screenshot failed",
-  actionFailed: "Action failed"
+  actionFailed: "Action failed",
+  realDevices: "iPhone / iPad (WebDriverAgent)",
+  realDevice: "real device",
+  noWda: "WebDriverAgent is not running on this iPhone \u2014 start it with ios_real_start_wda, or pick a simulator above."
 };
 var ZH = {
   language: "zh",
@@ -61,7 +65,10 @@ var ZH = {
   booted: "\u5DF2\u542F\u52A8",
   switching: "\u5207\u6362\u4E2D\u2026",
   captureFailed: "\u622A\u56FE\u5931\u8D25",
-  actionFailed: "\u64CD\u4F5C\u5931\u8D25"
+  actionFailed: "\u64CD\u4F5C\u5931\u8D25",
+  realDevices: "iPhone / iPad\uFF08WebDriverAgent\uFF09",
+  realDevice: "\u771F\u673A",
+  noWda: "\u8FD9\u53F0 iPhone \u4E0A\u7684 WebDriverAgent \u6CA1\u6709\u8FD0\u884C\u2014\u2014\u7528 ios_real_start_wda \u542F\u52A8\uFF0C\u6216\u5728\u4E0A\u65B9\u9009\u62E9\u6A21\u62DF\u5668\u3002"
 };
 function copyFor(language) {
   return (language ?? "").toLowerCase().startsWith("zh") ? ZH : EN;
@@ -225,7 +232,9 @@ var ui = {
   placeholder: element("placeholder")
 };
 var state = {
+  kind: "simulator",
   orientation: "portrait",
+  realOrientation: "portrait",
   sizeMode: sizeModeOf(localStorage.getItem("ios-sim.size")),
   frameStyle: frameStyleOf(localStorage.getItem("ios-sim.frame")),
   deviceName: "",
@@ -287,7 +296,7 @@ ui.img.addEventListener("error", () => {
   state.streamFailures += 1;
   setStatus("offline");
   ui.placeholder.hidden = false;
-  ui.placeholder.textContent = copy.noDevice;
+  ui.placeholder.textContent = state.kind === "real" ? copy.noWda : copy.noDevice;
   reconnectTimer = window.setTimeout(() => {
     void refreshStatus().finally(startStream);
   }, delay);
@@ -297,6 +306,7 @@ function connectWs() {
   ws.binaryType = "arraybuffer";
   state.ws = ws;
   ws.addEventListener("message", (event) => {
+    if (state.kind === "real") return;
     const config = parseSimConfigFrame(event.data);
     if (config === void 0 || config.orientation === state.orientation) return;
     state.orientation = config.orientation;
@@ -361,6 +371,11 @@ ui.shot.addEventListener("click", () => {
   }).catch((error) => report(copy.captureFailed, error));
 });
 ui.rotate.addEventListener("click", () => {
+  if (state.kind === "real") {
+    state.realOrientation = nextSimRotateOrientation(state.realOrientation);
+    send(simRotateFrame(state.realOrientation));
+    return;
+  }
   const next = nextSimRotateOrientation(state.orientation);
   send(simRotateFrame(next));
   state.orientation = next;
@@ -390,7 +405,10 @@ ui.picker.addEventListener("focus", () => {
 });
 ui.picker.addEventListener("change", () => {
   setStatus("connecting", copy.switching);
-  void postJson("/api/switch-device", { udid: ui.picker.value }).then(() => refreshStatus()).then(startStream).catch((error) => report(copy.actionFailed, error));
+  void postJson("/api/switch-device", { udid: ui.picker.value }).then(() => refreshStatus()).then(() => {
+    state.ws?.close();
+    startStream();
+  }).catch((error) => report(copy.actionFailed, error));
 });
 function runtimeLabel(runtime) {
   const match = /SimRuntime\.([A-Za-z]+)-(\d+)-(\d+)/u.exec(runtime);
@@ -405,13 +423,23 @@ function option(value, label) {
 async function loadDevices() {
   const response = await fetch("/api/devices");
   if (!response.ok) return;
-  const { devices, streaming } = await response.json();
+  const { devices, realDevices = [], streaming } = await response.json();
   const rows = devices.map((device) => {
     const node = option(device.udid, `${device.name} \xB7 ${runtimeLabel(device.runtime)}${device.state === "Booted" ? ` \xB7 ${copy.booted}` : ""}`);
     node.selected = device.udid === streaming;
     return node;
   });
-  if (!devices.some((device) => device.udid === streaming)) {
+  if (realDevices.length > 0) {
+    const group = document.createElement("optgroup");
+    group.label = copy.realDevices;
+    for (const device of realDevices) {
+      const node = option(device.udid, `${device.name} \xB7 ${copy.realDevice}`);
+      node.selected = device.udid === streaming;
+      group.append(node);
+    }
+    rows.push(group);
+  }
+  if (![...devices, ...realDevices].some((device) => device.udid === streaming)) {
     const placeholder = option("", copy.pickDevice);
     placeholder.disabled = true;
     placeholder.selected = true;
@@ -424,7 +452,22 @@ async function refreshStatus() {
   if (!response.ok) return;
   const status = await response.json();
   state.deviceName = status.deviceName ?? "";
+  const kind = status.kind ?? "simulator";
+  if (kind !== state.kind) {
+    state.kind = kind;
+    state.orientation = "portrait";
+    state.realOrientation = "portrait";
+    fillDeviceActions();
+    applyLayout();
+    state.ws?.close();
+    startStream();
+  }
+  ui.placeholder.textContent = kind === "real" ? copy.noWda : copy.noDevice;
   if (!status.running && ui.status.dataset.kind === "live") setStatus("offline");
+}
+function fillDeviceActions() {
+  const ids = state.kind === "real" ? REAL_DEVICE_ACTION_IDS : DEVICE_ACTION_IDS;
+  ui.action.replaceChildren(option("", copy.deviceActions), ...ids.map((id) => option(id, copy.actions[id])));
 }
 function initControls() {
   document.title = copy.title;
@@ -440,7 +483,7 @@ function initControls() {
     button.title = label;
     button.setAttribute("aria-label", label);
   }
-  ui.action.replaceChildren(option("", copy.deviceActions), ...DEVICE_ACTION_IDS.map((id) => option(id, copy.actions[id])));
+  fillDeviceActions();
   ui.size.replaceChildren(...SIZE_OPTIONS.map((entry) => option(entry.id, copy.language === "zh" ? entry.zh : entry.en)));
   ui.size.value = sizeModeId(state.sizeMode);
   ui.frameStyle.replaceChildren(...FRAME_STYLES.map((style) => option(style, copy.frameStyles[style])));

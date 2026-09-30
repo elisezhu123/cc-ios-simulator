@@ -52,6 +52,10 @@ export interface ScreenshotService {
 /** Starts the live panel once and reports its URL. */
 export interface PanelHandle {
   ensureStarted(): Promise<string>
+  /** Show a connected iPhone/iPad (WebDriverAgent running on it) and resolve the panel URL. */
+  showRealDevice(device: RealDevice): Promise<string>
+  /** Show simulators again. */
+  showSimulator(): void
 }
 
 export interface RecorderApi {
@@ -96,6 +100,8 @@ export interface WdaApi {
   /** The running client, or an adopted one; never builds. */
   control(device: RealDevice): Promise<WdaSessionClient>
   stop(): Promise<{ stopped: boolean; device?: { udid: string; name: string } }>
+  /** Local URL of the running device's MJPEG stream (the panel's live view). */
+  mjpegUrl(device: RealDevice): Promise<string>
 }
 
 export interface ToolDeps {

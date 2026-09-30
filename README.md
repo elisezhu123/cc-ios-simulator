@@ -67,7 +67,7 @@
 | 🌐 **环境模拟** | 打开 URL / Deep Link、模拟推送通知（APNs payload）、设置 / 清除 GPS 定位、浅色 / 深色模式 |
 | 🎬 **录屏** | 开始 / 停止录屏，输出 `.mov` / `.mp4`，每台设备同时一个录屏 |
 | 🖥️ **多设备** | 列出、启动、关闭任意模拟器；面板里可一键切换（未启动的会自动启动） |
-| 📲 **USB 真机** | 列出连接的 iPhone / iPad；在真机上列出 / 启动 / 结束 App、安装已签名的 `.app`、查看进程和 App 信息（devicectl）。用 `ios_real_start_wda` 启动 WebDriverAgent 后，截图、点击、输入、按键、滑动、旋转、无障碍树、OCR 找字 / 点字、列表行都能在真机上用（实时画面还未支持） |
+| 📲 **USB 真机** | 列出连接的 iPhone / iPad；在真机上列出 / 启动 / 结束 App、安装已签名的 `.app`、查看进程和 App 信息（devicectl）。用 `ios_real_start_wda` 启动 WebDriverAgent 后，截图、点击、输入、按键、滑动、旋转、无障碍树、OCR 找字 / 点字、列表行都能在真机上用，面板也能显示真机的实时画面并直接操作 |
 | 🧠 **内置 Skill** | `ios-ui-automation`：教 Claude 按"观察 → 操作 → 确认"的节奏工作，并避开常见坑（例如不猜 bundle id） |
 | 🔒 **安全** | 面板只监听 `127.0.0.1`，校验 Host / Origin 防 DNS 重绑定和跨站调用；所有命令用参数数组执行，无 shell 注入 |
 | 🌏 **中英双语** | 面板界面按浏览器语言自动切换中文 / 英文 |
@@ -90,7 +90,7 @@
 | `ios_sim_devices` | 列出模拟器（已启动的在前，runtime 新的在前），可按名称 / udid / runtime 过滤；连接的 iPhone / iPad 列在 `realDevices` 里 |
 | `ios_sim_boot` | 启动模拟器并开始推流，返回 `panelUrl` |
 | `ios_sim_shutdown` | 关闭模拟器（先停止它的录屏和推流） |
-| `ios_sim_panel` | 为已启动的设备确保推流并返回 `panelUrl`，不会启动设备 |
+| `ios_sim_panel` | 为已启动的设备确保推流并返回 `panelUrl`，不会启动设备；传运行着 WebDriverAgent 的 iPhone 时，面板改为显示这台真机 |
 | `ios_sim_screenshot` | 截图，以图片返回给 Claude，同时给出原尺寸 PNG 路径 |
 | `ios_sim_interact` | 交互：`tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`，默认附带结果截图 |
 | `ios_real_start_wda` | 在 USB 连接的 iPhone / iPad 上启动 WebDriverAgent（已在运行就直接接管，否则签名、构建并启动，冷构建需要几分钟）；`status` 查看状态，`stop` 停止 |
@@ -280,6 +280,7 @@ sequenceDiagram
   - 刷新。
 - **显示设置**（保存在浏览器本地）：尺寸 适应 / 50–125% / S·M·L；外框 无框 / 边框 / 真机框。
 - 你在面板里的操作和 Claude 的工具调用驱动的是**同一台模拟器**，可以随时接手或交还。
+- **真机**：`ios_real_start_wda` 启动 WebDriverAgent 后，设备选择器的"iPhone / iPad"分组里会出现这台手机（或调用 `ios_sim_panel {udid: 这台手机}`）。画面来自 WDA 的 MJPEG 流（经 USB 隧道），单击 = 点击，拖动 = 滑动（松手时按拖动时长一次发出），回到桌面、截图、旋转可用，设备操作只有锁屏 / 解锁 / Siri。
 
 ---
 
@@ -351,7 +352,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | UI 自动化 | 模拟器 + 真机 | 已移植（7 个工具，模拟器 + 真机），点击工具额外返回结果截图 |
 | 日志与调试 | 模拟器 + 真机 | 已移植模拟器部分（5 个工具） |
 | SwiftUI 预览热重载 | 已支持 | 已移植（`ios_sim_preview`） |
-| USB 真机 | 已支持 | devicectl 的设备 / App / 进程操作、WebDriverAgent 的截图 / 点击 / 无障碍树 / OCR 已移植（简化版：一次一台设备，工具调用中不会自动构建 WDA）；面板实时画面**尚未支持**，见 [路线图](#路线图)。卸载在真机上被拒绝 |
+| USB 真机 | 已支持 | devicectl 的设备 / App / 进程操作、WebDriverAgent 的截图 / 点击 / 无障碍树 / OCR 已移植（简化版：一次一台设备，工具调用中不会自动构建 WDA），面板可显示真机实时画面（WDA MJPEG）。卸载在真机上被拒绝 |
 
 移植的文件在第一行注明了来源（`Ported from dsh-ios (MIT) @ d9a9731 — src/<file>`），完整清单见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
@@ -485,7 +486,7 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 ## 路线图
 
 > [!IMPORTANT]
-> 目前完成了第 ①、②、④ 期，第 ③ 期的模拟器部分，以及第 ⑤ 期的 devicectl 和 WebDriverAgent 部分。第 ⑤ 期剩下的面板实时画面**还没有开始**。真机部分目前只有单元测试，尚未在真机上验证。
+> 第 ① – ⑤ 期都已完成（第 ③ 期的日志、线程栈、内存泄漏只支持模拟器）。真机部分（第 ⑤ 期）目前只有单元测试和模拟的浏览器测试，**尚未在真机上验证**。
 
 | 期 | 内容 | 状态 |
 |---|---|---|
@@ -495,7 +496,7 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 | ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | ✅ 已完成 |
 | ⑤a USB 真机：devicectl | 列出真机；真机上的 App 列表 / 启动 / 安装、进程、App 信息 | ✅ 已完成 |
 | ⑤b USB 真机：WebDriverAgent | `ios_real_start_wda`：签名、构建启动 WDA、usbmux 转发；真机截图、点击、输入、无障碍树、OCR 点击 | ✅ 已完成（待真机验证） |
-| ⑤c USB 真机：实时画面 | 面板显示真机画面 | ⏳ 未开始 |
+| ⑤c USB 真机：实时画面 | 面板显示真机画面（WDA MJPEG）并可点击、滑动 | ✅ 已完成（待真机验证） |
 
 ---
 

@@ -13,7 +13,7 @@ import { DEVICE_ACTIONS, isDeviceAction } from '../device-actions.js'
 import { interactControlArgs, performSimInteract, type SimInteractArgs, type SimInteractDelivery } from '../interact.js'
 import { isLandscape, readSimScreenConfig, toFramebufferArgs, type Landscape } from '../orientation.js'
 import { captureWda, planWdaInteract, runWdaInteract } from '../real-ui.js'
-import { assertMac, assertStreamAvailable, ensureStreamFor, realDeviceSummary, requireBooted, resolveTargetDevice, resolveToolTarget, sortDevices } from '../target.js'
+import { assertMac, assertStreamAvailable, ensureStreamFor, realDeviceSummary, requireBooted, resolveToolTarget, sortDevices } from '../target.js'
 import { deviceSummary, jsonResult, runTool, sleep, UDID_PARAM } from './result.js'
 
 export const ROTATE_ORIENTATIONS = ['portrait', 'landscape_left', 'portrait_upside_down', 'landscape_right'] as const
@@ -146,6 +146,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       })
     }
     await deps.host.ensureRunning({ udid: device.udid })
+    deps.panel.showSimulator()
     // Booted and streaming already: a panel that cannot start (no free port, say) must not fail the boot.
     let panel: { panelUrl: string } | { note: string }
     try {
@@ -177,14 +178,29 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     title: 'Open the live panel',
     description: 'Make sure the live stream runs for a booted simulator and return panelUrl, the live panel (video, '
       + 'tap/drag, Home, rotate, screenshot). Open it with preview_start {url: panelUrl} in the browser pane; in a '
-      + 'terminal-only session give the URL to the user. Never boots a device.',
+      + 'terminal-only session give the URL to the user. Never boots a device. Given a connected iPhone/iPad on which '
+      + 'ios_real_start_wda is running, the panel shows that phone instead (WebDriverAgent live view and touch).',
     inputSchema: { udid: UDID_PARAM },
   }, async ({ udid }) => runTool('ios_sim_panel', async () => {
     assertMac(deps.platform)
+    const target = await resolveToolTarget(deps, udid)
+    if (target.kind === 'real') {
+      if (deps.wda.status().phase !== 'running' || deps.wda.status().device?.udid !== target.device.udid) {
+        throw new Error(`WebDriverAgent is not running on "${target.device.name}" — run ios_real_start_wda first, then open the panel`)
+      }
+      const panelUrl = await deps.panel.showRealDevice(target.device)
+      return jsonResult({
+        panelUrl,
+        device: realDeviceSummary(target.device),
+        hint: 'Open panelUrl in the browser pane (preview_start with this url); in a terminal-only session give the URL to the user. '
+          + 'The live view comes from WebDriverAgent; taps and drags in it go to the phone.',
+      })
+    }
     assertStreamAvailable(deps.host)
-    const device = await resolveTargetDevice(deps, udid)
+    const device = target.device
     requireBooted('ios_sim_panel', device)
     await ensureStreamFor(deps.host, device)
+    deps.panel.showSimulator()
     const panelUrl = await deps.panel.ensureStarted()
     return jsonResult({
       panelUrl,
