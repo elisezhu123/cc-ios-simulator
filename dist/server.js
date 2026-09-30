@@ -2990,7 +2990,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve4.call(this, root, ref);
+      let _sch = resolve6.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a3 = root.localRefs) === null || _a3 === void 0 ? void 0 : _a3[ref];
         const { schemaId } = this.opts;
@@ -3017,7 +3017,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve4(root, ref) {
+    function resolve6(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3847,7 +3847,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve4(baseURI, relativeURI, options) {
+    function resolve6(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const {
         parsed: baseParsed,
@@ -4216,7 +4216,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize: normalize2,
-      resolve: resolve4,
+      resolve: resolve6,
       resolveComponent,
       equal,
       serialize,
@@ -10889,8 +10889,8 @@ var require_websocket_server = __commonJS({
 });
 
 // src/server.ts
-import { dirname as dirname5, join as join15 } from "node:path";
-import { fileURLToPath as fileURLToPath3 } from "node:url";
+import { dirname as dirname6, join as join17 } from "node:path";
+import { fileURLToPath as fileURLToPath4 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
 var util;
@@ -11279,15 +11279,15 @@ var makeIssue = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage8 = "";
+  let errorMessage9 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage8 = map2(fullIssue, { data, defaultError: errorMessage8 }).message;
+    errorMessage9 = map2(fullIssue, { data, defaultError: errorMessage9 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage8
+    message: errorMessage9
   };
 };
 function addIssueToContext(ctx, issueData) {
@@ -19550,7 +19550,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack, resolve4) {
+function isRecursive(inst, stack, resolve6) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -19560,7 +19560,7 @@ function isRecursive(inst, stack, resolve4) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack, resolve4);
+      const answer = isRecursive(child, stack, resolve6);
       if (answer > result)
         result = answer;
     }
@@ -19571,7 +19571,7 @@ function isRecursive(inst, stack, resolve4) {
       const desc = Object.getOwnPropertyDescriptor(sh, key);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve4) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve6) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -19635,7 +19635,7 @@ function isRecursive(inst, stack, resolve4) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def._cachedInner ?? (resolve4 ? inst._zod.innerType : void 0);
+      const inner = def._cachedInner ?? (resolve6 ? inst._zod.innerType : void 0);
       merge2(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
     }
@@ -36273,19 +36273,19 @@ var getRefs = (options) => {
 };
 
 // node_modules/zod-to-json-schema/dist/esm/errorMessages.js
-function addErrorMessage(res, key, errorMessage8, refs) {
+function addErrorMessage(res, key, errorMessage9, refs) {
   if (!refs?.errorMessages)
     return;
-  if (errorMessage8) {
+  if (errorMessage9) {
     res.errorMessage = {
       ...res.errorMessage,
-      [key]: errorMessage8
+      [key]: errorMessage9
     };
   }
 }
-function setResponseValueAndErrors(res, key, value, errorMessage8, refs) {
+function setResponseValueAndErrors(res, key, value, errorMessage9, refs) {
   res[key] = value;
-  addErrorMessage(res, key, errorMessage8, refs);
+  addErrorMessage(res, key, errorMessage9, refs);
 }
 
 // node_modules/zod-to-json-schema/dist/esm/getRelativePath.js
@@ -37596,8 +37596,8 @@ var Protocol = class {
                   if (queuedMessage.type === "response") {
                     resolver(message);
                   } else {
-                    const errorMessage8 = message;
-                    const error62 = new McpError(errorMessage8.error.code, errorMessage8.error.message, errorMessage8.error.data);
+                    const errorMessage9 = message;
+                    const error62 = new McpError(errorMessage9.error.code, errorMessage9.error.message, errorMessage9.error.data);
                     resolver(error62);
                   }
                 } else {
@@ -38043,7 +38043,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve4) => setTimeout(resolve4, pollInterval));
+        await new Promise((resolve6) => setTimeout(resolve6, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error62) {
@@ -38060,7 +38060,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve4, reject) => {
+    return new Promise((resolve6, reject) => {
       const earlyReject = (error62) => {
         reject(error62);
       };
@@ -38138,7 +38138,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve4(parseResult.data);
+            resolve6(parseResult.data);
           }
         } catch (error62) {
           reject(error62);
@@ -38399,12 +38399,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve4, reject) => {
+    return new Promise((resolve6, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve4, interval);
+      const timeoutId = setTimeout(resolve6, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -38888,23 +38888,23 @@ var Server = class extends Protocol {
       const wrappedHandler = async (request, extra) => {
         const validatedRequest = safeParse2(CallToolRequestSchema, request);
         if (!validatedRequest.success) {
-          const errorMessage8 = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage8}`);
+          const errorMessage9 = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage9}`);
         }
         const { params } = validatedRequest.data;
         const result = await Promise.resolve(handler(request, extra));
         if (params.task) {
           const taskValidationResult = safeParse2(CreateTaskResultSchema, result);
           if (!taskValidationResult.success) {
-            const errorMessage8 = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage8}`);
+            const errorMessage9 = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage9}`);
           }
           return taskValidationResult.data;
         }
         const validationResult = safeParse2(CallToolResultSchema, result);
         if (!validationResult.success) {
-          const errorMessage8 = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage8}`);
+          const errorMessage9 = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage9}`);
         }
         return validationResult.data;
       };
@@ -39398,12 +39398,12 @@ var McpServer = class {
    * @param errorMessage - The error message.
    * @returns The tool error result.
    */
-  createToolError(errorMessage8) {
+  createToolError(errorMessage9) {
     return {
       content: [
         {
           type: "text",
-          text: errorMessage8
+          text: errorMessage9
         }
       ],
       isError: true
@@ -39421,8 +39421,8 @@ var McpServer = class {
     const parseResult = await safeParseAsync2(schemaToParse, args);
     if (!parseResult.success) {
       const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage8 = getParseErrorMessage(error62);
-      throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage8}`);
+      const errorMessage9 = getParseErrorMessage(error62);
+      throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage9}`);
     }
     return parseResult.data;
   }
@@ -39446,8 +39446,8 @@ var McpServer = class {
     const parseResult = await safeParseAsync2(outputObj, result.structuredContent);
     if (!parseResult.success) {
       const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage8 = getParseErrorMessage(error62);
-      throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage8}`);
+      const errorMessage9 = getParseErrorMessage(error62);
+      throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage9}`);
     }
   }
   /**
@@ -39495,7 +39495,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve4) => setTimeout(resolve4, pollInterval));
+      await new Promise((resolve6) => setTimeout(resolve6, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -39659,8 +39659,8 @@ var McpServer = class {
         const parseResult = await safeParseAsync2(argsObj, request.params.arguments);
         if (!parseResult.success) {
           const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-          const errorMessage8 = getParseErrorMessage(error62);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage8}`);
+          const errorMessage9 = getParseErrorMessage(error62);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage9}`);
         }
         const args = parseResult.data;
         const cb = prompt.callback;
@@ -40159,12 +40159,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve4) => {
+    return new Promise((resolve6) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve4();
+        resolve6();
       } else {
-        this._stdout.once("drain", resolve4);
+        this._stdout.once("drain", resolve6);
       }
     });
   }
@@ -40572,7 +40572,7 @@ var SIMCTL_TERMINATE_TIMEOUT_MS = 3e4;
 var SIMCTL_UNINSTALL_TIMEOUT_MS = 6e4;
 var SIMCTL_MAX_BUFFER_BYTES = 16 * 1024 * 1024;
 function runXcrunSimctl(args, timeoutMs, signal) {
-  return new Promise((resolve4, reject) => {
+  return new Promise((resolve6, reject) => {
     execFile("xcrun", ["simctl", ...args], {
       timeout: timeoutMs,
       maxBuffer: SIMCTL_MAX_BUFFER_BYTES,
@@ -40587,7 +40587,7 @@ function runXcrunSimctl(args, timeoutMs, signal) {
         ));
         return;
       }
-      resolve4(stdout);
+      resolve6(stdout);
     });
   });
 }
@@ -41217,7 +41217,7 @@ function errorMessage2(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function sleep(milliseconds) {
-  return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
+  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
 }
 function signalGroup(pid, kill, signal) {
   if (pid === void 0) {
@@ -41242,14 +41242,14 @@ var DevTools = class {
     this.#processStat = options.processStat ?? defaultProcessStat;
   }
   simctl(args, signal) {
-    return new Promise((resolve4, reject) => {
+    return new Promise((resolve6, reject) => {
       execFile3("xcrun", ["simctl", ...args], { timeout: SIMCTL_CALL_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024, signal }, (error62, stdout, stderr) => {
         if (error62 !== null) {
           const detail = stderr.trim();
           reject(new Error(`simctl ${args.join(" ")} failed${detail === "" ? "" : `: ${detail}`}`));
           return;
         }
-        resolve4(stdout);
+        resolve6(stdout);
       });
     });
   }
@@ -41285,7 +41285,7 @@ var DevTools = class {
   run(options) {
     const { command, args, label, timeoutMs, windowMs, resumePid, signal } = options;
     if (signal?.aborted === true) return Promise.reject(abortError(label, signal));
-    return new Promise((resolve4, reject) => {
+    return new Promise((resolve6, reject) => {
       let settled = false;
       let stdout = "";
       let stderr = "";
@@ -41336,7 +41336,7 @@ var DevTools = class {
             reject(new Error(`${label} exceeded its ${timeoutMs} ms deadline and was killed${resumeDetail}`));
             return;
           }
-          resolve4({ stdout, stderr, code, killed, ...resumed === void 0 ? {} : { resumed } });
+          resolve6({ stdout, stderr, code, killed, ...resumed === void 0 ? {} : { resumed } });
         })();
       }));
     });
@@ -41567,13 +41567,13 @@ function sha256File(path) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 function run(command, args, timeoutMs, signal) {
-  return new Promise((resolve4, reject) => {
+  return new Promise((resolve6, reject) => {
     execFile4(command, [...args], { timeout: timeoutMs, maxBuffer: OCR_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
       if (error62 !== null) {
         reject(Object.assign(error62, { stdout, stderr }));
         return;
       }
-      resolve4({ stdout, stderr });
+      resolve6({ stdout, stderr });
     });
   });
 }
@@ -41766,11 +41766,716 @@ function pixelRectToNormalizedCenter(rect, pixelSize) {
   return { x: center.x / pixelSize.width, y: center.y / pixelSize.height };
 }
 
+// src/preview-host.ts
+import { execFile as execFile5, spawn as spawn3 } from "node:child_process";
+import { copyFileSync, existsSync as existsSync3, mkdirSync as mkdirSync2, readdirSync as readdirSync3, readFileSync as readFileSync3, renameSync as renameSync2, rmSync as rmSync2, statSync as statSync4, watch, writeFileSync as writeFileSync2 } from "node:fs";
+import { dirname as dirname3, join as join7, resolve as resolve3 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+
+// src/preview-source.ts
+import { existsSync as existsSync2, readdirSync as readdirSync2, readFileSync as readFileSync2 } from "node:fs";
+import { join as join6, resolve as resolve2, sep } from "node:path";
+var PREVIEW_HOST_BUNDLE_ID = "dev.ios-simulator.preview-host";
+var HOST_TARGET_NAME = "IosSimPreviewHost";
+var DYLIB_TARGET_NAME = "IosSimPreviewDylib";
+var DYLIB_LIBRARY_NAME = `lib${DYLIB_TARGET_NAME}.dylib`;
+var DROP_DIR_NAME = "ios-sim-preview-drop";
+var DEFAULT_IOS_PLATFORM_VERSION = 17;
+var ERROR_TAIL_LINES2 = 40;
+var IGNORED_DIRS = /* @__PURE__ */ new Set([".build", ".git", ".swiftpm", "DerivedData", "node_modules", "xcuserdata"]);
+function swiftStringLiteral(value) {
+  return JSON.stringify(value);
+}
+function extractCallArguments(text, selector) {
+  const found = [];
+  const needle = `.${selector}`;
+  let searchFrom = 0;
+  for (; ; ) {
+    const index = text.indexOf(needle, searchFrom);
+    if (index < 0) break;
+    searchFrom = index + needle.length;
+    const previous = text[index - 1];
+    if (previous !== void 0 && /[\w$]/u.test(previous)) continue;
+    let cursor = index + needle.length;
+    while (cursor < text.length && /\s/u.test(text[cursor])) cursor += 1;
+    if (text[cursor] !== "(") continue;
+    const close = findClosingDelimiter(text, cursor, "(", ")");
+    if (close < 0) break;
+    found.push(text.slice(cursor + 1, close));
+    searchFrom = close + 1;
+  }
+  return found;
+}
+function readPackageManifest(packageDir) {
+  const manifestPath = join6(packageDir, "Package.swift");
+  if (!existsSync2(manifestPath)) throw new Error(`no Package.swift found in ${packageDir}`);
+  const text = stripStringsAndComments(readFileSync2(manifestPath, "utf8"), { keepStrings: true });
+  const name = /name\s*:\s*"([^"]+)"/u.exec(text)?.[1] ?? "Package";
+  const iosVersionMatch = /\.iOS\(\s*\.v(\d+)/u.exec(text);
+  const libraryTargets = [];
+  const targetDirs = /* @__PURE__ */ new Map();
+  for (const args of extractCallArguments(text, "target")) {
+    const targetName = /name\s*:\s*"([^"]+)"/u.exec(args)?.[1];
+    if (targetName === void 0 || targetDirs.has(targetName)) continue;
+    const path = /path\s*:\s*"([^"]+)"/u.exec(args)?.[1];
+    libraryTargets.push(targetName);
+    targetDirs.set(targetName, path === void 0 ? join6(packageDir, "Sources", targetName) : resolve2(packageDir, path));
+  }
+  const productNames = extractCallArguments(text, "library").flatMap((args) => /name\s*:\s*"([^"]+)"/u.exec(args)?.slice(1) ?? []);
+  return {
+    name,
+    libraryTargets,
+    productNames: productNames.length > 0 ? productNames : libraryTargets,
+    targetDirs,
+    ...iosVersionMatch === null ? {} : { iosVersion: Number(iosVersionMatch[1]) }
+  };
+}
+function stripStringsAndComments(text, options = {}) {
+  const chars = [...text];
+  const out = chars.slice();
+  const blank = (index2) => {
+    if (out[index2] !== "\n") out[index2] = " ";
+  };
+  let index = 0;
+  while (index < chars.length) {
+    const char = chars[index];
+    if (char === "/" && chars[index + 1] === "/") {
+      while (index < chars.length && chars[index] !== "\n") blank(index++);
+      continue;
+    }
+    if (char === "/" && chars[index + 1] === "*") {
+      while (index < chars.length && !(chars[index] === "*" && chars[index + 1] === "/")) blank(index++);
+      if (index < chars.length) {
+        blank(index);
+        blank(index + 1);
+        index += 2;
+      }
+      continue;
+    }
+    if (char === '"') {
+      const triple = chars[index + 1] === '"' && chars[index + 2] === '"';
+      index += triple ? 3 : 1;
+      while (index < chars.length) {
+        if (triple ? chars[index] === '"' && chars[index + 1] === '"' && chars[index + 2] === '"' : chars[index] === '"') break;
+        if (!triple && chars[index] === "\n") break;
+        if (chars[index] === "\\") {
+          if (options.keepStrings !== true) blank(index);
+          index += 1;
+        }
+        if (index < chars.length && options.keepStrings !== true) blank(index);
+        index += 1;
+      }
+      index += triple ? 3 : 1;
+      continue;
+    }
+    index += 1;
+  }
+  return out.join("");
+}
+function findClosingDelimiter(text, openIndex, open2, close) {
+  let depth = 0;
+  for (let index = openIndex; index < text.length; index += 1) {
+    if (text[index] === open2) depth += 1;
+    else if (text[index] === close) {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+function scanMacroPreviews(original) {
+  const sanitized = stripStringsAndComments(original);
+  const found = [];
+  const pattern = /#Preview\b/gu;
+  let match;
+  while ((match = pattern.exec(sanitized)) !== null) {
+    let cursor = match.index + match[0].length;
+    while (cursor < sanitized.length && /\s/u.test(sanitized[cursor])) cursor += 1;
+    let label;
+    if (sanitized[cursor] === "(") {
+      const close2 = findClosingDelimiter(sanitized, cursor, "(", ")");
+      if (close2 < 0) continue;
+      const quoted = /"((?:[^"\\]|\\.)*)"/u.exec(original.slice(cursor + 1, close2));
+      label = quoted?.[1]?.replace(/\\(["\\])/gu, "$1");
+      cursor = close2 + 1;
+    }
+    while (cursor < sanitized.length && /\s/u.test(sanitized[cursor])) cursor += 1;
+    if (sanitized[cursor] !== "{") continue;
+    const close = findClosingDelimiter(sanitized, cursor, "{", "}");
+    if (close < 0) continue;
+    found.push({ name: label !== void 0 && label !== "" ? label : `#Preview ${found.length + 1}`, body: original.slice(cursor + 1, close).trim() });
+    pattern.lastIndex = close + 1;
+  }
+  return found;
+}
+function scanProviderPreviews(original) {
+  const sanitized = stripStringsAndComments(original);
+  return [...sanitized.matchAll(/struct\s+([A-Za-z_]\w*)\s*:\s*(?:[\w.]+\s*,\s*)*PreviewProvider\b/gu)].map((match) => match[1]);
+}
+function walkSwiftFiles(root, depth = 0) {
+  let entries;
+  try {
+    entries = readdirSync2(root, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const files = [];
+  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    const path = join6(root, entry.name);
+    if (entry.isDirectory()) {
+      if (depth < 12 && !IGNORED_DIRS.has(entry.name)) files.push(...walkSwiftFiles(path, depth + 1));
+    } else if (entry.isFile() && entry.name.endsWith(".swift") && !entry.name.startsWith(".")) {
+      files.push(path);
+    }
+  }
+  return files;
+}
+function scanPackagePreviews(manifest) {
+  const previews = [];
+  for (const [module, dir] of manifest.targetDirs) {
+    for (const file2 of walkSwiftFiles(dir)) {
+      let text;
+      try {
+        text = readFileSync2(file2, "utf8");
+      } catch {
+        continue;
+      }
+      for (const macro of scanMacroPreviews(text)) previews.push({ kind: "macro", name: macro.name, body: macro.body });
+      for (const provider of scanProviderPreviews(text)) previews.push({ kind: "provider", name: provider, ref: `${module}.${provider}.previews` });
+    }
+  }
+  return previews;
+}
+function filterPreviews(previews, filter) {
+  const needle = filter?.trim().toLowerCase() ?? "";
+  return needle === "" ? [...previews] : previews.filter((preview) => preview.name.toLowerCase().includes(needle));
+}
+function toPreviewEntries(previews) {
+  return previews.map((preview, index) => ({ id: `p${index}`, name: preview.name, kind: preview.kind }));
+}
+function isWatchedChange(relativePath) {
+  const top = relativePath.split(sep)[0] ?? "";
+  return !IGNORED_DIRS.has(top);
+}
+function generateHostPackageSwift(platformVersion) {
+  return `// swift-tools-version: 5.9
+import PackageDescription
+let package = Package(
+  name: ${swiftStringLiteral(HOST_TARGET_NAME)},
+  platforms: [.iOS(.v${platformVersion})],
+  targets: [.executableTarget(name: ${swiftStringLiteral(HOST_TARGET_NAME)})]
+)
+`;
+}
+function generateDylibPackageSwift(packagePath, packageName, productNames, platformVersion) {
+  const dependencies = productNames.map((product) => `.product(name: ${swiftStringLiteral(product)}, package: ${swiftStringLiteral(packageName)})`).join(", ");
+  return `// swift-tools-version: 5.9
+import PackageDescription
+let package = Package(
+  name: ${swiftStringLiteral(DYLIB_TARGET_NAME)},
+  platforms: [.iOS(.v${platformVersion})],
+  products: [
+    .library(name: ${swiftStringLiteral(DYLIB_TARGET_NAME)}, type: .dynamic, targets: ["PreviewEntry"])
+  ],
+  dependencies: [
+    .package(path: ${swiftStringLiteral(packagePath)})
+  ],
+  targets: [
+    .target(name: "PreviewEntry", dependencies: [${dependencies}])
+  ]
+)
+`;
+}
+function generateEntrySwift(previews, modules) {
+  const lines = [
+    "// Generated by the ios-simulator plugin: hot-swapped SwiftUI preview entry points.",
+    "// Regenerated on every package edit; do not edit by hand.",
+    "import SwiftUI",
+    ...modules.map((module) => `@testable import ${module}`),
+    "",
+    "private final class ViewBox {",
+    "  let view: AnyView",
+    "  init(_ view: AnyView) { self.view = view }",
+    "}",
+    "",
+    "@ViewBuilder",
+    "private func iossimBuild<Content: View>(@ViewBuilder _ content: () -> Content) -> Content {",
+    "  content()",
+    "}",
+    ""
+  ];
+  const cases = [];
+  const names = [];
+  let macroIndex = 0;
+  previews.forEach((preview, index) => {
+    names.push(`private let iossimName${index} = ${swiftStringLiteral(preview.name)}.utf8CString`);
+    if (preview.kind === "macro") {
+      const structName = `IosSimPreview${macroIndex}`;
+      macroIndex += 1;
+      lines.push(`private struct ${structName}: View {`, "  var body: some View {", "    iossimBuild {");
+      for (const bodyLine of (preview.body ?? "").split("\n")) lines.push(`      ${bodyLine}`);
+      lines.push("    }", "  }", "}");
+      cases.push(`  case ${index}: return AnyView(${structName}())`);
+    } else {
+      cases.push(`  case ${index}: return AnyView(${preview.ref ?? "EmptyView()"})`);
+    }
+  });
+  lines.push(
+    "",
+    "private func iossimItem(_ index: Int) -> AnyView {",
+    "  switch index {",
+    ...cases,
+    "  default: return AnyView(EmptyView())",
+    "  }",
+    "}"
+  );
+  if (names.length > 0) lines.push("", ...names);
+  lines.push(
+    "",
+    '@_cdecl("iossim_preview_count")',
+    "public func iossimPreviewCount() -> Int {",
+    `  return ${previews.length}`,
+    "}",
+    "",
+    '@_cdecl("iossim_preview_name")',
+    "public func iossimPreviewName(_ index: Int) -> UnsafePointer<CChar>? {",
+    "  switch index {",
+    ...previews.map((_, index) => `  case ${index}: return iossimName${index}.withUnsafeBufferPointer { $0.baseAddress }`),
+    "  default: return nil",
+    "  }",
+    "}",
+    "",
+    '@_cdecl("iossim_preview_make_view")',
+    "public func iossimPreviewMakeView(_ index: Int) -> UnsafeMutableRawPointer {",
+    "  Unmanaged.passRetained(ViewBox(iossimItem(index))).toOpaque()",
+    "}"
+  );
+  return `${lines.join("\n")}
+`;
+}
+function generateInfoPlist(platformVersion) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>SwiftUI Preview</string>
+	<key>CFBundleExecutable</key>
+	<string>${HOST_TARGET_NAME}</string>
+	<key>CFBundleIdentifier</key>
+	<string>${PREVIEW_HOST_BUNDLE_ID}</string>
+	<key>CFBundleName</key>
+	<string>SwiftUI Preview</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>MinimumOSVersion</key>
+	<string>${platformVersion}.0</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+		<integer>2</integer>
+	</array>
+</dict>
+</plist>
+`;
+}
+function filterSwiftBuildErrors(lines) {
+  return lines.filter((line) => line.trim() !== "").filter((line) => !/^\[\d+\/\d+\] /u.test(line)).filter((line) => !/^(Build complete!|Planning build|Building for debugging\.\.\.|Fetching |Updating |Resolving |Computing version)/u.test(line)).slice(-ERROR_TAIL_LINES2);
+}
+
+// src/preview-host.ts
+var SWIFT_BUILD_TIMEOUT_MS = 6e5;
+var SWIFT_OUTPUT_RING_LINES = 1e3;
+var KEPT_DYLIB_GENERATIONS = 3;
+var HOST_SOURCES = ["PreviewHostApp.swift", "PreviewSession.swift", "PreviewRootView.swift"];
+var DEFAULT_PREVIEW_TIMINGS = { debounceMs: 300, hostConfirmMs: 3e4, reloadConfirmMs: 15e3, pollMs: 500 };
+function errorMessage3(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+function sleep2(milliseconds) {
+  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
+}
+function readJsonObject(path) {
+  try {
+    const parsed = JSON.parse(readFileSync3(path, "utf8"));
+    return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+function writeJsonAtomic(path, value) {
+  mkdirSync2(dirname3(path), { recursive: true });
+  const temporary = `${path}.tmp-${process.pid}`;
+  writeFileSync2(temporary, JSON.stringify(value));
+  renameSync2(temporary, path);
+}
+function defaultPreviewAssetsDir() {
+  return join7(dirname3(fileURLToPath2(import.meta.url)), "..", "assets", "preview-host");
+}
+var PreviewHostController = class {
+  #options;
+  #timings;
+  #watch;
+  #session;
+  #starting = false;
+  constructor(options) {
+    this.#options = options;
+    this.#timings = { ...DEFAULT_PREVIEW_TIMINGS, ...options.timings };
+    this.#watch = options.watch ?? watchPackageTree;
+  }
+  #log(line) {
+    this.#options.log?.(`ios-simulator preview: ${line}`);
+  }
+  get running() {
+    return this.#session !== void 0;
+  }
+  /** Validate the package, build and launch the host, push the first preview, start watching. */
+  async start(options) {
+    if (this.#session !== void 0 || this.#starting) {
+      throw new Error(`a preview session is already running for ${this.#session?.packagePath ?? "another package"} \u2014 only one at a time; stop it first (action "stop") or inspect it (action "status")`);
+    }
+    const packagePath = resolve3(options.packagePath);
+    if (!existsSync3(join7(packagePath, "Package.swift")) || !statSync4(packagePath).isDirectory()) {
+      throw new Error(`packagePath must be a Swift package directory containing Package.swift: ${packagePath}`);
+    }
+    const manifest = readPackageManifest(packagePath);
+    if (manifest.libraryTargets.length === 0) {
+      throw new Error(`${packagePath} has no library targets \u2014 previews are read from .target(...) sources`);
+    }
+    const filter = options.previewFilter?.trim() || void 0;
+    const scanned = scanPackagePreviews(manifest);
+    const matching = filterPreviews(scanned, filter);
+    if (matching.length === 0) {
+      throw new Error(filter === void 0 ? `no SwiftUI previews found in ${packagePath} \u2014 looked for #Preview { \u2026 } and struct X: PreviewProvider in the library targets' sources` : `previewFilter ${JSON.stringify(filter)} matched none of the ${scanned.length} previews${scanned.length === 0 ? "" : `: ${scanned.map((preview) => preview.name).join(", ")}`}`);
+    }
+    this.#starting = true;
+    const platformVersion = Math.max(DEFAULT_IOS_PLATFORM_VERSION, manifest.iosVersion ?? DEFAULT_IOS_PLATFORM_VERSION);
+    const arch = this.#options.arch ?? (process.arch === "x64" ? "x86_64" : "arm64");
+    const sessionDir = join7(this.#options.cacheDir, projectSlug(packagePath));
+    const session = {
+      packagePath,
+      packageName: manifest.name,
+      device: options.device,
+      pid: "",
+      ...filter === void 0 ? {} : { filter },
+      dropDir: "",
+      dylibPackageDir: join7(sessionDir, "dylib-package"),
+      triple: `${arch}-apple-ios${platformVersion}.0-simulator`,
+      platformVersion,
+      sdk: "",
+      generation: 0,
+      loadedGeneration: 0,
+      previews: toPreviewEntries(matching),
+      watcher: { close() {
+      } },
+      rebuildRunning: false,
+      rebuildQueued: false,
+      reloads: 0,
+      startedAt: Date.now(),
+      disposed: false
+    };
+    try {
+      session.sdk = await this.#options.toolchain.sdkPath(options.signal);
+      this.#log(`building the host app for ${packagePath}`);
+      const appPath = await this.#buildHostApp(sessionDir, session, platformVersion, options.signal);
+      const { udid } = options.device;
+      await this.#options.simctl.installApp(udid, appPath, options.signal);
+      const launched = await this.#options.simctl.launchApp(udid, PREVIEW_HOST_BUNDLE_ID, options.signal);
+      session.pid = /:\s*(\d+)\s*$/u.exec(launched.trim())?.[1] ?? "";
+      session.dropDir = join7(await this.#options.simctl.getAppContainer(udid, PREVIEW_HOST_BUNDLE_ID, options.signal), "Documents", DROP_DIR_NAME);
+      this.#writeDylibPackage(session, manifest.productNames, platformVersion, matching, manifest.libraryTargets);
+      const build = await this.#options.toolchain.swiftBuild(session.dylibPackageDir, session.triple, session.sdk, options.signal);
+      if (build.exitCode !== 0) {
+        throw new Error(`swift build failed (exit ${String(build.exitCode)}) for ${packagePath}:
+${filterSwiftBuildErrors(build.lines).join("\n")}`);
+      }
+      await this.#pushGeneration(session, matching, options.signal);
+      if (!await this.#waitForHost(session, 1, this.#timings.hostConfirmMs)) {
+        const error62 = this.#hostResult(session).error;
+        throw new Error(`the preview host did not confirm the first preview within ${this.#timings.hostConfirmMs / 1e3}s${typeof error62 === "string" && error62 !== "" ? ` (host reports: ${error62})` : ""}`);
+      }
+      session.loadedGeneration = 1;
+      session.watcher = this.#watch(packagePath, () => this.#scheduleRebuild(session));
+      this.#session = session;
+      this.#log(`live: ${session.previews.length} preview(s) on ${options.device.name}`);
+      return this.status();
+    } catch (error62) {
+      session.disposed = true;
+      await this.#removeHost(session.device.udid).catch(() => void 0);
+      throw error62;
+    } finally {
+      this.#starting = false;
+    }
+  }
+  /** A live snapshot; reads the host's result.json for its confirmed generation. */
+  status() {
+    const session = this.#session;
+    if (session === void 0) return { running: false };
+    const live = this.#hostResult(session);
+    if (typeof live.generation === "number" && live.generation > session.loadedGeneration) session.loadedGeneration = live.generation;
+    const hostError = typeof live.error === "string" && live.error !== "" ? `host: ${live.error}` : void 0;
+    const runtimeError = session.lastRuntimeError ?? hostError;
+    return {
+      running: true,
+      device: { udid: session.device.udid, name: session.device.name },
+      package: { path: session.packagePath, name: session.packageName },
+      host: { bundleId: PREVIEW_HOST_BUNDLE_ID, ...session.pid === "" ? {} : { pid: session.pid } },
+      generation: session.generation,
+      loadedGeneration: session.loadedGeneration,
+      previews: session.previews,
+      reloads: session.reloads,
+      ...session.lastReload === void 0 ? {} : { lastReload: session.lastReload },
+      ...session.lastBuildError === void 0 ? {} : { lastBuildError: session.lastBuildError },
+      ...runtimeError === void 0 ? {} : { lastRuntimeError: runtimeError },
+      startedAt: session.startedAt
+    };
+  }
+  /** Stop watching, then terminate and uninstall the host app. */
+  async stop(signal) {
+    const session = this.#session;
+    if (session === void 0) return { stopped: false };
+    session.disposed = true;
+    if (session.debounceTimer !== void 0) clearTimeout(session.debounceTimer);
+    session.watcher.close();
+    this.#session = void 0;
+    await this.#removeHost(session.device.udid, signal);
+    this.#log(`stopped (${session.reloads} reloads)`);
+    return { stopped: true, device: session.device, reloads: session.reloads };
+  }
+  async dispose() {
+    await this.stop().catch(() => void 0);
+  }
+  async #removeHost(udid, signal) {
+    await this.#options.simctl.terminateApp(udid, PREVIEW_HOST_BUNDLE_ID, signal).catch(() => void 0);
+    await this.#options.simctl.uninstallApp(udid, PREVIEW_HOST_BUNDLE_ID, signal).catch(() => void 0);
+  }
+  async #buildHostApp(sessionDir, session, platformVersion, signal) {
+    const packageDir = join7(sessionDir, "host-package");
+    const sources = join7(packageDir, "Sources", HOST_TARGET_NAME);
+    mkdirSync2(sources, { recursive: true });
+    const assetsDir = this.#options.assetsDir ?? defaultPreviewAssetsDir();
+    for (const name of HOST_SOURCES) {
+      if (!existsSync3(join7(assetsDir, name))) throw new Error(`the preview host sources are missing (${join7(assetsDir, name)}) \u2014 reinstall the plugin`);
+      copyFileSync(join7(assetsDir, name), join7(sources, name));
+    }
+    writeFileSync2(join7(packageDir, "Package.swift"), generateHostPackageSwift(platformVersion));
+    const build = await this.#options.toolchain.swiftBuild(packageDir, session.triple, session.sdk, signal);
+    if (build.exitCode !== 0) {
+      throw new Error(`swift build failed (exit ${String(build.exitCode)}) for the preview host:
+${filterSwiftBuildErrors(build.lines).join("\n")}`);
+    }
+    const executable = join7(await this.#options.toolchain.binPath(packageDir, session.triple, session.sdk, signal), HOST_TARGET_NAME);
+    if (!existsSync3(executable)) throw new Error(`the built preview host executable is missing: ${executable}`);
+    const appDir = join7(sessionDir, `${HOST_TARGET_NAME}.app`);
+    rmSync2(appDir, { recursive: true, force: true });
+    mkdirSync2(appDir, { recursive: true });
+    copyFileSync(executable, join7(appDir, HOST_TARGET_NAME));
+    writeFileSync2(join7(appDir, "Info.plist"), generateInfoPlist(platformVersion));
+    await this.#options.toolchain.codesign(appDir, signal);
+    return appDir;
+  }
+  /** Write the dylib package (kept between rebuilds so SwiftPM builds incrementally). */
+  #writeDylibPackage(session, productNames, platformVersion, previews, modules) {
+    const entryDir = join7(session.dylibPackageDir, "Sources", "PreviewEntry");
+    mkdirSync2(entryDir, { recursive: true });
+    const manifestPath = join7(session.dylibPackageDir, "Package.swift");
+    const manifestText = generateDylibPackageSwift(session.packagePath, session.packageName, productNames, platformVersion);
+    if (!existsSync3(manifestPath) || readFileSync3(manifestPath, "utf8") !== manifestText) writeFileSync2(manifestPath, manifestText);
+    const entryPath = join7(entryDir, "Entry.swift");
+    const entryText = generateEntrySwift(previews, modules);
+    if (!existsSync3(entryPath) || readFileSync3(entryPath, "utf8") !== entryText) writeFileSync2(entryPath, entryText);
+  }
+  async #pushGeneration(session, previews, signal) {
+    const dylib = join7(await this.#options.toolchain.binPath(session.dylibPackageDir, session.triple, session.sdk, signal), DYLIB_LIBRARY_NAME);
+    if (!existsSync3(dylib)) throw new Error(`the built preview dylib is missing: ${dylib}`);
+    const generation = session.generation + 1;
+    mkdirSync2(session.dropDir, { recursive: true });
+    const target = join7(session.dropDir, `preview_${generation}.dylib`);
+    copyFileSync(dylib, target);
+    await this.#options.toolchain.codesign(target, signal);
+    session.generation = generation;
+    writeJsonAtomic(join7(session.dropDir, "manifest.json"), {
+      generation,
+      dylib: `preview_${generation}.dylib`,
+      previews: previews.map((preview) => preview.name)
+    });
+    for (const entry of readdirSync3(session.dropDir)) {
+      const old = /^preview_(\d+)\.dylib$/u.exec(entry);
+      if (old !== null && Number(old[1]) <= generation - KEPT_DYLIB_GENERATIONS) rmSync2(join7(session.dropDir, entry), { force: true });
+    }
+  }
+  async #waitForHost(session, generation, timeoutMs) {
+    const deadline = Date.now() + timeoutMs;
+    for (; ; ) {
+      const live = this.#hostResult(session).generation;
+      if (typeof live === "number" && live >= generation) return true;
+      if (Date.now() >= deadline) return false;
+      await sleep2(this.#timings.pollMs);
+    }
+  }
+  #hostResult(session) {
+    return session.dropDir === "" ? {} : readJsonObject(join7(session.dropDir, "result.json"));
+  }
+  #scheduleRebuild(session) {
+    if (session.disposed) return;
+    if (session.rebuildRunning) {
+      session.rebuildQueued = true;
+      return;
+    }
+    if (session.debounceTimer !== void 0) clearTimeout(session.debounceTimer);
+    session.debounceTimer = setTimeout(() => {
+      session.debounceTimer = void 0;
+      void this.#rebuild(session);
+    }, this.#timings.debounceMs);
+  }
+  /** Rescan, regenerate, rebuild, push, confirm. Never throws: failures land in status(). */
+  async #rebuild(session) {
+    if (session.disposed) return;
+    session.rebuildRunning = true;
+    const startedAt = Date.now();
+    try {
+      const manifest = readPackageManifest(session.packagePath);
+      const matching = filterPreviews(scanPackagePreviews(manifest), session.filter);
+      session.previews = toPreviewEntries(matching);
+      this.#writeDylibPackage(session, manifest.productNames, session.platformVersion, matching, manifest.libraryTargets);
+      const buildStartedAt = Date.now();
+      const build = await this.#options.toolchain.swiftBuild(session.dylibPackageDir, session.triple, session.sdk);
+      const buildMs = Date.now() - buildStartedAt;
+      if (session.disposed) return;
+      if (build.exitCode !== 0) {
+        session.lastBuildError = [`swift build failed (exit ${String(build.exitCode)})`, ...filterSwiftBuildErrors(build.lines)];
+        session.lastRuntimeError = void 0;
+        this.#log(`rebuild failed; keeping generation ${session.loadedGeneration}`);
+        return;
+      }
+      session.lastBuildError = void 0;
+      await this.#pushGeneration(session, matching);
+      if (await this.#waitForHost(session, session.generation, this.#timings.reloadConfirmMs)) {
+        const totalMs = Date.now() - startedAt;
+        session.loadedGeneration = session.generation;
+        session.reloads += 1;
+        session.lastReload = { generation: session.generation, buildMs, totalMs };
+        session.lastRuntimeError = void 0;
+        this.#log(`hot reloaded generation ${session.generation} (build ${buildMs} ms, total ${totalMs} ms)`);
+      } else {
+        session.lastRuntimeError = `the host did not confirm generation ${session.generation} within ${this.#timings.reloadConfirmMs / 1e3}s \u2014 keeping the last good preview`;
+      }
+    } catch (error62) {
+      session.lastRuntimeError = errorMessage3(error62);
+    } finally {
+      session.rebuildRunning = false;
+      if (session.rebuildQueued && !session.disposed) {
+        session.rebuildQueued = false;
+        void this.#rebuild(session);
+      }
+    }
+  }
+};
+function watchPackageTree(root, onChange) {
+  const watchers = [];
+  let closed = false;
+  try {
+    watchers.push(watch(root, { recursive: true }, (_event, filename) => {
+      if (!closed && isWatchedChange(typeof filename === "string" ? filename : "")) onChange();
+    }));
+  } catch {
+    const attach = (dir) => {
+      watchers.push(watch(dir, () => {
+        if (!closed) onChange();
+      }));
+      let entries;
+      try {
+        entries = readdirSync3(dir, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const entry of entries) {
+        if (entry.isDirectory() && !IGNORED_DIRS.has(entry.name)) attach(join7(dir, entry.name));
+      }
+    };
+    attach(root);
+  }
+  return {
+    close() {
+      closed = true;
+      for (const watcher of watchers) watcher.close();
+    }
+  };
+}
+var xcrunToolchain = {
+  sdkPath: (signal) => new Promise((resolveSdk, reject) => {
+    execFile5("xcrun", ["--show-sdk-path", "--sdk", "iphonesimulator"], { timeout: 3e4, signal }, (error62, stdout) => {
+      if (error62 !== null) reject(new Error(`xcrun --show-sdk-path --sdk iphonesimulator failed: ${error62.message}`));
+      else resolveSdk(stdout.trim());
+    });
+  }),
+  swiftBuild: (packageDir, triple, sdk, signal) => new Promise((resolveBuild) => {
+    const child = spawn3("xcrun", ["swift", "build", "--sdk", sdk, "--triple", triple, "--disable-index-store"], { cwd: packageDir, stdio: ["ignore", "pipe", "pipe"] });
+    const lines = [];
+    let partial2 = "";
+    const collect = (chunk) => {
+      const parts = (partial2 + chunk.toString("utf8")).split("\n");
+      partial2 = parts.pop() ?? "";
+      for (const line of parts) {
+        lines.push(line.trimEnd());
+        if (lines.length > SWIFT_OUTPUT_RING_LINES) lines.shift();
+      }
+    };
+    child.stdout.on("data", collect);
+    child.stderr.on("data", collect);
+    const kill = () => {
+      child.kill("SIGKILL");
+    };
+    const timer = setTimeout(kill, SWIFT_BUILD_TIMEOUT_MS);
+    signal?.addEventListener("abort", kill, { once: true });
+    const finish = (exitCode) => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", kill);
+      if (partial2 !== "") lines.push(partial2.trimEnd());
+      resolveBuild({ exitCode, lines });
+    };
+    child.once("error", (error62) => {
+      lines.push(`failed to start xcrun swift build: ${error62.message}`);
+      finish(-1);
+    });
+    child.once("close", finish);
+  }),
+  binPath: (packageDir, triple, sdk, signal) => new Promise((resolvePath, reject) => {
+    execFile5(
+      "xcrun",
+      ["swift", "build", "--sdk", sdk, "--triple", triple, "--disable-index-store", "--show-bin-path"],
+      { cwd: packageDir, timeout: 6e4, maxBuffer: 1024 * 1024, signal },
+      (error62, stdout, stderr) => {
+        const path = stdout.trim();
+        if (error62 !== null || path === "") reject(new Error(`swift build --show-bin-path failed${stderr.trim() === "" ? "" : `: ${stderr.trim()}`}`));
+        else resolvePath(path);
+      }
+    );
+  }),
+  codesign: (path, signal) => new Promise((resolveSign, reject) => {
+    execFile5("codesign", ["--force", "--sign", "-", path], { timeout: 12e4, signal }, (error62, _stdout, stderr) => {
+      if (error62 !== null) reject(new Error(`codesign failed for ${path}${stderr.trim() === "" ? "" : `: ${stderr.trim()}`}`));
+      else resolveSign();
+    });
+  })
+};
+
 // src/panel/panel-server.ts
 import { createReadStream, lstatSync, realpathSync } from "node:fs";
 import { readFile as readFile4 } from "node:fs/promises";
 import { createServer, get as httpGet } from "node:http";
-import { basename as basename2, join as join7, sep } from "node:path";
+import { basename as basename2, join as join9, sep as sep2 } from "node:path";
 import { pipeline } from "node:stream";
 
 // node_modules/ws/wrapper.mjs
@@ -41784,7 +42489,7 @@ var import_websocket = __toESM(require_websocket(), 1);
 var import_websocket_server = __toESM(require_websocket_server(), 1);
 
 // src/device-actions.ts
-import { execFile as execFile5 } from "node:child_process";
+import { execFile as execFile6 } from "node:child_process";
 var OSASCRIPT_TIMEOUT_MS = 8e3;
 var DEVICE_ACTIONS = [
   "app-switcher",
@@ -41870,10 +42575,10 @@ function simulatorHomeKeystrokeScript(repeat) {
   return focusedSimulatorScript(presses);
 }
 function runOsascript(script, timeoutMs) {
-  return new Promise((resolve4, reject) => {
-    execFile5("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
+  return new Promise((resolve6, reject) => {
+    execFile6("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
       if (error62 === null) {
-        resolve4();
+        resolve6();
         return;
       }
       const detail = `${stderr === "" ? error62.message : stderr}`.trim();
@@ -41897,10 +42602,10 @@ async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRI
 }
 
 // src/screenshot.ts
-import { execFile as execFile6 } from "node:child_process";
-import { closeSync, existsSync as existsSync2, mkdirSync as mkdirSync2, openSync, readSync, readdirSync as readdirSync2, statSync as statSync4, unlinkSync } from "node:fs";
+import { execFile as execFile7 } from "node:child_process";
+import { closeSync, existsSync as existsSync4, mkdirSync as mkdirSync3, openSync, readSync, readdirSync as readdirSync4, statSync as statSync5, unlinkSync } from "node:fs";
 import { readFile as readFile3, rm } from "node:fs/promises";
-import { join as join6 } from "node:path";
+import { join as join8 } from "node:path";
 var FILE_PATTERN = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
 var SIPS_TIMEOUT_MS = 3e4;
 function isScreenshotFileName(name) {
@@ -41947,10 +42652,10 @@ function jpegSize(buffer) {
   return void 0;
 }
 function runSips(args) {
-  return new Promise((resolve4, reject) => {
-    execFile6("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
+  return new Promise((resolve6, reject) => {
+    execFile7("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
       if (error62 === null) {
-        resolve4();
+        resolve6();
         return;
       }
       reject(new Error(`sips failed: ${stderr.trim() === "" ? error62.message : stderr.trim()}`));
@@ -41976,22 +42681,22 @@ var ScreenshotStore = class {
    * names already on disk are skipped so concurrent writers never collide.
    */
   nextPath(udid) {
-    mkdirSync2(this.dir, { recursive: true });
+    mkdirSync3(this.dir, { recursive: true });
     const safe = udid.replace(/[^A-Za-z0-9_-]/g, "_");
     let next = this.#next.get(safe);
     if (next === void 0) {
       next = 0;
       const prefix = `screenshot-${safe}-`;
-      for (const entry of readdirSync2(this.dir)) {
+      for (const entry of readdirSync4(this.dir)) {
         if (!entry.startsWith(prefix) || !entry.endsWith(".png")) continue;
         const index = Number(entry.slice(prefix.length, -4));
         if (Number.isInteger(index) && index >= next) next = index + 1;
       }
     }
-    let path = join6(this.dir, `screenshot-${safe}-${next}.png`);
-    while (existsSync2(path)) {
+    let path = join8(this.dir, `screenshot-${safe}-${next}.png`);
+    while (existsSync4(path)) {
       next += 1;
-      path = join6(this.dir, `screenshot-${safe}-${next}.png`);
+      path = join8(this.dir, `screenshot-${safe}-${next}.png`);
     }
     this.#next.set(safe, next + 1);
     return path;
@@ -42000,7 +42705,7 @@ var ScreenshotStore = class {
   async capture(udid, signal) {
     const path = this.nextPath(udid);
     await this.#take(udid, path, signal);
-    const bytes = statSync4(path).size;
+    const bytes = statSync5(path).size;
     const size = readPngSize(path);
     this.prune();
     return { path, bytes, ...size === void 0 ? {} : size };
@@ -42009,16 +42714,16 @@ var ScreenshotStore = class {
   prune() {
     let names;
     try {
-      names = readdirSync2(this.dir).filter(isScreenshotFileName);
+      names = readdirSync4(this.dir).filter(isScreenshotFileName);
     } catch {
       return;
     }
     if (names.length <= this.#keep) return;
     const entries = names.map((name) => {
-      const path = join6(this.dir, name);
+      const path = join8(this.dir, name);
       let mtime = 0;
       try {
-        mtime = statSync4(path).mtimeMs;
+        mtime = statSync5(path).mtimeMs;
       } catch {
       }
       return { path, mtime, index: Number(FILE_PATTERN.exec(name)?.[1] ?? 0) };
@@ -42177,7 +42882,7 @@ var HttpError = class extends Error {
   }
   status;
 };
-function errorMessage3(error62) {
+function errorMessage4(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function sendJson(res, status, value) {
@@ -42258,7 +42963,7 @@ var PanelServer = class {
     this.#server = void 0;
     if (server !== void 0) {
       server.closeAllConnections();
-      await new Promise((resolve4) => server.close(() => resolve4()));
+      await new Promise((resolve6) => server.close(() => resolve6()));
     }
   }
   async #listen() {
@@ -42274,11 +42979,11 @@ var PanelServer = class {
         void this.#handleUpgrade(req, socket, head);
       });
       try {
-        await new Promise((resolve4, reject) => {
+        await new Promise((resolve6, reject) => {
           server.once("error", reject);
           server.listen(port, "127.0.0.1", () => {
             server.off("error", reject);
-            resolve4();
+            resolve6();
           });
         });
       } catch (error62) {
@@ -42287,14 +42992,14 @@ var PanelServer = class {
         break;
       }
       server.on("error", (error62) => {
-        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage3(error62)}
+        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage4(error62)}
 `);
       });
       this.#server = server;
       this.#port = server.address().port;
       return `http://127.0.0.1:${this.#port}/`;
     }
-    throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage3(lastError)}`);
+    throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage4(lastError)}`);
   }
   #allowed(req, kind) {
     return checkRequest({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, this.#port, kind).ok;
@@ -42329,11 +43034,11 @@ var PanelServer = class {
         res.destroy();
         return;
       }
-      sendJson(res, error62 instanceof HttpError ? error62.status : 500, { ok: false, error: errorMessage3(error62) });
+      sendJson(res, error62 instanceof HttpError ? error62.status : 500, { ok: false, error: errorMessage4(error62) });
     }
   }
   async #serveStatic(res, entry) {
-    const body = await readFile4(join7(this.#options.staticDir, entry.file));
+    const body = await readFile4(join9(this.#options.staticDir, entry.file));
     const port = this.#port;
     res.writeHead(200, {
       "content-type": entry.type,
@@ -42369,7 +43074,7 @@ var PanelServer = class {
       streamUrl = (await this.#options.host.ensureRunning({ udid: status.device })).streamUrl;
     } catch (error62) {
       release();
-      throw new HttpError(502, `the simulator stream failed to start: ${errorMessage3(error62)}`);
+      throw new HttpError(502, `the simulator stream failed to start: ${errorMessage4(error62)}`);
     }
     if (this.#disposed || res.destroyed) {
       release();
@@ -42420,11 +43125,11 @@ var PanelServer = class {
     const dir = this.#options.screenshots.dir;
     let real;
     try {
-      const path = join7(dir, name);
+      const path = join9(dir, name);
       const stat = lstatSync(path);
       if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, "not found");
       real = realpathSync(path);
-      if (!real.startsWith(realpathSync(dir) + sep)) throw new HttpError(404, "not found");
+      if (!real.startsWith(realpathSync(dir) + sep2)) throw new HttpError(404, "not found");
     } catch (error62) {
       throw error62 instanceof HttpError ? error62 : new HttpError(404, "not found");
     }
@@ -42471,7 +43176,7 @@ var PanelServer = class {
     try {
       device = await this.#options.simctl.getDevice(udid);
     } catch (error62) {
-      throw new HttpError(409, errorMessage3(error62));
+      throw new HttpError(409, errorMessage4(error62));
     }
     if (device.state !== "Booted") await this.#options.simctl.bootDevice(device.udid);
     await this.#options.host.ensureRunning({ udid: device.udid });
@@ -42573,19 +43278,19 @@ var PanelServer = class {
 };
 
 // src/recorder.ts
-import { spawn as spawn3 } from "node:child_process";
-import { mkdirSync as mkdirSync3, statSync as statSync5 } from "node:fs";
-import { dirname as dirname3, join as join8 } from "node:path";
+import { spawn as spawn4 } from "node:child_process";
+import { mkdirSync as mkdirSync4, statSync as statSync6 } from "node:fs";
+import { dirname as dirname4, join as join10 } from "node:path";
 function recordVideoArgs(udid, path) {
   return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
 }
-var spawnXcrunRecord = (udid, path) => spawn3("xcrun", recordVideoArgs(udid, path), { stdio: ["ignore", "ignore", "pipe"] });
+var spawnXcrunRecord = (udid, path) => spawn4("xcrun", recordVideoArgs(udid, path), { stdio: ["ignore", "ignore", "pipe"] });
 function safeName(udid) {
   return udid.replace(/[^A-Za-z0-9_-]/g, "_");
 }
 function fileSize(path) {
   try {
-    return statSync5(path).size;
+    return statSync6(path).size;
   } catch {
     return 0;
   }
@@ -42612,7 +43317,7 @@ var Recorder = class {
   }
   defaultPath(udid) {
     const stamp = new Date(this.#now()).toISOString().replace(/[:.]/g, "-");
-    return join8(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
+    return join10(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
   }
   async start(udid, outputPath) {
     const running = this.#active.get(udid);
@@ -42627,11 +43332,11 @@ var Recorder = class {
       const requested = outputPath?.trim() ?? "";
       const path = requested === "" ? this.defaultPath(udid) : requested;
       if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`);
-      mkdirSync3(dirname3(path), { recursive: true });
+      mkdirSync4(dirname4(path), { recursive: true });
       const child = this.#spawnRecord(udid, path);
-      const exited = new Promise((resolve4) => {
-        child.once("exit", (code) => resolve4(code));
-        child.once("error", () => resolve4(null));
+      const exited = new Promise((resolve6) => {
+        child.once("exit", (code) => resolve6(code));
+        child.once("error", () => resolve6(null));
       });
       await this.#waitForStart(child, exited);
       const info = { udid, path, startedAt: this.#now() };
@@ -42656,8 +43361,8 @@ var Recorder = class {
     let timer;
     const outcome = await Promise.race([
       recording.exited.then((code) => ({ code })),
-      new Promise((resolve4) => {
-        timer = setTimeout(() => resolve4("timeout"), this.#stopTimeoutMs);
+      new Promise((resolve6) => {
+        timer = setTimeout(() => resolve6("timeout"), this.#stopTimeoutMs);
       })
     ]);
     if (timer !== void 0) clearTimeout(timer);
@@ -42700,7 +43405,7 @@ var Recorder = class {
     };
   }
   #waitForStart(child, exited) {
-    return new Promise((resolve4, reject) => {
+    return new Promise((resolve6, reject) => {
       let stderr = "";
       let settled = false;
       const onData = (chunk) => {
@@ -42712,7 +43417,7 @@ var Recorder = class {
         settled = true;
         clearTimeout(timer);
         child.stderr?.off("data", onData);
-        if (error62 === void 0) resolve4();
+        if (error62 === void 0) resolve6();
         else reject(error62);
       };
       const detail = () => stderr.trim() === "" ? "" : `: ${stderr.trim()}`;
@@ -42730,15 +43435,15 @@ var Recorder = class {
 
 // src/sim-host.ts
 import {
-  execFile as execFile7,
-  spawn as spawn4
+  execFile as execFile8,
+  spawn as spawn5
 } from "node:child_process";
-import { readFileSync as readFileSync2, statSync as statSync6 } from "node:fs";
+import { readFileSync as readFileSync4, statSync as statSync7 } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
 import { createServer as createServer2 } from "node:net";
-import { delimiter as delimiter3, dirname as dirname4, join as join9 } from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
+import { delimiter as delimiter3, dirname as dirname5, join as join11 } from "node:path";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
 var SERVE_SIM_PACKAGE = "serve-sim";
 var STREAM_PORT_RANGE_START = 3181;
 var STREAM_PORT_RANGE_LENGTH = 64;
@@ -42753,15 +43458,15 @@ var STDERR_RING_LINES = 40;
 var STDERR_LINE_MAX_CHARS = 240;
 var ADOPT_GRACE_MS = 1500;
 var ADOPTED_PROBE_TIMEOUT_MS = 2e3;
-function errorMessage4(error62) {
+function errorMessage5(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep2(milliseconds) {
-  return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
+function sleep3(milliseconds) {
+  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
 }
 function isExecutableFile2(path) {
   try {
-    const info = statSync6(path);
+    const info = statSync7(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
@@ -42769,7 +43474,7 @@ function isExecutableFile2(path) {
 }
 function isFile2(path) {
   try {
-    return statSync6(path).isFile();
+    return statSync7(path).isFile();
   } catch {
     return false;
   }
@@ -42777,7 +43482,7 @@ function isFile2(path) {
 function findOnPath3(command) {
   for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
     if (dir === "") continue;
-    const candidate = join9(dir, command);
+    const candidate = join11(dir, command);
     if (isExecutableFile2(candidate)) return candidate;
   }
   return void 0;
@@ -42787,11 +43492,11 @@ function resolvePackageManifest(packageName) {
     return createRequire(import.meta.url).resolve(`${packageName}/package.json`);
   } catch {
   }
-  let current = dirname4(fileURLToPath2(import.meta.url));
+  let current = dirname5(fileURLToPath3(import.meta.url));
   for (; ; ) {
-    const candidate = join9(current, "node_modules", packageName, "package.json");
+    const candidate = join11(current, "node_modules", packageName, "package.json");
     if (isFile2(candidate)) return candidate;
-    const parent = dirname4(current);
+    const parent = dirname5(current);
     if (parent === current) return void 0;
     current = parent;
   }
@@ -42800,7 +43505,7 @@ function tryResolvePackageBin() {
   const manifestPath = resolvePackageManifest(SERVE_SIM_PACKAGE);
   if (manifestPath === void 0) return void 0;
   try {
-    const manifest = JSON.parse(readFileSync2(manifestPath, "utf8"));
+    const manifest = JSON.parse(readFileSync4(manifestPath, "utf8"));
     const bin = manifest.bin;
     let binPath;
     if (typeof bin === "string") binPath = bin;
@@ -42809,7 +43514,7 @@ function tryResolvePackageBin() {
       if (typeof candidate === "string") binPath = candidate;
     }
     if (binPath === void 0) return void 0;
-    const resolved = join9(dirname4(manifestPath), binPath);
+    const resolved = join11(dirname5(manifestPath), binPath);
     return isExecutableFile2(resolved) ? resolved : void 0;
   } catch {
     return void 0;
@@ -42861,7 +43566,7 @@ function parseServeSimHandshake(line) {
   };
 }
 function waitForStreamHandshake(child, timeoutMs, diagnostics) {
-  return new Promise((resolve4, reject) => {
+  return new Promise((resolve6, reject) => {
     let settled = false;
     let stdout = "";
     const finish = (error62, info) => {
@@ -42872,7 +43577,7 @@ function waitForStreamHandshake(child, timeoutMs, diagnostics) {
       child.off("error", onError);
       child.off("close", onClose);
       if (error62 !== void 0) reject(error62);
-      else resolve4(info);
+      else resolve6(info);
     };
     const onData = (chunk) => {
       stdout += chunk.toString("utf8");
@@ -43001,8 +43706,8 @@ function serveSimControlArgs(command, udid, positionals) {
   return [command, "-d", udid, "--", ...positionals];
 }
 function execServeSim(binary, args, timeoutMs) {
-  return new Promise((resolve4, reject) => {
-    execFile7(binary.command, [...binary.args, ...args], {
+  return new Promise((resolve6, reject) => {
+    execFile8(binary.command, [...binary.args, ...args], {
       timeout: timeoutMs,
       maxBuffer: 4 * 1024 * 1024
     }, (error62, stdout, stderr) => {
@@ -43016,7 +43721,7 @@ function execServeSim(binary, args, timeoutMs) {
         ));
         return;
       }
-      resolve4({ stdout, stderr });
+      resolve6({ stdout, stderr });
     });
   });
 }
@@ -43144,7 +43849,7 @@ var SimHostController = class {
       this.#armIdle();
       return info;
     } catch (error62) {
-      this.#lastError = errorMessage4(error62);
+      this.#lastError = errorMessage5(error62);
       throw error62;
     } finally {
       if (this.#starting === starting) this.#starting = void 0;
@@ -43293,7 +43998,7 @@ var SimHostController = class {
       kill(-child.pid, "SIGTERM");
     } catch (error62) {
       if (error62.code !== "ESRCH") {
-        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage4(error62)}
+        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage5(error62)}
 `);
       }
     }
@@ -43320,7 +44025,7 @@ var SimHostController = class {
       this.#restarts += 1;
       await this.ensureRunning({ udid: device });
     } catch (error62) {
-      this.#lastError = errorMessage4(error62);
+      this.#lastError = errorMessage5(error62);
       if (this.#exitAt === void 0) this.#exitAt = Date.now();
     }
   }
@@ -43358,7 +44063,7 @@ var SimHostController = class {
     }
     const sinceStop = Date.now() - this.#lastStopAt;
     if (sinceStop < this.#options.restartDelayMs) {
-      await sleep2(this.#options.restartDelayMs - sinceStop);
+      await sleep3(this.#options.restartDelayMs - sinceStop);
     }
     await bootDevice(udid);
     if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
@@ -43406,7 +44111,7 @@ var SimHostController = class {
     throw new Error(`ios-simulator: no free port for serve-sim in range ${start}..${start + STREAM_PORT_RANGE_LENGTH - 1}`);
   }
   #launchStream(udid, port) {
-    const child = spawn4(this.binary.command, [
+    const child = spawn5(this.binary.command, [
       ...this.binary.args,
       "--no-preview",
       "--quiet",
@@ -43444,7 +44149,7 @@ var SimHostController = class {
       if (info.port !== port) {
         const childExited = await Promise.race([
           waitForChildClose(child, ADOPT_GRACE_MS),
-          sleep2(ADOPT_GRACE_MS).then(() => false)
+          sleep3(ADOPT_GRACE_MS).then(() => false)
         ]);
         if (this.#launchEpoch !== epoch) {
           throw new Error("ios-simulator: serve-sim launch was superseded by stop()");
@@ -43498,14 +44203,14 @@ var SimHostController = class {
 };
 
 // src/stream-source.ts
-import { readFileSync as readFileSync3, unlinkSync as unlinkSync2 } from "node:fs";
+import { readFileSync as readFileSync5, unlinkSync as unlinkSync2 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join as join10 } from "node:path";
-function errorMessage5(error62) {
+import { join as join12 } from "node:path";
+function errorMessage6(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep3(milliseconds) {
-  return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
+function sleep4(milliseconds) {
+  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
 }
 function requireNormalized(x, y) {
   if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 1 || y < 0 || y > 1) {
@@ -43581,9 +44286,9 @@ var SimStreamSource = class {
       requireNormalized(drag.toX, drag.toY);
       const holdMs = Math.min(2e3, Math.max(20, Math.round((drag.duration ?? 0.3) * 500)));
       await this.#run("gesture", JSON.stringify({ type: "begin", x: drag.fromX, y: drag.fromY }));
-      await sleep3(holdMs);
+      await sleep4(holdMs);
       await this.#run("gesture", JSON.stringify({ type: "move", x: drag.toX, y: drag.toY }));
-      await sleep3(holdMs);
+      await sleep4(holdMs);
       await this.#run("gesture", JSON.stringify({ type: "end", x: drag.toX, y: drag.toY }));
     },
     button: async (name = "home") => {
@@ -43604,14 +44309,14 @@ var SimStreamSource = class {
     ),
     screenshot: async () => {
       const udid = this.#requireDevice();
-      const path = join10(tmpdir(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
+      const path = join12(tmpdir(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
       try {
         await takeScreenshot(udid, path);
-        const pngBase64 = readFileSync3(path).toString("base64");
+        const pngBase64 = readFileSync5(path).toString("base64");
         const size = pngDimensionsFromBase64(pngBase64);
         return { pngBase64, ...size === void 0 ? {} : size };
       } catch (error62) {
-        throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage5(error62)}`);
+        throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage6(error62)}`);
       } finally {
         try {
           unlinkSync2(path);
@@ -43635,8 +44340,8 @@ var SimStreamSource = class {
 };
 
 // src/tools/apps.ts
-import { existsSync as existsSync3 } from "node:fs";
-import { join as join11, resolve as resolve2 } from "node:path";
+import { existsSync as existsSync5 } from "node:fs";
+import { join as join13, resolve as resolve4 } from "node:path";
 
 // src/tools/result.ts
 var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name. Default: the streamed device, else the newest-runtime booted iPhone.");
@@ -43662,8 +44367,8 @@ async function runTool(tool, body) {
     return errorResult(tool, error62);
   }
 }
-function sleep4(milliseconds) {
-  return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
+function sleep5(milliseconds) {
+  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
 }
 
 // src/tools/apps.ts
@@ -43780,8 +44485,8 @@ function registerAppTools(server, deps) {
     inputSchema: { appPath: external_exports.string().min(1), udid: UDID_PARAM }
   }, async (args, extra) => runTool("ios_sim_install_app", async () => {
     assertMac(deps.platform);
-    const appPath = resolve2(args.appPath);
-    if (!existsSync3(join11(appPath, "Info.plist"))) {
+    const appPath = resolve4(args.appPath);
+    if (!existsSync5(join13(appPath, "Info.plist"))) {
       throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`);
     }
     const device = await resolveTargetDevice(deps, args.udid);
@@ -43889,11 +44594,11 @@ function simDragRequestOf(payload) {
 function loadWs() {
   return { WebSocket: import_websocket.default };
 }
-function errorMessage6(error62) {
+function errorMessage7(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep5(milliseconds) {
-  return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
+function sleep6(milliseconds) {
+  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
 }
 function gestureUnavailable(wsUrl, detail) {
   return new Error(
@@ -43930,7 +44635,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
   let broken;
   let finished = false;
   socket.on("error", (error62) => {
-    broken ??= `the control socket errored (${errorMessage6(error62)})`;
+    broken ??= `the control socket errored (${errorMessage7(error62)})`;
   });
   socket.on("close", (code, reason) => {
     if (finished) return;
@@ -43942,15 +44647,15 @@ async function sendSimGesture(wsUrl, points, options = {}) {
     await openSocket(socket, connectTimeoutMs, url2, () => broken);
     for (const [index, point] of path.entries()) {
       if (broken !== void 0) throw gestureUnavailable(url2, broken);
-      if (index > 0 && stepMs > 0) await sleep5(stepMs);
+      if (index > 0 && stepMs > 0) await sleep6(stepMs);
       socket.send(encodeSimTouchFrame(index === 0 ? "begin" : "move", point.x, point.y));
     }
     if (broken !== void 0) throw gestureUnavailable(url2, broken);
-    await new Promise((resolve4, reject) => {
+    await new Promise((resolve6, reject) => {
       const last = path[path.length - 1];
       socket.send(encodeSimTouchFrame("end", last.x, last.y), (error62) => {
-        if (error62 === void 0 || error62 === null) resolve4();
-        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage6(error62)})`));
+        if (error62 === void 0 || error62 === null) resolve6();
+        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage7(error62)})`));
       });
     });
     const elapsedMs = Date.now() - started;
@@ -43962,7 +44667,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
   }
 }
 function openSocket(socket, timeoutMs, url2, broken) {
-  return new Promise((resolve4, reject) => {
+  return new Promise((resolve6, reject) => {
     let settled = false;
     const timer = setTimeout(() => {
       if (settled) return;
@@ -43973,7 +44678,7 @@ function openSocket(socket, timeoutMs, url2, broken) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve4();
+      resolve6();
     });
     socket.once("close", () => {
       if (settled) return;
@@ -43985,13 +44690,13 @@ function openSocket(socket, timeoutMs, url2, broken) {
 }
 function closeSocket(socket, closedState) {
   if (socket.readyState === closedState) return Promise.resolve();
-  return new Promise((resolve4) => {
+  return new Promise((resolve6) => {
     let settled = false;
     const done = () => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve4();
+      resolve6();
     };
     const timer = setTimeout(() => {
       socket.terminate();
@@ -44026,10 +44731,10 @@ var SERVE_SIM_BUTTONS = [
   "digital-crown",
   "left-side-button"
 ];
-function sleep6(milliseconds) {
-  return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
+function sleep7(milliseconds) {
+  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
 }
-function errorMessage7(error62) {
+function errorMessage8(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function scrollRequestOf(args) {
@@ -44116,7 +44821,7 @@ async function performSimInteractControl(host, deviceUdid, payloads) {
     if (command === void 0) continue;
     await host.control(serveSimControlArgs(command, deviceUdid, positionals));
     if (payloads.length > 1 && payload !== payloads[payloads.length - 1]) {
-      await sleep6(SCROLL_HOLD_MS);
+      await sleep7(SCROLL_HOLD_MS);
     }
   }
 }
@@ -44141,7 +44846,7 @@ async function performSimInteract(host, deviceUdid, args, payloads, options = {}
         const report = await sendSimGesture(wsUrl, points, { stepMs: options.stepMs ?? SIM_GESTURE_STEP_MS });
         return { channel: "ws", frames: report.frames, elapsedMs: report.elapsedMs };
       } catch (error62) {
-        wsError = errorMessage7(error62);
+        wsError = errorMessage8(error62);
       }
     }
   }
@@ -44204,7 +44909,7 @@ var SILENT_RETRY_MS = 6e4;
 function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
   const since = givenUpAt.get(wsUrl);
   if (since !== void 0 && now() - since < SILENT_RETRY_MS) return Promise.resolve(void 0);
-  return new Promise((resolve4) => {
+  return new Promise((resolve6) => {
     let settled = false;
     const socket = new import_websocket.default(wsUrl, { perMessageDeflate: false });
     const finish = (config2) => {
@@ -44212,7 +44917,7 @@ function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
       settled = true;
       clearTimeout(timer);
       socket.terminate();
-      resolve4(config2);
+      resolve6(config2);
     };
     const timer = setTimeout(() => {
       const timeouts = (timeoutsInARow.get(wsUrl) ?? 0) + 1;
@@ -44481,7 +45186,7 @@ function registerCoreTools(server, deps) {
       ...warning === void 0 ? {} : { warning }
     };
     if (args.screenshot === false) return jsonResult(result);
-    await sleep4(deps.settleMs);
+    await sleep5(deps.settleMs);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
     const image = await deps.screenshots.toModelImage(capture);
     lastImageLandscape.set(device.udid, image.width > image.height);
@@ -44497,8 +45202,8 @@ function registerCoreTools(server, deps) {
 }
 
 // src/tools/debug.ts
-import { mkdirSync as mkdirSync4, statSync as statSync7, existsSync as existsSync4, readFileSync as readFileSync4 } from "node:fs";
-import { join as join12 } from "node:path";
+import { mkdirSync as mkdirSync5, statSync as statSync8, existsSync as existsSync6, readFileSync as readFileSync6 } from "node:fs";
+import { join as join14 } from "node:path";
 var MAX_LOG_LINES = 300;
 var MAX_LOG_BYTES = 30 * 1024;
 var SNAPSHOT_TIMEOUT_MS = 8 * 60 * 1e3;
@@ -44679,9 +45384,9 @@ function registerDebugTools(server, deps) {
       if (sample === void 0) {
         throw new Error(`LLDB capture is unavailable${note === void 0 ? "" : ` (${note})`} and Xcode's sample tool is not installed \u2014 install Xcode or the Command Line Tools`);
       }
-      const dir = join12(deps.cacheRoot, "samples");
-      mkdirSync4(dir, { recursive: true });
-      reportPath = join12(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
+      const dir = join14(deps.cacheRoot, "samples");
+      mkdirSync5(dir, { recursive: true });
+      reportPath = join14(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
       const outcome = await deps.devtools.run({
         command: sample,
         args: [String(target.pid), "1", "1", "-file", reportPath],
@@ -44689,11 +45394,11 @@ function registerDebugTools(server, deps) {
         timeoutMs: BACKTRACE_TIMEOUT_MS,
         signal: extra.signal
       });
-      if (!existsSync4(reportPath)) {
+      if (!existsSync6(reportPath)) {
         const detail = tailDiagnostic(outcome.stderr === "" ? outcome.stdout : outcome.stderr, 3);
         throw new Error(`sample of pid ${target.pid} produced no report${detail === "" ? "" : `: ${detail}`}`);
       }
-      threads = parseSampleThreads(readFileSync4(reportPath, "utf8"));
+      threads = parseSampleThreads(readFileSync6(reportPath, "utf8"));
       if (threads.length === 0) throw new Error(`sample of pid ${target.pid} produced no thread sections (report: ${reportPath})`);
     }
     const kept = orderThreads(threads, allThreads);
@@ -44733,9 +45438,9 @@ function registerDebugTools(server, deps) {
     const unavailable = (fatal2) => new Error(`leaks could not analyze pid ${target.pid}: ${fatal2} \u2014 ${DEVELOPER_MODE_HINT}`);
     const base = { device: deviceSummary(device), ...processSummary(target), mode };
     if (mode === "memgraph") {
-      const dir = join12(deps.cacheRoot, "memgraphs");
-      mkdirSync4(dir, { recursive: true });
-      const path = join12(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
+      const dir = join14(deps.cacheRoot, "memgraphs");
+      mkdirSync5(dir, { recursive: true });
+      const path = join14(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
       const outcome2 = await deps.devtools.run({
         command: leaks,
         args: [`--outputGraph=${path}`, String(target.pid)],
@@ -44746,7 +45451,7 @@ function registerDebugTools(server, deps) {
       });
       const fatal2 = leaksFatalDiagnostic(outcome2.stderr, outcome2.stdout);
       if (fatal2 !== void 0) throw unavailable(fatal2);
-      if (!existsSync4(path)) {
+      if (!existsSync6(path)) {
         const detail = tailDiagnostic(outcome2.stderr === "" ? outcome2.stdout : outcome2.stderr, 3);
         throw new Error(`leaks wrote no memgraph${detail === "" ? "" : `: ${detail}`}`);
       }
@@ -44754,7 +45459,7 @@ function registerDebugTools(server, deps) {
       return jsonResult({
         ...base,
         path,
-        bytes: statSync7(path).size,
+        bytes: statSync8(path).size,
         resumed: resumed2,
         ...resumed2 ? {} : { note: "the app was not observed running after the capture \u2014 check ios_sim_processes" }
       });
@@ -44827,7 +45532,7 @@ function registerDebugTools(server, deps) {
 // src/tools/env.ts
 import { randomUUID } from "node:crypto";
 import { mkdir, rm as rm2, writeFile } from "node:fs/promises";
-import { join as join13, resolve as resolve3 } from "node:path";
+import { join as join15, resolve as resolve5 } from "node:path";
 function registerEnvTools(server, deps) {
   const bootedDevice = async (tool, udid) => {
     assertMac(deps.platform);
@@ -44859,9 +45564,9 @@ function registerEnvTools(server, deps) {
     }
     const bundleId = args.bundleId.trim();
     const device = await bootedDevice("ios_sim_push", args.udid);
-    const dir = join13(deps.cacheRoot, "tmp");
+    const dir = join15(deps.cacheRoot, "tmp");
     await mkdir(dir, { recursive: true });
-    const file2 = join13(dir, `push-${randomUUID()}.json`);
+    const file2 = join15(dir, `push-${randomUUID()}.json`);
     await writeFile(file2, JSON.stringify(args.payload), { mode: 384 });
     try {
       await deps.simctl.sendPush(device.udid, bundleId, file2, extra.signal);
@@ -44909,7 +45614,7 @@ function registerEnvTools(server, deps) {
   }, async (args) => runTool("ios_sim_record", async () => {
     if (args.action === "start") {
       const device2 = await bootedDevice("ios_sim_record", args.udid);
-      const info = await deps.recorder.start(device2.udid, args.outputPath === void 0 ? void 0 : resolve3(args.outputPath));
+      const info = await deps.recorder.start(device2.udid, args.outputPath === void 0 ? void 0 : resolve5(args.outputPath));
       return jsonResult({ device: deviceSummary(device2), recording: true, path: info.path });
     }
     assertMac(deps.platform);
@@ -44923,6 +45628,51 @@ function registerEnvTools(server, deps) {
       durationMs: result.durationMs,
       ...result.warning === void 0 ? {} : { warning: result.warning }
     });
+  }));
+}
+
+// src/tools/preview.ts
+function registerPreviewTools(server, deps) {
+  server.registerTool("ios_sim_preview", {
+    title: "Live SwiftUI previews with hot reload",
+    description: 'Show the SwiftUI previews of a Swift package LIVE in the simulator, with hot reload. action "start" (default) builds a disposable preview host app in the plugin cache (never inside the package), builds the package into a dylib for the simulator, installs and launches the host, then watches the package: every saved edit is rebuilt and hot-swapped into the running host without relaunching (a few seconds). A compile error never ends the session \u2014 the last good preview stays up and action "status" shows the error tail. Finds #Preview { \u2026 } and struct X: PreviewProvider in the library targets; several previews can be paged in the host, or narrowed with previewFilter. One session at a time; action "stop" removes the host app. The first start builds the package and can take a minute. Returns panelUrl when the live stream is available.',
+    inputSchema: {
+      action: external_exports.enum(["start", "status", "stop"]).optional(),
+      packagePath: external_exports.string().optional().describe("Absolute path to the Swift package directory (required for start)"),
+      udid: UDID_PARAM,
+      previewFilter: external_exports.string().optional().describe("Only previews whose name contains this (case-insensitive)")
+    }
+  }, async (args, extra) => runTool("ios_sim_preview", async () => {
+    const action = args.action ?? "start";
+    if (action === "status") return jsonResult(deps.preview.status());
+    assertMac(deps.platform);
+    if (action === "stop") {
+      const stopped = await deps.preview.stop(extra.signal);
+      return jsonResult(stopped.device === void 0 ? { stopped: false, note: "no preview session was running" } : { stopped: true, device: deviceSummary(stopped.device), reloads: stopped.reloads });
+    }
+    const packagePath = args.packagePath?.trim() ?? "";
+    if (packagePath === "") throw new Error('packagePath is required for action "start": the Swift package directory (it contains Package.swift)');
+    const device = await resolveTargetDevice(deps, args.udid, { bootFallback: true });
+    if (device.state !== "Booted") await deps.simctl.bootDevice(device.udid);
+    const booted = { ...device, state: "Booted" };
+    const status = await deps.preview.start({
+      packagePath,
+      device: booted,
+      ...args.previewFilter === void 0 ? {} : { previewFilter: args.previewFilter },
+      signal: extra.signal
+    });
+    let panel;
+    if (deps.host.binary.available) {
+      try {
+        await ensureStreamFor(deps.host, booted);
+        panel = { panelUrl: await deps.panel.ensureStarted() };
+      } catch (error62) {
+        panel = { note: `the preview runs, but the live panel could not start (${error62 instanceof Error ? error62.message : String(error62)})` };
+      }
+    } else {
+      panel = { note: "the preview runs in Simulator.app; the live panel needs serve-sim, which is unavailable here" };
+    }
+    return jsonResult({ ...status, ...panel });
   }));
 }
 
@@ -45510,7 +46260,7 @@ async function pollForText(read, text, mode, timeoutMs, intervalMs, minConfidenc
     const waitedMs = Date.now() - startedAt;
     if (matched) return mode === "appear" && present !== void 0 ? { matched, waitedMs, item: present } : { matched, waitedMs };
     if (signal?.aborted === true || Date.now() >= deadline) return { matched: false, waitedMs };
-    await new Promise((resolve4) => setTimeout(resolve4, Math.min(intervalMs, Math.max(0, deadline - Date.now()))));
+    await new Promise((resolve6) => setTimeout(resolve6, Math.min(intervalMs, Math.max(0, deadline - Date.now()))));
   }
 }
 function resolveOcrTextTarget(items, query, unfiltered = items, minConfidence = 0) {
@@ -45675,7 +46425,7 @@ function registerUiTools(server, deps) {
     } catch (error62) {
       throw new Error(`AXe tap at (${center.x}, ${center.y}) failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
     }
-    await sleep4(deps.settleMs);
+    await sleep5(deps.settleMs);
     const expected = await runExpectation(device, expectation, extra.signal);
     return withScreenshot(device, {
       action: "tap-element",
@@ -45789,7 +46539,7 @@ function registerUiTools(server, deps) {
     } catch (error62) {
       throw new Error(`serve-sim tap failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
     }
-    await sleep4(deps.settleMs);
+    await sleep5(deps.settleMs);
     const expected = await runExpectation(device, expectation, extra.signal);
     const pointRect = pixelRectToPoints(item.rect, snapshot.pixelSize, snapshot.pointSize);
     return withScreenshot(device, {
@@ -45864,12 +46614,12 @@ function registerUiTools(server, deps) {
     }
     let countCheck;
     if (expectation !== void 0) {
-      await sleep4(deps.rowSettleMs);
+      await sleep5(deps.rowSettleMs);
       const afterRoots = await readTree(device, extra.signal);
       const afterRow = detectListRows(afterRoots, { bounds: screenBounds(afterRoots) }).rows.find((row) => row.index === plan.row.index);
       countCheck = afterRow === void 0 ? { key: expectation.key, delta: expectation.delta, before, verified: false, changed: false, reason: "the re-read tree no longer contains the row (the screen changed)" } : verifyCountChange(plan.row, afterRow, expectation.key, expectation.delta);
     } else {
-      await sleep4(deps.settleMs);
+      await sleep5(deps.settleMs);
     }
     return withScreenshot(device, {
       action: "tap-row",
@@ -45883,10 +46633,10 @@ function registerUiTools(server, deps) {
 }
 
 // src/uitree-backend.ts
-import { execFile as execFile8 } from "node:child_process";
+import { execFile as execFile9 } from "node:child_process";
 import { createHash as createHash2 } from "node:crypto";
-import { chmodSync, existsSync as existsSync5, mkdirSync as mkdirSync5, readFileSync as readFileSync5, rmSync as rmSync2, statSync as statSync8, writeFileSync as writeFileSync2 } from "node:fs";
-import { delimiter as delimiter4, join as join14 } from "node:path";
+import { chmodSync, existsSync as existsSync7, mkdirSync as mkdirSync6, readFileSync as readFileSync7, rmSync as rmSync3, statSync as statSync9, writeFileSync as writeFileSync3 } from "node:fs";
+import { delimiter as delimiter4, join as join16 } from "node:path";
 var AXE_VERSION = "1.8.0";
 var AXE_RELEASE_URL = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz";
 var AXE_RELEASE_SHA256 = "7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834";
@@ -45898,7 +46648,7 @@ var DIGEST_FILE2 = ".ios-simulator-axe.sha256";
 var BREW_BIN_CANDIDATES = ["/opt/homebrew/bin/axe", "/usr/local/bin/axe"];
 function isExecutableFile3(path) {
   try {
-    const info = statSync8(path);
+    const info = statSync9(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
@@ -45907,22 +46657,22 @@ function isExecutableFile3(path) {
 function findOnPath4(command, env) {
   for (const dir of (env.PATH ?? "").split(delimiter4)) {
     if (dir === "") continue;
-    const candidate = join14(dir, command);
+    const candidate = join16(dir, command);
     if (isExecutableFile3(candidate)) return candidate;
   }
   return void 0;
 }
 function sha256File2(path) {
-  return createHash2("sha256").update(readFileSync5(path)).digest("hex");
+  return createHash2("sha256").update(readFileSync7(path)).digest("hex");
 }
 function run2(command, args, timeoutMs, signal) {
-  return new Promise((resolve4, reject) => {
-    execFile8(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
+  return new Promise((resolve6, reject) => {
+    execFile9(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
       if (error62 !== null) {
         reject(Object.assign(error62, { stdout, stderr }));
         return;
       }
-      resolve4({ stdout, stderr });
+      resolve6({ stdout, stderr });
     });
   });
 }
@@ -45937,13 +46687,13 @@ var AxeHelper = class {
     this.#env = options.env ?? process.env;
   }
   #installDir() {
-    return join14(this.#cacheDir, AXE_VERSION);
+    return join16(this.#cacheDir, AXE_VERSION);
   }
   #validCached() {
-    const binary = join14(this.#installDir(), "axe");
+    const binary = join16(this.#installDir(), "axe");
     if (!isExecutableFile3(binary)) return void 0;
     try {
-      const expected = readFileSync5(join14(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
+      const expected = readFileSync7(join16(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(expected)) return void 0;
       return sha256File2(binary) === expected ? binary : void 0;
     } catch {
@@ -45968,7 +46718,7 @@ var AxeHelper = class {
     if (onPath !== void 0) return { available: true, source: "path", command: onPath };
     const cached2 = this.#validCached();
     if (cached2 !== void 0) return { available: true, source: "cache", command: cached2 };
-    if (existsSync5(this.#installDir())) {
+    if (existsSync7(this.#installDir())) {
       return {
         available: false,
         source: "unavailable",
@@ -46005,8 +46755,8 @@ var AxeHelper = class {
    */
   async #download() {
     const installDir = this.#installDir();
-    mkdirSync5(this.#cacheDir, { recursive: true });
-    const archive = join14(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
+    mkdirSync6(this.#cacheDir, { recursive: true });
+    const archive = join16(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
     try {
       try {
         await run2("curl", [
@@ -46030,20 +46780,20 @@ var AxeHelper = class {
       if (digest !== AXE_RELEASE_SHA256) {
         throw new Error(`download integrity check failed: expected sha256 ${AXE_RELEASE_SHA256} but got ${digest}`);
       }
-      rmSync2(installDir, { recursive: true, force: true });
-      mkdirSync5(installDir, { recursive: true });
+      rmSync3(installDir, { recursive: true, force: true });
+      mkdirSync6(installDir, { recursive: true });
       await run2("tar", ["-xzf", archive, "-C", installDir], AXE_DOWNLOAD_TIMEOUT_MS);
-      const binary = join14(installDir, "axe");
+      const binary = join16(installDir, "axe");
       if (!isExecutableFile3(binary)) chmodSync(binary, 493);
       const version2 = await run2(binary, ["--version"], AXE_EXEC_TIMEOUT_MS);
       if (!version2.stdout.includes(AXE_VERSION)) {
         throw new Error(`downloaded axe reports an unexpected version: ${version2.stdout.trim()}`);
       }
-      writeFileSync2(join14(installDir, DIGEST_FILE2), `${sha256File2(binary)}
+      writeFileSync3(join16(installDir, DIGEST_FILE2), `${sha256File2(binary)}
 `, "utf8");
       return binary;
     } finally {
-      rmSync2(archive, { force: true });
+      rmSync3(archive, { force: true });
     }
   }
   async #require() {
@@ -46147,12 +46897,19 @@ async function main() {
   const host = new SimHostController();
   host.startKeepAlive();
   const stream = new SimStreamSource(host);
-  const screenshots = new ScreenshotStore({ dir: join15(root, "screenshots"), takeScreenshot });
+  const screenshots = new ScreenshotStore({ dir: join17(root, "screenshots"), takeScreenshot });
   const devtools = new DevTools();
-  const recorder = new Recorder({ dir: join15(root, "recordings") });
+  const preview = new PreviewHostController({
+    cacheDir: join17(root, "preview"),
+    simctl: simctl_exports,
+    toolchain: xcrunToolchain,
+    log: (line) => process.stderr.write(`${line}
+`)
+  });
+  const recorder = new Recorder({ dir: join17(root, "recordings") });
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
-    staticDir: join15(dirname5(fileURLToPath3(import.meta.url)), "panel"),
+    staticDir: join17(dirname6(fileURLToPath4(import.meta.url)), "panel"),
     preferredPort: preferredPanelPort(),
     host,
     stream,
@@ -46168,9 +46925,10 @@ async function main() {
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
-    axe: new AxeHelper({ cacheDir: join15(root, "bin", "axe") }),
-    ocr: new OcrHelper({ cacheDir: join15(root, "bin", "ocr") }),
+    axe: new AxeHelper({ cacheDir: join17(root, "bin", "axe") }),
+    ocr: new OcrHelper({ cacheDir: join17(root, "bin", "ocr") }),
     devtools,
+    preview,
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
@@ -46183,6 +46941,7 @@ async function main() {
   registerEnvTools(server, deps);
   registerUiTools(server, deps);
   registerDebugTools(server, deps);
+  registerPreviewTools(server, deps);
   let shuttingDown = false;
   const logFailure = (step) => (error62) => {
     process.stderr.write(`${PLUGIN_NAME}: shutdown: ${step} failed: ${error62 instanceof Error ? error62.message : String(error62)}
@@ -46194,7 +46953,8 @@ async function main() {
     devtools.dispose();
     await Promise.all([
       recorder.stopAll().catch(logFailure("finishing the recordings")),
-      host.dispose().catch(logFailure("stopping the serve-sim stream"))
+      host.dispose().catch(logFailure("stopping the serve-sim stream")),
+      preview.dispose().catch(logFailure("removing the preview host app"))
     ]);
     await panel.dispose().catch(logFailure("closing the panel server"));
     process.exit(0);

@@ -24,10 +24,10 @@
     <text x="475" y="46" text-anchor="middle" font-size="15" font-weight="700">MCP 服务 · dist/server.js</text>
 
     <rect x="310" y="64" width="330" height="184" rx="10" fill="#ffffff" stroke="#c9cdd8"/>
-    <text x="475" y="88" text-anchor="middle" font-weight="700">工具层（MCP SDK + zod，28 个 ios_sim_*）</text>
+    <text x="475" y="88" text-anchor="middle" font-weight="700">工具层（MCP SDK + zod，29 个 ios_sim_*）</text>
     <g font-size="12" fill="#3a3f4d">
       <text x="326" y="112">核心：devices · boot · shutdown · panel</text>
-      <text x="326" y="132">　　　screenshot · interact</text>
+      <text x="326" y="132">　　　screenshot · interact · preview（SwiftUI 热重载）</text>
       <text x="326" y="152">App：list_apps · launch_app · build_run · install / uninstall</text>
       <text x="326" y="172">环境：open_url · push · location · appearance · record</text>
       <text x="326" y="192" fill="#b4502c">UI：ui_tree · tap_element · ui_rows · tap_row</text>

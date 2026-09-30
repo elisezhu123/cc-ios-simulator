@@ -1,6 +1,6 @@
 ---
 name: ios-ui-automation
-description: Use when operating an iOS Simulator through this plugin's ios_sim_* tools — booting a device, opening the live panel, launching or building apps, reading the screen (accessibility tree, OCR), tapping elements or text, typing, scrolling, waiting for text, working with list rows, confirming that an action worked, and debugging an app (logs, processes, backtraces, leaks, app containers).
+description: Use when operating an iOS Simulator through this plugin's ios_sim_* tools — booting a device, opening the live panel, launching or building apps, reading the screen (accessibility tree, OCR), tapping elements or text, typing, scrolling, waiting for text, working with list rows, confirming that an action worked, debugging an app (logs, processes, backtraces, leaks, app containers), and live SwiftUI previews with hot reload.
 ---
 
 # Driving the iOS Simulator with the ios_sim_* tools
@@ -88,6 +88,13 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 
 - backtrace and leaks only target this simulator's app processes and always leave the app running. `engine: "sample"` plus a `note` about Developer Mode means LLDB could not attach — pass the note's command on to the user instead of retrying.
 - Logs are capped at the last ~300 lines; `truncated: true` means narrow the filter, not read again.
+
+## SwiftUI previews with hot reload
+
+- `ios_sim_preview {packagePath}` shows a Swift package's `#Preview` / `PreviewProvider` previews live in the simulator. The first start builds the whole package (up to a minute); after that every saved edit is hot-swapped in a few seconds without relaunching.
+- After editing a file, check `ios_sim_preview {action: "status"}`: `loadedGeneration` rises when the host shows the new build; `lastBuildError` holds the compiler error tail when the edit broke the build (the last good preview stays up). Fix the error rather than restarting the session.
+- One session at a time. `action: "stop"` removes the host app when you are done.
+- Nothing is written into the user's package: the host app and build products live in the plugin cache.
 
 ## Apps
 
