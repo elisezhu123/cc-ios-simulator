@@ -10,9 +10,10 @@ import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { filterInstalledApps, noMatchCandidateLines, noMatchListingHint, resolveAppByName } from '../app-list.js'
+import { filterInstalledApps, noMatchCandidateLines, noMatchListingHint, resolveAppByName, type InstalledApp } from '../app-list.js'
 import type { ToolDeps } from '../deps.js'
-import { assertMac, ensureStreamFor, requireBooted, resolveTargetDevice } from '../target.js'
+import type { RealApp } from '../devicectl.js'
+import { assertMac, ensureStreamFor, realDeviceSummary, requireBooted, resolveTargetDevice, resolveToolTarget, type ToolTarget } from '../target.js'
 import { deviceSummary, jsonResult, runTool, UDID_PARAM } from './result.js'
 
 /**
@@ -22,11 +23,32 @@ import { deviceSummary, jsonResult, runTool, UDID_PARAM } from './result.js'
  */
 const NOT_AN_OPTION = /^(?!\s*-)/u
 
+/** One devicectl app in the listing shape shared with simulators (names are devicectl's, not localized). */
+export function installedAppFromRealApp(app: RealApp): InstalledApp {
+  // devicectl reports either marker depending on the Xcode version.
+  const system = app.defaultApp === true || (app.appType ?? '').toLowerCase() === 'system'
+  return { bundleId: app.bundleId, name: app.name === '' ? app.bundleId : app.name, ...(app.version === undefined ? {} : { version: app.version }), system }
+}
+
 export function registerAppTools(server: McpServer, deps: ToolDeps): void {
+  /** The target of a tool that also works on a connected iPhone/iPad. */
+  const targetOf = async (tool: string, udid: string | undefined): Promise<ToolTarget> => {
+    assertMac(deps.platform)
+    const resolved = await resolveToolTarget(deps, udid)
+    if (resolved.kind === 'simulator') requireBooted(tool, resolved.device)
+    return resolved
+  }
+  const summaryOf = (resolved: ToolTarget): ReturnType<typeof deviceSummary> =>
+    resolved.kind === 'real' ? realDeviceSummary(resolved.device) : deviceSummary(resolved.device)
+  const appsOf = async (resolved: ToolTarget, signal?: AbortSignal): Promise<InstalledApp[]> => resolved.kind === 'real'
+    ? (await deps.realDevices.listApps(resolved.device.udid, signal)).map(installedAppFromRealApp)
+    : deps.listApps(resolved.device.udid, signal)
+
   server.registerTool('ios_sim_list_apps', {
     title: 'List installed apps',
-    description: 'List the apps INSTALLED on a booted simulator: bundle id, display name (localized to the simulator '
-      + 'language, e.g. 日历 rather than Calendar), version and a system flag. Run it before opening a third-party app '
+    description: 'List the apps INSTALLED on a booted simulator, or on a connected iPhone/iPad (pass its udid or name '
+      + 'from ios_sim_devices.realDevices): bundle id, display name (on a simulator localized to its language, e.g. 日历 '
+      + 'rather than Calendar; on a real device devicectl\'s base name), version and a system flag. Run it before opening a third-party app '
       + '— never guess a bundle id. query matches the name, the base name and the bundle id (case-insensitive, CJK '
       + 'works); include_system adds the stock Apple apps. A failed listing is an error, so count 0 means no match.',
     inputSchema: {
@@ -36,26 +58,25 @@ export function registerAppTools(server: McpServer, deps: ToolDeps): void {
     },
     annotations: { readOnlyHint: true },
   }, async (args, extra) => runTool('ios_sim_list_apps', async () => {
-    assertMac(deps.platform)
-    const device = await resolveTargetDevice(deps, args.udid)
-    requireBooted('ios_sim_list_apps', device)
-    const apps = await deps.listApps(device.udid, extra.signal)
+    const resolved = await targetOf('ios_sim_list_apps', args.udid)
+    const apps = await appsOf(resolved, extra.signal)
     const query = args.query?.trim() ?? ''
     const filtered = filterInstalledApps(apps, { ...(query === '' ? {} : { query }), includeSystem: args.include_system === true })
     const noMatch = filtered.length === 0 && query !== ''
     const candidates = noMatch ? noMatchCandidateLines(apps) : []
     return jsonResult({
-      device: deviceSummary(device),
+      device: summaryOf(resolved),
       count: filtered.length,
       apps: filtered,
-      ...(noMatch ? { hint: noMatchListingHint('simulator', apps.length) } : {}),
+      ...(noMatch ? { hint: noMatchListingHint(resolved.kind, apps.length) } : {}),
       ...(candidates.length > 0 ? { candidates } : {}),
     })
   }))
 
   server.registerTool('ios_sim_launch_app', {
     title: 'Launch an installed app',
-    description: 'Launch an installed app on a booted simulator. Pass EITHER bundleId OR name (exactly one): name is a '
+    description: 'Launch an installed app on a booted simulator, or on a connected iPhone/iPad (pass its udid or name). '
+      + 'Pass EITHER bundleId OR name (exactly one): name is a '
       + 'case-insensitive display-name substring (localized names work), resolved against the installed apps. '
       + 'Third-party bundle ids cannot be guessed — use name or ios_sim_list_apps. Stable Apple ids: Calendar '
       + 'com.apple.mobilecal, Safari com.apple.mobilesafari, Settings com.apple.Preferences, Photos '
@@ -77,13 +98,32 @@ export function registerAppTools(server: McpServer, deps: ToolDeps): void {
       throw new Error('bundleId is required, e.g. "com.apple.mobilecal" — or pass name to resolve one by display name; '
         + 'run ios_sim_list_apps to see what is installed')
     }
-    assertMac(deps.platform)
-    const device = await resolveTargetDevice(deps, args.udid)
-    requireBooted('ios_sim_launch_app', device)
+    const target = await targetOf('ios_sim_launch_app', args.udid)
     const resolved = requestedName === ''
       ? undefined
-      : resolveAppByName('ios_sim_launch_app', await deps.listApps(device.udid, extra.signal), requestedName, device.name)
+      : resolveAppByName('ios_sim_launch_app', await appsOf(target, extra.signal), requestedName, target.device.name, { physical: target.kind === 'real' })
     const bundleId = resolved?.bundleId ?? requestedId
+    const notLaunched = (error: unknown): Error => new Error(`could not launch ${bundleId} on ${target.device.name}: `
+      + `${error instanceof Error ? error.message : String(error)} — the app may not be installed, or the bundle id may be `
+      + 'wrong (a third-party bundle id cannot be guessed); run ios_sim_list_apps to see what is installed')
+    if (target.kind === 'real') {
+      if (args.relaunch === true) await deps.realDevices.terminateApp(target.device.udid, bundleId, extra.signal).catch(() => undefined)
+      let launched: { pid?: number }
+      try {
+        launched = await deps.realDevices.launchApp(target.device.udid, bundleId, extra.signal)
+      } catch (error) {
+        throw notLaunched(error)
+      }
+      return jsonResult({
+        device: realDeviceSummary(target.device),
+        bundleId,
+        ...(resolved === undefined ? {} : { name: resolved.name }),
+        launched: true,
+        ...(launched.pid === undefined ? {} : { pid: launched.pid }),
+        ...(args.relaunch === true ? { relaunched: true } : {}),
+      })
+    }
+    const device = target.device
     if (args.relaunch === true) {
       await deps.simctl.terminateApp(device.udid, bundleId, extra.signal).catch(() => undefined)
     }
@@ -91,9 +131,7 @@ export function registerAppTools(server: McpServer, deps: ToolDeps): void {
     try {
       stdout = await deps.simctl.launchApp(device.udid, bundleId, extra.signal)
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      throw new Error(`could not launch ${bundleId} on ${device.name}: ${message} — the app may not be installed, or `
-        + 'the bundle id may be wrong (a third-party bundle id cannot be guessed); run ios_sim_list_apps to see what is installed')
+      throw notLaunched(error)
     }
     const pid = Number.parseInt(stdout.split(':').pop()?.trim() ?? '', 10)
     return jsonResult({
@@ -150,7 +188,8 @@ export function registerAppTools(server: McpServer, deps: ToolDeps): void {
   server.registerTool('ios_sim_install_app', {
     title: 'Install a built app',
     description: 'Install a built .app bundle (a directory containing Info.plist) on a booted simulator and report its '
-      + 'bundle id. To build from source use ios_sim_build_run.',
+      + 'bundle id. It also installs on a connected iPhone/iPad (pass its udid or name), where the .app must be built '
+      + 'for iphoneos and signed for that device. To build for a simulator from source use ios_sim_build_run.',
     inputSchema: { appPath: z.string().min(1), udid: UDID_PARAM },
   }, async (args, extra) => runTool('ios_sim_install_app', async () => {
     assertMac(deps.platform)
@@ -158,16 +197,17 @@ export function registerAppTools(server: McpServer, deps: ToolDeps): void {
     if (!existsSync(join(appPath, 'Info.plist'))) {
       throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`)
     }
-    const device = await resolveTargetDevice(deps, args.udid)
-    requireBooted('ios_sim_install_app', device)
-    await deps.simctl.installApp(device.udid, appPath, extra.signal)
+    const target = await targetOf('ios_sim_install_app', args.udid)
+    if (target.kind === 'real') await deps.realDevices.installApp(target.device.udid, appPath, extra.signal)
+    else await deps.simctl.installApp(target.device.udid, appPath, extra.signal)
     const bundleId = await deps.builder.readBundleIdentifier(appPath, extra.signal)
-    return jsonResult({ device: deviceSummary(device), appPath, bundleId, installed: true })
+    return jsonResult({ device: summaryOf(target), appPath, bundleId, installed: true })
   }))
 
   server.registerTool('ios_sim_uninstall_app', {
     title: 'Uninstall an app',
-    description: 'Uninstall an app (and its data container) from a booted simulator by bundle id.',
+    description: 'Uninstall an app (and its data container) from a booted simulator by bundle id. Simulators only: on a '
+      + 'real iPhone/iPad the app\'s data cannot be recovered, so uninstall it on the device yourself.',
     inputSchema: { bundleId: z.string().min(1), udid: UDID_PARAM },
     annotations: { destructiveHint: true },
   }, async (args, extra) => runTool('ios_sim_uninstall_app', async () => {

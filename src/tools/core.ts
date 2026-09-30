@@ -94,10 +94,11 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     title: 'List iOS simulators',
     description: 'List the iOS Simulator devices on this Mac (udid, name, runtime, state, deviceType): booted first, '
       + 'then newest runtime. Use it to find the udid or name the other ios_sim_* tools take; `streaming` names the '
-      + 'device the live panel shows.',
+      + 'device the live panel shows. Connected iPhones and iPads are listed under `realDevices` (devicectl); pass one '
+      + 'of their udids or names to the tools that support real devices.',
     inputSchema: { query: z.string().optional().describe('Case-insensitive substring over name, udid and runtime') },
     annotations: { readOnlyHint: true },
-  }, async ({ query }) => runTool('ios_sim_devices', async () => {
+  }, async ({ query }, extra) => runTool('ios_sim_devices', async () => {
     assertMac(deps.platform)
     const all = await deps.simctl.listDevices()
     const needle = (query ?? '').trim().toLowerCase()
@@ -106,6 +107,13 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       || device.udid.toLowerCase().includes(needle)
       || device.runtime.toLowerCase().includes(needle))
     const status = deps.host.status()
+    // Real devices are best effort: a devicectl hiccup must not hide the simulators.
+    let real: { realDevices: unknown[] } | { realDevicesError: string }
+    try {
+      real = { realDevices: await deps.realDevices.listDevices(extra.signal) }
+    } catch (error) {
+      real = { realDevicesError: error instanceof Error ? error.message : String(error) }
+    }
     return jsonResult({
       devices: devices.map(device => ({
         ...deviceSummary(device),
@@ -114,6 +122,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       count: devices.length,
       booted: all.filter(device => device.state === 'Booted').map(device => device.udid),
       ...(status.running && status.device !== undefined ? { streaming: status.device } : {}),
+      ...real,
     })
   }))
 

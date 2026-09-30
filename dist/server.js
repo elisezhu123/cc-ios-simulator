@@ -107,7 +107,7 @@ var require_code = __commonJS({
     }
     exports._ = _;
     var plus = new _Code("+");
-    function str(strs, ...args) {
+    function str2(strs, ...args) {
       const expr = [safeStringify(strs[0])];
       let i = 0;
       while (i < args.length) {
@@ -118,7 +118,7 @@ var require_code = __commonJS({
       optimize(expr);
       return new _Code(expr);
     }
-    exports.str = str;
+    exports.str = str2;
     function addCodeArg(code, arg) {
       if (arg instanceof _Code)
         code.push(...arg._items);
@@ -161,7 +161,7 @@ var require_code = __commonJS({
       return;
     }
     function strConcat(c1, c2) {
-      return c2.emptyStr() ? c1 : c1.emptyStr() ? c2 : str`${c1}${c2}`;
+      return c2.emptyStr() ? c1 : c1.emptyStr() ? c2 : str2`${c1}${c2}`;
     }
     exports.strConcat = strConcat;
     function interpolate(x) {
@@ -1123,22 +1123,22 @@ var require_util = __commonJS({
       return (0, codegen_1._)`${topSchemaRef}${schemaPath}${(0, codegen_1.getProperty)(keyword)}`;
     }
     exports.schemaRefOrVal = schemaRefOrVal;
-    function unescapeFragment(str) {
-      return unescapeJsonPointer(decodeURIComponent(str));
+    function unescapeFragment(str2) {
+      return unescapeJsonPointer(decodeURIComponent(str2));
     }
     exports.unescapeFragment = unescapeFragment;
-    function escapeFragment(str) {
-      return encodeURIComponent(escapeJsonPointer(str));
+    function escapeFragment(str2) {
+      return encodeURIComponent(escapeJsonPointer(str2));
     }
     exports.escapeFragment = escapeFragment;
-    function escapeJsonPointer(str) {
-      if (typeof str == "number")
-        return `${str}`;
-      return str.replace(/~/g, "~0").replace(/\//g, "~1");
+    function escapeJsonPointer(str2) {
+      if (typeof str2 == "number")
+        return `${str2}`;
+      return str2.replace(/~/g, "~0").replace(/\//g, "~1");
     }
     exports.escapeJsonPointer = escapeJsonPointer;
-    function unescapeJsonPointer(str) {
-      return str.replace(/~1/g, "/").replace(/~0/g, "~");
+    function unescapeJsonPointer(str2) {
+      return str2.replace(/~1/g, "/").replace(/~0/g, "~");
     }
     exports.unescapeJsonPointer = unescapeJsonPointer;
     function eachItem(xs, f) {
@@ -2163,8 +2163,8 @@ var require_json_schema_traverse = __commonJS({
         post(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
       }
     }
-    function escapeJsonPtr(str) {
-      return str.replace(/~/g, "~0").replace(/\//g, "~1");
+    function escapeJsonPtr(str2) {
+      return str2.replace(/~/g, "~0").replace(/\//g, "~1");
     }
   }
 });
@@ -3261,10 +3261,10 @@ var require_utils = __commonJS({
         isIPV6: true
       };
     }
-    function findToken(str, token) {
+    function findToken(str2, token) {
       let ind = 0;
-      for (let i = 0; i < str.length; i++) {
-        if (str[i] === token) ind++;
+      for (let i = 0; i < str2.length; i++) {
+        if (str2[i] === token) ind++;
       }
       return ind;
     }
@@ -4278,7 +4278,7 @@ var require_core = __commonJS({
     var util_1 = require_util();
     var $dataRefSchema = require_data();
     var uri_1 = require_uri();
-    var defaultRegExp = (str, flags) => new RegExp(str, flags);
+    var defaultRegExp = (str2, flags) => new RegExp(str2, flags);
     defaultRegExp.code = "new RegExp";
     var META_IGNORE_OPTIONS = ["removeAdditional", "useDefaults", "coerceTypes"];
     var EXT_SCOPE_NAMES = /* @__PURE__ */ new Set([
@@ -5073,16 +5073,16 @@ var require_ucs2length = __commonJS({
   "node_modules/ajv/dist/runtime/ucs2length.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    function ucs2length(str) {
-      const len = str.length;
+    function ucs2length(str2) {
+      const len = str2.length;
       let length = 0;
       let pos = 0;
       let value;
       while (pos < len) {
         length++;
-        value = str.charCodeAt(pos++);
+        value = str2.charCodeAt(pos++);
         if (value >= 55296 && value <= 56319 && pos < len) {
-          value = str.charCodeAt(pos);
+          value = str2.charCodeAt(pos);
           if ((value & 64512) === 56320)
             pos++;
         }
@@ -6965,8 +6965,8 @@ var require_formats = __commonJS({
     }
     var DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    function date5(str) {
-      const matches = DATE.exec(str);
+    function date5(str2) {
+      const matches = DATE.exec(str2);
       if (!matches)
         return false;
       const year = +matches[1];
@@ -6985,8 +6985,8 @@ var require_formats = __commonJS({
     }
     var TIME = /^(\d\d):(\d\d):(\d\d(?:\.\d+)?)(z|([+-])(\d\d)(?::?(\d\d))?)?$/i;
     function getTime(strictTimeZone) {
-      return function time3(str) {
-        const matches = TIME.exec(str);
+      return function time3(str2) {
+        const matches = TIME.exec(str2);
         if (!matches)
           return false;
         const hr = +matches[1];
@@ -7032,8 +7032,8 @@ var require_formats = __commonJS({
     var DATE_TIME_SEPARATOR = /t|\s/i;
     function getDateTime(strictTimeZone) {
       const time3 = getTime(strictTimeZone);
-      return function date_time(str) {
-        const dateTime = str.split(DATE_TIME_SEPARATOR);
+      return function date_time(str2) {
+        const dateTime = str2.split(DATE_TIME_SEPARATOR);
         return dateTime.length === 2 && date5(dateTime[0]) && time3(dateTime[1]);
       };
     }
@@ -7058,13 +7058,13 @@ var require_formats = __commonJS({
     }
     var NOT_URI_FRAGMENT = /\/|:/;
     var URI = /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)(?:\?(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i;
-    function uri(str) {
-      return NOT_URI_FRAGMENT.test(str) && URI.test(str);
+    function uri(str2) {
+      return NOT_URI_FRAGMENT.test(str2) && URI.test(str2);
     }
     var BYTE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/gm;
-    function byte(str) {
+    function byte(str2) {
       BYTE.lastIndex = 0;
-      return BYTE.test(str);
+      return BYTE.test(str2);
     }
     var MIN_INT32 = -(2 ** 31);
     var MAX_INT32 = 2 ** 31 - 1;
@@ -7078,11 +7078,11 @@ var require_formats = __commonJS({
       return true;
     }
     var Z_ANCHOR = /[^\\]\\Z/;
-    function regex(str) {
-      if (Z_ANCHOR.test(str))
+    function regex(str2) {
+      if (Z_ANCHOR.test(str2))
         return false;
       try {
-        new RegExp(str);
+        new RegExp(str2);
         return true;
       } catch (e) {
         return false;
@@ -10889,7 +10889,7 @@ var require_websocket_server = __commonJS({
 });
 
 // src/server.ts
-import { dirname as dirname6, join as join17 } from "node:path";
+import { dirname as dirname6, join as join18 } from "node:path";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
@@ -15358,14 +15358,14 @@ function promiseAllObject(promisesObj) {
 }
 function randomString(length = 10) {
   const chars = "abcdefghijklmnopqrstuvwxyz";
-  let str = "";
+  let str2 = "";
   for (let i = 0; i < length; i++) {
-    str += chars[Math.floor(Math.random() * chars.length)];
+    str2 += chars[Math.floor(Math.random() * chars.length)];
   }
-  return str;
+  return str2;
 }
-function esc(str) {
-  return JSON.stringify(str);
+function esc(str2) {
+  return JSON.stringify(str2);
 }
 function slugify(input2) {
   return input2.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
@@ -15479,8 +15479,8 @@ var primitiveTypes = /* @__PURE__ */ new Set([
   "symbol",
   "undefined"
 ]);
-function escapeRegex(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegex(str2) {
+  return str2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function clone(inst, def, params) {
   const cl = new inst._zod.constr(def ?? inst._zod.def);
@@ -15734,13 +15734,13 @@ function getSizableOrigin(input2) {
   return "unknown";
 }
 var highSurrogate = /[\uD800-\uDBFF]/;
-function codePointLength(str) {
-  const units = str.length;
-  if (!highSurrogate.test(str))
+function codePointLength(str2) {
+  const units = str2.length;
+  if (!highSurrogate.test(str2))
     return units;
   let count = units;
   for (let i = 0; i < units - 1; i++) {
-    if ((str.charCodeAt(i) & 64512) === 55296 && (str.charCodeAt(i + 1) & 64512) === 56320) {
+    if ((str2.charCodeAt(i) & 64512) === 55296 && (str2.charCodeAt(i + 1) & 64512) === 56320) {
       count--;
       i++;
     }
@@ -31128,8 +31128,8 @@ function rewriteKeyNames(ctx) {
       bySchema.set(entry.schema, entry);
   }
   const rewrites = /* @__PURE__ */ new Map();
-  for (const record2 of pendingRecords.get(ctx) ?? []) {
-    const seen = ctx.seen.get(record2);
+  for (const record3 of pendingRecords.get(ctx) ?? []) {
+    const seen = ctx.seen.get(record3);
     const names = (seen?.def ?? seen?.schema)?.propertyNames;
     if (!names || names === true || rewrites.has(names))
       continue;
@@ -41069,8 +41069,8 @@ async function listSchemes(target, signal) {
     return [];
   }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return [];
-  const record2 = parsed;
-  for (const section of [record2.workspace, record2.project]) {
+  const record3 = parsed;
+  for (const section of [record3.workspace, record3.project]) {
     if (typeof section !== "object" || section === null || Array.isArray(section)) continue;
     const schemes = section.schemes;
     if (!Array.isArray(schemes)) continue;
@@ -41204,10 +41204,292 @@ ${buildFailureDetail(lines)}`);
   };
 }
 
+// src/devicectl.ts
+import { readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join as join4 } from "node:path";
+var DevicectlError = class extends Error {
+  constructor(message, stderr = "", stdout = "", code) {
+    super(message);
+    this.stderr = stderr;
+    this.stdout = stdout;
+    this.code = code;
+    this.name = "DevicectlError";
+  }
+  stderr;
+  stdout;
+  code;
+};
+var LIST_TIMEOUT_MS2 = 3e4;
+var DEFAULT_TIMEOUT_MS = 6e4;
+var APPS_TIMEOUT_MS = 9e4;
+var PROCESSES_TIMEOUT_MS = 3e4;
+var INSTALL_TIMEOUT_MS = 18e4;
+var ALL_APPS_FLAGS = ["--include-default-apps", "--include-app-clips", "--include-removable-apps"];
+function devicectlRunner(run3) {
+  let sequence = 0;
+  return async (args, timeoutMs, signal) => {
+    sequence += 1;
+    const jsonPath = join4(tmpdir(), `ios-sim-devicectl-${process.pid}-${sequence}-${Date.now()}.json`);
+    try {
+      const fullArgs = ["devicectl", "--timeout", String(Math.max(1, Math.ceil(timeoutMs / 1e3))), "--json-output", jsonPath, ...args];
+      let outcome;
+      try {
+        outcome = await run3({
+          command: "xcrun",
+          args: fullArgs,
+          label: `devicectl ${args.join(" ")}`,
+          // devicectl's own --timeout first; the hard kill a little after.
+          timeoutMs: timeoutMs + 5e3,
+          ...signal === void 0 ? {} : { signal }
+        });
+      } catch (error62) {
+        const message = error62 instanceof Error ? error62.message : String(error62);
+        throw new DevicectlError(/deadline/u.test(message) ? `${message} \u2014 the device tunnel may be stuck; check the USB connection and retry` : message);
+      }
+      let json2;
+      try {
+        json2 = JSON.parse(readFileSync(jsonPath, "utf8"));
+      } catch {
+        json2 = void 0;
+      }
+      return { stdout: outcome.stdout, stderr: outcome.stderr, code: outcome.code, json: json2 };
+    } finally {
+      rmSync(jsonPath, { force: true });
+    }
+  };
+}
+function record2(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value) ? value : void 0;
+}
+function str(source, key) {
+  const value = source?.[key];
+  return typeof value === "string" && value.trim() !== "" ? value : void 0;
+}
+function stripFileUrl(value) {
+  return value.startsWith("file://") ? decodeURIComponent(value.slice("file://".length)) : value;
+}
+function outcomeOf(json2) {
+  const outcome = record2(record2(json2)?.info)?.outcome;
+  return outcome === "success" ? "success" : outcome === "failed" ? "failed" : "unknown";
+}
+function jsonErrorDetail(json2) {
+  const userInfo = record2(record2(record2(json2)?.error)?.userInfo);
+  const read = (key) => str(record2(userInfo?.[key]), "string");
+  return read("NSLocalizedFailureReason") ?? read("NSLocalizedDescription");
+}
+function classifyDevicectlFailure(label, result) {
+  const detail = jsonErrorDetail(result.json) ?? `${result.stderr}
+${result.stdout}`.split("\n").map((line) => line.trim()).filter((line) => line !== "").slice(-6).join(" | ");
+  const text = `${detail}
+${result.stderr}`.toLowerCase();
+  const fail = (message) => new DevicectlError(message, result.stderr, result.stdout, result.code);
+  if (/locked|fbsopenapplication/u.test(text)) {
+    return fail(`${label} failed because the device is locked \u2014 unlock the iPhone (and keep it unlocked), then retry`);
+  }
+  if (/developer mode/u.test(text)) {
+    return fail(`${label} failed because Developer Mode is off on the device \u2014 turn it on in Settings \u25B8 Privacy & Security \u25B8 Developer Mode (the device restarts), then retry`);
+  }
+  if (/not paired|unpaired|pairing/u.test(text)) {
+    return fail(`${label} failed because the device is not paired \u2014 connect it over USB, tap "Trust This Computer", and check \`xcrun devicectl list devices\``);
+  }
+  if (/unable to locate a device|coredeviceservice|coredeviceerror[^\d]*1011/u.test(text)) {
+    return fail(`${label} failed because the device is not reachable by CoreDevice right now \u2014 reconnect it over USB and retry (this is not the app being missing: nothing was listed at all)`);
+  }
+  return fail(`${label} failed (exit ${String(result.code)})${detail === "" ? "" : `: ${detail}`}`);
+}
+function parseDevicectlDevices(json2) {
+  const entries = record2(record2(json2)?.result)?.devices;
+  if (!Array.isArray(entries)) return [];
+  const devices = [];
+  for (const entry of entries) {
+    const row = record2(entry);
+    const udid = str(row, "identifier");
+    if (row === void 0 || udid === void 0) continue;
+    const deviceProps = record2(row.deviceProperties);
+    const hardware = record2(row.hardwareProperties);
+    const connection = record2(row.connectionProperties);
+    if (str(hardware, "reality") === "simulated" || str(record2(row.properties), "hardware.reality") === "simulated" || str(row, "visibilityClass") === "simulators") continue;
+    const pairing = str(connection, "pairingState");
+    const tunnelState = str(connection, "tunnelState");
+    const transport = str(connection, "transportType");
+    const developerMode = str(deviceProps, "developerModeStatus");
+    const optional2 = (key, value) => value === void 0 ? {} : { [key]: value };
+    devices.push({
+      udid,
+      ...optional2("hardwareUdid", str(hardware, "udid")),
+      name: str(deviceProps, "name") ?? udid,
+      ...optional2("osVersion", str(deviceProps, "osVersionNumber")),
+      ...optional2("build", str(deviceProps, "osBuildUpdate")),
+      ...optional2("model", str(hardware, "marketingName")),
+      ...optional2("productType", str(hardware, "productType")),
+      ...optional2("platform", str(hardware, "platform")),
+      state: connection === void 0 || tunnelState === "unavailable" ? "unavailable" : pairing === "paired" ? "available (paired)" : "available",
+      connection: transport === "wired" || transport === "wireless" ? transport : "unknown",
+      pairingState: pairing === "paired" || pairing === "unpaired" ? pairing : "unknown",
+      ...optional2("tunnelState", tunnelState),
+      developerMode: developerMode === "enabled" || developerMode === "disabled" ? developerMode : "unknown",
+      ...optional2("bootState", str(deviceProps, "bootState"))
+    });
+  }
+  return devices;
+}
+function parseDevicectlApps(json2) {
+  const entries = record2(record2(json2)?.result)?.apps;
+  if (!Array.isArray(entries)) return void 0;
+  const apps = [];
+  for (const entry of entries) {
+    const row = record2(entry);
+    const bundleId = str(row, "bundleIdentifier");
+    if (row === void 0 || bundleId === void 0) continue;
+    const url2 = str(row, "url");
+    apps.push({
+      bundleId,
+      name: str(row, "name") ?? bundleId,
+      ...str(row, "version") === void 0 ? {} : { version: str(row, "version") },
+      ...str(row, "bundleVersion") === void 0 ? {} : { bundleVersion: str(row, "bundleVersion") },
+      ...row.builtByDeveloper === true ? { builtByDeveloper: true } : {},
+      ...row.defaultApp === true ? { defaultApp: true } : {},
+      ...str(row, "appType") === void 0 ? {} : { appType: str(row, "appType") },
+      ...row.hidden === true ? { hidden: true } : {},
+      ...row.removable === true ? { removable: true } : {},
+      ...row.appClip === true ? { appClip: true } : {},
+      ...url2 === void 0 ? {} : { path: stripFileUrl(url2) }
+    });
+  }
+  return apps;
+}
+function parseDevicectlProcesses(json2) {
+  const entries = record2(record2(json2)?.result)?.runningProcesses;
+  if (!Array.isArray(entries)) return void 0;
+  const processes = [];
+  for (const entry of entries) {
+    const row = record2(entry);
+    const pid = row?.processIdentifier;
+    const executable = str(row, "executable");
+    if (typeof pid !== "number" || !Number.isInteger(pid) || pid < 1 || executable === void 0) continue;
+    const path = stripFileUrl(executable);
+    processes.push({ pid, executable: path, name: path.split("/").pop() ?? path });
+  }
+  return processes;
+}
+function attachBundleIds(processes, apps) {
+  const byPath = /* @__PURE__ */ new Map();
+  for (const app of apps) if (app.path !== void 0) byPath.set(app.path.endsWith("/") ? app.path : `${app.path}/`, app);
+  for (const process3 of processes) {
+    const app = byPath.get(`${process3.executable.split("/").slice(0, -1).join("/")}/`);
+    if (app !== void 0) {
+      process3.bundleId = app.bundleId;
+      process3.name = app.name;
+    }
+  }
+  return processes.sort((a, b) => a.pid - b.pid);
+}
+var Devicectl = class {
+  #run;
+  #platform;
+  constructor(options) {
+    this.#run = options.run;
+    this.#platform = options.platform ?? process.platform;
+  }
+  async #successful(args, label, timeoutMs, signal) {
+    const result = await this.#run(args, timeoutMs, signal);
+    if (result.code !== 0 || outcomeOf(result.json) === "failed") throw classifyDevicectlFailure(label, result);
+    return result;
+  }
+  async listDevices(signal) {
+    if (this.#platform !== "darwin") return [];
+    const result = await this.#run(["list", "devices"], LIST_TIMEOUT_MS2, signal);
+    if (result.code !== 0) throw classifyDevicectlFailure("devicectl list devices", result);
+    return parseDevicectlDevices(result.json);
+  }
+  async getDevice(reference, signal) {
+    const wanted = reference.trim();
+    const devices = await this.listDevices(signal);
+    const found = devices.find((device) => device.udid === wanted || device.hardwareUdid === wanted) ?? devices.find((device) => device.name.toLowerCase() === wanted.toLowerCase());
+    if (found !== void 0) return found;
+    const names = devices.slice(0, 8).map((device) => `${device.name} (${device.udid})`);
+    throw new DevicectlError(`no connected iPhone or iPad matches "${wanted}"` + (names.length === 0 ? " \u2014 no physical device is connected" : `; connected: ${names.join(", ")}`));
+  }
+  async matches(reference, signal) {
+    if (reference.trim() === "") return false;
+    try {
+      await this.getDevice(reference, signal);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  async listApps(udid, signal) {
+    const label = `devicectl device info apps on ${udid}`;
+    const result = await this.#successful(["device", "info", "apps", "--device", udid, ...ALL_APPS_FLAGS], label, APPS_TIMEOUT_MS, signal);
+    const apps = parseDevicectlApps(result.json);
+    if (apps === void 0) {
+      throw new DevicectlError(`${label} reported success but wrote no app list \u2014 the listing failed (reconnect the device over USB and retry); this is not the same as the device having no apps`, result.stderr, result.stdout, result.code);
+    }
+    return apps;
+  }
+  async getApp(udid, bundleId, signal) {
+    const result = await this.#successful(
+      ["device", "info", "apps", "--device", udid, ...ALL_APPS_FLAGS, "--bundle-id", bundleId],
+      `devicectl device info apps --bundle-id ${bundleId} on ${udid}`,
+      APPS_TIMEOUT_MS,
+      signal
+    );
+    return (parseDevicectlApps(result.json) ?? []).find((app) => app.bundleId === bundleId);
+  }
+  async listProcesses(udid, signal) {
+    const label = `devicectl device info processes on ${udid}`;
+    const result = await this.#successful(["device", "info", "processes", "--device", udid], label, PROCESSES_TIMEOUT_MS, signal);
+    const processes = parseDevicectlProcesses(result.json);
+    if (processes === void 0) throw new DevicectlError(`${label} returned no process list`, result.stderr, result.stdout, result.code);
+    let apps = [];
+    try {
+      apps = await this.listApps(udid, signal);
+    } catch {
+    }
+    return attachBundleIds(processes, apps);
+  }
+  async launchApp(udid, bundleId, signal) {
+    const result = await this.#successful(
+      ["device", "process", "launch", "--device", udid, bundleId],
+      `devicectl device process launch ${bundleId} on ${udid}`,
+      DEFAULT_TIMEOUT_MS,
+      signal
+    );
+    const pid = record2(record2(record2(result.json)?.result)?.process)?.processIdentifier;
+    return typeof pid === "number" && Number.isInteger(pid) ? { pid } : {};
+  }
+  /** Terminate every process of a bundle id (the app and its extensions). */
+  async terminateApp(udid, bundleId, signal) {
+    const processes = await this.listProcesses(udid, signal);
+    const matching = processes.filter((process3) => process3.bundleId === bundleId);
+    if (matching.length === 0) throw new DevicectlError(`no running process of "${bundleId}" on the device`);
+    const pids = [];
+    for (const process3 of matching) {
+      try {
+        await this.#successful(
+          ["device", "process", "terminate", "--device", udid, "--pid", String(process3.pid)],
+          `devicectl device process terminate ${process3.pid} on ${udid}`,
+          DEFAULT_TIMEOUT_MS,
+          signal
+        );
+        pids.push(process3.pid);
+      } catch (error62) {
+        if (!(error62 instanceof DevicectlError && /not found|no such process/iu.test(error62.message))) throw error62;
+      }
+    }
+    return { pids };
+  }
+  async installApp(udid, appPath, signal) {
+    await this.#successful(["device", "install", "app", "--device", udid, appPath], `devicectl device install app on ${udid}`, INSTALL_TIMEOUT_MS, signal);
+  }
+};
+
 // src/devtools.ts
 import { execFile as execFile3, execFileSync, spawn as spawn2 } from "node:child_process";
 import { statSync as statSync2 } from "node:fs";
-import { delimiter, join as join4 } from "node:path";
+import { delimiter, join as join5 } from "node:path";
 var MAX_CHILD_CAPTURE_BYTES = 2 * 1024 * 1024;
 var KILL_GRACE_MS = 2e3;
 var RESUME_POLL_MS = 300;
@@ -41361,7 +41643,7 @@ function defaultProcessStat(pid) {
 function findOnPath(command, env) {
   for (const dir of (env.PATH ?? "").split(delimiter)) {
     if (dir === "") continue;
-    const candidate = join4(dir, command);
+    const candidate = join5(dir, command);
     try {
       const info = statSync2(candidate);
       if (info.isFile() && (info.mode & 73) !== 0) return candidate;
@@ -41531,8 +41813,8 @@ function tailLogLines(text, options) {
 // src/ocr-backend.ts
 import { execFile as execFile4 } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, renameSync, rmSync, statSync as statSync3, writeFileSync } from "node:fs";
-import { delimiter as delimiter2, dirname as dirname2, join as join5 } from "node:path";
+import { mkdirSync, readFileSync as readFileSync2, renameSync, rmSync as rmSync2, statSync as statSync3, writeFileSync } from "node:fs";
+import { delimiter as delimiter2, dirname as dirname2, join as join6 } from "node:path";
 import { fileURLToPath } from "node:url";
 var OCR_INSTALL_HINT = 'the plugin compiles its bundled Vision OCR helper with swiftc on first use \u2014 install Xcode (or the Command Line Tools: run "xcode-select --install") so ios_sim_find_text / ios_sim_tap_text / ios_sim_wait_for can run';
 var SWIFTC_CANDIDATES = ["/usr/bin/swiftc", "/usr/local/bin/swiftc"];
@@ -41558,13 +41840,13 @@ function isFile(path) {
 function findOnPath2(command, env) {
   for (const dir of (env.PATH ?? "").split(delimiter2)) {
     if (dir === "") continue;
-    const candidate = join5(dir, command);
+    const candidate = join6(dir, command);
     if (isExecutableFile(candidate)) return candidate;
   }
   return void 0;
 }
 function sha256File(path) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
+  return createHash("sha256").update(readFileSync2(path)).digest("hex");
 }
 function run(command, args, timeoutMs, signal) {
   return new Promise((resolve6, reject) => {
@@ -41578,7 +41860,7 @@ function run(command, args, timeoutMs, signal) {
   });
 }
 function defaultOcrSourcePath() {
-  return join5(dirname2(fileURLToPath(import.meta.url)), "..", "assets", "ocr.swift");
+  return join6(dirname2(fileURLToPath(import.meta.url)), "..", "assets", "ocr.swift");
 }
 var OcrHelper = class {
   #cacheDir;
@@ -41606,14 +41888,14 @@ var OcrHelper = class {
     return { reason: "swiftc (the Swift compiler) was not found on PATH \u2014 install Xcode or the Command Line Tools" };
   }
   #slot(sourceSha256) {
-    return join5(this.#cacheDir, sourceSha256.slice(0, 16));
+    return join6(this.#cacheDir, sourceSha256.slice(0, 16));
   }
   /** A cached compile whose recorded digest still matches the binary's bytes. */
   #validCached(sourceSha256) {
-    const binary = join5(this.#slot(sourceSha256), "ocr");
+    const binary = join6(this.#slot(sourceSha256), "ocr");
     if (!isExecutableFile(binary)) return void 0;
     try {
-      const recorded = readFileSync(join5(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
+      const recorded = readFileSync2(join6(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(recorded)) return void 0;
       return recorded === sha256File(binary) ? binary : void 0;
     } catch {
@@ -41664,7 +41946,7 @@ var OcrHelper = class {
     if (cached2 !== void 0) return cached2;
     const slot = this.#slot(sourceSha256);
     mkdirSync(slot, { recursive: true });
-    const tmp = join5(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
+    const tmp = join6(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
     try {
       try {
         await run(swiftc.command, ["-O", this.#sourcePath, "-o", tmp], OCR_COMPILE_TIMEOUT_MS);
@@ -41679,13 +41961,13 @@ var OcrHelper = class {
           throw new Error(`the compiled OCR helper failed its sanity launch: ${error62 instanceof Error ? error62.message : String(error62)}`);
         }
       }
-      const binary = join5(slot, "ocr");
+      const binary = join6(slot, "ocr");
       renameSync(tmp, binary);
-      writeFileSync(join5(slot, DIGEST_FILE), `${sha256File(binary)}
+      writeFileSync(join6(slot, DIGEST_FILE), `${sha256File(binary)}
 `, "utf8");
       return binary;
     } finally {
-      rmSync(tmp, { force: true });
+      rmSync2(tmp, { force: true });
     }
   }
   /** OCR one PNG: ensure the helper, run it, parse its JSON. */
@@ -41715,14 +41997,14 @@ function parseOcrOutput(stdout) {
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new Error("the OCR helper returned an unexpected payload (expected an object with an items array)");
   }
-  const record2 = parsed;
-  if (!Array.isArray(record2.items)) {
+  const record3 = parsed;
+  if (!Array.isArray(record3.items)) {
     throw new Error("the OCR helper returned an unexpected payload (missing items array)");
   }
   const finite = (value) => typeof value === "number" && Number.isFinite(value) ? value : void 0;
   const seen = /* @__PURE__ */ new Set();
   const items = [];
-  for (const entry of record2.items) {
+  for (const entry of record3.items) {
     if (typeof entry !== "object" || entry === null) continue;
     const raw = entry;
     const text = typeof raw.text === "string" ? raw.text.trim() : "";
@@ -41768,13 +42050,13 @@ function pixelRectToNormalizedCenter(rect, pixelSize) {
 
 // src/preview-host.ts
 import { execFile as execFile5, spawn as spawn3 } from "node:child_process";
-import { copyFileSync, existsSync as existsSync3, mkdirSync as mkdirSync2, readdirSync as readdirSync3, readFileSync as readFileSync3, renameSync as renameSync2, rmSync as rmSync2, statSync as statSync4, watch, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname as dirname3, join as join7, resolve as resolve3 } from "node:path";
+import { copyFileSync, existsSync as existsSync3, mkdirSync as mkdirSync2, readdirSync as readdirSync3, readFileSync as readFileSync4, renameSync as renameSync2, rmSync as rmSync3, statSync as statSync4, watch, writeFileSync as writeFileSync2 } from "node:fs";
+import { dirname as dirname3, join as join8, resolve as resolve3 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // src/preview-source.ts
-import { existsSync as existsSync2, readdirSync as readdirSync2, readFileSync as readFileSync2 } from "node:fs";
-import { join as join6, resolve as resolve2, sep } from "node:path";
+import { existsSync as existsSync2, readdirSync as readdirSync2, readFileSync as readFileSync3 } from "node:fs";
+import { join as join7, resolve as resolve2, sep } from "node:path";
 var PREVIEW_HOST_BUNDLE_ID = "dev.ios-simulator.preview-host";
 var HOST_TARGET_NAME = "IosSimPreviewHost";
 var DYLIB_TARGET_NAME = "IosSimPreviewDylib";
@@ -41807,9 +42089,9 @@ function extractCallArguments(text, selector) {
   return found;
 }
 function readPackageManifest(packageDir) {
-  const manifestPath = join6(packageDir, "Package.swift");
+  const manifestPath = join7(packageDir, "Package.swift");
   if (!existsSync2(manifestPath)) throw new Error(`no Package.swift found in ${packageDir}`);
-  const text = stripStringsAndComments(readFileSync2(manifestPath, "utf8"), { keepStrings: true });
+  const text = stripStringsAndComments(readFileSync3(manifestPath, "utf8"), { keepStrings: true });
   const name = /name\s*:\s*"([^"]+)"/u.exec(text)?.[1] ?? "Package";
   const iosVersionMatch = /\.iOS\(\s*\.v(\d+)/u.exec(text);
   const libraryTargets = [];
@@ -41819,7 +42101,7 @@ function readPackageManifest(packageDir) {
     if (targetName === void 0 || targetDirs.has(targetName)) continue;
     const path = /path\s*:\s*"([^"]+)"/u.exec(args)?.[1];
     libraryTargets.push(targetName);
-    targetDirs.set(targetName, path === void 0 ? join6(packageDir, "Sources", targetName) : resolve2(packageDir, path));
+    targetDirs.set(targetName, path === void 0 ? join7(packageDir, "Sources", targetName) : resolve2(packageDir, path));
   }
   const productNames = extractCallArguments(text, "library").flatMap((args) => /name\s*:\s*"([^"]+)"/u.exec(args)?.slice(1) ?? []);
   return {
@@ -41921,7 +42203,7 @@ function walkSwiftFiles(root, depth = 0) {
   }
   const files = [];
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-    const path = join6(root, entry.name);
+    const path = join7(root, entry.name);
     if (entry.isDirectory()) {
       if (depth < 12 && !IGNORED_DIRS.has(entry.name)) files.push(...walkSwiftFiles(path, depth + 1));
     } else if (entry.isFile() && entry.name.endsWith(".swift") && !entry.name.startsWith(".")) {
@@ -41936,7 +42218,7 @@ function scanPackagePreviews(manifest) {
     for (const file2 of walkSwiftFiles(dir)) {
       let text;
       try {
-        text = readFileSync2(file2, "utf8");
+        text = readFileSync3(file2, "utf8");
       } catch {
         continue;
       }
@@ -42108,7 +42390,7 @@ function sleep2(milliseconds) {
 }
 function readJsonObject(path) {
   try {
-    const parsed = JSON.parse(readFileSync3(path, "utf8"));
+    const parsed = JSON.parse(readFileSync4(path, "utf8"));
     return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
   } catch {
     return {};
@@ -42121,7 +42403,7 @@ function writeJsonAtomic(path, value) {
   renameSync2(temporary, path);
 }
 function defaultPreviewAssetsDir() {
-  return join7(dirname3(fileURLToPath2(import.meta.url)), "..", "assets", "preview-host");
+  return join8(dirname3(fileURLToPath2(import.meta.url)), "..", "assets", "preview-host");
 }
 var PreviewHostController = class {
   #options;
@@ -42146,7 +42428,7 @@ var PreviewHostController = class {
       throw new Error(`a preview session is already running for ${this.#session?.packagePath ?? "another package"} \u2014 only one at a time; stop it first (action "stop") or inspect it (action "status")`);
     }
     const packagePath = resolve3(options.packagePath);
-    if (!existsSync3(join7(packagePath, "Package.swift")) || !statSync4(packagePath).isDirectory()) {
+    if (!existsSync3(join8(packagePath, "Package.swift")) || !statSync4(packagePath).isDirectory()) {
       throw new Error(`packagePath must be a Swift package directory containing Package.swift: ${packagePath}`);
     }
     const manifest = readPackageManifest(packagePath);
@@ -42162,7 +42444,7 @@ var PreviewHostController = class {
     this.#starting = true;
     const platformVersion = Math.max(DEFAULT_IOS_PLATFORM_VERSION, manifest.iosVersion ?? DEFAULT_IOS_PLATFORM_VERSION);
     const arch = this.#options.arch ?? (process.arch === "x64" ? "x86_64" : "arm64");
-    const sessionDir = join7(this.#options.cacheDir, projectSlug(packagePath));
+    const sessionDir = join8(this.#options.cacheDir, projectSlug(packagePath));
     const session = {
       packagePath,
       packageName: manifest.name,
@@ -42170,7 +42452,7 @@ var PreviewHostController = class {
       pid: "",
       ...filter === void 0 ? {} : { filter },
       dropDir: "",
-      dylibPackageDir: join7(sessionDir, "dylib-package"),
+      dylibPackageDir: join8(sessionDir, "dylib-package"),
       triple: `${arch}-apple-ios${platformVersion}.0-simulator`,
       platformVersion,
       sdk: "",
@@ -42193,7 +42475,7 @@ var PreviewHostController = class {
       await this.#options.simctl.installApp(udid, appPath, options.signal);
       const launched = await this.#options.simctl.launchApp(udid, PREVIEW_HOST_BUNDLE_ID, options.signal);
       session.pid = /:\s*(\d+)\s*$/u.exec(launched.trim())?.[1] ?? "";
-      session.dropDir = join7(await this.#options.simctl.getAppContainer(udid, PREVIEW_HOST_BUNDLE_ID, options.signal), "Documents", DROP_DIR_NAME);
+      session.dropDir = join8(await this.#options.simctl.getAppContainer(udid, PREVIEW_HOST_BUNDLE_ID, options.signal), "Documents", DROP_DIR_NAME);
       this.#writeDylibPackage(session, manifest.productNames, platformVersion, matching, manifest.libraryTargets);
       const build = await this.#options.toolchain.swiftBuild(session.dylibPackageDir, session.triple, session.sdk, options.signal);
       if (build.exitCode !== 0) {
@@ -42261,58 +42543,58 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
     await this.#options.simctl.uninstallApp(udid, PREVIEW_HOST_BUNDLE_ID, signal).catch(() => void 0);
   }
   async #buildHostApp(sessionDir, session, platformVersion, signal) {
-    const packageDir = join7(sessionDir, "host-package");
-    const sources = join7(packageDir, "Sources", HOST_TARGET_NAME);
+    const packageDir = join8(sessionDir, "host-package");
+    const sources = join8(packageDir, "Sources", HOST_TARGET_NAME);
     mkdirSync2(sources, { recursive: true });
     const assetsDir = this.#options.assetsDir ?? defaultPreviewAssetsDir();
     for (const name of HOST_SOURCES) {
-      if (!existsSync3(join7(assetsDir, name))) throw new Error(`the preview host sources are missing (${join7(assetsDir, name)}) \u2014 reinstall the plugin`);
-      copyFileSync(join7(assetsDir, name), join7(sources, name));
+      if (!existsSync3(join8(assetsDir, name))) throw new Error(`the preview host sources are missing (${join8(assetsDir, name)}) \u2014 reinstall the plugin`);
+      copyFileSync(join8(assetsDir, name), join8(sources, name));
     }
-    writeFileSync2(join7(packageDir, "Package.swift"), generateHostPackageSwift(platformVersion));
+    writeFileSync2(join8(packageDir, "Package.swift"), generateHostPackageSwift(platformVersion));
     const build = await this.#options.toolchain.swiftBuild(packageDir, session.triple, session.sdk, signal);
     if (build.exitCode !== 0) {
       throw new Error(`swift build failed (exit ${String(build.exitCode)}) for the preview host:
 ${filterSwiftBuildErrors(build.lines).join("\n")}`);
     }
-    const executable = join7(await this.#options.toolchain.binPath(packageDir, session.triple, session.sdk, signal), HOST_TARGET_NAME);
+    const executable = join8(await this.#options.toolchain.binPath(packageDir, session.triple, session.sdk, signal), HOST_TARGET_NAME);
     if (!existsSync3(executable)) throw new Error(`the built preview host executable is missing: ${executable}`);
-    const appDir = join7(sessionDir, `${HOST_TARGET_NAME}.app`);
-    rmSync2(appDir, { recursive: true, force: true });
+    const appDir = join8(sessionDir, `${HOST_TARGET_NAME}.app`);
+    rmSync3(appDir, { recursive: true, force: true });
     mkdirSync2(appDir, { recursive: true });
-    copyFileSync(executable, join7(appDir, HOST_TARGET_NAME));
-    writeFileSync2(join7(appDir, "Info.plist"), generateInfoPlist(platformVersion));
+    copyFileSync(executable, join8(appDir, HOST_TARGET_NAME));
+    writeFileSync2(join8(appDir, "Info.plist"), generateInfoPlist(platformVersion));
     await this.#options.toolchain.codesign(appDir, signal);
     return appDir;
   }
   /** Write the dylib package (kept between rebuilds so SwiftPM builds incrementally). */
   #writeDylibPackage(session, productNames, platformVersion, previews, modules) {
-    const entryDir = join7(session.dylibPackageDir, "Sources", "PreviewEntry");
+    const entryDir = join8(session.dylibPackageDir, "Sources", "PreviewEntry");
     mkdirSync2(entryDir, { recursive: true });
-    const manifestPath = join7(session.dylibPackageDir, "Package.swift");
+    const manifestPath = join8(session.dylibPackageDir, "Package.swift");
     const manifestText = generateDylibPackageSwift(session.packagePath, session.packageName, productNames, platformVersion);
-    if (!existsSync3(manifestPath) || readFileSync3(manifestPath, "utf8") !== manifestText) writeFileSync2(manifestPath, manifestText);
-    const entryPath = join7(entryDir, "Entry.swift");
+    if (!existsSync3(manifestPath) || readFileSync4(manifestPath, "utf8") !== manifestText) writeFileSync2(manifestPath, manifestText);
+    const entryPath = join8(entryDir, "Entry.swift");
     const entryText = generateEntrySwift(previews, modules);
-    if (!existsSync3(entryPath) || readFileSync3(entryPath, "utf8") !== entryText) writeFileSync2(entryPath, entryText);
+    if (!existsSync3(entryPath) || readFileSync4(entryPath, "utf8") !== entryText) writeFileSync2(entryPath, entryText);
   }
   async #pushGeneration(session, previews, signal) {
-    const dylib = join7(await this.#options.toolchain.binPath(session.dylibPackageDir, session.triple, session.sdk, signal), DYLIB_LIBRARY_NAME);
+    const dylib = join8(await this.#options.toolchain.binPath(session.dylibPackageDir, session.triple, session.sdk, signal), DYLIB_LIBRARY_NAME);
     if (!existsSync3(dylib)) throw new Error(`the built preview dylib is missing: ${dylib}`);
     const generation = session.generation + 1;
     mkdirSync2(session.dropDir, { recursive: true });
-    const target = join7(session.dropDir, `preview_${generation}.dylib`);
+    const target = join8(session.dropDir, `preview_${generation}.dylib`);
     copyFileSync(dylib, target);
     await this.#options.toolchain.codesign(target, signal);
     session.generation = generation;
-    writeJsonAtomic(join7(session.dropDir, "manifest.json"), {
+    writeJsonAtomic(join8(session.dropDir, "manifest.json"), {
       generation,
       dylib: `preview_${generation}.dylib`,
       previews: previews.map((preview) => preview.name)
     });
     for (const entry of readdirSync3(session.dropDir)) {
       const old = /^preview_(\d+)\.dylib$/u.exec(entry);
-      if (old !== null && Number(old[1]) <= generation - KEPT_DYLIB_GENERATIONS) rmSync2(join7(session.dropDir, entry), { force: true });
+      if (old !== null && Number(old[1]) <= generation - KEPT_DYLIB_GENERATIONS) rmSync3(join8(session.dropDir, entry), { force: true });
     }
   }
   async #waitForHost(session, generation, timeoutMs) {
@@ -42325,7 +42607,7 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
     }
   }
   #hostResult(session) {
-    return session.dropDir === "" ? {} : readJsonObject(join7(session.dropDir, "result.json"));
+    return session.dropDir === "" ? {} : readJsonObject(join8(session.dropDir, "result.json"));
   }
   #scheduleRebuild(session) {
     if (session.disposed) return;
@@ -42401,7 +42683,7 @@ function watchPackageTree(root, onChange) {
         return;
       }
       for (const entry of entries) {
-        if (entry.isDirectory() && !IGNORED_DIRS.has(entry.name)) attach(join7(dir, entry.name));
+        if (entry.isDirectory() && !IGNORED_DIRS.has(entry.name)) attach(join8(dir, entry.name));
       }
     };
     attach(root);
@@ -42475,7 +42757,7 @@ var xcrunToolchain = {
 import { createReadStream, lstatSync, realpathSync } from "node:fs";
 import { readFile as readFile4 } from "node:fs/promises";
 import { createServer, get as httpGet } from "node:http";
-import { basename as basename2, join as join9, sep as sep2 } from "node:path";
+import { basename as basename2, join as join10, sep as sep2 } from "node:path";
 import { pipeline } from "node:stream";
 
 // node_modules/ws/wrapper.mjs
@@ -42605,7 +42887,7 @@ async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRI
 import { execFile as execFile7 } from "node:child_process";
 import { closeSync, existsSync as existsSync4, mkdirSync as mkdirSync3, openSync, readSync, readdirSync as readdirSync4, statSync as statSync5, unlinkSync } from "node:fs";
 import { readFile as readFile3, rm } from "node:fs/promises";
-import { join as join8 } from "node:path";
+import { join as join9 } from "node:path";
 var FILE_PATTERN = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
 var SIPS_TIMEOUT_MS = 3e4;
 function isScreenshotFileName(name) {
@@ -42693,10 +42975,10 @@ var ScreenshotStore = class {
         if (Number.isInteger(index) && index >= next) next = index + 1;
       }
     }
-    let path = join8(this.dir, `screenshot-${safe}-${next}.png`);
+    let path = join9(this.dir, `screenshot-${safe}-${next}.png`);
     while (existsSync4(path)) {
       next += 1;
-      path = join8(this.dir, `screenshot-${safe}-${next}.png`);
+      path = join9(this.dir, `screenshot-${safe}-${next}.png`);
     }
     this.#next.set(safe, next + 1);
     return path;
@@ -42720,7 +43002,7 @@ var ScreenshotStore = class {
     }
     if (names.length <= this.#keep) return;
     const entries = names.map((name) => {
-      const path = join8(this.dir, name);
+      const path = join9(this.dir, name);
       let mtime = 0;
       try {
         mtime = statSync5(path).mtimeMs;
@@ -42783,8 +43065,18 @@ function pickPreferred(devices) {
   if (picked === void 0) throw new Error("No simulator devices are installed \u2014 install an iOS Simulator runtime in Xcode, then retry");
   return picked;
 }
+var REAL_DEVICE_TOOLS = "ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes and ios_sim_app_info";
 async function resolveTargetDevice(deps, reference, options = {}) {
-  if (reference !== void 0 && reference.trim() !== "") return deps.simctl.getDevice(reference);
+  if (reference !== void 0 && reference.trim() !== "") {
+    try {
+      return await deps.simctl.getDevice(reference);
+    } catch (error62) {
+      if (deps.realDevices !== void 0 && await deps.realDevices.matches(reference)) {
+        throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only \u2014 on a real device use ${REAL_DEVICE_TOOLS} (screen, touch and UI tools need WebDriverAgent, which is not supported yet)`);
+      }
+      throw error62;
+    }
+  }
   const status = deps.host.status();
   if (status.running && status.device !== void 0) {
     try {
@@ -42812,6 +43104,28 @@ async function ensureStreamFor(host, device) {
   const info = host.streamInfo;
   if (info !== void 0 && info.device === device.udid) return info;
   return host.ensureRunning({ udid: device.udid });
+}
+async function resolveToolTarget(deps, reference) {
+  if (reference === void 0 || reference.trim() === "") return { kind: "simulator", device: await resolveTargetDevice(deps, reference) };
+  let simulatorError;
+  try {
+    return { kind: "simulator", device: await deps.simctl.getDevice(reference) };
+  } catch (error62) {
+    simulatorError = error62;
+  }
+  let device;
+  try {
+    device = await deps.realDevices.getDevice(reference);
+  } catch {
+    throw simulatorError;
+  }
+  if (device.pairingState !== "paired" || device.state === "unavailable") {
+    throw new Error(`${device.name} is not available (${device.state}) \u2014 connect it over USB, unlock it, tap "Trust This Computer", and check \`xcrun devicectl list devices\``);
+  }
+  return { kind: "real", device };
+}
+function realDeviceSummary(device) {
+  return { udid: device.udid, name: device.name, runtime: device.osVersion === void 0 ? "iOS" : `iOS ${device.osVersion}`, state: device.state };
 }
 
 // src/panel/fence.ts
@@ -43038,7 +43352,7 @@ var PanelServer = class {
     }
   }
   async #serveStatic(res, entry) {
-    const body = await readFile4(join9(this.#options.staticDir, entry.file));
+    const body = await readFile4(join10(this.#options.staticDir, entry.file));
     const port = this.#port;
     res.writeHead(200, {
       "content-type": entry.type,
@@ -43125,7 +43439,7 @@ var PanelServer = class {
     const dir = this.#options.screenshots.dir;
     let real;
     try {
-      const path = join9(dir, name);
+      const path = join10(dir, name);
       const stat = lstatSync(path);
       if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, "not found");
       real = realpathSync(path);
@@ -43280,7 +43594,7 @@ var PanelServer = class {
 // src/recorder.ts
 import { spawn as spawn4 } from "node:child_process";
 import { mkdirSync as mkdirSync4, statSync as statSync6 } from "node:fs";
-import { dirname as dirname4, join as join10 } from "node:path";
+import { dirname as dirname4, join as join11 } from "node:path";
 function recordVideoArgs(udid, path) {
   return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
 }
@@ -43317,7 +43631,7 @@ var Recorder = class {
   }
   defaultPath(udid) {
     const stamp = new Date(this.#now()).toISOString().replace(/[:.]/g, "-");
-    return join10(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
+    return join11(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
   }
   async start(udid, outputPath) {
     const running = this.#active.get(udid);
@@ -43438,11 +43752,11 @@ import {
   execFile as execFile8,
   spawn as spawn5
 } from "node:child_process";
-import { readFileSync as readFileSync4, statSync as statSync7 } from "node:fs";
+import { readFileSync as readFileSync5, statSync as statSync7 } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
 import { createServer as createServer2 } from "node:net";
-import { delimiter as delimiter3, dirname as dirname5, join as join11 } from "node:path";
+import { delimiter as delimiter3, dirname as dirname5, join as join12 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 var SERVE_SIM_PACKAGE = "serve-sim";
 var STREAM_PORT_RANGE_START = 3181;
@@ -43482,7 +43796,7 @@ function isFile2(path) {
 function findOnPath3(command) {
   for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
     if (dir === "") continue;
-    const candidate = join11(dir, command);
+    const candidate = join12(dir, command);
     if (isExecutableFile2(candidate)) return candidate;
   }
   return void 0;
@@ -43494,7 +43808,7 @@ function resolvePackageManifest(packageName) {
   }
   let current = dirname5(fileURLToPath3(import.meta.url));
   for (; ; ) {
-    const candidate = join11(current, "node_modules", packageName, "package.json");
+    const candidate = join12(current, "node_modules", packageName, "package.json");
     if (isFile2(candidate)) return candidate;
     const parent = dirname5(current);
     if (parent === current) return void 0;
@@ -43505,7 +43819,7 @@ function tryResolvePackageBin() {
   const manifestPath = resolvePackageManifest(SERVE_SIM_PACKAGE);
   if (manifestPath === void 0) return void 0;
   try {
-    const manifest = JSON.parse(readFileSync4(manifestPath, "utf8"));
+    const manifest = JSON.parse(readFileSync5(manifestPath, "utf8"));
     const bin = manifest.bin;
     let binPath;
     if (typeof bin === "string") binPath = bin;
@@ -43514,7 +43828,7 @@ function tryResolvePackageBin() {
       if (typeof candidate === "string") binPath = candidate;
     }
     if (binPath === void 0) return void 0;
-    const resolved = join11(dirname5(manifestPath), binPath);
+    const resolved = join12(dirname5(manifestPath), binPath);
     return isExecutableFile2(resolved) ? resolved : void 0;
   } catch {
     return void 0;
@@ -43553,16 +43867,16 @@ function parseServeSimHandshake(line) {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     throw new Error("serve-sim returned an invalid handshake");
   }
-  const record2 = value;
-  if (typeof record2.url !== "string" || !/^https?:\/\//.test(record2.url) || typeof record2.streamUrl !== "string" || !/^https?:\/\//.test(record2.streamUrl) || typeof record2.wsUrl !== "string" || !/^wss?:\/\//.test(record2.wsUrl) || typeof record2.port !== "number" || !Number.isSafeInteger(record2.port) || record2.port < 1 || record2.port > 65535 || typeof record2.device !== "string" || record2.device === "") {
+  const record3 = value;
+  if (typeof record3.url !== "string" || !/^https?:\/\//.test(record3.url) || typeof record3.streamUrl !== "string" || !/^https?:\/\//.test(record3.streamUrl) || typeof record3.wsUrl !== "string" || !/^wss?:\/\//.test(record3.wsUrl) || typeof record3.port !== "number" || !Number.isSafeInteger(record3.port) || record3.port < 1 || record3.port > 65535 || typeof record3.device !== "string" || record3.device === "") {
     throw new Error("serve-sim returned an incomplete handshake");
   }
   return {
-    url: record2.url,
-    streamUrl: record2.streamUrl,
-    wsUrl: record2.wsUrl,
-    port: record2.port,
-    device: record2.device
+    url: record3.url,
+    streamUrl: record3.streamUrl,
+    wsUrl: record3.wsUrl,
+    port: record3.port,
+    device: record3.device
   };
 }
 function waitForStreamHandshake(child, timeoutMs, diagnostics) {
@@ -44203,9 +44517,9 @@ var SimHostController = class {
 };
 
 // src/stream-source.ts
-import { readFileSync as readFileSync5, unlinkSync as unlinkSync2 } from "node:fs";
-import { tmpdir } from "node:os";
-import { join as join12 } from "node:path";
+import { readFileSync as readFileSync6, unlinkSync as unlinkSync2 } from "node:fs";
+import { tmpdir as tmpdir2 } from "node:os";
+import { join as join13 } from "node:path";
 function errorMessage6(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
@@ -44309,10 +44623,10 @@ var SimStreamSource = class {
     ),
     screenshot: async () => {
       const udid = this.#requireDevice();
-      const path = join12(tmpdir(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
+      const path = join13(tmpdir2(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
       try {
         await takeScreenshot(udid, path);
-        const pngBase64 = readFileSync5(path).toString("base64");
+        const pngBase64 = readFileSync6(path).toString("base64");
         const size = pngDimensionsFromBase64(pngBase64);
         return { pngBase64, ...size === void 0 ? {} : size };
       } catch (error62) {
@@ -44341,7 +44655,7 @@ var SimStreamSource = class {
 
 // src/tools/apps.ts
 import { existsSync as existsSync5 } from "node:fs";
-import { join as join13, resolve as resolve4 } from "node:path";
+import { join as join14, resolve as resolve4 } from "node:path";
 
 // src/tools/result.ts
 var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name. Default: the streamed device, else the newest-runtime booted iPhone.");
@@ -44373,10 +44687,22 @@ function sleep5(milliseconds) {
 
 // src/tools/apps.ts
 var NOT_AN_OPTION = /^(?!\s*-)/u;
+function installedAppFromRealApp(app) {
+  const system = app.defaultApp === true || (app.appType ?? "").toLowerCase() === "system";
+  return { bundleId: app.bundleId, name: app.name === "" ? app.bundleId : app.name, ...app.version === void 0 ? {} : { version: app.version }, system };
+}
 function registerAppTools(server, deps) {
+  const targetOf = async (tool, udid) => {
+    assertMac(deps.platform);
+    const resolved = await resolveToolTarget(deps, udid);
+    if (resolved.kind === "simulator") requireBooted(tool, resolved.device);
+    return resolved;
+  };
+  const summaryOf = (resolved) => resolved.kind === "real" ? realDeviceSummary(resolved.device) : deviceSummary(resolved.device);
+  const appsOf = async (resolved, signal) => resolved.kind === "real" ? (await deps.realDevices.listApps(resolved.device.udid, signal)).map(installedAppFromRealApp) : deps.listApps(resolved.device.udid, signal);
   server.registerTool("ios_sim_list_apps", {
     title: "List installed apps",
-    description: "List the apps INSTALLED on a booted simulator: bundle id, display name (localized to the simulator language, e.g. \u65E5\u5386 rather than Calendar), version and a system flag. Run it before opening a third-party app \u2014 never guess a bundle id. query matches the name, the base name and the bundle id (case-insensitive, CJK works); include_system adds the stock Apple apps. A failed listing is an error, so count 0 means no match.",
+    description: "List the apps INSTALLED on a booted simulator, or on a connected iPhone/iPad (pass its udid or name from ios_sim_devices.realDevices): bundle id, display name (on a simulator localized to its language, e.g. \u65E5\u5386 rather than Calendar; on a real device devicectl's base name), version and a system flag. Run it before opening a third-party app \u2014 never guess a bundle id. query matches the name, the base name and the bundle id (case-insensitive, CJK works); include_system adds the stock Apple apps. A failed listing is an error, so count 0 means no match.",
     inputSchema: {
       udid: UDID_PARAM,
       query: external_exports.string().optional(),
@@ -44384,25 +44710,23 @@ function registerAppTools(server, deps) {
     },
     annotations: { readOnlyHint: true }
   }, async (args, extra) => runTool("ios_sim_list_apps", async () => {
-    assertMac(deps.platform);
-    const device = await resolveTargetDevice(deps, args.udid);
-    requireBooted("ios_sim_list_apps", device);
-    const apps = await deps.listApps(device.udid, extra.signal);
+    const resolved = await targetOf("ios_sim_list_apps", args.udid);
+    const apps = await appsOf(resolved, extra.signal);
     const query = args.query?.trim() ?? "";
     const filtered = filterInstalledApps(apps, { ...query === "" ? {} : { query }, includeSystem: args.include_system === true });
     const noMatch = filtered.length === 0 && query !== "";
     const candidates = noMatch ? noMatchCandidateLines(apps) : [];
     return jsonResult({
-      device: deviceSummary(device),
+      device: summaryOf(resolved),
       count: filtered.length,
       apps: filtered,
-      ...noMatch ? { hint: noMatchListingHint("simulator", apps.length) } : {},
+      ...noMatch ? { hint: noMatchListingHint(resolved.kind, apps.length) } : {},
       ...candidates.length > 0 ? { candidates } : {}
     });
   }));
   server.registerTool("ios_sim_launch_app", {
     title: "Launch an installed app",
-    description: "Launch an installed app on a booted simulator. Pass EITHER bundleId OR name (exactly one): name is a case-insensitive display-name substring (localized names work), resolved against the installed apps. Third-party bundle ids cannot be guessed \u2014 use name or ios_sim_list_apps. Stable Apple ids: Calendar com.apple.mobilecal, Safari com.apple.mobilesafari, Settings com.apple.Preferences, Photos com.apple.mobileslideshow, Messages com.apple.MobileSMS, Maps com.apple.Maps, Notes com.apple.mobilenotes. relaunch terminates a running instance first. To build from source use ios_sim_build_run.",
+    description: "Launch an installed app on a booted simulator, or on a connected iPhone/iPad (pass its udid or name). Pass EITHER bundleId OR name (exactly one): name is a case-insensitive display-name substring (localized names work), resolved against the installed apps. Third-party bundle ids cannot be guessed \u2014 use name or ios_sim_list_apps. Stable Apple ids: Calendar com.apple.mobilecal, Safari com.apple.mobilesafari, Settings com.apple.Preferences, Photos com.apple.mobileslideshow, Messages com.apple.MobileSMS, Maps com.apple.Maps, Notes com.apple.mobilenotes. relaunch terminates a running instance first. To build from source use ios_sim_build_run.",
     inputSchema: {
       bundleId: external_exports.string().optional(),
       name: external_exports.string().optional(),
@@ -44418,11 +44742,28 @@ function registerAppTools(server, deps) {
     if (requestedId === "" && requestedName === "") {
       throw new Error('bundleId is required, e.g. "com.apple.mobilecal" \u2014 or pass name to resolve one by display name; run ios_sim_list_apps to see what is installed');
     }
-    assertMac(deps.platform);
-    const device = await resolveTargetDevice(deps, args.udid);
-    requireBooted("ios_sim_launch_app", device);
-    const resolved = requestedName === "" ? void 0 : resolveAppByName("ios_sim_launch_app", await deps.listApps(device.udid, extra.signal), requestedName, device.name);
+    const target = await targetOf("ios_sim_launch_app", args.udid);
+    const resolved = requestedName === "" ? void 0 : resolveAppByName("ios_sim_launch_app", await appsOf(target, extra.signal), requestedName, target.device.name, { physical: target.kind === "real" });
     const bundleId = resolved?.bundleId ?? requestedId;
+    const notLaunched = (error62) => new Error(`could not launch ${bundleId} on ${target.device.name}: ${error62 instanceof Error ? error62.message : String(error62)} \u2014 the app may not be installed, or the bundle id may be wrong (a third-party bundle id cannot be guessed); run ios_sim_list_apps to see what is installed`);
+    if (target.kind === "real") {
+      if (args.relaunch === true) await deps.realDevices.terminateApp(target.device.udid, bundleId, extra.signal).catch(() => void 0);
+      let launched;
+      try {
+        launched = await deps.realDevices.launchApp(target.device.udid, bundleId, extra.signal);
+      } catch (error62) {
+        throw notLaunched(error62);
+      }
+      return jsonResult({
+        device: realDeviceSummary(target.device),
+        bundleId,
+        ...resolved === void 0 ? {} : { name: resolved.name },
+        launched: true,
+        ...launched.pid === void 0 ? {} : { pid: launched.pid },
+        ...args.relaunch === true ? { relaunched: true } : {}
+      });
+    }
+    const device = target.device;
     if (args.relaunch === true) {
       await deps.simctl.terminateApp(device.udid, bundleId, extra.signal).catch(() => void 0);
     }
@@ -44430,8 +44771,7 @@ function registerAppTools(server, deps) {
     try {
       stdout = await deps.simctl.launchApp(device.udid, bundleId, extra.signal);
     } catch (error62) {
-      const message = error62 instanceof Error ? error62.message : String(error62);
-      throw new Error(`could not launch ${bundleId} on ${device.name}: ${message} \u2014 the app may not be installed, or the bundle id may be wrong (a third-party bundle id cannot be guessed); run ios_sim_list_apps to see what is installed`);
+      throw notLaunched(error62);
     }
     const pid = Number.parseInt(stdout.split(":").pop()?.trim() ?? "", 10);
     return jsonResult({
@@ -44481,23 +44821,23 @@ function registerAppTools(server, deps) {
   }));
   server.registerTool("ios_sim_install_app", {
     title: "Install a built app",
-    description: "Install a built .app bundle (a directory containing Info.plist) on a booted simulator and report its bundle id. To build from source use ios_sim_build_run.",
+    description: "Install a built .app bundle (a directory containing Info.plist) on a booted simulator and report its bundle id. It also installs on a connected iPhone/iPad (pass its udid or name), where the .app must be built for iphoneos and signed for that device. To build for a simulator from source use ios_sim_build_run.",
     inputSchema: { appPath: external_exports.string().min(1), udid: UDID_PARAM }
   }, async (args, extra) => runTool("ios_sim_install_app", async () => {
     assertMac(deps.platform);
     const appPath = resolve4(args.appPath);
-    if (!existsSync5(join13(appPath, "Info.plist"))) {
+    if (!existsSync5(join14(appPath, "Info.plist"))) {
       throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`);
     }
-    const device = await resolveTargetDevice(deps, args.udid);
-    requireBooted("ios_sim_install_app", device);
-    await deps.simctl.installApp(device.udid, appPath, extra.signal);
+    const target = await targetOf("ios_sim_install_app", args.udid);
+    if (target.kind === "real") await deps.realDevices.installApp(target.device.udid, appPath, extra.signal);
+    else await deps.simctl.installApp(target.device.udid, appPath, extra.signal);
     const bundleId = await deps.builder.readBundleIdentifier(appPath, extra.signal);
-    return jsonResult({ device: deviceSummary(device), appPath, bundleId, installed: true });
+    return jsonResult({ device: summaryOf(target), appPath, bundleId, installed: true });
   }));
   server.registerTool("ios_sim_uninstall_app", {
     title: "Uninstall an app",
-    description: "Uninstall an app (and its data container) from a booted simulator by bundle id.",
+    description: "Uninstall an app (and its data container) from a booted simulator by bundle id. Simulators only: on a real iPhone/iPad the app's data cannot be recovered, so uninstall it on the device yourself.",
     inputSchema: { bundleId: external_exports.string().min(1), udid: UDID_PARAM },
     annotations: { destructiveHint: true }
   }, async (args, extra) => runTool("ios_sim_uninstall_app", async () => {
@@ -44581,14 +44921,14 @@ function simDragPath(request, stepMs = SIM_GESTURE_STEP_MS) {
 }
 function simDragRequestOf(payload) {
   if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return void 0;
-  const record2 = payload;
+  const record3 = payload;
   const normalized = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1 ? value : void 0;
-  const fromX = normalized(record2.fromX);
-  const fromY = normalized(record2.fromY);
-  const toX = normalized(record2.toX);
-  const toY = normalized(record2.toY);
+  const fromX = normalized(record3.fromX);
+  const fromY = normalized(record3.fromY);
+  const toX = normalized(record3.toX);
+  const toY = normalized(record3.toY);
   if (fromX === void 0 || fromY === void 0 || toX === void 0 || toY === void 0) return void 0;
-  const duration3 = typeof record2.duration === "number" && Number.isFinite(record2.duration) ? record2.duration : void 0;
+  const duration3 = typeof record3.duration === "number" && Number.isFinite(record3.duration) ? record3.duration : void 0;
   return { fromX, fromY, toX, toY, ...duration3 === void 0 ? {} : { duration: duration3 } };
 }
 function loadWs() {
@@ -44957,16 +45297,16 @@ function toFramebufferArgs(orientation, args) {
     case "gesture": {
       const json2 = args.json;
       if (typeof json2 !== "object" || json2 === null || Array.isArray(json2)) return args;
-      const record2 = json2;
-      const drag = simDragRequestOf(record2);
+      const record3 = json2;
+      const drag = simDragRequestOf(record3);
       if (drag !== void 0) {
         const from = map2(drag.fromX, drag.fromY);
         const to = map2(drag.toX, drag.toY);
-        return { ...args, json: { ...record2, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y } };
+        return { ...args, json: { ...record3, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y } };
       }
-      if (typeof record2.x === "number" && typeof record2.y === "number") {
-        const point = map2(record2.x, record2.y);
-        return { ...args, json: { ...record2, x: point.x, y: point.y } };
+      if (typeof record3.x === "number" && typeof record3.y === "number") {
+        const point = map2(record3.x, record3.y);
+        return { ...args, json: { ...record3, x: point.x, y: point.y } };
       }
       return args;
     }
@@ -45011,15 +45351,21 @@ function registerCoreTools(server, deps) {
   };
   server.registerTool("ios_sim_devices", {
     title: "List iOS simulators",
-    description: "List the iOS Simulator devices on this Mac (udid, name, runtime, state, deviceType): booted first, then newest runtime. Use it to find the udid or name the other ios_sim_* tools take; `streaming` names the device the live panel shows.",
+    description: "List the iOS Simulator devices on this Mac (udid, name, runtime, state, deviceType): booted first, then newest runtime. Use it to find the udid or name the other ios_sim_* tools take; `streaming` names the device the live panel shows. Connected iPhones and iPads are listed under `realDevices` (devicectl); pass one of their udids or names to the tools that support real devices.",
     inputSchema: { query: external_exports.string().optional().describe("Case-insensitive substring over name, udid and runtime") },
     annotations: { readOnlyHint: true }
-  }, async ({ query }) => runTool("ios_sim_devices", async () => {
+  }, async ({ query }, extra) => runTool("ios_sim_devices", async () => {
     assertMac(deps.platform);
     const all = await deps.simctl.listDevices();
     const needle = (query ?? "").trim().toLowerCase();
     const devices = sortDevices(all).filter((device) => needle === "" || device.name.toLowerCase().includes(needle) || device.udid.toLowerCase().includes(needle) || device.runtime.toLowerCase().includes(needle));
     const status = deps.host.status();
+    let real;
+    try {
+      real = { realDevices: await deps.realDevices.listDevices(extra.signal) };
+    } catch (error62) {
+      real = { realDevicesError: error62 instanceof Error ? error62.message : String(error62) };
+    }
     return jsonResult({
       devices: devices.map((device) => ({
         ...deviceSummary(device),
@@ -45027,7 +45373,8 @@ function registerCoreTools(server, deps) {
       })),
       count: devices.length,
       booted: all.filter((device) => device.state === "Booted").map((device) => device.udid),
-      ...status.running && status.device !== void 0 ? { streaming: status.device } : {}
+      ...status.running && status.device !== void 0 ? { streaming: status.device } : {},
+      ...real
     });
   }));
   server.registerTool("ios_sim_boot", {
@@ -45202,8 +45549,8 @@ function registerCoreTools(server, deps) {
 }
 
 // src/tools/debug.ts
-import { mkdirSync as mkdirSync5, statSync as statSync8, existsSync as existsSync6, readFileSync as readFileSync6 } from "node:fs";
-import { join as join14 } from "node:path";
+import { mkdirSync as mkdirSync5, statSync as statSync8, existsSync as existsSync6, readFileSync as readFileSync7 } from "node:fs";
+import { join as join15 } from "node:path";
 var MAX_LOG_LINES = 300;
 var MAX_LOG_BYTES = 30 * 1024;
 var SNAPSHOT_TIMEOUT_MS = 8 * 60 * 1e3;
@@ -45331,14 +45678,22 @@ function registerDebugTools(server, deps) {
   }));
   server.registerTool("ios_sim_processes", {
     title: "List running app processes",
-    description: "List the running app processes of a booted simulator (pid, process name, bundle id) from the simulator's own launchd. The pids are host pids and feed ios_sim_backtrace and ios_sim_leaks. filter is a case-insensitive substring over the name and bundle id.",
+    description: "List the running app processes of a booted simulator (pid, process name, bundle id) from the simulator's own launchd. The pids are host pids and feed ios_sim_backtrace and ios_sim_leaks. On a connected iPhone/iPad (pass its udid or name) it lists every running process through devicectl; those pids live on the device, and only processes inside an installed app carry a bundle id. filter is a case-insensitive substring over the name and bundle id.",
     inputSchema: { udid: UDID_PARAM, filter: external_exports.string().optional() },
     annotations: { readOnlyHint: true }
   }, async (args, extra) => runTool("ios_sim_processes", async () => {
-    const device = await bootedTarget("ios_sim_processes", args.udid);
+    assertMac(deps.platform);
+    const target = await resolveToolTarget(deps, args.udid);
+    if (target.kind === "simulator") requireBooted("ios_sim_processes", target.device);
     const needle = args.filter?.trim().toLowerCase() ?? "";
-    const processes = (await listProcesses(device, extra.signal)).filter((entry) => needle === "" || entry.name.toLowerCase().includes(needle) || entry.bundleId?.toLowerCase().includes(needle) === true);
-    return jsonResult({ device: deviceSummary(device), count: processes.length, processes: processes.map(processSummary) });
+    const all = target.kind === "real" ? await deps.realDevices.listProcesses(target.device.udid, extra.signal) : await listProcesses(target.device, extra.signal);
+    const processes = all.filter((entry) => needle === "" || entry.name.toLowerCase().includes(needle) || entry.bundleId?.toLowerCase().includes(needle) === true);
+    return jsonResult({
+      device: target.kind === "real" ? realDeviceSummary(target.device) : deviceSummary(target.device),
+      count: processes.length,
+      processes: processes.map(processSummary),
+      ...target.kind === "real" ? { note: "these pids live on the device: ios_sim_backtrace and ios_sim_leaks work on simulators only" } : {}
+    });
   }));
   server.registerTool("ios_sim_backtrace", {
     title: "Backtrace a running app",
@@ -45384,9 +45739,9 @@ function registerDebugTools(server, deps) {
       if (sample === void 0) {
         throw new Error(`LLDB capture is unavailable${note === void 0 ? "" : ` (${note})`} and Xcode's sample tool is not installed \u2014 install Xcode or the Command Line Tools`);
       }
-      const dir = join14(deps.cacheRoot, "samples");
+      const dir = join15(deps.cacheRoot, "samples");
       mkdirSync5(dir, { recursive: true });
-      reportPath = join14(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
+      reportPath = join15(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
       const outcome = await deps.devtools.run({
         command: sample,
         args: [String(target.pid), "1", "1", "-file", reportPath],
@@ -45398,7 +45753,7 @@ function registerDebugTools(server, deps) {
         const detail = tailDiagnostic(outcome.stderr === "" ? outcome.stdout : outcome.stderr, 3);
         throw new Error(`sample of pid ${target.pid} produced no report${detail === "" ? "" : `: ${detail}`}`);
       }
-      threads = parseSampleThreads(readFileSync6(reportPath, "utf8"));
+      threads = parseSampleThreads(readFileSync7(reportPath, "utf8"));
       if (threads.length === 0) throw new Error(`sample of pid ${target.pid} produced no thread sections (report: ${reportPath})`);
     }
     const kept = orderThreads(threads, allThreads);
@@ -45438,9 +45793,9 @@ function registerDebugTools(server, deps) {
     const unavailable = (fatal2) => new Error(`leaks could not analyze pid ${target.pid}: ${fatal2} \u2014 ${DEVELOPER_MODE_HINT}`);
     const base = { device: deviceSummary(device), ...processSummary(target), mode };
     if (mode === "memgraph") {
-      const dir = join14(deps.cacheRoot, "memgraphs");
+      const dir = join15(deps.cacheRoot, "memgraphs");
       mkdirSync5(dir, { recursive: true });
-      const path = join14(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
+      const path = join15(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
       const outcome2 = await deps.devtools.run({
         command: leaks,
         args: [`--outputGraph=${path}`, String(target.pid)],
@@ -45488,15 +45843,33 @@ function registerDebugTools(server, deps) {
   }));
   server.registerTool("ios_sim_app_info", {
     title: "Show an installed app's paths and Info.plist",
-    description: "Installed-app facts for one bundle id on a booted simulator: the .app path, the writable data container (Documents, Library, \u2026), and Info.plist values (display name, executable, version), via simctl appinfo with a get_app_container fallback. A bundle id that is not installed returns installed:false with a note \u2014 list the apps instead of guessing ids.",
+    description: "Installed-app facts for one bundle id on a booted simulator: the .app path, the writable data container (Documents, Library, \u2026), and Info.plist values (display name, executable, version), via simctl appinfo with a get_app_container fallback. On a connected iPhone/iPad (pass its udid or name) it reports the on-device .app path, name, version and whether it is a system app (containers are not exposed there). A bundle id that is not installed returns installed:false with a note \u2014 list the apps instead of guessing ids.",
     inputSchema: {
       udid: UDID_PARAM,
       bundle_id: external_exports.string().trim().min(1).describe("Bundle id of the installed app, e.g. com.apple.Preferences")
     },
     annotations: { readOnlyHint: true }
   }, async (args, extra) => runTool("ios_sim_app_info", async () => {
-    const device = await bootedTarget("ios_sim_app_info", args.udid);
+    assertMac(deps.platform);
+    const target = await resolveToolTarget(deps, args.udid);
     const bundleId = args.bundle_id;
+    if (target.kind === "real") {
+      const summary = realDeviceSummary(target.device);
+      const app = await deps.realDevices.getApp(target.device.udid, bundleId, extra.signal);
+      if (app === void 0) return jsonResult({ device: summary, bundleId, installed: false, note: `${bundleId} is not installed on ${target.device.name} \u2014 ${APP_LIST_HINT}` });
+      return jsonResult({
+        device: summary,
+        bundleId,
+        installed: true,
+        ...app.path === void 0 ? {} : { appPath: app.path },
+        name: app.name,
+        ...app.bundleVersion === void 0 ? {} : { version: app.bundleVersion },
+        ...app.version === void 0 ? {} : { shortVersion: app.version },
+        applicationType: app.defaultApp === true || (app.appType ?? "").toLowerCase() === "system" ? "System" : "User"
+      });
+    }
+    requireBooted("ios_sim_app_info", target.device);
+    const device = target.device;
     const container = async (kind) => {
       try {
         const path = (await deps.devtools.simctl(["get_app_container", device.udid, bundleId, kind], extra.signal)).trim();
@@ -45532,7 +45905,7 @@ function registerDebugTools(server, deps) {
 // src/tools/env.ts
 import { randomUUID } from "node:crypto";
 import { mkdir, rm as rm2, writeFile } from "node:fs/promises";
-import { join as join15, resolve as resolve5 } from "node:path";
+import { join as join16, resolve as resolve5 } from "node:path";
 function registerEnvTools(server, deps) {
   const bootedDevice = async (tool, udid) => {
     assertMac(deps.platform);
@@ -45564,9 +45937,9 @@ function registerEnvTools(server, deps) {
     }
     const bundleId = args.bundleId.trim();
     const device = await bootedDevice("ios_sim_push", args.udid);
-    const dir = join15(deps.cacheRoot, "tmp");
+    const dir = join16(deps.cacheRoot, "tmp");
     await mkdir(dir, { recursive: true });
-    const file2 = join15(dir, `push-${randomUUID()}.json`);
+    const file2 = join16(dir, `push-${randomUUID()}.json`);
     await writeFile(file2, JSON.stringify(args.payload), { mode: 384 });
     try {
       await deps.simctl.sendPush(device.udid, bundleId, file2, extra.signal);
@@ -46635,8 +47008,8 @@ function registerUiTools(server, deps) {
 // src/uitree-backend.ts
 import { execFile as execFile9 } from "node:child_process";
 import { createHash as createHash2 } from "node:crypto";
-import { chmodSync, existsSync as existsSync7, mkdirSync as mkdirSync6, readFileSync as readFileSync7, rmSync as rmSync3, statSync as statSync9, writeFileSync as writeFileSync3 } from "node:fs";
-import { delimiter as delimiter4, join as join16 } from "node:path";
+import { chmodSync, existsSync as existsSync7, mkdirSync as mkdirSync6, readFileSync as readFileSync8, rmSync as rmSync4, statSync as statSync9, writeFileSync as writeFileSync3 } from "node:fs";
+import { delimiter as delimiter4, join as join17 } from "node:path";
 var AXE_VERSION = "1.8.0";
 var AXE_RELEASE_URL = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz";
 var AXE_RELEASE_SHA256 = "7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834";
@@ -46657,13 +47030,13 @@ function isExecutableFile3(path) {
 function findOnPath4(command, env) {
   for (const dir of (env.PATH ?? "").split(delimiter4)) {
     if (dir === "") continue;
-    const candidate = join16(dir, command);
+    const candidate = join17(dir, command);
     if (isExecutableFile3(candidate)) return candidate;
   }
   return void 0;
 }
 function sha256File2(path) {
-  return createHash2("sha256").update(readFileSync7(path)).digest("hex");
+  return createHash2("sha256").update(readFileSync8(path)).digest("hex");
 }
 function run2(command, args, timeoutMs, signal) {
   return new Promise((resolve6, reject) => {
@@ -46687,13 +47060,13 @@ var AxeHelper = class {
     this.#env = options.env ?? process.env;
   }
   #installDir() {
-    return join16(this.#cacheDir, AXE_VERSION);
+    return join17(this.#cacheDir, AXE_VERSION);
   }
   #validCached() {
-    const binary = join16(this.#installDir(), "axe");
+    const binary = join17(this.#installDir(), "axe");
     if (!isExecutableFile3(binary)) return void 0;
     try {
-      const expected = readFileSync7(join16(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
+      const expected = readFileSync8(join17(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(expected)) return void 0;
       return sha256File2(binary) === expected ? binary : void 0;
     } catch {
@@ -46756,7 +47129,7 @@ var AxeHelper = class {
   async #download() {
     const installDir = this.#installDir();
     mkdirSync6(this.#cacheDir, { recursive: true });
-    const archive = join16(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
+    const archive = join17(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
     try {
       try {
         await run2("curl", [
@@ -46780,20 +47153,20 @@ var AxeHelper = class {
       if (digest !== AXE_RELEASE_SHA256) {
         throw new Error(`download integrity check failed: expected sha256 ${AXE_RELEASE_SHA256} but got ${digest}`);
       }
-      rmSync3(installDir, { recursive: true, force: true });
+      rmSync4(installDir, { recursive: true, force: true });
       mkdirSync6(installDir, { recursive: true });
       await run2("tar", ["-xzf", archive, "-C", installDir], AXE_DOWNLOAD_TIMEOUT_MS);
-      const binary = join16(installDir, "axe");
+      const binary = join17(installDir, "axe");
       if (!isExecutableFile3(binary)) chmodSync(binary, 493);
       const version2 = await run2(binary, ["--version"], AXE_EXEC_TIMEOUT_MS);
       if (!version2.stdout.includes(AXE_VERSION)) {
         throw new Error(`downloaded axe reports an unexpected version: ${version2.stdout.trim()}`);
       }
-      writeFileSync3(join16(installDir, DIGEST_FILE2), `${sha256File2(binary)}
+      writeFileSync3(join17(installDir, DIGEST_FILE2), `${sha256File2(binary)}
 `, "utf8");
       return binary;
     } finally {
-      rmSync3(archive, { force: true });
+      rmSync4(archive, { force: true });
     }
   }
   async #require() {
@@ -46897,19 +47270,19 @@ async function main() {
   const host = new SimHostController();
   host.startKeepAlive();
   const stream = new SimStreamSource(host);
-  const screenshots = new ScreenshotStore({ dir: join17(root, "screenshots"), takeScreenshot });
+  const screenshots = new ScreenshotStore({ dir: join18(root, "screenshots"), takeScreenshot });
   const devtools = new DevTools();
   const preview = new PreviewHostController({
-    cacheDir: join17(root, "preview"),
+    cacheDir: join18(root, "preview"),
     simctl: simctl_exports,
     toolchain: xcrunToolchain,
     log: (line) => process.stderr.write(`${line}
 `)
   });
-  const recorder = new Recorder({ dir: join17(root, "recordings") });
+  const recorder = new Recorder({ dir: join18(root, "recordings") });
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
-    staticDir: join17(dirname6(fileURLToPath4(import.meta.url)), "panel"),
+    staticDir: join18(dirname6(fileURLToPath4(import.meta.url)), "panel"),
     preferredPort: preferredPanelPort(),
     host,
     stream,
@@ -46925,10 +47298,11 @@ async function main() {
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
-    axe: new AxeHelper({ cacheDir: join17(root, "bin", "axe") }),
-    ocr: new OcrHelper({ cacheDir: join17(root, "bin", "ocr") }),
+    axe: new AxeHelper({ cacheDir: join18(root, "bin", "axe") }),
+    ocr: new OcrHelper({ cacheDir: join18(root, "bin", "ocr") }),
     devtools,
     preview,
+    realDevices: new Devicectl({ run: devicectlRunner((options) => devtools.run(options)) }),
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
