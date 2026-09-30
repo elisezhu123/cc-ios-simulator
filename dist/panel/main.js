@@ -418,7 +418,6 @@ var Annotator = class {
 };
 
 // src/panel/client/copy.ts
-var REAL_DEVICE_ACTION_IDS = ["lock", "unlock", "siri"];
 var EN = {
   language: "en",
   title: "iOS Simulator",
@@ -439,7 +438,9 @@ var EN = {
     shake: "Shake",
     siri: "Siri",
     "action-button": "Action Button",
-    "re-center": "Re-center window"
+    "re-center": "Re-center window",
+    "toggle-keyboard": "Show on-screen keyboard",
+    "slow-animations": "Slow animations"
   },
   size: "Simulator display size",
   frame: "Simulator frame style",
@@ -463,7 +464,29 @@ var EN = {
   addToChat: "Add to chat",
   annotationAdded: "Added \u2014 ask Claude to look at it (ios_sim_annotation)",
   annotationAddedCopied: "Added and copied \u2014 paste it into the chat, or ask Claude to look at it (ios_sim_annotation)",
-  annotationFailed: "Could not add the annotation"
+  annotationFailed: "Could not add the annotation",
+  deviceMenu: "Device",
+  debugMenu: "Debug",
+  appearance: "Appearance",
+  light: "Light",
+  dark: "Dark",
+  keyboard: "Keyboard",
+  rotateLeft: "Rotate left",
+  rotateRight: "Rotate right",
+  saveScreenshot: "Save screenshot",
+  screenshotSaved: "Screenshot saved",
+  recordVideo: "Record video",
+  stopRecording: "Stop recording",
+  recordingSaved: "Recording saved to",
+  shutdown: "Shut down simulator",
+  detach: "Detach simulator",
+  fullscreen: "Full screen",
+  bootedSection: "Booted",
+  realSection: "iPhone / iPad",
+  shutdownSection: "Shut down",
+  displaySize: "Display size",
+  reconnect: "Reconnect stream",
+  simulatorOnly: "Simulators only"
 };
 var ZH = {
   language: "zh",
@@ -485,7 +508,9 @@ var ZH = {
     shake: "\u6447\u4E00\u6447",
     siri: "Siri",
     "action-button": "Action \u6309\u94AE",
-    "re-center": "\u7A97\u53E3\u91CD\u65B0\u5C45\u4E2D"
+    "re-center": "\u7A97\u53E3\u91CD\u65B0\u5C45\u4E2D",
+    "toggle-keyboard": "\u663E\u793A\u5C4F\u5E55\u952E\u76D8",
+    "slow-animations": "\u6162\u52A8\u753B"
   },
   size: "\u6A21\u62DF\u5668\u663E\u793A\u5927\u5C0F",
   frame: "\u6A21\u62DF\u5668\u8FB9\u6846\u6837\u5F0F",
@@ -509,7 +534,29 @@ var ZH = {
   addToChat: "\u6DFB\u52A0\u5230\u5BF9\u8BDD",
   annotationAdded: "\u5DF2\u6DFB\u52A0\u2014\u2014\u8BA9 Claude \u67E5\u770B\uFF08ios_sim_annotation\uFF09",
   annotationAddedCopied: "\u5DF2\u6DFB\u52A0\u5E76\u590D\u5236\u2014\u2014\u53EF\u76F4\u63A5\u7C98\u8D34\u5230\u5BF9\u8BDD\uFF0C\u6216\u8BA9 Claude \u67E5\u770B\uFF08ios_sim_annotation\uFF09",
-  annotationFailed: "\u6DFB\u52A0\u6807\u6CE8\u5931\u8D25"
+  annotationFailed: "\u6DFB\u52A0\u6807\u6CE8\u5931\u8D25",
+  deviceMenu: "\u8BBE\u5907",
+  debugMenu: "\u8C03\u8BD5",
+  appearance: "\u5916\u89C2",
+  light: "\u6D45\u8272",
+  dark: "\u6DF1\u8272",
+  keyboard: "\u952E\u76D8",
+  rotateLeft: "\u5411\u5DE6\u65CB\u8F6C",
+  rotateRight: "\u5411\u53F3\u65CB\u8F6C",
+  saveScreenshot: "\u4FDD\u5B58\u622A\u56FE",
+  screenshotSaved: "\u622A\u56FE\u5DF2\u4FDD\u5B58",
+  recordVideo: "\u5F55\u5236\u89C6\u9891",
+  stopRecording: "\u505C\u6B62\u5F55\u5236",
+  recordingSaved: "\u5F55\u5C4F\u5DF2\u4FDD\u5B58\u5230",
+  shutdown: "\u5173\u95ED\u6A21\u62DF\u5668",
+  detach: "\u65AD\u5F00\u6A21\u62DF\u5668",
+  fullscreen: "\u5168\u5C4F",
+  bootedSection: "\u5DF2\u542F\u52A8",
+  realSection: "iPhone / iPad",
+  shutdownSection: "\u672A\u542F\u52A8",
+  displaySize: "\u663E\u793A\u5927\u5C0F",
+  reconnect: "\u91CD\u65B0\u8FDE\u63A5\u753B\u9762",
+  simulatorOnly: "\u4EC5\u6A21\u62DF\u5668\u53EF\u7528"
 };
 function copyFor(language) {
   return (language ?? "").toLowerCase().startsWith("zh") ? ZH : EN;
@@ -527,14 +574,14 @@ var SIZE_OPTIONS = [
 ];
 var FRAME_STYLES = ["none", "bezel", "device"];
 function sizeModeOf(id) {
-  return SIZE_OPTIONS.find((option2) => option2.id === id)?.mode ?? { kind: "fit" };
+  return SIZE_OPTIONS.find((option) => option.id === id)?.mode ?? { kind: "fit" };
 }
 function sizeModeId(mode) {
   const key = JSON.stringify(mode);
-  return SIZE_OPTIONS.find((option2) => JSON.stringify(option2.mode) === key)?.id ?? "fit";
+  return SIZE_OPTIONS.find((option) => JSON.stringify(option.mode) === key)?.id ?? "fit";
 }
 function frameStyleOf(id) {
-  return FRAME_STYLES.includes(id ?? "") ? id : "bezel";
+  return FRAME_STYLES.includes(id ?? "") ? id : "device";
 }
 function orientationLayout(orientation, baseW, baseH) {
   switch (orientation) {
@@ -584,6 +631,142 @@ function screenWidthFor(mode, layout, stage, style) {
 function screenRadius(width, height) {
   return Math.round(Math.min(width, height) * 55 / 390);
 }
+
+// src/panel/client/menu.ts
+var CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
+var CHEVRON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+var openMenu;
+function closeMenus() {
+  openMenu?.close();
+}
+document.addEventListener("pointerdown", (event) => {
+  if (openMenu !== void 0 && !openMenu.contains(event.target)) openMenu.close();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeMenus();
+});
+window.addEventListener("blur", () => closeMenus());
+var Menu = class {
+  #anchor;
+  #build;
+  #root = document.createElement("div");
+  #sub;
+  constructor(anchor, build) {
+    this.#anchor = anchor;
+    this.#build = build;
+    this.#root.className = "menu-popover";
+    this.#root.setAttribute("role", "menu");
+    this.#root.hidden = true;
+    document.body.append(this.#root);
+    anchor.setAttribute("aria-haspopup", "menu");
+    anchor.addEventListener("click", () => {
+      if (openMenu === this) this.close();
+      else this.open();
+    });
+    anchor.addEventListener("pointerenter", () => {
+      if (openMenu !== void 0 && openMenu !== this) this.open();
+    });
+  }
+  get isOpen() {
+    return openMenu === this;
+  }
+  contains(node) {
+    return this.#anchor.contains(node) || this.#root.contains(node) || (this.#sub?.contains(node) ?? false);
+  }
+  open() {
+    openMenu?.close();
+    openMenu = this;
+    this.#fill(this.#root, this.#build());
+    this.#root.hidden = false;
+    this.#anchor.classList.add("open");
+    const box = this.#anchor.getBoundingClientRect();
+    this.#root.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - this.#root.offsetWidth - 8))}px`;
+    this.#root.style.top = `${box.bottom + 4}px`;
+  }
+  close() {
+    if (openMenu === this) openMenu = void 0;
+    this.#root.hidden = true;
+    this.#closeSub();
+    this.#anchor.classList.remove("open");
+  }
+  #closeSub() {
+    this.#sub?.remove();
+    this.#sub = void 0;
+    for (const row of this.#root.querySelectorAll(".menu-item.expanded")) row.classList.remove("expanded");
+  }
+  #fill(container, entries) {
+    container.replaceChildren();
+    for (const entry of entries) {
+      if ("separator" in entry) {
+        const line = document.createElement("div");
+        line.className = "menu-separator";
+        container.append(line);
+        continue;
+      }
+      if ("section" in entry) {
+        const heading = document.createElement("div");
+        heading.className = "menu-section";
+        heading.textContent = entry.section;
+        if (entry.dot === true) heading.insertAdjacentHTML("beforeend", '<span class="menu-dot"></span>');
+        container.append(heading);
+        continue;
+      }
+      container.append(this.#row(entry, container === this.#root));
+    }
+  }
+  #row(item, topLevel) {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "menu-item";
+    row.setAttribute("role", item.checked === void 0 ? "menuitem" : "menuitemcheckbox");
+    if (item.checked !== void 0) row.setAttribute("aria-checked", String(item.checked));
+    row.disabled = item.disabled === true;
+    const text = document.createElement("span");
+    text.className = "menu-label";
+    text.textContent = item.label;
+    if (item.detail !== void 0) {
+      const detail = document.createElement("span");
+      detail.className = "menu-detail";
+      detail.textContent = item.detail;
+      text.append(detail);
+    }
+    row.append(text);
+    if (item.shortcut !== void 0) {
+      const hint = document.createElement("kbd");
+      hint.textContent = item.shortcut;
+      row.append(hint);
+    }
+    if (item.checked === true) row.insertAdjacentHTML("beforeend", `<span class="menu-check">${CHECK}</span>`);
+    if (item.submenu !== void 0) row.insertAdjacentHTML("beforeend", `<span class="menu-chevron">${CHEVRON}</span>`);
+    const submenu = item.submenu;
+    if (submenu !== void 0) {
+      const show = () => {
+        if (row.disabled) return;
+        this.#closeSub();
+        row.classList.add("expanded");
+        const sub = document.createElement("div");
+        sub.className = "menu-popover submenu";
+        sub.setAttribute("role", "menu");
+        this.#fill(sub, submenu());
+        document.body.append(sub);
+        this.#sub = sub;
+        const box = row.getBoundingClientRect();
+        const left = box.right + 4 + sub.offsetWidth > window.innerWidth - 8 ? box.left - sub.offsetWidth - 4 : box.right + 4;
+        sub.style.left = `${Math.max(8, left)}px`;
+        sub.style.top = `${Math.max(8, box.top - 6)}px`;
+      };
+      row.addEventListener("pointerenter", show);
+      row.addEventListener("click", show);
+    } else {
+      if (topLevel) row.addEventListener("pointerenter", () => this.#closeSub());
+      row.addEventListener("click", () => {
+        this.close();
+        item.run?.();
+      });
+    }
+    return row;
+  }
+};
 
 // src/panel/client/protocol.ts
 var SIM_TOUCH_TAG = 3;
@@ -643,13 +826,30 @@ function normalizePointerPoint(event, bounds) {
 // src/panel/client/main.ts
 var copy = copyFor(navigator.language);
 var RECONNECT_DELAYS_MS = [1e3, 2e3, 5e3];
-var DEVICE_ACTION_IDS = ["app-switcher", "lock", "unlock", "shake", "siri", "action-button", "re-center"];
-var SVG_ATTRS = 'viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+var SIMULATOR_ACTIONS = ["app-switcher", "shake", "siri", "action-button", "re-center"];
+var IS_MAC = /Mac|iPhone|iPad/u.test(navigator.platform);
+function keys(shift, key) {
+  return IS_MAC ? `${shift ? "\u21E7" : ""}\u2318${key}` : `${shift ? "Shift+" : ""}Ctrl+${key}`;
+}
+var SHORTCUTS = {
+  home: keys(true, "H"),
+  screenshot: keys(false, "S"),
+  record: keys(false, "R"),
+  rotateRight: keys(false, "\u2192"),
+  rotateLeft: keys(false, "\u2190"),
+  keyboard: keys(false, "K")
+};
+var SVG_ATTRS = 'viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
 var ICONS = {
-  home: `<svg ${SVG_ATTRS}><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>`,
-  screenshot: `<svg ${SVG_ATTRS}><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>`,
-  rotate: `<svg ${SVG_ATTRS}><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>`,
-  refresh: `<svg ${SVG_ATTRS}><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></svg>`
+  home: `<svg ${SVG_ATTRS}><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>`,
+  screenshot: `<svg ${SVG_ATTRS}><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>`,
+  record: `<svg ${SVG_ATTRS}><rect x="3" y="7" width="12.5" height="10" rx="1.5"/><path d="m15.5 11 5-3v8l-5-3"/></svg>`,
+  recording: `<svg ${SVG_ATTRS}><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>`,
+  rotate: `<svg ${SVG_ATTRS}><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v5h-5"/></svg>`,
+  power: `<svg ${SVG_ATTRS}><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>`,
+  detach: `<svg ${SVG_ATTRS}><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5"/><path d="M14 8l4 4-4 4"/><path d="M18 12H9"/></svg>`,
+  fullscreen: `<svg ${SVG_ATTRS}><path d="M14 4h6v6"/><path d="m20 4-6 6"/><path d="M10 20H4v-6"/><path d="m4 20 6-6"/></svg>`,
+  chevron: '<svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'
 };
 function element(id) {
   const node = document.getElementById(id);
@@ -657,30 +857,51 @@ function element(id) {
   return node;
 }
 var ui = {
-  picker: element("device-picker"),
   status: element("status"),
-  home: element("btn-home"),
-  annotate: element("btn-annotate"),
-  toast: element("toast"),
-  shot: element("btn-screenshot"),
-  rotate: element("btn-rotate"),
-  action: element("device-action"),
-  refresh: element("btn-refresh"),
-  size: element("size-mode"),
-  frameStyle: element("frame-style"),
+  fullscreen: element("btn-fullscreen"),
+  devicesButton: element("menu-devices"),
+  deviceName: element("device-name"),
+  deviceRuntime: element("device-runtime"),
+  deviceMenuButton: element("menu-device"),
+  debugMenuButton: element("menu-debug"),
   stage: element("stage"),
   frame: element("frame"),
   screen: element("screen"),
   img: element("stream"),
-  placeholder: element("placeholder")
+  placeholder: element("placeholder"),
+  toast: element("toast"),
+  home: element("btn-home"),
+  annotate: element("btn-annotate"),
+  shot: element("btn-screenshot"),
+  record: element("btn-record"),
+  rotate: element("btn-rotate"),
+  shutdown: element("btn-shutdown"),
+  detach: element("btn-detach")
 };
+function stored(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function store(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+  }
+}
 var state = {
   kind: "simulator",
   orientation: "portrait",
   realOrientation: "portrait",
-  sizeMode: sizeModeOf(localStorage.getItem("ios-sim.size")),
-  frameStyle: frameStyleOf(localStorage.getItem("ios-sim.frame")),
+  sizeMode: sizeModeOf(stored("ios-sim.size")),
+  frameStyle: frameStyleOf(stored("ios-sim.frame")),
+  device: void 0,
   deviceName: "",
+  recording: false,
+  devices: [],
+  realDevices: [],
   ws: void 0,
   streamFailures: 0,
   dragging: false,
@@ -689,18 +910,33 @@ var state = {
 };
 function setStatus(kind, message) {
   ui.status.dataset.kind = kind;
-  const label = message ?? (kind === "live" ? copy.live : kind === "connecting" ? copy.connecting : copy.offline);
-  ui.status.textContent = state.deviceName === "" ? label : `${state.deviceName} \xB7 ${label}`;
+  ui.status.textContent = message ?? (kind === "live" ? copy.live : kind === "connecting" ? copy.connecting : copy.offline);
+  ui.status.title = ui.status.textContent;
 }
 function report(prefix, error) {
-  setStatus("offline", `${prefix}: ${error instanceof Error ? error.message : String(error)}`);
+  notify(`${prefix}: ${error instanceof Error ? error.message : String(error)}`, "error");
+}
+var toastTimer;
+function notify(message, kind) {
+  window.clearTimeout(toastTimer);
+  ui.toast.textContent = message;
+  ui.toast.dataset.kind = kind;
+  ui.toast.hidden = false;
+  toastTimer = window.setTimeout(() => {
+    ui.toast.hidden = true;
+  }, kind === "ok" ? 5e3 : 8e3);
 }
 function applyLayout() {
   const baseW = ui.img.naturalWidth > 0 ? ui.img.naturalWidth : FALLBACK_BASE.width;
   const baseH = ui.img.naturalHeight > 0 ? ui.img.naturalHeight : FALLBACK_BASE.height;
   const layout = orientationLayout(state.orientation, baseW, baseH);
   const stage = ui.stage.getBoundingClientRect();
-  const width = screenWidthFor(state.sizeMode, layout, { width: stage.width - 32, height: stage.height - 32 }, state.frameStyle);
+  const style = getComputedStyle(ui.stage);
+  const room = {
+    width: stage.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+    height: stage.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
+  };
+  const width = screenWidthFor(state.sizeMode, layout, room, state.frameStyle);
   const height = Math.round(width * layout.displayH / layout.displayW);
   const scale = width / layout.displayW;
   ui.screen.style.width = `${width}px`;
@@ -711,6 +947,7 @@ function applyLayout() {
   const radius = screenRadius(width, height);
   ui.screen.style.borderRadius = `${radius}px`;
   ui.frame.dataset.style = state.frameStyle;
+  ui.frame.dataset.landscape = String(width > height);
   ui.frame.style.padding = `${framePadding(state.frameStyle)}px`;
   ui.frame.style.borderRadius = state.frameStyle === "none" ? "0" : `${radius + frameInset(state.frameStyle)}px`;
 }
@@ -744,6 +981,11 @@ ui.img.addEventListener("error", () => {
     void refreshStatus().finally(startStream);
   }, delay);
 });
+function reconnect() {
+  state.streamFailures = 0;
+  state.ws?.close();
+  startStream();
+}
 function connectWs() {
   const ws = new WebSocket(`ws://${location.host}/ws`);
   ws.binaryType = "arraybuffer";
@@ -804,15 +1046,57 @@ async function postJson(path, body) {
   if (!response.ok) throw new Error(value.error ?? `HTTP ${response.status}`);
   return value;
 }
-var toastTimer;
-function notify(message, kind) {
-  window.clearTimeout(toastTimer);
-  ui.toast.textContent = message;
-  ui.toast.dataset.kind = kind;
-  ui.toast.hidden = false;
-  toastTimer = window.setTimeout(() => {
-    ui.toast.hidden = true;
-  }, kind === "ok" ? 5e3 : 8e3);
+function deviceAction(action) {
+  void postJson("/api/device-action", { action }).catch((error) => report(copy.actionFailed, error));
+}
+function pressHome() {
+  send(simButtonFrame("home"));
+}
+function rotate(direction) {
+  const order = SIM_ROTATE_ORIENTATIONS;
+  const turn = (current) => {
+    if (direction === 1) return nextSimRotateOrientation(current);
+    const index = order.indexOf(current);
+    return order[((index < 0 ? 0 : index) + order.length - 1) % order.length] ?? "portrait";
+  };
+  if (state.kind === "real") {
+    state.realOrientation = turn(state.realOrientation);
+    send(simRotateFrame(state.realOrientation));
+    return;
+  }
+  state.orientation = turn(state.orientation);
+  send(simRotateFrame(state.orientation));
+  applyLayout();
+}
+async function saveScreenshot() {
+  const { url } = await postJson("/api/capture", {});
+  const blob = await (await fetch(url)).blob();
+  const link = document.createElement("a");
+  const stamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[:T]/gu, ".").replace(/\.\d+Z$/u, "");
+  link.href = URL.createObjectURL(blob);
+  link.download = `Simulator Screenshot - ${state.deviceName || "device"} - ${stamp}.png`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(link.href), 1e4);
+  notify(copy.screenshotSaved, "ok");
+}
+async function toggleRecording() {
+  const result = await postJson("/api/record", { action: state.recording ? "stop" : "start" });
+  state.recording = result.recording;
+  renderDock();
+  if (!result.recording && result.path !== void 0) notify(`${copy.recordingSaved} ${result.path}`, "ok");
+}
+async function shutdown() {
+  await postJson("/api/shutdown", {});
+  state.recording = false;
+  await refreshStatus();
+  reconnect();
+}
+async function detach() {
+  await postJson("/api/detach", {});
+  await refreshStatus();
+  reconnect();
 }
 var annotator = new Annotator({
   screen: ui.screen,
@@ -823,141 +1107,204 @@ var annotator = new Annotator({
   },
   notify
 });
-ui.annotate.addEventListener("click", () => {
+function toggleAnnotate() {
   if (annotator.isOpen) annotator.close();
   else void annotator.open().catch((error) => report(copy.captureFailed, error));
-});
-ui.home.addEventListener("click", () => send(simButtonFrame("home")));
-ui.home.addEventListener("dblclick", () => {
-  void postJson("/api/device-action", { action: "app-switcher" }).catch((error) => report(copy.actionFailed, error));
-});
+}
+function dockButton(button2, icon, label, shortcut) {
+  button2.innerHTML = `${icon}<span class="tip" role="tooltip">${label}${shortcut === void 0 ? "" : `<kbd>${shortcut}</kbd>`}</span>`;
+  button2.setAttribute("aria-label", label);
+  if (shortcut !== void 0) button2.setAttribute("aria-keyshortcuts", shortcut);
+}
+function renderDock() {
+  const simulator = state.kind === "simulator";
+  dockButton(ui.home, ICONS.home, copy.home, SHORTCUTS.home);
+  dockButton(ui.annotate, PENCIL_ICON, copy.annotate);
+  dockButton(ui.shot, ICONS.screenshot, copy.saveScreenshot, SHORTCUTS.screenshot);
+  dockButton(ui.record, state.recording ? ICONS.recording : ICONS.record, simulator ? state.recording ? copy.stopRecording : copy.recordVideo : copy.simulatorOnly, SHORTCUTS.record);
+  dockButton(ui.rotate, ICONS.rotate, copy.rotateRight, SHORTCUTS.rotateRight);
+  dockButton(ui.shutdown, ICONS.power, simulator ? copy.shutdown : copy.simulatorOnly);
+  dockButton(ui.detach, ICONS.detach, copy.detach);
+  ui.record.classList.toggle("recording", state.recording);
+  ui.record.disabled = !simulator;
+  ui.shutdown.disabled = !simulator;
+}
+ui.home.addEventListener("click", pressHome);
+ui.home.addEventListener("dblclick", () => deviceAction("app-switcher"));
+ui.annotate.addEventListener("click", toggleAnnotate);
 ui.shot.addEventListener("click", () => {
-  void postJson("/api/capture", {}).then(({ url }) => {
-    window.open(url, "_blank", "noopener");
-  }).catch((error) => report(copy.captureFailed, error));
+  void saveScreenshot().catch((error) => report(copy.captureFailed, error));
 });
-ui.rotate.addEventListener("click", () => {
-  if (state.kind === "real") {
-    state.realOrientation = nextSimRotateOrientation(state.realOrientation);
-    send(simRotateFrame(state.realOrientation));
-    return;
-  }
-  const next = nextSimRotateOrientation(state.orientation);
-  send(simRotateFrame(next));
-  state.orientation = next;
-  applyLayout();
+ui.record.addEventListener("click", () => {
+  void toggleRecording().catch((error) => report(copy.actionFailed, error));
 });
-ui.action.addEventListener("change", () => {
-  const action = ui.action.value;
-  ui.action.value = "";
-  if (action !== "") void postJson("/api/device-action", { action }).catch((error) => report(copy.actionFailed, error));
+ui.rotate.addEventListener("click", () => rotate(1));
+ui.shutdown.addEventListener("click", () => {
+  void shutdown().catch((error) => report(copy.actionFailed, error));
 });
-ui.refresh.addEventListener("click", () => {
-  state.streamFailures = 0;
-  startStream();
+ui.detach.addEventListener("click", () => {
+  void detach().catch((error) => report(copy.actionFailed, error));
 });
-ui.size.addEventListener("change", () => {
-  state.sizeMode = sizeModeOf(ui.size.value);
-  localStorage.setItem("ios-sim.size", ui.size.value);
-  applyLayout();
+ui.fullscreen.addEventListener("click", () => {
+  if (document.fullscreenElement === null) void document.documentElement.requestFullscreen().catch(() => void 0);
+  else void document.exitFullscreen();
 });
-ui.frameStyle.addEventListener("change", () => {
-  state.frameStyle = frameStyleOf(ui.frameStyle.value);
-  localStorage.setItem("ios-sim.frame", state.frameStyle);
-  applyLayout();
-});
-ui.picker.addEventListener("focus", () => {
-  void loadDevices();
-});
-ui.picker.addEventListener("change", () => {
-  setStatus("connecting", copy.switching);
-  void postJson("/api/switch-device", { udid: ui.picker.value }).then(() => refreshStatus()).then(() => {
-    state.ws?.close();
-    startStream();
-  }).catch((error) => report(copy.actionFailed, error));
+document.addEventListener("keydown", (event) => {
+  if (annotator.isOpen || !(event.metaKey || event.ctrlKey) || event.altKey) return;
+  const target = event.target;
+  if (target !== null && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))) return;
+  const key = event.key.toLowerCase();
+  const run = (action) => {
+    event.preventDefault();
+    closeMenus();
+    action();
+  };
+  if (event.shiftKey && key === "h") run(pressHome);
+  else if (!event.shiftKey && key === "s") run(() => {
+    void saveScreenshot().catch((error) => report(copy.captureFailed, error));
+  });
+  else if (!event.shiftKey && key === "r" && state.kind === "simulator") run(() => {
+    void toggleRecording().catch((error) => report(copy.actionFailed, error));
+  });
+  else if (!event.shiftKey && key === "arrowright") run(() => rotate(1));
+  else if (!event.shiftKey && key === "arrowleft") run(() => rotate(-1));
+  else if (!event.shiftKey && key === "k" && state.kind === "simulator") run(() => deviceAction("toggle-keyboard"));
 });
 function runtimeLabel(runtime) {
   const match = /SimRuntime\.([A-Za-z]+)-(\d+)-(\d+)/u.exec(runtime);
   return match === null ? runtime : `${match[1] ?? ""} ${match[2] ?? ""}.${match[3] ?? ""}`;
 }
-function option(value, label) {
-  const node = document.createElement("option");
-  node.value = value;
-  node.textContent = label;
-  return node;
+function switchTo(udid) {
+  setStatus("connecting", copy.switching);
+  void postJson("/api/switch-device", { udid }).then(() => refreshStatus()).then(reconnect).catch((error) => report(copy.actionFailed, error));
 }
+var devicesMenu = new Menu(ui.devicesButton, () => {
+  const entries = [];
+  const row = (device) => ({
+    label: device.name,
+    detail: runtimeLabel(device.runtime),
+    checked: device.udid === state.device,
+    run: () => switchTo(device.udid)
+  });
+  const booted = state.devices.filter((device) => device.state === "Booted");
+  const others = state.devices.filter((device) => device.state !== "Booted");
+  if (booted.length > 0) entries.push({ section: copy.bootedSection, dot: true }, ...booted.map(row));
+  if (state.realDevices.length > 0) {
+    entries.push({ section: copy.realSection }, ...state.realDevices.map((device) => ({
+      label: device.name,
+      detail: copy.realDevice,
+      checked: device.udid === state.device,
+      run: () => switchTo(device.udid)
+    })));
+  }
+  if (others.length > 0) entries.push({ section: copy.shutdownSection }, ...others.map(row));
+  return entries.length > 0 ? entries : [{ label: copy.noDevice, disabled: true }];
+});
+ui.devicesButton.addEventListener("pointerdown", () => {
+  void loadDevices().then(() => {
+    if (devicesMenu.isOpen) devicesMenu.open();
+  });
+});
+new Menu(ui.deviceMenuButton, () => {
+  const rotation = [
+    { label: copy.rotateLeft, shortcut: SHORTCUTS.rotateLeft, run: () => rotate(-1) },
+    { label: copy.rotateRight, shortcut: SHORTCUTS.rotateRight, run: () => rotate(1) }
+  ];
+  const lock = [
+    { label: copy.actions.lock, run: () => deviceAction("lock") },
+    { label: copy.actions.unlock, run: () => deviceAction("unlock") },
+    { label: copy.actions.siri, run: () => deviceAction("siri") }
+  ];
+  if (state.kind === "real") return [...rotation, { separator: true }, ...lock];
+  const appearance = (value) => {
+    void postJson("/api/appearance", { appearance: value }).catch((error) => report(copy.actionFailed, error));
+  };
+  return [
+    { label: copy.appearance, submenu: () => [
+      { label: copy.light, run: () => appearance("light") },
+      { label: copy.dark, run: () => appearance("dark") }
+    ] },
+    { label: copy.keyboard, submenu: () => [
+      { label: copy.actions["toggle-keyboard"], shortcut: SHORTCUTS.keyboard, run: () => deviceAction("toggle-keyboard") }
+    ] },
+    { separator: true },
+    ...rotation,
+    { separator: true },
+    { label: copy.home, shortcut: SHORTCUTS.home, run: pressHome },
+    ...SIMULATOR_ACTIONS.filter((id) => id !== "siri").map((id) => ({ label: copy.actions[id], run: () => deviceAction(id) })),
+    { separator: true },
+    ...lock
+  ];
+});
+new Menu(ui.debugMenuButton, () => [
+  ...state.kind === "simulator" ? [{ label: copy.actions["slow-animations"], run: () => deviceAction("slow-animations") }, { separator: true }] : [],
+  { label: copy.displaySize, submenu: () => SIZE_OPTIONS.map((option) => ({
+    label: copy.language === "zh" ? option.zh : option.en,
+    checked: sizeModeId(state.sizeMode) === option.id,
+    run: () => {
+      state.sizeMode = option.mode;
+      store("ios-sim.size", option.id);
+      applyLayout();
+    }
+  })) },
+  { label: copy.frame, submenu: () => FRAME_STYLES.map((style) => ({
+    label: copy.frameStyles[style],
+    checked: state.frameStyle === style,
+    run: () => {
+      state.frameStyle = style;
+      store("ios-sim.frame", style);
+      applyLayout();
+    }
+  })) },
+  { separator: true },
+  { label: copy.reconnect, run: reconnect }
+]);
 async function loadDevices() {
   const response = await fetch("/api/devices");
   if (!response.ok) return;
-  const { devices, realDevices = [], streaming } = await response.json();
-  const rows = devices.map((device) => {
-    const node = option(device.udid, `${device.name} \xB7 ${runtimeLabel(device.runtime)}${device.state === "Booted" ? ` \xB7 ${copy.booted}` : ""}`);
-    node.selected = device.udid === streaming;
-    return node;
-  });
-  if (realDevices.length > 0) {
-    const group = document.createElement("optgroup");
-    group.label = copy.realDevices;
-    for (const device of realDevices) {
-      const node = option(device.udid, `${device.name} \xB7 ${copy.realDevice}`);
-      node.selected = device.udid === streaming;
-      group.append(node);
-    }
-    rows.push(group);
-  }
-  if (![...devices, ...realDevices].some((device) => device.udid === streaming)) {
-    const placeholder = option("", copy.pickDevice);
-    placeholder.disabled = true;
-    placeholder.selected = true;
-    rows.unshift(placeholder);
-  }
-  ui.picker.replaceChildren(...rows);
+  const body = await response.json();
+  state.devices = body.devices;
+  state.realDevices = body.realDevices ?? [];
+  renderDeviceButton();
+}
+function renderDeviceButton() {
+  const row = state.devices.find((device) => device.udid === state.device);
+  ui.deviceName.textContent = state.deviceName !== "" ? state.deviceName : copy.pickDevice;
+  ui.deviceRuntime.textContent = state.kind === "real" ? copy.realDevice : row === void 0 ? "" : runtimeLabel(row.runtime);
+  ui.devicesButton.insertAdjacentHTML("beforeend", ui.devicesButton.querySelector(".chevron") === null ? ICONS.chevron : "");
 }
 async function refreshStatus() {
   const response = await fetch("/api/status");
   if (!response.ok) return;
   const status = await response.json();
+  state.device = status.device;
   state.deviceName = status.deviceName ?? "";
   const kind = status.kind ?? "simulator";
+  const recording = status.recording === true;
   if (kind !== state.kind) {
     state.kind = kind;
     state.orientation = "portrait";
     state.realOrientation = "portrait";
-    fillDeviceActions();
     applyLayout();
-    state.ws?.close();
-    startStream();
+    reconnect();
   }
+  state.recording = recording;
+  renderDock();
+  renderDeviceButton();
   ui.placeholder.textContent = kind === "real" ? copy.noWda : copy.noDevice;
   if (!status.running && ui.status.dataset.kind === "live") setStatus("offline");
-}
-function fillDeviceActions() {
-  const ids = state.kind === "real" ? REAL_DEVICE_ACTION_IDS : DEVICE_ACTION_IDS;
-  ui.action.replaceChildren(option("", copy.deviceActions), ...ids.map((id) => option(id, copy.actions[id])));
 }
 function initControls() {
   document.title = copy.title;
   document.documentElement.lang = copy.language;
-  const buttons = [
-    [ui.home, ICONS.home, copy.homeHint],
-    [ui.annotate, PENCIL_ICON, copy.annotate],
-    [ui.shot, ICONS.screenshot, copy.screenshot],
-    [ui.rotate, ICONS.rotate, copy.rotate],
-    [ui.refresh, ICONS.refresh, copy.refresh]
-  ];
-  for (const [button2, icon, label] of buttons) {
-    button2.innerHTML = icon;
-    button2.title = label;
-    button2.setAttribute("aria-label", label);
-  }
-  fillDeviceActions();
-  ui.size.replaceChildren(...SIZE_OPTIONS.map((entry) => option(entry.id, copy.language === "zh" ? entry.zh : entry.en)));
-  ui.size.value = sizeModeId(state.sizeMode);
-  ui.frameStyle.replaceChildren(...FRAME_STYLES.map((style) => option(style, copy.frameStyles[style])));
-  ui.frameStyle.value = state.frameStyle;
-  ui.size.title = copy.size;
-  ui.frameStyle.title = copy.frame;
-  ui.picker.title = copy.picker;
+  ui.deviceMenuButton.innerHTML = `${copy.deviceMenu}${ICONS.chevron}`;
+  ui.debugMenuButton.innerHTML = `${copy.debugMenu}${ICONS.chevron}`;
+  ui.devicesButton.title = copy.picker;
+  ui.fullscreen.innerHTML = ICONS.fullscreen;
+  ui.fullscreen.title = copy.fullscreen;
+  ui.fullscreen.setAttribute("aria-label", copy.fullscreen);
+  renderDock();
+  renderDeviceButton();
 }
 initControls();
 new ResizeObserver(() => applyLayout()).observe(ui.stage);

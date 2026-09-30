@@ -1,16 +1,41 @@
+/*
+ * The live panel, laid out like Claude Code desktop's iOS Simulator: a title
+ * bar, a menu bar, the device in its frame on a light stage, and a floating
+ * dock. Light and dark follow the system.
+ */
 :root {
   color-scheme: light dark;
-  --bg: #0f1117;
-  --bar: #171a23;
-  --line: #2a2e3a;
-  --text: #f5f5f5;
-  --muted: #9aa0ab;
+  --bg: #ffffff;
+  --stage: #f6f6f7;
+  --bar: #ffffff;
+  --line: #e4e4e7;
+  --text: #1d1d1f;
+  --muted: #86868b;
+  --hover: rgb(0 0 0 / 6%);
+  --popover: #ffffff;
+  --popover-line: rgb(0 0 0 / 10%);
+  --tip: #111114;
+  --accent: #3b82f6;
+  --danger: #c9443f;
   --live: #34c759;
   --warn: #ff9f0a;
   --bad: #ff453a;
+  --shadow: 0 10px 30px rgb(0 0 0 / 14%), 0 1px 3px rgb(0 0 0 / 8%);
 }
-@media (prefers-color-scheme: light) {
-  :root { --bg: #f5f5f7; --bar: #ffffff; --line: #d9d9de; --text: #1d1d1f; --muted: #6e6e73; }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --stage: #141416;
+    --bar: #1c1c1e;
+    --line: #2f2f33;
+    --text: #f5f5f7;
+    --muted: #98989d;
+    --hover: rgb(255 255 255 / 8%);
+    --popover: #2a2a2d;
+    --popover-line: rgb(255 255 255 / 10%);
+    --tip: #000000;
+    --shadow: 0 10px 30px rgb(0 0 0 / 45%), 0 1px 3px rgb(0 0 0 / 30%);
+  }
 }
 * { box-sizing: border-box; margin: 0; }
 html, body { height: 100%; }
@@ -19,57 +44,161 @@ body {
   flex-direction: column;
   background: var(--bg);
   color: var(--text);
-  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font: 14px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", sans-serif;
   overflow: hidden;
 }
-.topbar, .toolbar {
+button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+button:disabled { cursor: default; }
+.muted { color: var(--muted); }
+
+/* ── title bar and menu bar ─────────────────────────────────────────────── */
+.titlebar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 10px;
+  height: 44px;
+  padding: 0 10px 0 16px;
   background: var(--bar);
-  border-bottom: 1px solid var(--line);
 }
-.topbar select { flex: 1; min-width: 0; }
-.spacer { flex: 1; }
-select, button {
-  font: inherit;
-  color: var(--text);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 4px 8px;
+.title { font-size: 15px; font-weight: 500; }
+.status {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-button { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-button:hover, select:hover { border-color: var(--muted); }
-.status { white-space: nowrap; color: var(--muted); }
 .status::before {
   content: "";
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   margin-right: 6px;
+  vertical-align: 1px;
   border-radius: 50%;
   background: var(--warn);
 }
 .status[data-kind="live"]::before { background: var(--live); }
 .status[data-kind="offline"]::before { background: var(--bad); }
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+.icon-button:hover { background: var(--hover); }
+.menubar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 8px;
+  background: var(--bar);
+  border-bottom: 1px solid var(--line);
+}
+.menu-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 5px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.menu-button:hover, .menu-button.open { background: var(--hover); }
+#menu-devices { overflow: hidden; }
+#device-name { overflow: hidden; text-overflow: ellipsis; }
+.chevron { flex: none; color: var(--muted); }
+
+/* ── menus ──────────────────────────────────────────────────────────────── */
+.menu-popover {
+  position: fixed;
+  z-index: 30;
+  min-width: 200px;
+  max-width: min(360px, calc(100vw - 16px));
+  max-height: calc(100vh - 80px);
+  padding: 6px;
+  overflow-y: auto;
+  background: var(--popover);
+  border: 1px solid var(--popover-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.menu-popover[hidden] { display: none; }
+.menu-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.menu-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.menu-separator { height: 1px; margin: 5px 6px; background: var(--line); }
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  text-align: left;
+  border-radius: 8px;
+}
+.menu-item:hover:not(:disabled), .menu-item.expanded { background: var(--hover); }
+.menu-item:disabled { color: var(--muted); }
+.menu-label { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.menu-detail { color: var(--muted); font-size: 13px; }
+.menu-item kbd { margin-left: 18px; color: var(--muted); font: inherit; font-size: 13px; }
+.menu-check { display: inline-flex; color: var(--accent); }
+.menu-chevron { display: inline-flex; color: var(--muted); }
+
+/* ── stage and device frame ─────────────────────────────────────────────── */
 .stage {
   position: relative;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 24px 24px 92px;
   overflow: auto;
+  background: radial-gradient(ellipse at 50% 40%, var(--bg) 0%, var(--stage) 75%);
 }
-.frame { flex: none; }
+.frame { position: relative; flex: none; }
 .frame[data-style="bezel"] { background: #1c1c1e; border: 1px solid #3a3a3c; }
 .frame[data-style="device"] {
-  background: linear-gradient(145deg, #2c2c2e, #111);
-  border: 1px solid #48484a;
-  box-shadow: 0 20px 60px rgb(0 0 0 / 45%);
+  background: #050505;
+  border: 1px solid #1a1a1a;
+  box-shadow:
+    0 0 0 2px #8e8e93,
+    0 0 0 3px #3a3a3c,
+    0 24px 60px rgb(0 0 0 / 28%);
 }
+/* Side buttons: action + volume on the left, power on the right (on the long sides). */
+.frame[data-style="device"]::before,
+.frame[data-style="device"]::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  border-radius: 2px;
+}
+.frame[data-style="device"]::before {
+  left: -7px;
+  top: 17%;
+  height: 22%;
+  background: linear-gradient(to bottom, #2c2c2e 0 18%, transparent 18% 30%, #2c2c2e 30% 62%, transparent 62% 70%, #2c2c2e 70% 100%);
+}
+.frame[data-style="device"]::after { right: -7px; top: 25%; height: 11%; background: #2c2c2e; }
+.frame[data-style="device"][data-landscape="true"]::before,
+.frame[data-style="device"][data-landscape="true"]::after { display: none; }
 .screen {
   position: relative;
   overflow: hidden;
@@ -87,7 +216,65 @@ button:hover, select:hover { border-color: var(--muted); }
   pointer-events: none;
   transform-origin: center center;
 }
-.placeholder { position: absolute; left: 16px; right: 16px; bottom: 16px; text-align: center; color: var(--muted); }
+.placeholder {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 96px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ── dock ───────────────────────────────────────────────────────────────── */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  transform: translateX(-50%);
+  background: var(--popover);
+  border: 1px solid var(--popover-line);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+body.annotating .dock { display: none; }
+.dock button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.dock button:hover:not(:disabled) { background: var(--hover); }
+.dock button:disabled { opacity: 0.35; }
+.dock button.danger:hover:not(:disabled) { color: #fff; background: var(--danger); }
+.dock button.recording { color: var(--bad); }
+.dock-separator { width: 1px; height: 22px; margin: 0 2px; background: var(--line); }
+.tip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  transform: translateX(-50%);
+  color: #fff;
+  background: var(--tip);
+  border-radius: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.tip kbd { color: #a1a1a6; font: inherit; }
+.dock button:hover .tip { display: inline-flex; }
+.dock button:disabled:hover .tip { display: inline-flex; }
 
 /* ── annotation ─────────────────────────────────────────────────────────── */
 .annotate-overlay { position: absolute; inset: 0; z-index: 2; cursor: crosshair; touch-action: none; }

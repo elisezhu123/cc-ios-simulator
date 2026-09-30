@@ -1,12 +1,14 @@
 /**
- * Browser entry for the live panel: the MJPEG <img>, pointer → serve-sim
- * touch frames over /ws, the toolbar, the device picker and the size/frame
- * controls. Behaviour follows dsh-ios's React sim-panel in plain DOM code.
+ * Browser entry for the live panel, laid out like Claude Code desktop's iOS
+ * Simulator: a title bar, a menu bar (device picker, Device, Debug), the
+ * device in its frame, and a floating dock (Home, annotate, save screenshot,
+ * record, rotate, shut down, detach) with shortcut tooltips. Touches go to
+ * serve-sim as frames over /ws; behaviour follows dsh-ios's React sim-panel.
  * @module ios-simulator/panel/client/main
  */
 
 import { Annotator, PENCIL_ICON } from './annotate-ui.js'
-import { copyFor, REAL_DEVICE_ACTION_IDS, type DeviceActionId } from './copy.js'
+import { copyFor, type DeviceActionId } from './copy.js'
 import {
   FALLBACK_BASE,
   FRAME_STYLES,
@@ -23,8 +25,10 @@ import {
   type FrameStyle,
   type SizeMode,
 } from './layout.js'
+import { closeMenus, Menu, type MenuEntry } from './menu.js'
 import {
   nextSimRotateOrientation,
+  SIM_ROTATE_ORIENTATIONS,
   normalizePointerPoint,
   parseSimConfigFrame,
   simButtonFrame,
@@ -35,13 +39,32 @@ import {
 
 const copy = copyFor(navigator.language)
 const RECONNECT_DELAYS_MS = [1000, 2000, 5000]
-const DEVICE_ACTION_IDS: readonly DeviceActionId[] = ['app-switcher', 'lock', 'unlock', 'shake', 'siri', 'action-button', 're-center']
-const SVG_ATTRS = 'viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"'
+/** Device-menu actions besides lock/unlock (which the dock and menu show separately). */
+const SIMULATOR_ACTIONS: readonly DeviceActionId[] = ['app-switcher', 'shake', 'siri', 'action-button', 're-center']
+const IS_MAC = /Mac|iPhone|iPad/u.test(navigator.platform)
+/** A shortcut label in the platform's notation: ⇧⌘H on a Mac, Shift+Ctrl+H elsewhere. */
+function keys(shift: boolean, key: string): string {
+  return IS_MAC ? `${shift ? '⇧' : ''}⌘${key}` : `${shift ? 'Shift+' : ''}Ctrl+${key}`
+}
+const SHORTCUTS = {
+  home: keys(true, 'H'),
+  screenshot: keys(false, 'S'),
+  record: keys(false, 'R'),
+  rotateRight: keys(false, '→'),
+  rotateLeft: keys(false, '←'),
+  keyboard: keys(false, 'K'),
+}
+const SVG_ATTRS = 'viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"'
 const ICONS = {
-  home: `<svg ${SVG_ATTRS}><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>`,
-  screenshot: `<svg ${SVG_ATTRS}><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>`,
-  rotate: `<svg ${SVG_ATTRS}><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>`,
-  refresh: `<svg ${SVG_ATTRS}><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></svg>`,
+  home: `<svg ${SVG_ATTRS}><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>`,
+  screenshot: `<svg ${SVG_ATTRS}><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>`,
+  record: `<svg ${SVG_ATTRS}><rect x="3" y="7" width="12.5" height="10" rx="1.5"/><path d="m15.5 11 5-3v8l-5-3"/></svg>`,
+  recording: `<svg ${SVG_ATTRS}><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>`,
+  rotate: `<svg ${SVG_ATTRS}><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v5h-5"/></svg>`,
+  power: `<svg ${SVG_ATTRS}><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>`,
+  detach: `<svg ${SVG_ATTRS}><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5"/><path d="M14 8l4 4-4 4"/><path d="M18 12H9"/></svg>`,
+  fullscreen: `<svg ${SVG_ATTRS}><path d="M14 4h6v6"/><path d="m20 4-6 6"/><path d="M10 20H4v-6"/><path d="m4 20 6-6"/></svg>`,
+  chevron: '<svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
 }
 
 function element<T extends HTMLElement>(id: string): T {
@@ -51,22 +74,33 @@ function element<T extends HTMLElement>(id: string): T {
 }
 
 const ui = {
-  picker: element<HTMLSelectElement>('device-picker'),
   status: element<HTMLSpanElement>('status'),
-  home: element<HTMLButtonElement>('btn-home'),
-  annotate: element<HTMLButtonElement>('btn-annotate'),
-  toast: element<HTMLParagraphElement>('toast'),
-  shot: element<HTMLButtonElement>('btn-screenshot'),
-  rotate: element<HTMLButtonElement>('btn-rotate'),
-  action: element<HTMLSelectElement>('device-action'),
-  refresh: element<HTMLButtonElement>('btn-refresh'),
-  size: element<HTMLSelectElement>('size-mode'),
-  frameStyle: element<HTMLSelectElement>('frame-style'),
+  fullscreen: element<HTMLButtonElement>('btn-fullscreen'),
+  devicesButton: element<HTMLButtonElement>('menu-devices'),
+  deviceName: element<HTMLSpanElement>('device-name'),
+  deviceRuntime: element<HTMLSpanElement>('device-runtime'),
+  deviceMenuButton: element<HTMLButtonElement>('menu-device'),
+  debugMenuButton: element<HTMLButtonElement>('menu-debug'),
   stage: element<HTMLElement>('stage'),
   frame: element<HTMLDivElement>('frame'),
   screen: element<HTMLDivElement>('screen'),
   img: element<HTMLImageElement>('stream'),
   placeholder: element<HTMLParagraphElement>('placeholder'),
+  toast: element<HTMLParagraphElement>('toast'),
+  home: element<HTMLButtonElement>('btn-home'),
+  annotate: element<HTMLButtonElement>('btn-annotate'),
+  shot: element<HTMLButtonElement>('btn-screenshot'),
+  record: element<HTMLButtonElement>('btn-record'),
+  rotate: element<HTMLButtonElement>('btn-rotate'),
+  shutdown: element<HTMLButtonElement>('btn-shutdown'),
+  detach: element<HTMLButtonElement>('btn-detach'),
+}
+
+interface DeviceRow {
+  udid: string
+  name: string
+  runtime: string
+  state: string
 }
 
 interface PanelState {
@@ -81,7 +115,11 @@ interface PanelState {
   realOrientation: string
   sizeMode: SizeMode
   frameStyle: FrameStyle
+  device: string | undefined
   deviceName: string
+  recording: boolean
+  devices: DeviceRow[]
+  realDevices: Array<{ udid: string; name: string }>
   ws: WebSocket | undefined
   streamFailures: number
   dragging: boolean
@@ -89,13 +127,33 @@ interface PanelState {
   moveScheduled: boolean
 }
 
+function stored(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function store(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Private windows: the setting just does not persist.
+  }
+}
+
 const state: PanelState = {
   kind: 'simulator',
   orientation: 'portrait',
   realOrientation: 'portrait',
-  sizeMode: sizeModeOf(localStorage.getItem('ios-sim.size')),
-  frameStyle: frameStyleOf(localStorage.getItem('ios-sim.frame')),
+  sizeMode: sizeModeOf(stored('ios-sim.size')),
+  frameStyle: frameStyleOf(stored('ios-sim.frame')),
+  device: undefined,
   deviceName: '',
+  recording: false,
+  devices: [],
+  realDevices: [],
   ws: undefined,
   streamFailures: 0,
   dragging: false,
@@ -105,12 +163,22 @@ const state: PanelState = {
 
 function setStatus(kind: 'connecting' | 'live' | 'offline', message?: string): void {
   ui.status.dataset.kind = kind
-  const label = message ?? (kind === 'live' ? copy.live : kind === 'connecting' ? copy.connecting : copy.offline)
-  ui.status.textContent = state.deviceName === '' ? label : `${state.deviceName} · ${label}`
+  ui.status.textContent = message ?? (kind === 'live' ? copy.live : kind === 'connecting' ? copy.connecting : copy.offline)
+  ui.status.title = ui.status.textContent
 }
 
 function report(prefix: string, error: unknown): void {
-  setStatus('offline', `${prefix}: ${error instanceof Error ? error.message : String(error)}`)
+  notify(`${prefix}: ${error instanceof Error ? error.message : String(error)}`, 'error')
+}
+
+let toastTimer: number | undefined
+
+function notify(message: string, kind: 'ok' | 'error'): void {
+  window.clearTimeout(toastTimer)
+  ui.toast.textContent = message
+  ui.toast.dataset.kind = kind
+  ui.toast.hidden = false
+  toastTimer = window.setTimeout(() => { ui.toast.hidden = true }, kind === 'ok' ? 5000 : 8000)
 }
 
 // ── layout ────────────────────────────────────────────────────────────────────
@@ -120,7 +188,12 @@ function applyLayout(): void {
   const baseH = ui.img.naturalHeight > 0 ? ui.img.naturalHeight : FALLBACK_BASE.height
   const layout = orientationLayout(state.orientation, baseW, baseH)
   const stage = ui.stage.getBoundingClientRect()
-  const width = screenWidthFor(state.sizeMode, layout, { width: stage.width - 32, height: stage.height - 32 }, state.frameStyle)
+  const style = getComputedStyle(ui.stage)
+  const room = {
+    width: stage.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+    height: stage.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom),
+  }
+  const width = screenWidthFor(state.sizeMode, layout, room, state.frameStyle)
   const height = Math.round(width * layout.displayH / layout.displayW)
   const scale = width / layout.displayW
   ui.screen.style.width = `${width}px`
@@ -131,6 +204,7 @@ function applyLayout(): void {
   const radius = screenRadius(width, height)
   ui.screen.style.borderRadius = `${radius}px`
   ui.frame.dataset.style = state.frameStyle
+  ui.frame.dataset.landscape = String(width > height)
   ui.frame.style.padding = `${framePadding(state.frameStyle)}px`
   ui.frame.style.borderRadius = state.frameStyle === 'none' ? '0' : `${radius + frameInset(state.frameStyle)}px`
 }
@@ -169,6 +243,13 @@ ui.img.addEventListener('error', () => {
   ui.placeholder.textContent = state.kind === 'real' ? copy.noWda : copy.noDevice
   reconnectTimer = window.setTimeout(() => { void refreshStatus().finally(startStream) }, delay)
 })
+
+function reconnect(): void {
+  state.streamFailures = 0
+  // The control socket is bound to the device shown when it opened.
+  state.ws?.close()
+  startStream()
+}
 
 // ── control socket ────────────────────────────────────────────────────────────
 
@@ -230,7 +311,7 @@ function endTouch(event: PointerEvent): void {
 ui.screen.addEventListener('pointerup', endTouch)
 ui.screen.addEventListener('pointercancel', endTouch)
 
-// ── toolbar ───────────────────────────────────────────────────────────────────
+// ── actions ───────────────────────────────────────────────────────────────────
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(path, {
@@ -243,14 +324,65 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return value as T
 }
 
-let toastTimer: number | undefined
+function deviceAction(action: DeviceActionId): void {
+  void postJson('/api/device-action', { action }).catch(error => report(copy.actionFailed, error))
+}
 
-function notify(message: string, kind: 'ok' | 'error'): void {
-  window.clearTimeout(toastTimer)
-  ui.toast.textContent = message
-  ui.toast.dataset.kind = kind
-  ui.toast.hidden = false
-  toastTimer = window.setTimeout(() => { ui.toast.hidden = true }, kind === 'ok' ? 5000 : 8000)
+function pressHome(): void {
+  send(simButtonFrame('home'))
+}
+
+/** Rotate by a quarter turn; a simulator also re-lays out its rotated stream here. */
+function rotate(direction: 1 | -1): void {
+  const order = SIM_ROTATE_ORIENTATIONS as readonly string[]
+  const turn = (current: string): string => {
+    if (direction === 1) return nextSimRotateOrientation(current)
+    const index = order.indexOf(current)
+    return order[((index < 0 ? 0 : index) + order.length - 1) % order.length] ?? 'portrait'
+  }
+  if (state.kind === 'real') {
+    state.realOrientation = turn(state.realOrientation)
+    send(simRotateFrame(state.realOrientation))
+    return
+  }
+  state.orientation = turn(state.orientation)
+  send(simRotateFrame(state.orientation))
+  applyLayout()
+}
+
+/** Save a full-resolution screenshot as a download, named like Simulator's own. */
+async function saveScreenshot(): Promise<void> {
+  const { url } = await postJson<{ url: string }>('/api/capture', {})
+  const blob = await (await fetch(url)).blob()
+  const link = document.createElement('a')
+  const stamp = new Date().toISOString().replace(/[:T]/gu, '.').replace(/\.\d+Z$/u, '')
+  link.href = URL.createObjectURL(blob)
+  link.download = `Simulator Screenshot - ${state.deviceName || 'device'} - ${stamp}.png`
+  document.body.append(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(link.href), 10_000)
+  notify(copy.screenshotSaved, 'ok')
+}
+
+async function toggleRecording(): Promise<void> {
+  const result = await postJson<{ recording: boolean; path?: string }>('/api/record', { action: state.recording ? 'stop' : 'start' })
+  state.recording = result.recording
+  renderDock()
+  if (!result.recording && result.path !== undefined) notify(`${copy.recordingSaved} ${result.path}`, 'ok')
+}
+
+async function shutdown(): Promise<void> {
+  await postJson('/api/shutdown', {})
+  state.recording = false
+  await refreshStatus()
+  reconnect()
+}
+
+async function detach(): Promise<void> {
+  await postJson('/api/detach', {})
+  await refreshStatus()
+  reconnect()
 }
 
 const annotator = new Annotator({
@@ -261,169 +393,219 @@ const annotator = new Annotator({
   notify,
 })
 
-ui.annotate.addEventListener('click', () => {
+function toggleAnnotate(): void {
   if (annotator.isOpen) annotator.close()
   else void annotator.open().catch(error => report(copy.captureFailed, error))
-})
-
-ui.home.addEventListener('click', () => send(simButtonFrame('home')))
-ui.home.addEventListener('dblclick', () => {
-  void postJson('/api/device-action', { action: 'app-switcher' }).catch(error => report(copy.actionFailed, error))
-})
-ui.shot.addEventListener('click', () => {
-  void postJson<{ url: string }>('/api/capture', {})
-    .then(({ url }) => { window.open(url, '_blank', 'noopener') })
-    .catch(error => report(copy.captureFailed, error))
-})
-ui.rotate.addEventListener('click', () => {
-  if (state.kind === 'real') {
-    state.realOrientation = nextSimRotateOrientation(state.realOrientation)
-    send(simRotateFrame(state.realOrientation))
-    return
-  }
-  const next = nextSimRotateOrientation(state.orientation)
-  send(simRotateFrame(next))
-  state.orientation = next
-  applyLayout()
-})
-ui.action.addEventListener('change', () => {
-  const action = ui.action.value
-  ui.action.value = ''
-  if (action !== '') void postJson('/api/device-action', { action }).catch(error => report(copy.actionFailed, error))
-})
-ui.refresh.addEventListener('click', () => {
-  state.streamFailures = 0
-  startStream()
-})
-ui.size.addEventListener('change', () => {
-  state.sizeMode = sizeModeOf(ui.size.value)
-  localStorage.setItem('ios-sim.size', ui.size.value)
-  applyLayout()
-})
-ui.frameStyle.addEventListener('change', () => {
-  state.frameStyle = frameStyleOf(ui.frameStyle.value)
-  localStorage.setItem('ios-sim.frame', state.frameStyle)
-  applyLayout()
-})
-ui.picker.addEventListener('focus', () => { void loadDevices() })
-ui.picker.addEventListener('change', () => {
-  setStatus('connecting', copy.switching)
-  void postJson('/api/switch-device', { udid: ui.picker.value })
-    .then(() => refreshStatus())
-    .then(() => {
-      // The control socket is bound to the device shown when it opened.
-      state.ws?.close()
-      startStream()
-    })
-    .catch(error => report(copy.actionFailed, error))
-})
-
-// ── devices & status ──────────────────────────────────────────────────────────
-
-interface DeviceRow {
-  udid: string
-  name: string
-  runtime: string
-  state: string
 }
+
+// ── dock ──────────────────────────────────────────────────────────────────────
+
+/** An icon button with a tooltip above it: the label and, when there is one, its shortcut. */
+function dockButton(button: HTMLButtonElement, icon: string, label: string, shortcut?: string): void {
+  button.innerHTML = `${icon}<span class="tip" role="tooltip">${label}${shortcut === undefined ? '' : `<kbd>${shortcut}</kbd>`}</span>`
+  button.setAttribute('aria-label', label)
+  if (shortcut !== undefined) button.setAttribute('aria-keyshortcuts', shortcut)
+}
+
+function renderDock(): void {
+  const simulator = state.kind === 'simulator'
+  dockButton(ui.home, ICONS.home, copy.home, SHORTCUTS.home)
+  dockButton(ui.annotate, PENCIL_ICON, copy.annotate)
+  dockButton(ui.shot, ICONS.screenshot, copy.saveScreenshot, SHORTCUTS.screenshot)
+  dockButton(ui.record, state.recording ? ICONS.recording : ICONS.record, simulator ? (state.recording ? copy.stopRecording : copy.recordVideo) : copy.simulatorOnly, SHORTCUTS.record)
+  dockButton(ui.rotate, ICONS.rotate, copy.rotateRight, SHORTCUTS.rotateRight)
+  dockButton(ui.shutdown, ICONS.power, simulator ? copy.shutdown : copy.simulatorOnly)
+  dockButton(ui.detach, ICONS.detach, copy.detach)
+  ui.record.classList.toggle('recording', state.recording)
+  ui.record.disabled = !simulator
+  ui.shutdown.disabled = !simulator
+}
+
+ui.home.addEventListener('click', pressHome)
+ui.home.addEventListener('dblclick', () => deviceAction('app-switcher'))
+ui.annotate.addEventListener('click', toggleAnnotate)
+ui.shot.addEventListener('click', () => { void saveScreenshot().catch(error => report(copy.captureFailed, error)) })
+ui.record.addEventListener('click', () => { void toggleRecording().catch(error => report(copy.actionFailed, error)) })
+ui.rotate.addEventListener('click', () => rotate(1))
+ui.shutdown.addEventListener('click', () => { void shutdown().catch(error => report(copy.actionFailed, error)) })
+ui.detach.addEventListener('click', () => { void detach().catch(error => report(copy.actionFailed, error)) })
+ui.fullscreen.addEventListener('click', () => {
+  if (document.fullscreenElement === null) void document.documentElement.requestFullscreen().catch(() => undefined)
+  else void document.exitFullscreen()
+})
+
+document.addEventListener('keydown', event => {
+  if (annotator.isOpen || !(event.metaKey || event.ctrlKey) || event.altKey) return
+  const target = event.target as HTMLElement | null
+  if (target !== null && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))) return
+  const key = event.key.toLowerCase()
+  const run = (action: () => void): void => {
+    event.preventDefault()
+    closeMenus()
+    action()
+  }
+  if (event.shiftKey && key === 'h') run(pressHome)
+  else if (!event.shiftKey && key === 's') run(() => { void saveScreenshot().catch(error => report(copy.captureFailed, error)) })
+  else if (!event.shiftKey && key === 'r' && state.kind === 'simulator') run(() => { void toggleRecording().catch(error => report(copy.actionFailed, error)) })
+  else if (!event.shiftKey && key === 'arrowright') run(() => rotate(1))
+  else if (!event.shiftKey && key === 'arrowleft') run(() => rotate(-1))
+  else if (!event.shiftKey && key === 'k' && state.kind === 'simulator') run(() => deviceAction('toggle-keyboard'))
+})
+
+// ── menus ─────────────────────────────────────────────────────────────────────
 
 function runtimeLabel(runtime: string): string {
   const match = /SimRuntime\.([A-Za-z]+)-(\d+)-(\d+)/u.exec(runtime)
   return match === null ? runtime : `${match[1] ?? ''} ${match[2] ?? ''}.${match[3] ?? ''}`
 }
 
-function option(value: string, label: string): HTMLOptionElement {
-  const node = document.createElement('option')
-  node.value = value
-  node.textContent = label
-  return node
+function switchTo(udid: string): void {
+  setStatus('connecting', copy.switching)
+  void postJson('/api/switch-device', { udid })
+    .then(() => refreshStatus())
+    .then(reconnect)
+    .catch(error => report(copy.actionFailed, error))
 }
+
+const devicesMenu = new Menu(ui.devicesButton, () => {
+  const entries: MenuEntry[] = []
+  const row = (device: DeviceRow): MenuEntry => ({
+    label: device.name,
+    detail: runtimeLabel(device.runtime),
+    checked: device.udid === state.device,
+    run: () => switchTo(device.udid),
+  })
+  const booted = state.devices.filter(device => device.state === 'Booted')
+  const others = state.devices.filter(device => device.state !== 'Booted')
+  if (booted.length > 0) entries.push({ section: copy.bootedSection, dot: true }, ...booted.map(row))
+  if (state.realDevices.length > 0) {
+    entries.push({ section: copy.realSection }, ...state.realDevices.map(device => ({
+      label: device.name,
+      detail: copy.realDevice,
+      checked: device.udid === state.device,
+      run: () => switchTo(device.udid),
+    })))
+  }
+  if (others.length > 0) entries.push({ section: copy.shutdownSection }, ...others.map(row))
+  return entries.length > 0 ? entries : [{ label: copy.noDevice, disabled: true }]
+})
+// The list is fetched as the menu opens, then shown again with fresh rows.
+ui.devicesButton.addEventListener('pointerdown', () => {
+  void loadDevices().then(() => { if (devicesMenu.isOpen) devicesMenu.open() })
+})
+
+new Menu(ui.deviceMenuButton, () => {
+  const rotation: MenuEntry[] = [
+    { label: copy.rotateLeft, shortcut: SHORTCUTS.rotateLeft, run: () => rotate(-1) },
+    { label: copy.rotateRight, shortcut: SHORTCUTS.rotateRight, run: () => rotate(1) },
+  ]
+  const lock: MenuEntry[] = [
+    { label: copy.actions.lock, run: () => deviceAction('lock') },
+    { label: copy.actions.unlock, run: () => deviceAction('unlock') },
+    { label: copy.actions.siri, run: () => deviceAction('siri') },
+  ]
+  if (state.kind === 'real') return [...rotation, { separator: true }, ...lock]
+  const appearance = (value: 'light' | 'dark'): void => {
+    void postJson('/api/appearance', { appearance: value }).catch(error => report(copy.actionFailed, error))
+  }
+  return [
+    { label: copy.appearance, submenu: () => [
+      { label: copy.light, run: () => appearance('light') },
+      { label: copy.dark, run: () => appearance('dark') },
+    ] },
+    { label: copy.keyboard, submenu: () => [
+      { label: copy.actions['toggle-keyboard'], shortcut: SHORTCUTS.keyboard, run: () => deviceAction('toggle-keyboard') },
+    ] },
+    { separator: true },
+    ...rotation,
+    { separator: true },
+    { label: copy.home, shortcut: SHORTCUTS.home, run: pressHome },
+    ...SIMULATOR_ACTIONS.filter(id => id !== 'siri').map(id => ({ label: copy.actions[id], run: () => deviceAction(id) })),
+    { separator: true },
+    ...lock,
+  ]
+})
+
+new Menu(ui.debugMenuButton, () => [
+  ...(state.kind === 'simulator'
+    ? [{ label: copy.actions['slow-animations'], run: () => deviceAction('slow-animations') }, { separator: true } as const]
+    : []),
+  { label: copy.displaySize, submenu: () => SIZE_OPTIONS.map(option => ({
+    label: copy.language === 'zh' ? option.zh : option.en,
+    checked: sizeModeId(state.sizeMode) === option.id,
+    run: () => {
+      state.sizeMode = option.mode
+      store('ios-sim.size', option.id)
+      applyLayout()
+    },
+  })) },
+  { label: copy.frame, submenu: () => FRAME_STYLES.map(style => ({
+    label: copy.frameStyles[style],
+    checked: state.frameStyle === style,
+    run: () => {
+      state.frameStyle = style
+      store('ios-sim.frame', style)
+      applyLayout()
+    },
+  })) },
+  { separator: true },
+  { label: copy.reconnect, run: reconnect },
+])
+
+// ── devices & status ──────────────────────────────────────────────────────────
 
 async function loadDevices(): Promise<void> {
   const response = await fetch('/api/devices')
   if (!response.ok) return
-  const { devices, realDevices = [], streaming } = await response.json() as {
-    devices: DeviceRow[]
-    realDevices?: Array<{ udid: string; name: string }>
-    streaming?: string
-  }
-  const rows: HTMLElement[] = devices.map(device => {
-    const node = option(device.udid, `${device.name} · ${runtimeLabel(device.runtime)}${device.state === 'Booted' ? ` · ${copy.booted}` : ''}`)
-    node.selected = device.udid === streaming
-    return node
-  })
-  if (realDevices.length > 0) {
-    const group = document.createElement('optgroup')
-    group.label = copy.realDevices
-    for (const device of realDevices) {
-      const node = option(device.udid, `${device.name} · ${copy.realDevice}`)
-      node.selected = device.udid === streaming
-      group.append(node)
-    }
-    rows.push(group)
-  }
-  if (![...devices, ...realDevices].some(device => device.udid === streaming)) {
-    // With no row selected the browser shows the first device, and picking it fires no
-    // `change`: a selected, disabled placeholder makes every device a real choice.
-    const placeholder = option('', copy.pickDevice)
-    placeholder.disabled = true
-    placeholder.selected = true
-    rows.unshift(placeholder)
-  }
-  ui.picker.replaceChildren(...rows)
+  const body = await response.json() as { devices: DeviceRow[]; realDevices?: Array<{ udid: string; name: string }>; streaming?: string }
+  state.devices = body.devices
+  state.realDevices = body.realDevices ?? []
+  renderDeviceButton()
+}
+
+function renderDeviceButton(): void {
+  const row = state.devices.find(device => device.udid === state.device)
+  ui.deviceName.textContent = state.deviceName !== '' ? state.deviceName : copy.pickDevice
+  ui.deviceRuntime.textContent = state.kind === 'real' ? copy.realDevice : row === undefined ? '' : runtimeLabel(row.runtime)
+  ui.devicesButton.insertAdjacentHTML('beforeend', ui.devicesButton.querySelector('.chevron') === null ? ICONS.chevron : '')
 }
 
 async function refreshStatus(): Promise<void> {
   const response = await fetch('/api/status')
   if (!response.ok) return
-  const status = await response.json() as { kind?: 'simulator' | 'real'; running: boolean; deviceName?: string }
+  const status = await response.json() as { kind?: 'simulator' | 'real'; running: boolean; device?: string; deviceName?: string; recording?: boolean }
+  state.device = status.device
   state.deviceName = status.deviceName ?? ''
   const kind = status.kind ?? 'simulator'
+  const recording = status.recording === true
   if (kind !== state.kind) {
     // Switched by a tool (ios_sim_panel / ios_sim_boot) or another tab: follow it.
     state.kind = kind
     state.orientation = 'portrait'
     state.realOrientation = 'portrait'
-    fillDeviceActions()
     applyLayout()
-    state.ws?.close()
-    startStream()
+    reconnect()
   }
+  state.recording = recording
+  renderDock()
+  renderDeviceButton()
   ui.placeholder.textContent = kind === 'real' ? copy.noWda : copy.noDevice
   if (!status.running && ui.status.dataset.kind === 'live') setStatus('offline')
 }
 
 // ── start ─────────────────────────────────────────────────────────────────────
 
-/** A real device supports fewer device actions (lock, unlock, Siri). */
-function fillDeviceActions(): void {
-  const ids = state.kind === 'real' ? REAL_DEVICE_ACTION_IDS : DEVICE_ACTION_IDS
-  ui.action.replaceChildren(option('', copy.deviceActions), ...ids.map(id => option(id, copy.actions[id])))
-}
-
 function initControls(): void {
   document.title = copy.title
   document.documentElement.lang = copy.language
-  const buttons: Array<[HTMLButtonElement, string, string]> = [
-    [ui.home, ICONS.home, copy.homeHint],
-    [ui.annotate, PENCIL_ICON, copy.annotate],
-    [ui.shot, ICONS.screenshot, copy.screenshot],
-    [ui.rotate, ICONS.rotate, copy.rotate],
-    [ui.refresh, ICONS.refresh, copy.refresh],
-  ]
-  for (const [button, icon, label] of buttons) {
-    button.innerHTML = icon
-    button.title = label
-    button.setAttribute('aria-label', label)
-  }
-  fillDeviceActions()
-  ui.size.replaceChildren(...SIZE_OPTIONS.map(entry => option(entry.id, copy.language === 'zh' ? entry.zh : entry.en)))
-  ui.size.value = sizeModeId(state.sizeMode)
-  ui.frameStyle.replaceChildren(...FRAME_STYLES.map(style => option(style, copy.frameStyles[style])))
-  ui.frameStyle.value = state.frameStyle
-  ui.size.title = copy.size
-  ui.frameStyle.title = copy.frame
-  ui.picker.title = copy.picker
+  ui.deviceMenuButton.innerHTML = `${copy.deviceMenu}${ICONS.chevron}`
+  ui.debugMenuButton.innerHTML = `${copy.debugMenu}${ICONS.chevron}`
+  ui.devicesButton.title = copy.picker
+  ui.fullscreen.innerHTML = ICONS.fullscreen
+  ui.fullscreen.title = copy.fullscreen
+  ui.fullscreen.setAttribute('aria-label', copy.fullscreen)
+  renderDock()
+  renderDeviceButton()
 }
 
 initControls()

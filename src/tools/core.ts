@@ -302,7 +302,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     description: 'Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / '
       + 'screenshot image width, y = pixel y / image height), type US-keyboard text, press a hardware button (home, '
       + 'lock, …), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, '
-      + 'lock, unlock, shake, siri, action-button, re-center; all but lock drive Simulator.app and need the '
+      + 'lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; all but lock drive Simulator.app and need the '
       + 'Accessibility permission). Starts the live stream when needed but never boots a device. About 300 ms after '
       + 'the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. '
       + 'On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), '

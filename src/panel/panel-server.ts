@@ -17,7 +17,7 @@ import { WebSocket, WebSocketServer, type RawData } from 'ws'
 import { PANEL_PORT_ATTEMPTS, PLUGIN_NAME } from '../config.js'
 import { isAnnotationFileName, MAX_ANNOTATION_BYTES, type AnnotationStore } from '../annotations.js'
 import type { RealDevice, RealDeviceApi } from '../devicectl.js'
-import type { ScreenshotService, SimctlApi, StreamHost, WdaApi } from '../deps.js'
+import type { RecorderApi, ScreenshotService, SimctlApi, StreamHost, WdaApi } from '../deps.js'
 import { isDeviceAction } from '../device-actions.js'
 import { captureWda, planWdaInteract, runWdaInteract } from '../real-ui.js'
 import { isScreenshotFileName } from '../screenshot.js'
@@ -35,11 +35,13 @@ export interface PanelServerOptions {
   attempts?: number
   host: StreamHost
   stream: StreamSource
-  simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'>
+  simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'> & Partial<Pick<SimctlApi, 'shutdownDevice' | 'setAppearance'>>
   screenshots: Pick<ScreenshotService, 'capture' | 'dir' | 'save'>
   /** WebDriverAgent: the live view and touch of a connected iPhone/iPad. */
   wda?: WdaApi
   realDevices?: Pick<RealDeviceApi, 'getDevice'>
+  /** Screen recording of the shown simulator (the dock's record button). */
+  recorder?: RecorderApi
   /** Where "Add to chat" stores annotated screenshots for ios_sim_annotation. */
   annotations?: Pick<AnnotationStore, 'save' | 'dir'>
 }
@@ -252,6 +254,16 @@ export class PanelServer {
         await readJsonBody(req)
         return sendJson(res, 200, await this.#capture())
       }
+      if (method === 'POST' && path === '/api/record') return sendJson(res, 200, await this.#record(await readJsonBody(req)))
+      if (method === 'POST' && path === '/api/appearance') return sendJson(res, 200, await this.#appearance(await readJsonBody(req)))
+      if (method === 'POST' && path === '/api/shutdown') {
+        await readJsonBody(req)
+        return sendJson(res, 200, await this.#shutdown())
+      }
+      if (method === 'POST' && path === '/api/detach') {
+        await readJsonBody(req)
+        return sendJson(res, 200, await this.#detach())
+      }
       if (method === 'POST' && path === '/api/device-action') {
         return sendJson(res, 200, await this.#deviceAction(await readJsonBody(req)))
       }
@@ -450,9 +462,11 @@ export class PanelServer {
         deviceName = undefined
       }
     }
+    const recording = status.device !== undefined && this.#options.recorder?.active(status.device) !== undefined
     return {
       kind: 'simulator',
       running: status.running,
+      recording,
       available: this.#options.host.binary.available,
       ...(status.device === undefined ? {} : { device: status.device }),
       ...(deviceName === undefined ? {} : { deviceName }),
@@ -513,6 +527,65 @@ export class PanelServer {
       url: `/shots/${basename(shot.path)}`,
       ...(shot.width === undefined ? {} : { width: shot.width, height: shot.height }),
     }
+  }
+
+  /** The streamed simulator for the dock's simulator-only buttons (never a real device). */
+  async #simulatorFor(what: string): Promise<SimulatorDevice> {
+    if (this.#real !== undefined) throw new HttpError(400, `${what} works on simulators only`)
+    const device = await this.#currentDevice()
+    if (device === undefined) throw new HttpError(409, 'no booted simulator')
+    return device
+  }
+
+  /** Start or stop recording the shown simulator. */
+  async #record(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const recorder = this.#options.recorder
+    if (recorder === undefined) throw new HttpError(501, 'recording is not enabled')
+    const device = await this.#simulatorFor('recording')
+    if (body.action === 'start') {
+      const info = recorder.active(device.udid) ?? await recorder.start(device.udid)
+      return { ok: true, recording: true, path: info.path }
+    }
+    if (body.action === 'stop') {
+      if (recorder.active(device.udid) === undefined) return { ok: true, recording: false }
+      const result = await recorder.stop(device.udid)
+      return { ok: true, recording: false, path: result.path, bytes: result.bytes, durationMs: result.durationMs }
+    }
+    throw new HttpError(400, 'action must be "start" or "stop"')
+  }
+
+  async #appearance(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const appearance = body.appearance
+    if (appearance !== 'light' && appearance !== 'dark') throw new HttpError(400, 'appearance must be "light" or "dark"')
+    const set = this.#options.simctl.setAppearance
+    if (set === undefined) throw new HttpError(501, 'appearance is not supported')
+    const device = await this.#simulatorFor('appearance')
+    await set(device.udid, appearance)
+    return { ok: true, appearance }
+  }
+
+  /** Shut the shown simulator down (its recording and stream first, like ios_sim_shutdown). */
+  async #shutdown(): Promise<Record<string, unknown>> {
+    const shutdown = this.#options.simctl.shutdownDevice
+    if (shutdown === undefined) throw new HttpError(501, 'shutting down is not supported')
+    const device = await this.#simulatorFor('shutting down')
+    const recorder = this.#options.recorder
+    if (recorder?.active(device.udid) !== undefined) await recorder.stop(device.udid).catch(() => undefined)
+    this.#closeRelays()
+    if (this.#options.host.status().device === device.udid) await this.#options.host.stop()
+    await shutdown(device.udid)
+    return { ok: true, device: { udid: device.udid, name: device.name, state: 'Shutdown' } }
+  }
+
+  /** Stop showing the device: stop the simulator stream (the simulator keeps running), or leave the iPhone. */
+  async #detach(): Promise<Record<string, unknown>> {
+    if (this.#real !== undefined) {
+      this.showSimulator()
+      return { ok: true }
+    }
+    this.#closeRelays()
+    await this.#options.host.stop()
+    return { ok: true }
   }
 
   async #deviceAction(body: Record<string, unknown>): Promise<Record<string, unknown>> {

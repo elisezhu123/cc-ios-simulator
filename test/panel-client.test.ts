@@ -63,7 +63,7 @@ test('size and frame ids round-trip and fall back safely; copy follows the langu
   assert.equal(sizeModeId({ kind: 'preset', width: 320 }), 'preset-M')
   assert.deepEqual(sizeModeOf('bogus'), { kind: 'fit' })
   assert.equal(frameStyleOf('device'), 'device')
-  assert.equal(frameStyleOf(null), 'bezel')
+  assert.equal(frameStyleOf(null), 'device', 'the device frame is the default, like the desktop simulator')
   assert.equal(screenRadius(402, 874), 57)
   assert.equal(copyFor('zh-CN').home, '回到桌面')
   assert.equal(copyFor('en-US').home, 'Home')
