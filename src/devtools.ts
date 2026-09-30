@@ -433,6 +433,8 @@ export function parseOpenStepPlist(text: string): Record<string, string> {
     const match = /^([A-Za-z0-9_]+)\s*=\s*(.*?);\s*$/u.exec(raw.trim())
     if (match === null) continue
     let value = match[2]!.trim()
+    // Dictionaries and arrays are not scalars (`GroupContainers = { };`).
+    if (value.startsWith('{') || value.startsWith('(')) continue
     if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1)
     if (value.startsWith('file://')) {
       try {

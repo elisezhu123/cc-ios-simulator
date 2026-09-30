@@ -315,7 +315,7 @@ export function fakeDevtools(options: {
   run?: Record<string, Partial<RunOutcome> | ((run: RunOptions) => Partial<RunOutcome>)>
   which?: Partial<Record<DebugToolName, string>>
   running?: boolean
-} = {}): { api: DevToolsApi; simctlCalls: string[]; runs: RunOptions[]; resumeChecks: number[] } {
+} = {}): { api: DevToolsApi; simctlArgs: string[]; runs: RunOptions[]; resumeChecks: number[] } {
   const simctlCalls: string[] = []
   const runs: RunOptions[] = []
   const resumeChecks: number[] = []
@@ -340,5 +340,5 @@ export function fakeDevtools(options: {
       return options.running ?? true
     },
   }
-  return { api, simctlCalls, runs, resumeChecks }
+  return { api, simctlArgs: simctlCalls, runs, resumeChecks }
 }
