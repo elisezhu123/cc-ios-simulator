@@ -49,7 +49,11 @@ export async function toolHarness(
     stream: new SimStreamSource(host),
     simctl,
     screenshots: new ScreenshotStore({ dir: join(cacheRoot, 'screenshots'), takeScreenshot: simctl.takeScreenshot }),
-    panel: { ensureStarted: async () => 'http://127.0.0.1:3999/' },
+    panel: {
+      ensureStarted: async () => 'http://127.0.0.1:3999/',
+      showRealDevice: async () => 'http://127.0.0.1:3999/',
+      showSimulator: () => {},
+    },
     recorder: new Recorder({ dir: join(cacheRoot, 'recordings'), spawnRecord: fakeRecordSpawn().spawnRecord }),
     builder: {
       detectProject: projectPath => ({ kind: 'xcodeproj', root: '/p', location: projectPath }),

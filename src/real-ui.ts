@@ -63,7 +63,7 @@ export async function wdaTree(client: WdaControl, deviceName: string, depth?: nu
 }
 
 /** A WDA screenshot, saved like a simulator one (same cache, same pruning). */
-export async function captureWda(client: WdaControl, screenshots: ScreenshotService, udid: string, deviceName: string): Promise<ScreenshotCapture> {
+export async function captureWda(client: WdaControl, screenshots: Pick<ScreenshotService, 'save'>, udid: string, deviceName: string): Promise<ScreenshotCapture> {
   let pngBase64: string
   try {
     pngBase64 = (await client.screenshot()).pngBase64

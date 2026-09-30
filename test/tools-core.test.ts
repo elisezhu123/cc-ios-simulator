@@ -40,7 +40,13 @@ test('ios_sim_boot degrades to a plain boot when serve-sim is unavailable', asyn
 
 test('ios_sim_boot still reports a booted, streaming device when the live panel cannot start', async () => {
   const h = await toolHarness(registerCoreTools, {
-    deps: { panel: { ensureStarted: async () => { throw new Error('could not start the panel server on 127.0.0.1:3456+: listen EADDRINUSE') } } },
+    deps: {
+      panel: {
+        ensureStarted: async () => { throw new Error('could not start the panel server on 127.0.0.1:3456+: listen EADDRINUSE') },
+        showRealDevice: async () => { throw new Error('unused') },
+        showSimulator: () => {},
+      },
+    },
   })
   const result = await h.call('ios_sim_boot', { udid: 'CCC' })
   assert.equal(result.isError, undefined)

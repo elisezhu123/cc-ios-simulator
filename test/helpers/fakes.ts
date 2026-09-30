@@ -400,6 +400,8 @@ export function fakeWda(options: {
   windowSize?: { width: number; height: number }
   pixelSize?: { width: number; height: number }
   notRunning?: string
+  /** What mjpegUrl() answers (default: it fails). */
+  mjpegUrl?: string
 } = {}): { api: WdaApi; client: WdaSessionClient; calls: string[] } {
   const calls: string[] = []
   const sources = options.sources ?? ['<XCUIElementTypeApplication type="XCUIElementTypeApplication" name="Settings" label="Settings" x="0" y="0" width="402" height="874"/>']
@@ -440,6 +442,11 @@ export function fakeWda(options: {
     control: async () => {
       if (options.notRunning !== undefined) throw new Error(options.notRunning)
       return client
+    },
+    mjpegUrl: async device => {
+      calls.push(`mjpeg ${device.udid}`)
+      if (options.mjpegUrl === undefined) throw new Error('test: no MJPEG stream')
+      return options.mjpegUrl
     },
     stop: async () => {
       calls.push('stop')
