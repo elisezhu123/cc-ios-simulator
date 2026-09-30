@@ -23,6 +23,7 @@ import {
 import type { ToolDeps } from './deps.js'
 import { DevTools } from './devtools.js'
 import { OcrHelper } from './ocr-backend.js'
+import { PreviewHostController, xcrunToolchain } from './preview-host.js'
 import { PanelServer } from './panel/panel-server.js'
 import { Recorder } from './recorder.js'
 import { ScreenshotStore } from './screenshot.js'
@@ -33,6 +34,7 @@ import { registerAppTools } from './tools/apps.js'
 import { registerCoreTools } from './tools/core.js'
 import { registerDebugTools } from './tools/debug.js'
 import { registerEnvTools } from './tools/env.js'
+import { registerPreviewTools } from './tools/preview.js'
 import { registerUiTools } from './tools/ui.js'
 import { AxeHelper } from './uitree-backend.js'
 
@@ -43,6 +45,12 @@ async function main(): Promise<void> {
   const stream = new SimStreamSource(host)
   const screenshots = new ScreenshotStore({ dir: join(root, 'screenshots'), takeScreenshot: simctl.takeScreenshot })
   const devtools = new DevTools()
+  const preview = new PreviewHostController({
+    cacheDir: join(root, 'preview'),
+    simctl,
+    toolchain: xcrunToolchain,
+    log: line => process.stderr.write(`${line}\n`),
+  })
   const recorder = new Recorder({ dir: join(root, 'recordings') })
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
@@ -65,6 +73,7 @@ async function main(): Promise<void> {
     axe: new AxeHelper({ cacheDir: join(root, 'bin', 'axe') }),
     ocr: new OcrHelper({ cacheDir: join(root, 'bin', 'ocr') }),
     devtools,
+    preview,
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
@@ -77,6 +86,7 @@ async function main(): Promise<void> {
   registerEnvTools(server, deps)
   registerUiTools(server, deps)
   registerDebugTools(server, deps)
+  registerPreviewTools(server, deps)
 
   let shuttingDown = false
   /** A failed shutdown step gets one stderr line and never blocks the exit. */
@@ -93,6 +103,7 @@ async function main(): Promise<void> {
     await Promise.all([
       recorder.stopAll().catch(logFailure('finishing the recordings')),
       host.dispose().catch(logFailure('stopping the serve-sim stream')),
+      preview.dispose().catch(logFailure('removing the preview host app')),
     ])
     await panel.dispose().catch(logFailure('closing the panel server'))
     process.exit(0)
