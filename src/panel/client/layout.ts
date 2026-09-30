@@ -49,7 +49,7 @@ export function sizeModeId(mode: SizeMode): string {
 }
 
 export function frameStyleOf(id: string | null | undefined): FrameStyle {
-  return (FRAME_STYLES as readonly string[]).includes(id ?? '') ? (id as FrameStyle) : 'bezel'
+  return (FRAME_STYLES as readonly string[]).includes(id ?? '') ? (id as FrameStyle) : 'device'
 }
 
 /** The CSS rotation and displayed box for one serve-sim orientation. */

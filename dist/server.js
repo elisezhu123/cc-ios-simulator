@@ -42271,7 +42271,9 @@ var DEVICE_ACTIONS = [
   "shake",
   "siri",
   "action-button",
-  "re-center"
+  "re-center",
+  "toggle-keyboard",
+  "slow-animations"
 ];
 function isDeviceAction(value) {
   return typeof value === "string" && DEVICE_ACTIONS.includes(value);
@@ -42284,7 +42286,10 @@ var DEVICE_ACTION_SPECS = [
   { action: "shake", transport: { kind: "menu", item: "Shake" }, realDevice: false },
   { action: "siri", transport: { kind: "menu", item: "Siri" }, realDevice: true },
   { action: "action-button", transport: { kind: "menu", item: "Action Button" }, realDevice: false },
-  { action: "re-center", transport: { kind: "menu", item: "Re-Center Open Apps" }, realDevice: false }
+  { action: "re-center", transport: { kind: "menu", item: "Re-Center Open Apps" }, realDevice: false },
+  // Simulator's own toggles (⌘K, ⌘T): the on-screen keyboard and slow-motion animations.
+  { action: "toggle-keyboard", transport: { kind: "menu", item: "Toggle Software Keyboard", path: ["I/O", "Keyboard"] }, realDevice: false },
+  { action: "slow-animations", transport: { kind: "menu", item: "Slow Animations", path: ["Debug"] }, realDevice: false }
 ];
 function deviceActionSpec(action) {
   const spec = DEVICE_ACTION_SPECS.find((entry) => entry.action === action);
@@ -42299,7 +42304,7 @@ function deviceActionFailureHint(message) {
     return DEVICE_ACTION_PERMISSION_HINT;
   }
   if (/menu-item-missing/.test(message)) {
-    return "this Xcode's Simulator has no such Device menu item \u2014 the action is unavailable on this host";
+    return "this Xcode's Simulator has no such menu item \u2014 the action is unavailable on this host";
   }
   if (/simulator-not-frontmost/.test(message)) {
     return "Simulator.app would not come to the front \u2014 another app may be holding focus; try again";
@@ -42337,10 +42342,14 @@ ${body}
 end tell
 `;
 }
-function simulatorMenuItemScript(item) {
+function simulatorMenuItemScript(item, path = ["Device"]) {
+  const [bar = "Device", ...submenus] = path;
+  let menu = `menu 1 of menu bar item ${appleScriptString(bar)} of menu bar 1`;
+  for (const submenu of submenus) menu = `menu 1 of menu item ${appleScriptString(submenu)} of ${menu}`;
+  const target = `menu item ${appleScriptString(item)} of ${menu}`;
   return focusedSimulatorScript(`  tell process "Simulator"
-    if not (exists menu item ${appleScriptString(item)} of menu 1 of menu bar item "Device" of menu bar 1) then error "ios-simulator: menu-item-missing"
-    click menu item ${appleScriptString(item)} of menu 1 of menu bar item "Device" of menu bar 1
+    if not (exists ${target}) then error "ios-simulator: menu-item-missing"
+    click ${target}
   end tell`);
 }
 function simulatorHomeKeystrokeScript(repeat) {
@@ -42366,7 +42375,7 @@ async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRI
       await pressButton(spec.transport.button);
       return;
     }
-    const script = spec.transport.kind === "menu" ? simulatorMenuItemScript(spec.transport.item) : simulatorHomeKeystrokeScript(spec.transport.repeat);
+    const script = spec.transport.kind === "menu" ? simulatorMenuItemScript(spec.transport.item, spec.transport.path) : simulatorHomeKeystrokeScript(spec.transport.repeat);
     await runOsascript(script, timeoutMs);
   } catch (error62) {
     const message = error62 instanceof Error ? error62.message : String(error62);
@@ -47070,6 +47079,16 @@ var PanelServer = class {
         await readJsonBody(req);
         return sendJson(res, 200, await this.#capture());
       }
+      if (method === "POST" && path === "/api/record") return sendJson(res, 200, await this.#record(await readJsonBody(req)));
+      if (method === "POST" && path === "/api/appearance") return sendJson(res, 200, await this.#appearance(await readJsonBody(req)));
+      if (method === "POST" && path === "/api/shutdown") {
+        await readJsonBody(req);
+        return sendJson(res, 200, await this.#shutdown());
+      }
+      if (method === "POST" && path === "/api/detach") {
+        await readJsonBody(req);
+        return sendJson(res, 200, await this.#detach());
+      }
       if (method === "POST" && path === "/api/device-action") {
         return sendJson(res, 200, await this.#deviceAction(await readJsonBody(req)));
       }
@@ -47256,9 +47275,11 @@ var PanelServer = class {
         deviceName = void 0;
       }
     }
+    const recording = status.device !== void 0 && this.#options.recorder?.active(status.device) !== void 0;
     return {
       kind: "simulator",
       running: status.running,
+      recording,
       available: this.#options.host.binary.available,
       ...status.device === void 0 ? {} : { device: status.device },
       ...deviceName === void 0 ? {} : { deviceName },
@@ -47316,6 +47337,60 @@ var PanelServer = class {
       url: `/shots/${basename2(shot.path)}`,
       ...shot.width === void 0 ? {} : { width: shot.width, height: shot.height }
     };
+  }
+  /** The streamed simulator for the dock's simulator-only buttons (never a real device). */
+  async #simulatorFor(what) {
+    if (this.#real !== void 0) throw new HttpError(400, `${what} works on simulators only`);
+    const device = await this.#currentDevice();
+    if (device === void 0) throw new HttpError(409, "no booted simulator");
+    return device;
+  }
+  /** Start or stop recording the shown simulator. */
+  async #record(body) {
+    const recorder = this.#options.recorder;
+    if (recorder === void 0) throw new HttpError(501, "recording is not enabled");
+    const device = await this.#simulatorFor("recording");
+    if (body.action === "start") {
+      const info = recorder.active(device.udid) ?? await recorder.start(device.udid);
+      return { ok: true, recording: true, path: info.path };
+    }
+    if (body.action === "stop") {
+      if (recorder.active(device.udid) === void 0) return { ok: true, recording: false };
+      const result = await recorder.stop(device.udid);
+      return { ok: true, recording: false, path: result.path, bytes: result.bytes, durationMs: result.durationMs };
+    }
+    throw new HttpError(400, 'action must be "start" or "stop"');
+  }
+  async #appearance(body) {
+    const appearance = body.appearance;
+    if (appearance !== "light" && appearance !== "dark") throw new HttpError(400, 'appearance must be "light" or "dark"');
+    const set2 = this.#options.simctl.setAppearance;
+    if (set2 === void 0) throw new HttpError(501, "appearance is not supported");
+    const device = await this.#simulatorFor("appearance");
+    await set2(device.udid, appearance);
+    return { ok: true, appearance };
+  }
+  /** Shut the shown simulator down (its recording and stream first, like ios_sim_shutdown). */
+  async #shutdown() {
+    const shutdown = this.#options.simctl.shutdownDevice;
+    if (shutdown === void 0) throw new HttpError(501, "shutting down is not supported");
+    const device = await this.#simulatorFor("shutting down");
+    const recorder = this.#options.recorder;
+    if (recorder?.active(device.udid) !== void 0) await recorder.stop(device.udid).catch(() => void 0);
+    this.#closeRelays();
+    if (this.#options.host.status().device === device.udid) await this.#options.host.stop();
+    await shutdown(device.udid);
+    return { ok: true, device: { udid: device.udid, name: device.name, state: "Shutdown" } };
+  }
+  /** Stop showing the device: stop the simulator stream (the simulator keeps running), or leave the iPhone. */
+  async #detach() {
+    if (this.#real !== void 0) {
+      this.showSimulator();
+      return { ok: true };
+    }
+    this.#closeRelays();
+    await this.#options.host.stop();
+    return { ok: true };
   }
   async #deviceAction(body) {
     const action = body.action;
@@ -49449,7 +49524,8 @@ async function main() {
     screenshots,
     wda,
     realDevices,
-    annotations
+    annotations,
+    recorder
   });
   const deps = {
     host,

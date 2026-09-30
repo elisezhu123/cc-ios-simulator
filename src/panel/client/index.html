@@ -8,20 +8,15 @@
   <script type="module" src="/main.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <select id="device-picker"></select>
+  <header class="titlebar">
+    <span class="title" id="title">iOS Simulator</span>
     <span id="status" class="status" role="status" data-kind="connecting"></span>
+    <button id="btn-fullscreen" class="icon-button" type="button"></button>
   </header>
-  <nav class="toolbar">
-    <button id="btn-home" type="button"></button>
-    <button id="btn-annotate" type="button"></button>
-    <button id="btn-screenshot" type="button"></button>
-    <button id="btn-rotate" type="button"></button>
-    <select id="device-action"></select>
-    <button id="btn-refresh" type="button"></button>
-    <span class="spacer"></span>
-    <select id="size-mode"></select>
-    <select id="frame-style"></select>
+  <nav class="menubar">
+    <button id="menu-devices" class="menu-button" type="button"><span id="device-name"></span><span id="device-runtime" class="muted"></span></button>
+    <button id="menu-device" class="menu-button" type="button"></button>
+    <button id="menu-debug" class="menu-button" type="button"></button>
   </nav>
   <main class="stage" id="stage">
     <div class="frame" id="frame">
@@ -32,5 +27,17 @@
     <p id="placeholder" class="placeholder" hidden></p>
     <p id="toast" class="toast" role="status" hidden></p>
   </main>
+  <div class="dock" id="dock" role="toolbar">
+    <button id="btn-home" type="button"></button>
+    <span class="dock-separator"></span>
+    <button id="btn-annotate" type="button"></button>
+    <button id="btn-screenshot" type="button"></button>
+    <button id="btn-record" type="button"></button>
+    <span class="dock-separator"></span>
+    <button id="btn-rotate" type="button"></button>
+    <span class="dock-separator"></span>
+    <button id="btn-shutdown" class="danger" type="button"></button>
+    <button id="btn-detach" class="danger" type="button"></button>
+  </div>
 </body>
 </html>

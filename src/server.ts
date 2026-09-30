@@ -69,6 +69,7 @@ async function main(): Promise<void> {
     wda,
     realDevices,
     annotations,
+    recorder,
   })
   const deps: ToolDeps = {
     host,

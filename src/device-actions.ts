@@ -45,6 +45,8 @@ export const DEVICE_ACTIONS = [
   'siri',
   'action-button',
   're-center',
+  'toggle-keyboard',
+  'slow-animations',
 ] as const
 
 export type DeviceAction = typeof DEVICE_ACTIONS[number]
@@ -56,7 +58,8 @@ export function isDeviceAction(value: unknown): value is DeviceAction {
 /** How one action reaches the simulator. */
 export type DeviceActionTransport =
   | { kind: 'serve-sim'; button: string }
-  | { kind: 'menu'; item: string }
+  /** `path` is the menu bar item and any submenus above `item` (default `Device`). */
+  | { kind: 'menu'; item: string; path?: readonly string[] }
   | { kind: 'keystroke'; repeat: number }
 
 export interface DeviceActionSpec {
@@ -81,6 +84,9 @@ export const DEVICE_ACTION_SPECS: readonly DeviceActionSpec[] = [
   { action: 'siri', transport: { kind: 'menu', item: 'Siri' }, realDevice: true },
   { action: 'action-button', transport: { kind: 'menu', item: 'Action Button' }, realDevice: false },
   { action: 're-center', transport: { kind: 'menu', item: 'Re-Center Open Apps' }, realDevice: false },
+  // Simulator's own toggles (⌘K, ⌘T): the on-screen keyboard and slow-motion animations.
+  { action: 'toggle-keyboard', transport: { kind: 'menu', item: 'Toggle Software Keyboard', path: ['I/O', 'Keyboard'] }, realDevice: false },
+  { action: 'slow-animations', transport: { kind: 'menu', item: 'Slow Animations', path: ['Debug'] }, realDevice: false },
 ]
 
 export function deviceActionSpec(action: DeviceAction): DeviceActionSpec {
@@ -105,7 +111,7 @@ export function deviceActionFailureHint(message: string): string {
     return DEVICE_ACTION_PERMISSION_HINT
   }
   if (/menu-item-missing/.test(message)) {
-    return 'this Xcode\'s Simulator has no such Device menu item — the action is unavailable on this host'
+    return 'this Xcode\'s Simulator has no such menu item — the action is unavailable on this host'
   }
   if (/simulator-not-frontmost/.test(message)) {
     return 'Simulator.app would not come to the front — another app may be holding focus; try again'
@@ -152,11 +158,18 @@ end tell
 `
 }
 
-/** Click one `Device` menu item by its exact English title. */
-export function simulatorMenuItemScript(item: string): string {
+/**
+ * Click one menu item by its exact English title; `path` is the menu bar
+ * item then any submenus above it (default: the `Device` menu).
+ */
+export function simulatorMenuItemScript(item: string, path: readonly string[] = ['Device']): string {
+  const [bar = 'Device', ...submenus] = path
+  let menu = `menu 1 of menu bar item ${appleScriptString(bar)} of menu bar 1`
+  for (const submenu of submenus) menu = `menu 1 of menu item ${appleScriptString(submenu)} of ${menu}`
+  const target = `menu item ${appleScriptString(item)} of ${menu}`
   return focusedSimulatorScript(`  tell process "Simulator"
-    if not (exists menu item ${appleScriptString(item)} of menu 1 of menu bar item "Device" of menu bar 1) then error "ios-simulator: menu-item-missing"
-    click menu item ${appleScriptString(item)} of menu 1 of menu bar item "Device" of menu bar 1
+    if not (exists ${target}) then error "ios-simulator: menu-item-missing"
+    click ${target}
   end tell`)
 }
 
@@ -197,7 +210,7 @@ export async function runSimulatorDeviceAction(
       return
     }
     const script = spec.transport.kind === 'menu'
-      ? simulatorMenuItemScript(spec.transport.item)
+      ? simulatorMenuItemScript(spec.transport.item, spec.transport.path)
       : simulatorHomeKeystrokeScript(spec.transport.repeat)
     await runOsascript(script, timeoutMs)
   } catch (error) {

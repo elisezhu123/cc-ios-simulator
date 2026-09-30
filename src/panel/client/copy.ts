@@ -5,7 +5,7 @@
  * @module ios-simulator/panel/client/copy
  */
 
-export type DeviceActionId = 'app-switcher' | 'lock' | 'unlock' | 'shake' | 'siri' | 'action-button' | 're-center'
+export type DeviceActionId = 'app-switcher' | 'lock' | 'unlock' | 'shake' | 'siri' | 'action-button' | 're-center' | 'toggle-keyboard' | 'slow-animations'
 
 export interface PanelCopy {
   language: 'en' | 'zh'
@@ -49,10 +49,30 @@ export interface PanelCopy {
   annotationAdded: string
   annotationAddedCopied: string
   annotationFailed: string
+  /** Menu bar and dock (the Claude Code desktop simulator layout). */
+  deviceMenu: string
+  debugMenu: string
+  appearance: string
+  light: string
+  dark: string
+  keyboard: string
+  rotateLeft: string
+  rotateRight: string
+  saveScreenshot: string
+  screenshotSaved: string
+  recordVideo: string
+  stopRecording: string
+  recordingSaved: string
+  shutdown: string
+  detach: string
+  fullscreen: string
+  bootedSection: string
+  realSection: string
+  shutdownSection: string
+  displaySize: string
+  reconnect: string
+  simulatorOnly: string
 }
-
-/** The device actions WebDriverAgent can run on a real device. */
-export const REAL_DEVICE_ACTION_IDS: readonly DeviceActionId[] = ['lock', 'unlock', 'siri']
 
 const EN: PanelCopy = {
   language: 'en',
@@ -75,6 +95,8 @@ const EN: PanelCopy = {
     siri: 'Siri',
     'action-button': 'Action Button',
     're-center': 'Re-center window',
+    'toggle-keyboard': 'Show on-screen keyboard',
+    'slow-animations': 'Slow animations',
   },
   size: 'Simulator display size',
   frame: 'Simulator frame style',
@@ -99,6 +121,28 @@ const EN: PanelCopy = {
   annotationAdded: 'Added — ask Claude to look at it (ios_sim_annotation)',
   annotationAddedCopied: 'Added and copied — paste it into the chat, or ask Claude to look at it (ios_sim_annotation)',
   annotationFailed: 'Could not add the annotation',
+  deviceMenu: 'Device',
+  debugMenu: 'Debug',
+  appearance: 'Appearance',
+  light: 'Light',
+  dark: 'Dark',
+  keyboard: 'Keyboard',
+  rotateLeft: 'Rotate left',
+  rotateRight: 'Rotate right',
+  saveScreenshot: 'Save screenshot',
+  screenshotSaved: 'Screenshot saved',
+  recordVideo: 'Record video',
+  stopRecording: 'Stop recording',
+  recordingSaved: 'Recording saved to',
+  shutdown: 'Shut down simulator',
+  detach: 'Detach simulator',
+  fullscreen: 'Full screen',
+  bootedSection: 'Booted',
+  realSection: 'iPhone / iPad',
+  shutdownSection: 'Shut down',
+  displaySize: 'Display size',
+  reconnect: 'Reconnect stream',
+  simulatorOnly: 'Simulators only',
 }
 
 const ZH: PanelCopy = {
@@ -122,6 +166,8 @@ const ZH: PanelCopy = {
     siri: 'Siri',
     'action-button': 'Action 按钮',
     're-center': '窗口重新居中',
+    'toggle-keyboard': '显示屏幕键盘',
+    'slow-animations': '慢动画',
   },
   size: '模拟器显示大小',
   frame: '模拟器边框样式',
@@ -146,6 +192,28 @@ const ZH: PanelCopy = {
   annotationAdded: '已添加——让 Claude 查看（ios_sim_annotation）',
   annotationAddedCopied: '已添加并复制——可直接粘贴到对话，或让 Claude 查看（ios_sim_annotation）',
   annotationFailed: '添加标注失败',
+  deviceMenu: '设备',
+  debugMenu: '调试',
+  appearance: '外观',
+  light: '浅色',
+  dark: '深色',
+  keyboard: '键盘',
+  rotateLeft: '向左旋转',
+  rotateRight: '向右旋转',
+  saveScreenshot: '保存截图',
+  screenshotSaved: '截图已保存',
+  recordVideo: '录制视频',
+  stopRecording: '停止录制',
+  recordingSaved: '录屏已保存到',
+  shutdown: '关闭模拟器',
+  detach: '断开模拟器',
+  fullscreen: '全屏',
+  bootedSection: '已启动',
+  realSection: 'iPhone / iPad',
+  shutdownSection: '未启动',
+  displaySize: '显示大小',
+  reconnect: '重新连接画面',
+  simulatorOnly: '仅模拟器可用',
 }
 
 export function copyFor(language: string | undefined): PanelCopy {
