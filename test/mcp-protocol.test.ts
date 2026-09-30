@@ -13,7 +13,9 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 
 const EXPECTED_TOOLS = [
+  'ios_sim_app_info',
   'ios_sim_appearance',
+  'ios_sim_backtrace',
   'ios_sim_boot',
   'ios_sim_build_run',
   'ios_sim_devices',
@@ -21,10 +23,13 @@ const EXPECTED_TOOLS = [
   'ios_sim_install_app',
   'ios_sim_interact',
   'ios_sim_launch_app',
+  'ios_sim_leaks',
   'ios_sim_list_apps',
   'ios_sim_location',
+  'ios_sim_logs',
   'ios_sim_open_url',
   'ios_sim_panel',
+  'ios_sim_processes',
   'ios_sim_push',
   'ios_sim_record',
   'ios_sim_screenshot',
@@ -48,7 +53,7 @@ function childEnv(): Record<string, string> {
   return env
 }
 
-test('the stdio MCP server lists the 23 ios_sim tools and answers calls', async () => {
+test('the stdio MCP server lists the 28 ios_sim tools and answers calls', async () => {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: ['--import', 'tsx', join(ROOT, 'src/server.ts')],

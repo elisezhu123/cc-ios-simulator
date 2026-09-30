@@ -10889,7 +10889,7 @@ var require_websocket_server = __commonJS({
 });
 
 // src/server.ts
-import { dirname as dirname5, join as join13 } from "node:path";
+import { dirname as dirname5, join as join15 } from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
@@ -11279,15 +11279,15 @@ var makeIssue = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage7 = "";
+  let errorMessage8 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage7 = map2(fullIssue, { data, defaultError: errorMessage7 }).message;
+    errorMessage8 = map2(fullIssue, { data, defaultError: errorMessage8 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage7
+    message: errorMessage8
   };
 };
 function addIssueToContext(ctx, issueData) {
@@ -16521,8 +16521,8 @@ function emoji() {
 }
 var ipv4 = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 var ipv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;
-var mac = (delimiter4) => {
-  const escapedDelim = escapeRegex(delimiter4 ?? ":");
+var mac = (delimiter5) => {
+  const escapedDelim = escapeRegex(delimiter5 ?? ":");
   return new RegExp(`^(?:[0-9A-F]{2}${escapedDelim}){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}${escapedDelim}){5}[0-9a-f]{2}$`);
 };
 var cidrv4 = /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/;
@@ -36273,19 +36273,19 @@ var getRefs = (options) => {
 };
 
 // node_modules/zod-to-json-schema/dist/esm/errorMessages.js
-function addErrorMessage(res, key, errorMessage7, refs) {
+function addErrorMessage(res, key, errorMessage8, refs) {
   if (!refs?.errorMessages)
     return;
-  if (errorMessage7) {
+  if (errorMessage8) {
     res.errorMessage = {
       ...res.errorMessage,
-      [key]: errorMessage7
+      [key]: errorMessage8
     };
   }
 }
-function setResponseValueAndErrors(res, key, value, errorMessage7, refs) {
+function setResponseValueAndErrors(res, key, value, errorMessage8, refs) {
   res[key] = value;
-  addErrorMessage(res, key, errorMessage7, refs);
+  addErrorMessage(res, key, errorMessage8, refs);
 }
 
 // node_modules/zod-to-json-schema/dist/esm/getRelativePath.js
@@ -37596,8 +37596,8 @@ var Protocol = class {
                   if (queuedMessage.type === "response") {
                     resolver(message);
                   } else {
-                    const errorMessage7 = message;
-                    const error62 = new McpError(errorMessage7.error.code, errorMessage7.error.message, errorMessage7.error.data);
+                    const errorMessage8 = message;
+                    const error62 = new McpError(errorMessage8.error.code, errorMessage8.error.message, errorMessage8.error.data);
                     resolver(error62);
                   }
                 } else {
@@ -38888,23 +38888,23 @@ var Server = class extends Protocol {
       const wrappedHandler = async (request, extra) => {
         const validatedRequest = safeParse2(CallToolRequestSchema, request);
         if (!validatedRequest.success) {
-          const errorMessage7 = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage7}`);
+          const errorMessage8 = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage8}`);
         }
         const { params } = validatedRequest.data;
         const result = await Promise.resolve(handler(request, extra));
         if (params.task) {
           const taskValidationResult = safeParse2(CreateTaskResultSchema, result);
           if (!taskValidationResult.success) {
-            const errorMessage7 = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage7}`);
+            const errorMessage8 = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage8}`);
           }
           return taskValidationResult.data;
         }
         const validationResult = safeParse2(CallToolResultSchema, result);
         if (!validationResult.success) {
-          const errorMessage7 = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage7}`);
+          const errorMessage8 = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage8}`);
         }
         return validationResult.data;
       };
@@ -39398,12 +39398,12 @@ var McpServer = class {
    * @param errorMessage - The error message.
    * @returns The tool error result.
    */
-  createToolError(errorMessage7) {
+  createToolError(errorMessage8) {
     return {
       content: [
         {
           type: "text",
-          text: errorMessage7
+          text: errorMessage8
         }
       ],
       isError: true
@@ -39421,8 +39421,8 @@ var McpServer = class {
     const parseResult = await safeParseAsync2(schemaToParse, args);
     if (!parseResult.success) {
       const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage7 = getParseErrorMessage(error62);
-      throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage7}`);
+      const errorMessage8 = getParseErrorMessage(error62);
+      throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage8}`);
     }
     return parseResult.data;
   }
@@ -39446,8 +39446,8 @@ var McpServer = class {
     const parseResult = await safeParseAsync2(outputObj, result.structuredContent);
     if (!parseResult.success) {
       const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage7 = getParseErrorMessage(error62);
-      throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage7}`);
+      const errorMessage8 = getParseErrorMessage(error62);
+      throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage8}`);
     }
   }
   /**
@@ -39659,8 +39659,8 @@ var McpServer = class {
         const parseResult = await safeParseAsync2(argsObj, request.params.arguments);
         if (!parseResult.success) {
           const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-          const errorMessage7 = getParseErrorMessage(error62);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage7}`);
+          const errorMessage8 = getParseErrorMessage(error62);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage8}`);
         }
         const args = parseResult.data;
         const cb = prompt.callback;
@@ -40995,8 +40995,8 @@ var OUTPUT_TAIL_LINES = 400;
 var ERROR_TAIL_LINES = 80;
 function projectSlug(projectPath) {
   const base = basename(projectPath).replace(/\.(xcodeproj|xcworkspace)$/u, "");
-  const slug = base.replace(/[^A-Za-z0-9._-]/g, "_").replace(/^_+|_+$/g, "") || "project";
-  return slug;
+  const slug2 = base.replace(/[^A-Za-z0-9._-]/g, "_").replace(/^_+|_+$/g, "") || "project";
+  return slug2;
 }
 function detectProject(projectPath) {
   const absolute = resolve(projectPath);
@@ -41204,11 +41204,335 @@ ${buildFailureDetail(lines)}`);
   };
 }
 
+// src/devtools.ts
+import { execFile as execFile3, execFileSync, spawn as spawn2 } from "node:child_process";
+import { statSync as statSync2 } from "node:fs";
+import { delimiter, join as join4 } from "node:path";
+var MAX_CHILD_CAPTURE_BYTES = 2 * 1024 * 1024;
+var KILL_GRACE_MS = 2e3;
+var RESUME_POLL_MS = 300;
+var SIMCTL_CALL_TIMEOUT_MS = 3e4;
+var DIAGNOSTIC_LINE_MAX_CHARS = 240;
+function errorMessage2(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+function sleep(milliseconds) {
+  return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
+}
+function signalGroup(pid, kill, signal) {
+  if (pid === void 0) {
+    kill(signal);
+    return;
+  }
+  try {
+    process.kill(-pid, signal);
+  } catch {
+    kill(signal);
+  }
+}
+var DevTools = class {
+  #platform;
+  #env;
+  #processStat;
+  #children = /* @__PURE__ */ new Set();
+  #which = /* @__PURE__ */ new Map();
+  constructor(options = {}) {
+    this.#platform = options.platform ?? process.platform;
+    this.#env = options.env ?? process.env;
+    this.#processStat = options.processStat ?? defaultProcessStat;
+  }
+  simctl(args, signal) {
+    return new Promise((resolve4, reject) => {
+      execFile3("xcrun", ["simctl", ...args], { timeout: SIMCTL_CALL_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024, signal }, (error62, stdout, stderr) => {
+        if (error62 !== null) {
+          const detail = stderr.trim();
+          reject(new Error(`simctl ${args.join(" ")} failed${detail === "" ? "" : `: ${detail}`}`));
+          return;
+        }
+        resolve4(stdout);
+      });
+    });
+  }
+  which(name) {
+    if (this.#which.has(name)) return this.#which.get(name);
+    let found;
+    if (this.#platform === "darwin") {
+      try {
+        found = execFileSync("xcrun", ["--find", name], { encoding: "utf8", timeout: SIMCTL_CALL_TIMEOUT_MS, stdio: ["ignore", "pipe", "ignore"] }).trim() || void 0;
+      } catch {
+        found = findOnPath(name, this.#env);
+      }
+    }
+    this.#which.set(name, found);
+    return found;
+  }
+  async ensureRunning(pid) {
+    await sleep(RESUME_POLL_MS);
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const stat2 = this.#processStat(pid);
+      if (stat2 === void 0 || stat2 === "") return false;
+      if (!stat2.includes("T")) return true;
+      try {
+        process.kill(pid, "SIGCONT");
+      } catch {
+        return false;
+      }
+      await sleep(RESUME_POLL_MS);
+    }
+    const stat = this.#processStat(pid);
+    return stat !== void 0 && stat !== "" && !stat.includes("T");
+  }
+  run(options) {
+    const { command, args, label, timeoutMs, windowMs, resumePid, signal } = options;
+    if (signal?.aborted === true) return Promise.reject(abortError(label, signal));
+    return new Promise((resolve4, reject) => {
+      let settled = false;
+      let stdout = "";
+      let stderr = "";
+      let timedOut = false;
+      let killed = false;
+      const child = spawn2(command, [...args], { stdio: ["ignore", "pipe", "pipe"], detached: true });
+      this.#children.add(child);
+      const killTree = () => {
+        killed = true;
+        signalGroup(child.pid, (signal2) => child.kill(signal2), "SIGTERM");
+        const killer = setTimeout(() => signalGroup(child.pid, (signal2) => child.kill(signal2), "SIGKILL"), KILL_GRACE_MS);
+        killer.unref?.();
+      };
+      const onAbort = () => killTree();
+      signal?.addEventListener("abort", onAbort, { once: true });
+      const windowTimer = windowMs === void 0 ? void 0 : setTimeout(killTree, windowMs);
+      const deadline = setTimeout(() => {
+        timedOut = true;
+        killTree();
+      }, timeoutMs);
+      const finish = (done) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(deadline);
+        if (windowTimer !== void 0) clearTimeout(windowTimer);
+        signal?.removeEventListener("abort", onAbort);
+        this.#children.delete(child);
+        done();
+      };
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk.toString("utf8");
+        if (stdout.length > MAX_CHILD_CAPTURE_BYTES) stdout = stdout.slice(-MAX_CHILD_CAPTURE_BYTES);
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk.toString("utf8");
+        if (stderr.length > MAX_CHILD_CAPTURE_BYTES) stderr = stderr.slice(-MAX_CHILD_CAPTURE_BYTES);
+      });
+      child.once("error", (error62) => finish(() => reject(new Error(`${label} failed to start: ${errorMessage2(error62)}`))));
+      child.once("close", (code) => finish(() => {
+        void (async () => {
+          const resumed = resumePid !== void 0 && killed ? await this.ensureRunning(resumePid) : void 0;
+          const resumeDetail = resumePid === void 0 || resumed === void 0 ? "" : resumed ? `; the target process was verified resumed (pid ${resumePid})` : `; the target process was NOT found afterwards (pid ${resumePid}, it may have exited)`;
+          if (signal?.aborted === true) {
+            reject(abortError(label, signal, resumeDetail));
+            return;
+          }
+          if (timedOut) {
+            reject(new Error(`${label} exceeded its ${timeoutMs} ms deadline and was killed${resumeDetail}`));
+            return;
+          }
+          resolve4({ stdout, stderr, code, killed, ...resumed === void 0 ? {} : { resumed } });
+        })();
+      }));
+    });
+  }
+  /** Kill every child still running (server shutdown). */
+  dispose() {
+    for (const child of [...this.#children]) signalGroup(child.pid, (signal) => child.kill(signal), "SIGKILL");
+    this.#children.clear();
+  }
+};
+function abortError(label, signal, detail = "") {
+  if (signal.reason instanceof Error && signal.reason.name !== "AbortError") return signal.reason;
+  return new Error(`${label} aborted${detail}`);
+}
+function defaultProcessStat(pid) {
+  try {
+    return execFileSync("ps", ["-o", "stat=", "-p", String(pid)], { encoding: "utf8", timeout: 5e3, stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return void 0;
+  }
+}
+function findOnPath(command, env) {
+  for (const dir of (env.PATH ?? "").split(delimiter)) {
+    if (dir === "") continue;
+    const candidate = join4(dir, command);
+    try {
+      const info = statSync2(candidate);
+      if (info.isFile() && (info.mode & 73) !== 0) return candidate;
+    } catch {
+    }
+  }
+  return void 0;
+}
+function parseLaunchctlApps(stdout) {
+  const processes = [];
+  for (const line of stdout.split("\n")) {
+    const [pidRaw, , labelRaw] = line.split("	");
+    const label = (labelRaw ?? "").trim();
+    if (!label.startsWith("UIKitApplication:")) continue;
+    const pid = Number(pidRaw);
+    if (!Number.isInteger(pid) || pid < 1) continue;
+    const rest = label.slice("UIKitApplication:".length);
+    const bracket = rest.indexOf("[");
+    const bundleId = (bracket >= 0 ? rest.slice(0, bracket) : rest).trim();
+    const name = (bundleId === "" ? rest : bundleId).split(".").pop() ?? rest;
+    processes.push({ pid, name, ...bundleId === "" ? {} : { bundleId } });
+  }
+  return processes.sort((a, b) => a.pid - b.pid);
+}
+function parseLldbThreads(text) {
+  const threads = [];
+  let current;
+  for (const raw of text.split("\n")) {
+    const line = raw.replace(/\r$/u, "");
+    if (/^\(lldb\)/u.test(line)) continue;
+    if (/^Process \d+ (stopped|resuming|detached|exited)/u.test(line)) {
+      current = void 0;
+      continue;
+    }
+    if (/^(\*?)\s*thread #\d+/u.test(line)) {
+      current = { header: line.trim(), lines: [] };
+      threads.push(current);
+      continue;
+    }
+    if (current !== void 0) {
+      if (line.trim() === "" && current.lines.length === 0) continue;
+      current.lines.push(line);
+    }
+  }
+  return threads;
+}
+function parseSampleThreads(text) {
+  const threads = [];
+  let inCallGraph = false;
+  let current;
+  for (const raw of text.split("\n")) {
+    const line = raw.replace(/\r$/u, "");
+    if (!inCallGraph) {
+      if (line.trim() === "Call graph:") inCallGraph = true;
+      continue;
+    }
+    if (/^\s{1,6}\d+\s+Thread_\S+/u.test(line)) {
+      current = { header: line.trim(), lines: [] };
+      threads.push(current);
+      continue;
+    }
+    if (line.trim() === "") {
+      current = void 0;
+      continue;
+    }
+    if (current !== void 0) current.lines.push(line);
+  }
+  return threads;
+}
+var MAIN_THREAD = /main[- ]thread/iu;
+function orderThreads(threads, allThreads) {
+  const mainIndex = threads.findIndex((thread) => MAIN_THREAD.test(thread.header));
+  const ordered = mainIndex <= 0 ? [...threads] : [threads[mainIndex], ...threads.slice(0, mainIndex), ...threads.slice(mainIndex + 1)];
+  return allThreads ? ordered : ordered.slice(0, 1);
+}
+function capThreadLines(threads, maxLines) {
+  const lines = [];
+  for (const thread of threads) {
+    const block = [thread.header, ...thread.lines];
+    const room = maxLines - lines.length;
+    if (block.length <= room) {
+      lines.push(...block);
+      continue;
+    }
+    lines.push(...block.slice(0, room));
+    return { lines, truncated: true };
+  }
+  return { lines, truncated: false };
+}
+function parseLeaksSummary(stdout, maxTypes = 30) {
+  const leaksMatch = /^Process \d+: (\d+) leaks? for (\d+) total leaked bytes\./mu.exec(stdout);
+  if (leaksMatch === null) return void 0;
+  const nodesMatch = /^Process \d+: (\d+) nodes malloced for ([0-9.]+\s+\w+)/mu.exec(stdout);
+  const counts = /* @__PURE__ */ new Map();
+  for (const match of stdout.matchAll(/^\s*(\d+)\s+\([^)]*\)\s+ROOT LEAK:\s+(.+?)\s*\[(\d+)\]\s*$/gmu)) {
+    const raw = match[2].trim();
+    const type = raw.startsWith("<") && raw.endsWith(">") ? raw.slice(1, -1).replace(/\s+0x[0-9a-f]+$/iu, "") : "<unknown>";
+    const entry = counts.get(type) ?? { count: 0, bytes: 0 };
+    entry.count += Number(match[1]);
+    entry.bytes += Number(match[3]);
+    counts.set(type, entry);
+  }
+  const topTypes = [...counts.entries()].map(([type, entry]) => ({ type, count: entry.count, bytes: entry.bytes })).sort((a, b) => b.count - a.count || b.bytes - a.bytes).slice(0, maxTypes);
+  return {
+    leaks: Number(leaksMatch[1]),
+    leakedBytes: Number(leaksMatch[2]),
+    ...nodesMatch === null ? {} : { nodes: Number(nodesMatch[1]), nodesBytes: nodesMatch[2] },
+    topTypes
+  };
+}
+function leaksFatalDiagnostic(stderr, stdout) {
+  for (const raw of `${stderr}
+${stdout}`.split("\n")) {
+    const line = raw.trim();
+    if (/\[fatal\]|Failed to get DYLD info|minimal corpse|cannot examine process|not allowed to attach/iu.test(line)) {
+      return truncateLine(line);
+    }
+  }
+  return void 0;
+}
+function firstDiagnostic(stderr, stdout) {
+  const line = `${stderr}
+${stdout}`.split("\n").map((entry) => entry.trim()).find((entry) => entry !== "");
+  return line === void 0 ? void 0 : truncateLine(line);
+}
+function tailDiagnostic(text, lines) {
+  return text.split("\n").map((line) => line.trim()).filter((line) => line !== "").slice(-lines).map(truncateLine).join(" | ");
+}
+function truncateLine(line) {
+  return line.length > DIAGNOSTIC_LINE_MAX_CHARS ? `${line.slice(0, DIAGNOSTIC_LINE_MAX_CHARS)}\u2026` : line;
+}
+function parseOpenStepPlist(text) {
+  const fields = {};
+  for (const raw of text.split("\n")) {
+    const match = /^([A-Za-z0-9_]+)\s*=\s*(.*?);\s*$/u.exec(raw.trim());
+    if (match === null) continue;
+    let value = match[2].trim();
+    if (value.startsWith("{") || value.startsWith("(")) continue;
+    if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+    if (value.startsWith("file://")) {
+      try {
+        value = decodeURIComponent(value.slice("file://".length)).replace(/\/$/u, "");
+      } catch {
+      }
+    }
+    fields[match[1]] = value;
+  }
+  return fields;
+}
+var ANSI_PATTERN = /\u001b\][^\u0007]*(?:\u0007|\u001b\\)|\u001b\[[0-9;?]*[A-Za-z]/gu;
+var BANNER_PATTERN = /^(?:Filtering the log data using |Timestamp\s+Ty\s+Process\[PID:TID\])/u;
+function tailLogLines(text, options) {
+  let lines = text.split("\n").map((line) => line.replace(ANSI_PATTERN, "").trimEnd()).filter((line) => line !== "" && !BANNER_PATTERN.test(line));
+  if (options.grep !== void 0) {
+    const grep = options.grep;
+    lines = lines.filter((line) => line.search(grep) !== -1);
+  }
+  let bytes = lines.reduce((sum, line) => sum + Buffer.byteLength(line, "utf8") + 1, 0);
+  let start = 0;
+  while (start < lines.length && (lines.length - start > options.maxLines || bytes > options.maxBytes)) {
+    bytes -= Buffer.byteLength(lines[start], "utf8") + 1;
+    start += 1;
+  }
+  return { lines: lines.slice(start), truncated: start > 0 };
+}
+
 // src/ocr-backend.ts
-import { execFile as execFile3 } from "node:child_process";
+import { execFile as execFile4 } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, renameSync, rmSync, statSync as statSync2, writeFileSync } from "node:fs";
-import { delimiter, dirname as dirname2, join as join4 } from "node:path";
+import { mkdirSync, readFileSync, renameSync, rmSync, statSync as statSync3, writeFileSync } from "node:fs";
+import { delimiter as delimiter2, dirname as dirname2, join as join5 } from "node:path";
 import { fileURLToPath } from "node:url";
 var OCR_INSTALL_HINT = 'the plugin compiles its bundled Vision OCR helper with swiftc on first use \u2014 install Xcode (or the Command Line Tools: run "xcode-select --install") so ios_sim_find_text / ios_sim_tap_text / ios_sim_wait_for can run';
 var SWIFTC_CANDIDATES = ["/usr/bin/swiftc", "/usr/local/bin/swiftc"];
@@ -41218,7 +41542,7 @@ var OCR_MAX_BUFFER_BYTES = 8 * 1024 * 1024;
 var DIGEST_FILE = ".ios-simulator-ocr.sha256";
 function isExecutableFile(path) {
   try {
-    const info = statSync2(path);
+    const info = statSync3(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
@@ -41226,15 +41550,15 @@ function isExecutableFile(path) {
 }
 function isFile(path) {
   try {
-    return statSync2(path).isFile();
+    return statSync3(path).isFile();
   } catch {
     return false;
   }
 }
-function findOnPath(command, env) {
-  for (const dir of (env.PATH ?? "").split(delimiter)) {
+function findOnPath2(command, env) {
+  for (const dir of (env.PATH ?? "").split(delimiter2)) {
     if (dir === "") continue;
-    const candidate = join4(dir, command);
+    const candidate = join5(dir, command);
     if (isExecutableFile(candidate)) return candidate;
   }
   return void 0;
@@ -41244,7 +41568,7 @@ function sha256File(path) {
 }
 function run(command, args, timeoutMs, signal) {
   return new Promise((resolve4, reject) => {
-    execFile3(command, [...args], { timeout: timeoutMs, maxBuffer: OCR_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
+    execFile4(command, [...args], { timeout: timeoutMs, maxBuffer: OCR_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
       if (error62 !== null) {
         reject(Object.assign(error62, { stdout, stderr }));
         return;
@@ -41254,7 +41578,7 @@ function run(command, args, timeoutMs, signal) {
   });
 }
 function defaultOcrSourcePath() {
-  return join4(dirname2(fileURLToPath(import.meta.url)), "..", "assets", "ocr.swift");
+  return join5(dirname2(fileURLToPath(import.meta.url)), "..", "assets", "ocr.swift");
 }
 var OcrHelper = class {
   #cacheDir;
@@ -41275,21 +41599,21 @@ var OcrHelper = class {
       if (isExecutableFile(explicit)) return { command: explicit };
       return { reason: `IOS_SIM_SWIFTC points at a missing or non-executable file: ${explicit}` };
     }
-    const onPath = findOnPath("swiftc", this.#env);
+    const onPath = findOnPath2("swiftc", this.#env);
     if (onPath !== void 0) return { command: onPath };
     const known = SWIFTC_CANDIDATES.find(isExecutableFile);
     if (known !== void 0) return { command: known };
     return { reason: "swiftc (the Swift compiler) was not found on PATH \u2014 install Xcode or the Command Line Tools" };
   }
   #slot(sourceSha256) {
-    return join4(this.#cacheDir, sourceSha256.slice(0, 16));
+    return join5(this.#cacheDir, sourceSha256.slice(0, 16));
   }
   /** A cached compile whose recorded digest still matches the binary's bytes. */
   #validCached(sourceSha256) {
-    const binary = join4(this.#slot(sourceSha256), "ocr");
+    const binary = join5(this.#slot(sourceSha256), "ocr");
     if (!isExecutableFile(binary)) return void 0;
     try {
-      const recorded = readFileSync(join4(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
+      const recorded = readFileSync(join5(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(recorded)) return void 0;
       return recorded === sha256File(binary) ? binary : void 0;
     } catch {
@@ -41340,7 +41664,7 @@ var OcrHelper = class {
     if (cached2 !== void 0) return cached2;
     const slot = this.#slot(sourceSha256);
     mkdirSync(slot, { recursive: true });
-    const tmp = join4(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
+    const tmp = join5(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
     try {
       try {
         await run(swiftc.command, ["-O", this.#sourcePath, "-o", tmp], OCR_COMPILE_TIMEOUT_MS);
@@ -41355,9 +41679,9 @@ var OcrHelper = class {
           throw new Error(`the compiled OCR helper failed its sanity launch: ${error62 instanceof Error ? error62.message : String(error62)}`);
         }
       }
-      const binary = join4(slot, "ocr");
+      const binary = join5(slot, "ocr");
       renameSync(tmp, binary);
-      writeFileSync(join4(slot, DIGEST_FILE), `${sha256File(binary)}
+      writeFileSync(join5(slot, DIGEST_FILE), `${sha256File(binary)}
 `, "utf8");
       return binary;
     } finally {
@@ -41446,7 +41770,7 @@ function pixelRectToNormalizedCenter(rect, pixelSize) {
 import { createReadStream, lstatSync, realpathSync } from "node:fs";
 import { readFile as readFile4 } from "node:fs/promises";
 import { createServer, get as httpGet } from "node:http";
-import { basename as basename2, join as join6, sep } from "node:path";
+import { basename as basename2, join as join7, sep } from "node:path";
 import { pipeline } from "node:stream";
 
 // node_modules/ws/wrapper.mjs
@@ -41460,7 +41784,7 @@ var import_websocket = __toESM(require_websocket(), 1);
 var import_websocket_server = __toESM(require_websocket_server(), 1);
 
 // src/device-actions.ts
-import { execFile as execFile4 } from "node:child_process";
+import { execFile as execFile5 } from "node:child_process";
 var OSASCRIPT_TIMEOUT_MS = 8e3;
 var DEVICE_ACTIONS = [
   "app-switcher",
@@ -41547,7 +41871,7 @@ function simulatorHomeKeystrokeScript(repeat) {
 }
 function runOsascript(script, timeoutMs) {
   return new Promise((resolve4, reject) => {
-    execFile4("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
+    execFile5("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
       if (error62 === null) {
         resolve4();
         return;
@@ -41573,10 +41897,10 @@ async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRI
 }
 
 // src/screenshot.ts
-import { execFile as execFile5 } from "node:child_process";
-import { closeSync, existsSync as existsSync2, mkdirSync as mkdirSync2, openSync, readSync, readdirSync as readdirSync2, statSync as statSync3, unlinkSync } from "node:fs";
+import { execFile as execFile6 } from "node:child_process";
+import { closeSync, existsSync as existsSync2, mkdirSync as mkdirSync2, openSync, readSync, readdirSync as readdirSync2, statSync as statSync4, unlinkSync } from "node:fs";
 import { readFile as readFile3, rm } from "node:fs/promises";
-import { join as join5 } from "node:path";
+import { join as join6 } from "node:path";
 var FILE_PATTERN = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
 var SIPS_TIMEOUT_MS = 3e4;
 function isScreenshotFileName(name) {
@@ -41624,7 +41948,7 @@ function jpegSize(buffer) {
 }
 function runSips(args) {
   return new Promise((resolve4, reject) => {
-    execFile5("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
+    execFile6("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
       if (error62 === null) {
         resolve4();
         return;
@@ -41664,10 +41988,10 @@ var ScreenshotStore = class {
         if (Number.isInteger(index) && index >= next) next = index + 1;
       }
     }
-    let path = join5(this.dir, `screenshot-${safe}-${next}.png`);
+    let path = join6(this.dir, `screenshot-${safe}-${next}.png`);
     while (existsSync2(path)) {
       next += 1;
-      path = join5(this.dir, `screenshot-${safe}-${next}.png`);
+      path = join6(this.dir, `screenshot-${safe}-${next}.png`);
     }
     this.#next.set(safe, next + 1);
     return path;
@@ -41676,7 +42000,7 @@ var ScreenshotStore = class {
   async capture(udid, signal) {
     const path = this.nextPath(udid);
     await this.#take(udid, path, signal);
-    const bytes = statSync3(path).size;
+    const bytes = statSync4(path).size;
     const size = readPngSize(path);
     this.prune();
     return { path, bytes, ...size === void 0 ? {} : size };
@@ -41691,10 +42015,10 @@ var ScreenshotStore = class {
     }
     if (names.length <= this.#keep) return;
     const entries = names.map((name) => {
-      const path = join5(this.dir, name);
+      const path = join6(this.dir, name);
       let mtime = 0;
       try {
-        mtime = statSync3(path).mtimeMs;
+        mtime = statSync4(path).mtimeMs;
       } catch {
       }
       return { path, mtime, index: Number(FILE_PATTERN.exec(name)?.[1] ?? 0) };
@@ -41853,7 +42177,7 @@ var HttpError = class extends Error {
   }
   status;
 };
-function errorMessage2(error62) {
+function errorMessage3(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function sendJson(res, status, value) {
@@ -41963,14 +42287,14 @@ var PanelServer = class {
         break;
       }
       server.on("error", (error62) => {
-        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage2(error62)}
+        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage3(error62)}
 `);
       });
       this.#server = server;
       this.#port = server.address().port;
       return `http://127.0.0.1:${this.#port}/`;
     }
-    throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage2(lastError)}`);
+    throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage3(lastError)}`);
   }
   #allowed(req, kind) {
     return checkRequest({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, this.#port, kind).ok;
@@ -42005,11 +42329,11 @@ var PanelServer = class {
         res.destroy();
         return;
       }
-      sendJson(res, error62 instanceof HttpError ? error62.status : 500, { ok: false, error: errorMessage2(error62) });
+      sendJson(res, error62 instanceof HttpError ? error62.status : 500, { ok: false, error: errorMessage3(error62) });
     }
   }
   async #serveStatic(res, entry) {
-    const body = await readFile4(join6(this.#options.staticDir, entry.file));
+    const body = await readFile4(join7(this.#options.staticDir, entry.file));
     const port = this.#port;
     res.writeHead(200, {
       "content-type": entry.type,
@@ -42045,7 +42369,7 @@ var PanelServer = class {
       streamUrl = (await this.#options.host.ensureRunning({ udid: status.device })).streamUrl;
     } catch (error62) {
       release();
-      throw new HttpError(502, `the simulator stream failed to start: ${errorMessage2(error62)}`);
+      throw new HttpError(502, `the simulator stream failed to start: ${errorMessage3(error62)}`);
     }
     if (this.#disposed || res.destroyed) {
       release();
@@ -42096,7 +42420,7 @@ var PanelServer = class {
     const dir = this.#options.screenshots.dir;
     let real;
     try {
-      const path = join6(dir, name);
+      const path = join7(dir, name);
       const stat = lstatSync(path);
       if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, "not found");
       real = realpathSync(path);
@@ -42147,7 +42471,7 @@ var PanelServer = class {
     try {
       device = await this.#options.simctl.getDevice(udid);
     } catch (error62) {
-      throw new HttpError(409, errorMessage2(error62));
+      throw new HttpError(409, errorMessage3(error62));
     }
     if (device.state !== "Booted") await this.#options.simctl.bootDevice(device.udid);
     await this.#options.host.ensureRunning({ udid: device.udid });
@@ -42249,19 +42573,19 @@ var PanelServer = class {
 };
 
 // src/recorder.ts
-import { spawn as spawn2 } from "node:child_process";
-import { mkdirSync as mkdirSync3, statSync as statSync4 } from "node:fs";
-import { dirname as dirname3, join as join7 } from "node:path";
+import { spawn as spawn3 } from "node:child_process";
+import { mkdirSync as mkdirSync3, statSync as statSync5 } from "node:fs";
+import { dirname as dirname3, join as join8 } from "node:path";
 function recordVideoArgs(udid, path) {
   return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
 }
-var spawnXcrunRecord = (udid, path) => spawn2("xcrun", recordVideoArgs(udid, path), { stdio: ["ignore", "ignore", "pipe"] });
+var spawnXcrunRecord = (udid, path) => spawn3("xcrun", recordVideoArgs(udid, path), { stdio: ["ignore", "ignore", "pipe"] });
 function safeName(udid) {
   return udid.replace(/[^A-Za-z0-9_-]/g, "_");
 }
 function fileSize(path) {
   try {
-    return statSync4(path).size;
+    return statSync5(path).size;
   } catch {
     return 0;
   }
@@ -42288,7 +42612,7 @@ var Recorder = class {
   }
   defaultPath(udid) {
     const stamp = new Date(this.#now()).toISOString().replace(/[:.]/g, "-");
-    return join7(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
+    return join8(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
   }
   async start(udid, outputPath) {
     const running = this.#active.get(udid);
@@ -42406,14 +42730,14 @@ var Recorder = class {
 
 // src/sim-host.ts
 import {
-  execFile as execFile6,
-  spawn as spawn3
+  execFile as execFile7,
+  spawn as spawn4
 } from "node:child_process";
-import { readFileSync as readFileSync2, statSync as statSync5 } from "node:fs";
+import { readFileSync as readFileSync2, statSync as statSync6 } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { createRequire } from "node:module";
 import { createServer as createServer2 } from "node:net";
-import { delimiter as delimiter2, dirname as dirname4, join as join8 } from "node:path";
+import { delimiter as delimiter3, dirname as dirname4, join as join9 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 var SERVE_SIM_PACKAGE = "serve-sim";
 var STREAM_PORT_RANGE_START = 3181;
@@ -42429,15 +42753,15 @@ var STDERR_RING_LINES = 40;
 var STDERR_LINE_MAX_CHARS = 240;
 var ADOPT_GRACE_MS = 1500;
 var ADOPTED_PROBE_TIMEOUT_MS = 2e3;
-function errorMessage3(error62) {
+function errorMessage4(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep(milliseconds) {
+function sleep2(milliseconds) {
   return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
 }
 function isExecutableFile2(path) {
   try {
-    const info = statSync5(path);
+    const info = statSync6(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
@@ -42445,15 +42769,15 @@ function isExecutableFile2(path) {
 }
 function isFile2(path) {
   try {
-    return statSync5(path).isFile();
+    return statSync6(path).isFile();
   } catch {
     return false;
   }
 }
-function findOnPath2(command) {
-  for (const dir of (process.env.PATH ?? "").split(delimiter2)) {
+function findOnPath3(command) {
+  for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
     if (dir === "") continue;
-    const candidate = join8(dir, command);
+    const candidate = join9(dir, command);
     if (isExecutableFile2(candidate)) return candidate;
   }
   return void 0;
@@ -42465,7 +42789,7 @@ function resolvePackageManifest(packageName) {
   }
   let current = dirname4(fileURLToPath2(import.meta.url));
   for (; ; ) {
-    const candidate = join8(current, "node_modules", packageName, "package.json");
+    const candidate = join9(current, "node_modules", packageName, "package.json");
     if (isFile2(candidate)) return candidate;
     const parent = dirname4(current);
     if (parent === current) return void 0;
@@ -42485,7 +42809,7 @@ function tryResolvePackageBin() {
       if (typeof candidate === "string") binPath = candidate;
     }
     if (binPath === void 0) return void 0;
-    const resolved = join8(dirname4(manifestPath), binPath);
+    const resolved = join9(dirname4(manifestPath), binPath);
     return isExecutableFile2(resolved) ? resolved : void 0;
   } catch {
     return void 0;
@@ -42508,7 +42832,7 @@ function resolveServeSimBinary(options = {}) {
   if (packageBin !== void 0) {
     return { available: true, source: "package-bin", command: packageBin, args: [] };
   }
-  const npx = (options.findNpx ?? (() => findOnPath2("npx")))();
+  const npx = (options.findNpx ?? (() => findOnPath3("npx")))();
   if (npx === void 0) {
     return { available: false, source: "unavailable", args: [], reason: "serve-sim is not installed and npx is not on PATH" };
   }
@@ -42678,7 +43002,7 @@ function serveSimControlArgs(command, udid, positionals) {
 }
 function execServeSim(binary, args, timeoutMs) {
   return new Promise((resolve4, reject) => {
-    execFile6(binary.command, [...binary.args, ...args], {
+    execFile7(binary.command, [...binary.args, ...args], {
       timeout: timeoutMs,
       maxBuffer: 4 * 1024 * 1024
     }, (error62, stdout, stderr) => {
@@ -42820,7 +43144,7 @@ var SimHostController = class {
       this.#armIdle();
       return info;
     } catch (error62) {
-      this.#lastError = errorMessage3(error62);
+      this.#lastError = errorMessage4(error62);
       throw error62;
     } finally {
       if (this.#starting === starting) this.#starting = void 0;
@@ -42969,7 +43293,7 @@ var SimHostController = class {
       kill(-child.pid, "SIGTERM");
     } catch (error62) {
       if (error62.code !== "ESRCH") {
-        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage3(error62)}
+        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage4(error62)}
 `);
       }
     }
@@ -42996,7 +43320,7 @@ var SimHostController = class {
       this.#restarts += 1;
       await this.ensureRunning({ udid: device });
     } catch (error62) {
-      this.#lastError = errorMessage3(error62);
+      this.#lastError = errorMessage4(error62);
       if (this.#exitAt === void 0) this.#exitAt = Date.now();
     }
   }
@@ -43034,7 +43358,7 @@ var SimHostController = class {
     }
     const sinceStop = Date.now() - this.#lastStopAt;
     if (sinceStop < this.#options.restartDelayMs) {
-      await sleep(this.#options.restartDelayMs - sinceStop);
+      await sleep2(this.#options.restartDelayMs - sinceStop);
     }
     await bootDevice(udid);
     if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
@@ -43082,7 +43406,7 @@ var SimHostController = class {
     throw new Error(`ios-simulator: no free port for serve-sim in range ${start}..${start + STREAM_PORT_RANGE_LENGTH - 1}`);
   }
   #launchStream(udid, port) {
-    const child = spawn3(this.binary.command, [
+    const child = spawn4(this.binary.command, [
       ...this.binary.args,
       "--no-preview",
       "--quiet",
@@ -43120,7 +43444,7 @@ var SimHostController = class {
       if (info.port !== port) {
         const childExited = await Promise.race([
           waitForChildClose(child, ADOPT_GRACE_MS),
-          sleep(ADOPT_GRACE_MS).then(() => false)
+          sleep2(ADOPT_GRACE_MS).then(() => false)
         ]);
         if (this.#launchEpoch !== epoch) {
           throw new Error("ios-simulator: serve-sim launch was superseded by stop()");
@@ -43176,11 +43500,11 @@ var SimHostController = class {
 // src/stream-source.ts
 import { readFileSync as readFileSync3, unlinkSync as unlinkSync2 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join as join9 } from "node:path";
-function errorMessage4(error62) {
+import { join as join10 } from "node:path";
+function errorMessage5(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep2(milliseconds) {
+function sleep3(milliseconds) {
   return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
 }
 function requireNormalized(x, y) {
@@ -43257,9 +43581,9 @@ var SimStreamSource = class {
       requireNormalized(drag.toX, drag.toY);
       const holdMs = Math.min(2e3, Math.max(20, Math.round((drag.duration ?? 0.3) * 500)));
       await this.#run("gesture", JSON.stringify({ type: "begin", x: drag.fromX, y: drag.fromY }));
-      await sleep2(holdMs);
+      await sleep3(holdMs);
       await this.#run("gesture", JSON.stringify({ type: "move", x: drag.toX, y: drag.toY }));
-      await sleep2(holdMs);
+      await sleep3(holdMs);
       await this.#run("gesture", JSON.stringify({ type: "end", x: drag.toX, y: drag.toY }));
     },
     button: async (name = "home") => {
@@ -43280,14 +43604,14 @@ var SimStreamSource = class {
     ),
     screenshot: async () => {
       const udid = this.#requireDevice();
-      const path = join9(tmpdir(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
+      const path = join10(tmpdir(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
       try {
         await takeScreenshot(udid, path);
         const pngBase64 = readFileSync3(path).toString("base64");
         const size = pngDimensionsFromBase64(pngBase64);
         return { pngBase64, ...size === void 0 ? {} : size };
       } catch (error62) {
-        throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage4(error62)}`);
+        throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage5(error62)}`);
       } finally {
         try {
           unlinkSync2(path);
@@ -43312,7 +43636,7 @@ var SimStreamSource = class {
 
 // src/tools/apps.ts
 import { existsSync as existsSync3 } from "node:fs";
-import { join as join10, resolve as resolve2 } from "node:path";
+import { join as join11, resolve as resolve2 } from "node:path";
 
 // src/tools/result.ts
 var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name. Default: the streamed device, else the newest-runtime booted iPhone.");
@@ -43338,7 +43662,7 @@ async function runTool(tool, body) {
     return errorResult(tool, error62);
   }
 }
-function sleep3(milliseconds) {
+function sleep4(milliseconds) {
   return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
 }
 
@@ -43457,7 +43781,7 @@ function registerAppTools(server, deps) {
   }, async (args, extra) => runTool("ios_sim_install_app", async () => {
     assertMac(deps.platform);
     const appPath = resolve2(args.appPath);
-    if (!existsSync3(join10(appPath, "Info.plist"))) {
+    if (!existsSync3(join11(appPath, "Info.plist"))) {
       throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`);
     }
     const device = await resolveTargetDevice(deps, args.udid);
@@ -43565,10 +43889,10 @@ function simDragRequestOf(payload) {
 function loadWs() {
   return { WebSocket: import_websocket.default };
 }
-function errorMessage5(error62) {
+function errorMessage6(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep4(milliseconds) {
+function sleep5(milliseconds) {
   return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
 }
 function gestureUnavailable(wsUrl, detail) {
@@ -43606,7 +43930,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
   let broken;
   let finished = false;
   socket.on("error", (error62) => {
-    broken ??= `the control socket errored (${errorMessage5(error62)})`;
+    broken ??= `the control socket errored (${errorMessage6(error62)})`;
   });
   socket.on("close", (code, reason) => {
     if (finished) return;
@@ -43618,7 +43942,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
     await openSocket(socket, connectTimeoutMs, url2, () => broken);
     for (const [index, point] of path.entries()) {
       if (broken !== void 0) throw gestureUnavailable(url2, broken);
-      if (index > 0 && stepMs > 0) await sleep4(stepMs);
+      if (index > 0 && stepMs > 0) await sleep5(stepMs);
       socket.send(encodeSimTouchFrame(index === 0 ? "begin" : "move", point.x, point.y));
     }
     if (broken !== void 0) throw gestureUnavailable(url2, broken);
@@ -43626,7 +43950,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
       const last = path[path.length - 1];
       socket.send(encodeSimTouchFrame("end", last.x, last.y), (error62) => {
         if (error62 === void 0 || error62 === null) resolve4();
-        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage5(error62)})`));
+        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage6(error62)})`));
       });
     });
     const elapsedMs = Date.now() - started;
@@ -43702,10 +44026,10 @@ var SERVE_SIM_BUTTONS = [
   "digital-crown",
   "left-side-button"
 ];
-function sleep5(milliseconds) {
+function sleep6(milliseconds) {
   return new Promise((resolve4) => setTimeout(resolve4, milliseconds));
 }
-function errorMessage6(error62) {
+function errorMessage7(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function scrollRequestOf(args) {
@@ -43792,7 +44116,7 @@ async function performSimInteractControl(host, deviceUdid, payloads) {
     if (command === void 0) continue;
     await host.control(serveSimControlArgs(command, deviceUdid, positionals));
     if (payloads.length > 1 && payload !== payloads[payloads.length - 1]) {
-      await sleep5(SCROLL_HOLD_MS);
+      await sleep6(SCROLL_HOLD_MS);
     }
   }
 }
@@ -43817,7 +44141,7 @@ async function performSimInteract(host, deviceUdid, args, payloads, options = {}
         const report = await sendSimGesture(wsUrl, points, { stepMs: options.stepMs ?? SIM_GESTURE_STEP_MS });
         return { channel: "ws", frames: report.frames, elapsedMs: report.elapsedMs };
       } catch (error62) {
-        wsError = errorMessage6(error62);
+        wsError = errorMessage7(error62);
       }
     }
   }
@@ -44157,7 +44481,7 @@ function registerCoreTools(server, deps) {
       ...warning === void 0 ? {} : { warning }
     };
     if (args.screenshot === false) return jsonResult(result);
-    await sleep3(deps.settleMs);
+    await sleep4(deps.settleMs);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
     const image = await deps.screenshots.toModelImage(capture);
     lastImageLandscape.set(device.udid, image.width > image.height);
@@ -44172,10 +44496,338 @@ function registerCoreTools(server, deps) {
   }));
 }
 
+// src/tools/debug.ts
+import { mkdirSync as mkdirSync4, statSync as statSync7, existsSync as existsSync4, readFileSync as readFileSync4 } from "node:fs";
+import { join as join12 } from "node:path";
+var MAX_LOG_LINES = 300;
+var MAX_LOG_BYTES = 30 * 1024;
+var SNAPSHOT_TIMEOUT_MS = 8 * 60 * 1e3;
+var FOLLOW_GRACE_MS = 3e4;
+var MAX_BACKTRACE_LINES = 200;
+var BACKTRACE_TIMEOUT_MS = 3e4;
+var LEAKS_TIMEOUT_MS = 12e4;
+var LOG_TRUNCATION_HINT = "[ios-simulator: output capped at 300 lines / 30 KB \u2014 narrow with predicate, bundle_id, grep, or a shorter window]";
+var BACKTRACE_TRUNCATION_HINT = "[ios-simulator: backtrace capped at ~200 lines \u2014 pass all_threads:false for just the main thread]";
+var DEVELOPER_MODE_HINT = "macOS Developer Mode is required for full task inspection \u2014 run `sudo DevToolsSecurity -enable` once, then retry";
+var MALLOC_STACK_LOGGING_HINT = "the app was not launched with MallocStackLogging, so allocation backtraces are unavailable \u2014 relaunch it with SIMCTL_CHILD_MallocStackLogging=1 xcrun simctl launch <udid> <bundle_id>, then re-run";
+var APP_LIST_HINT = "run ios_sim_list_apps to see what is installed";
+var PROCESS_TARGET = {
+  pid: external_exports.number().int().min(1).optional().describe("Pid of the app from ios_sim_processes (the most precise target)"),
+  bundle_id: external_exports.string().optional().describe("Bundle id of the running app, e.g. com.apple.Preferences (used when pid is not given)")
+};
+function predicateString(value) {
+  return `"${value.replace(/\\/gu, "\\\\").replace(/"/gu, '\\"')}"`;
+}
+function logPredicate(args) {
+  const predicate = args.predicate?.trim();
+  if (predicate !== void 0 && predicate !== "") return predicate;
+  const bundleId = args.bundle_id?.trim();
+  if (bundleId === void 0 || bundleId === "") return void 0;
+  const processName = bundleId.split(".").pop() ?? bundleId;
+  return `subsystem == ${predicateString(bundleId)} OR process == ${predicateString(processName)}`;
+}
+function slug(value) {
+  return value.replace(/[^A-Za-z0-9_-]/gu, "_").slice(0, 64);
+}
+function registerDebugTools(server, deps) {
+  const bootedTarget = async (tool, udid) => {
+    assertMac(deps.platform);
+    const device = await resolveTargetDevice(deps, udid);
+    requireBooted(tool, device);
+    return device;
+  };
+  const listProcesses = async (device, signal) => parseLaunchctlApps(await deps.devtools.simctl(["spawn", device.udid, "launchctl", "list"], signal));
+  const targetProcess = async (device, pid, bundleId, signal) => {
+    const processes = await listProcesses(device, signal);
+    if (pid !== void 0) {
+      const found2 = processes.find((entry) => entry.pid === pid);
+      if (found2 === void 0) {
+        throw new Error(`pid ${pid} is not a running app process on ${device.name} \u2014 only this simulator's app processes can be inspected (host processes are never attached); run ios_sim_processes to list them`);
+      }
+      return found2;
+    }
+    const wanted = bundleId?.trim().toLowerCase() ?? "";
+    if (wanted === "") throw new Error("pass pid or bundle_id (a pid from ios_sim_processes is the most precise)");
+    const found = processes.find((entry) => entry.bundleId?.toLowerCase() === wanted || entry.name.toLowerCase() === wanted);
+    if (found === void 0) {
+      throw new Error(`no running process for "${bundleId?.trim()}" on ${device.name} \u2014 launch the app first (ios_sim_launch_app or ios_sim_build_run), then retry; ios_sim_processes lists what runs`);
+    }
+    return found;
+  };
+  const processSummary = (entry) => ({
+    pid: entry.pid,
+    name: entry.name,
+    ...entry.bundleId === void 0 ? {} : { bundleId: entry.bundleId }
+  });
+  server.registerTool("ios_sim_logs", {
+    title: "Read the simulator log",
+    description: 'Read what apps on a booted simulator print, from its unified log. Two bounded modes: "snapshot" (default) reads the recent persisted log (`log show --last <duration>`, default 2m); "follow" captures live output for duration_seconds (default 10, max 60) and returns it when the window closes \u2014 never an endless stream. Filter with bundle_id (subsystem or process name), a raw NSPredicate (predicate, e.g. process == "MyApp"), a level, and a client-side grep regex. Output keeps the last ~300 lines / 30 KB; truncated:true says the cap bit. To catch what an action logs, start a follow capture, then act.',
+    inputSchema: {
+      udid: UDID_PARAM,
+      mode: external_exports.enum(["snapshot", "follow"]).optional(),
+      duration: external_exports.string().regex(/^\d{1,4}[smh]$/u, 'duration must look like "2m", "30s" or "1h"').optional().describe('Snapshot window for log show --last, e.g. "30s", "2m", "1h" (default "2m")'),
+      duration_seconds: external_exports.number().int().min(1).max(60).optional().describe("Follow window in seconds (default 10)"),
+      bundle_id: external_exports.string().optional().describe("Only this app: subsystem == <bundle_id> OR process == <its last component>; ignored when predicate is set"),
+      predicate: external_exports.string().optional().describe('Raw NSPredicate, e.g. eventMessage CONTAINS "error"'),
+      level: external_exports.enum(["default", "info", "debug"]).optional().describe("Include info / debug messages too"),
+      grep: external_exports.string().optional().describe("Regular expression each returned line must match")
+    },
+    annotations: { readOnlyHint: true }
+  }, async (args, extra) => runTool("ios_sim_logs", async () => {
+    let grep;
+    if (args.grep !== void 0 && args.grep.trim() !== "") {
+      try {
+        grep = new RegExp(args.grep);
+      } catch (error62) {
+        throw new Error(`grep is not a valid regular expression: ${error62 instanceof Error ? error62.message : String(error62)}`);
+      }
+    }
+    const device = await bootedTarget("ios_sim_logs", args.udid);
+    const mode = args.mode ?? "snapshot";
+    const predicate = logPredicate(args);
+    const predicateArgs = predicate === void 0 ? [] : ["--predicate", predicate];
+    let logArgs;
+    let window;
+    let windowMs;
+    if (mode === "follow") {
+      const seconds = args.duration_seconds ?? 10;
+      logArgs = ["stream", "--style", "compact", ...args.level === void 0 ? [] : ["--level", args.level], ...predicateArgs];
+      window = `follow ${seconds}s`;
+      windowMs = seconds * 1e3;
+    } else {
+      const duration3 = args.duration ?? "2m";
+      const level = args.level === "info" ? ["--info"] : args.level === "debug" ? ["--info", "--debug"] : [];
+      logArgs = ["show", "--last", duration3, "--style", "compact", ...level, ...predicateArgs];
+      window = `last ${duration3}`;
+    }
+    const label = `simctl spawn ${device.udid} log ${logArgs[0]}`;
+    const outcome = await deps.devtools.run({
+      command: "xcrun",
+      args: ["simctl", "spawn", device.udid, "log", ...logArgs],
+      label,
+      timeoutMs: windowMs === void 0 ? SNAPSHOT_TIMEOUT_MS : windowMs + FOLLOW_GRACE_MS,
+      ...windowMs === void 0 ? {} : { windowMs },
+      signal: extra.signal
+    });
+    if (!outcome.killed && outcome.code !== 0 && outcome.code !== null) {
+      const detail = tailDiagnostic(outcome.stderr, 5);
+      throw new Error(`${label} failed (exit ${outcome.code})${detail === "" ? "" : `: ${detail}`}`);
+    }
+    const { lines, truncated } = tailLogLines(outcome.stdout, { maxLines: MAX_LOG_LINES, maxBytes: MAX_LOG_BYTES, ...grep === void 0 ? {} : { grep } });
+    return jsonResult({
+      device: deviceSummary(device),
+      mode,
+      window,
+      ...predicate === void 0 ? {} : { predicate },
+      lineCount: lines.length,
+      truncated,
+      lines: truncated ? [...lines, LOG_TRUNCATION_HINT] : lines
+    });
+  }));
+  server.registerTool("ios_sim_processes", {
+    title: "List running app processes",
+    description: "List the running app processes of a booted simulator (pid, process name, bundle id) from the simulator's own launchd. The pids are host pids and feed ios_sim_backtrace and ios_sim_leaks. filter is a case-insensitive substring over the name and bundle id.",
+    inputSchema: { udid: UDID_PARAM, filter: external_exports.string().optional() },
+    annotations: { readOnlyHint: true }
+  }, async (args, extra) => runTool("ios_sim_processes", async () => {
+    const device = await bootedTarget("ios_sim_processes", args.udid);
+    const needle = args.filter?.trim().toLowerCase() ?? "";
+    const processes = (await listProcesses(device, extra.signal)).filter((entry) => needle === "" || entry.name.toLowerCase().includes(needle) || entry.bundleId?.toLowerCase().includes(needle) === true);
+    return jsonResult({ device: deviceSummary(device), count: processes.length, processes: processes.map(processSummary) });
+  }));
+  server.registerTool("ios_sim_backtrace", {
+    title: "Backtrace a running app",
+    description: "Capture a symbolized backtrace of a running simulator app in one shot: batch LLDB (attach \u2192 thread backtrace \u2192 detach), never an interactive session. The app is always detached and verified running afterwards, even when the capture times out. When LLDB may not attach (Developer Mode off) it falls back to Xcode's non-suspending `sample` and says how to enable LLDB. Main thread first, capped at ~200 lines; all_threads:false returns just the main thread. Use it when an app hangs or looks stuck.",
+    inputSchema: {
+      udid: UDID_PARAM,
+      ...PROCESS_TARGET,
+      all_threads: external_exports.boolean().optional().describe("Backtrace every thread (default true)")
+    }
+  }, async (args, extra) => runTool("ios_sim_backtrace", async () => {
+    const device = await bootedTarget("ios_sim_backtrace", args.udid);
+    const target = await targetProcess(device, args.pid, args.bundle_id, extra.signal);
+    const allThreads = args.all_threads !== false;
+    let threads;
+    let engine = "lldb";
+    let reportPath;
+    let note;
+    const lldb = deps.devtools.which("lldb");
+    if (lldb !== void 0) {
+      const outcome = await deps.devtools.run({
+        command: lldb,
+        args: ["-b", "-o", `attach ${target.pid}`, "-o", allThreads ? "thread backtrace all" : "thread backtrace", "-o", "detach"],
+        label: `lldb backtrace of pid ${target.pid}`,
+        timeoutMs: BACKTRACE_TIMEOUT_MS,
+        resumePid: target.pid,
+        signal: extra.signal
+      });
+      const parsed = parseLldbThreads(outcome.stdout);
+      if (parsed.length > 0) {
+        threads = parsed;
+      } else {
+        const detail = firstDiagnostic(outcome.stderr, outcome.stdout) ?? `lldb exited ${String(outcome.code)} without a backtrace`;
+        engine = "sample";
+        note = `LLDB capture failed (${detail}) and sample was used instead`;
+        if (/not allowed to attach|attach failed/iu.test(detail)) note += ` \u2014 ${DEVELOPER_MODE_HINT} to enable LLDB attach`;
+      }
+    } else {
+      engine = "sample";
+      note = "Xcode's lldb is not installed; sample was used instead";
+    }
+    if (threads === void 0) {
+      const sample = deps.devtools.which("sample");
+      if (sample === void 0) {
+        throw new Error(`LLDB capture is unavailable${note === void 0 ? "" : ` (${note})`} and Xcode's sample tool is not installed \u2014 install Xcode or the Command Line Tools`);
+      }
+      const dir = join12(deps.cacheRoot, "samples");
+      mkdirSync4(dir, { recursive: true });
+      reportPath = join12(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
+      const outcome = await deps.devtools.run({
+        command: sample,
+        args: [String(target.pid), "1", "1", "-file", reportPath],
+        label: `sample of pid ${target.pid}`,
+        timeoutMs: BACKTRACE_TIMEOUT_MS,
+        signal: extra.signal
+      });
+      if (!existsSync4(reportPath)) {
+        const detail = tailDiagnostic(outcome.stderr === "" ? outcome.stdout : outcome.stderr, 3);
+        throw new Error(`sample of pid ${target.pid} produced no report${detail === "" ? "" : `: ${detail}`}`);
+      }
+      threads = parseSampleThreads(readFileSync4(reportPath, "utf8"));
+      if (threads.length === 0) throw new Error(`sample of pid ${target.pid} produced no thread sections (report: ${reportPath})`);
+    }
+    const kept = orderThreads(threads, allThreads);
+    const { lines, truncated } = capThreadLines(kept, MAX_BACKTRACE_LINES);
+    const resumed = await deps.devtools.ensureRunning(target.pid);
+    if (!resumed && engine === "lldb") {
+      note = `${note === void 0 ? "" : `${note}; `}the app was not observed running after detach \u2014 check ios_sim_processes`;
+    }
+    return jsonResult({
+      device: deviceSummary(device),
+      ...processSummary(target),
+      engine,
+      allThreads,
+      threadCount: kept.length,
+      lineCount: lines.length,
+      truncated,
+      lines: truncated ? [...lines, BACKTRACE_TRUNCATION_HINT] : lines,
+      resumed,
+      ...reportPath === void 0 ? {} : { reportPath },
+      ...note === void 0 ? {} : { note }
+    });
+  }));
+  server.registerTool("ios_sim_leaks", {
+    title: "Find memory leaks in a running app",
+    description: `Analyze a running simulator app with Xcode's leaks tool. "summary" (default) returns the leak count, total leaked bytes and the top ~30 leaked types; "memgraph" writes a .memgraph for Xcode Instruments and returns its path and size. leaks suspends the app while it scans; the app is always verified running afterwards, even on a timeout. Without Developer Mode leaks may not inspect the app (the error says how to enable it); without MallocStackLogging counts work but allocation stacks do not.`,
+    inputSchema: {
+      udid: UDID_PARAM,
+      ...PROCESS_TARGET,
+      mode: external_exports.enum(["summary", "memgraph"]).optional()
+    }
+  }, async (args, extra) => runTool("ios_sim_leaks", async () => {
+    const leaks = deps.devtools.which("leaks");
+    const device = await bootedTarget("ios_sim_leaks", args.udid);
+    if (leaks === void 0) throw new Error("Xcode's leaks tool is not installed \u2014 install Xcode or the Command Line Tools, then retry");
+    const target = await targetProcess(device, args.pid, args.bundle_id, extra.signal);
+    const mode = args.mode ?? "summary";
+    const unavailable = (fatal2) => new Error(`leaks could not analyze pid ${target.pid}: ${fatal2} \u2014 ${DEVELOPER_MODE_HINT}`);
+    const base = { device: deviceSummary(device), ...processSummary(target), mode };
+    if (mode === "memgraph") {
+      const dir = join12(deps.cacheRoot, "memgraphs");
+      mkdirSync4(dir, { recursive: true });
+      const path = join12(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
+      const outcome2 = await deps.devtools.run({
+        command: leaks,
+        args: [`--outputGraph=${path}`, String(target.pid)],
+        label: `leaks memgraph of pid ${target.pid}`,
+        timeoutMs: LEAKS_TIMEOUT_MS,
+        resumePid: target.pid,
+        signal: extra.signal
+      });
+      const fatal2 = leaksFatalDiagnostic(outcome2.stderr, outcome2.stdout);
+      if (fatal2 !== void 0) throw unavailable(fatal2);
+      if (!existsSync4(path)) {
+        const detail = tailDiagnostic(outcome2.stderr === "" ? outcome2.stdout : outcome2.stderr, 3);
+        throw new Error(`leaks wrote no memgraph${detail === "" ? "" : `: ${detail}`}`);
+      }
+      const resumed2 = await deps.devtools.ensureRunning(target.pid);
+      return jsonResult({
+        ...base,
+        path,
+        bytes: statSync7(path).size,
+        resumed: resumed2,
+        ...resumed2 ? {} : { note: "the app was not observed running after the capture \u2014 check ios_sim_processes" }
+      });
+    }
+    const outcome = await deps.devtools.run({
+      command: leaks,
+      args: ["--nostacks", String(target.pid)],
+      label: `leaks summary of pid ${target.pid}`,
+      timeoutMs: LEAKS_TIMEOUT_MS,
+      resumePid: target.pid,
+      signal: extra.signal
+    });
+    const fatal = leaksFatalDiagnostic(outcome.stderr, outcome.stdout);
+    if (fatal !== void 0) throw unavailable(fatal);
+    const summary = parseLeaksSummary(outcome.stdout);
+    if (summary === void 0) {
+      const detail = tailDiagnostic(outcome.stderr === "" ? outcome.stdout : outcome.stderr, 3);
+      throw new Error(`leaks produced no parseable summary for pid ${target.pid}${detail === "" ? "" : `: ${detail}`}`);
+    }
+    const notes = [];
+    if (/not debuggable|restricted processes/iu.test(outcome.stderr)) notes.push(`restricted inspection mode (${DEVELOPER_MODE_HINT})`);
+    if (summary.leaks > 0 && !/multi-line stacks/iu.test(outcome.stdout)) notes.push(MALLOC_STACK_LOGGING_HINT);
+    const resumed = await deps.devtools.ensureRunning(target.pid);
+    if (!resumed) notes.push("the app was not observed running after the analysis \u2014 check ios_sim_processes");
+    return jsonResult({ ...base, ...summary, resumed, ...notes.length === 0 ? {} : { note: notes.join(". ") } });
+  }));
+  server.registerTool("ios_sim_app_info", {
+    title: "Show an installed app's paths and Info.plist",
+    description: "Installed-app facts for one bundle id on a booted simulator: the .app path, the writable data container (Documents, Library, \u2026), and Info.plist values (display name, executable, version), via simctl appinfo with a get_app_container fallback. A bundle id that is not installed returns installed:false with a note \u2014 list the apps instead of guessing ids.",
+    inputSchema: {
+      udid: UDID_PARAM,
+      bundle_id: external_exports.string().trim().min(1).describe("Bundle id of the installed app, e.g. com.apple.Preferences")
+    },
+    annotations: { readOnlyHint: true }
+  }, async (args, extra) => runTool("ios_sim_app_info", async () => {
+    const device = await bootedTarget("ios_sim_app_info", args.udid);
+    const bundleId = args.bundle_id;
+    const container = async (kind) => {
+      try {
+        const path = (await deps.devtools.simctl(["get_app_container", device.udid, bundleId, kind], extra.signal)).trim();
+        return path === "" || path === "(null)" ? void 0 : path;
+      } catch {
+        return void 0;
+      }
+    };
+    const fields = parseOpenStepPlist(await deps.devtools.simctl(["appinfo", device.udid, bundleId], extra.signal));
+    let appPath = fields.Path;
+    if (appPath === void 0 && fields.Bundle === void 0) appPath = await container("app");
+    const installed = appPath !== void 0 || fields.Bundle !== void 0;
+    const dataPath = fields.DataContainer ?? (installed ? await container("data") : void 0);
+    const optional2 = (key, value) => value === void 0 ? {} : { [key]: value };
+    return jsonResult({
+      device: deviceSummary(device),
+      bundleId,
+      installed,
+      ...optional2("appPath", appPath),
+      ...optional2("dataPath", dataPath),
+      ...optional2("bundleContainer", fields.BundleContainer ?? fields.Bundle),
+      ...optional2("displayName", fields.CFBundleDisplayName),
+      ...optional2("executable", fields.CFBundleExecutable),
+      ...optional2("name", fields.CFBundleName),
+      ...optional2("version", fields.CFBundleVersion),
+      ...optional2("shortVersion", fields.CFBundleShortVersionString),
+      ...optional2("applicationType", fields.ApplicationType),
+      ...installed ? {} : { note: `${bundleId} is not installed on ${device.name} \u2014 ${APP_LIST_HINT}` }
+    });
+  }));
+}
+
 // src/tools/env.ts
 import { randomUUID } from "node:crypto";
 import { mkdir, rm as rm2, writeFile } from "node:fs/promises";
-import { join as join11, resolve as resolve3 } from "node:path";
+import { join as join13, resolve as resolve3 } from "node:path";
 function registerEnvTools(server, deps) {
   const bootedDevice = async (tool, udid) => {
     assertMac(deps.platform);
@@ -44207,9 +44859,9 @@ function registerEnvTools(server, deps) {
     }
     const bundleId = args.bundleId.trim();
     const device = await bootedDevice("ios_sim_push", args.udid);
-    const dir = join11(deps.cacheRoot, "tmp");
+    const dir = join13(deps.cacheRoot, "tmp");
     await mkdir(dir, { recursive: true });
-    const file2 = join11(dir, `push-${randomUUID()}.json`);
+    const file2 = join13(dir, `push-${randomUUID()}.json`);
     await writeFile(file2, JSON.stringify(args.payload), { mode: 384 });
     try {
       await deps.simctl.sendPush(device.udid, bundleId, file2, extra.signal);
@@ -45023,7 +45675,7 @@ function registerUiTools(server, deps) {
     } catch (error62) {
       throw new Error(`AXe tap at (${center.x}, ${center.y}) failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
     }
-    await sleep3(deps.settleMs);
+    await sleep4(deps.settleMs);
     const expected = await runExpectation(device, expectation, extra.signal);
     return withScreenshot(device, {
       action: "tap-element",
@@ -45137,7 +45789,7 @@ function registerUiTools(server, deps) {
     } catch (error62) {
       throw new Error(`serve-sim tap failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
     }
-    await sleep3(deps.settleMs);
+    await sleep4(deps.settleMs);
     const expected = await runExpectation(device, expectation, extra.signal);
     const pointRect = pixelRectToPoints(item.rect, snapshot.pixelSize, snapshot.pointSize);
     return withScreenshot(device, {
@@ -45212,12 +45864,12 @@ function registerUiTools(server, deps) {
     }
     let countCheck;
     if (expectation !== void 0) {
-      await sleep3(deps.rowSettleMs);
+      await sleep4(deps.rowSettleMs);
       const afterRoots = await readTree(device, extra.signal);
       const afterRow = detectListRows(afterRoots, { bounds: screenBounds(afterRoots) }).rows.find((row) => row.index === plan.row.index);
       countCheck = afterRow === void 0 ? { key: expectation.key, delta: expectation.delta, before, verified: false, changed: false, reason: "the re-read tree no longer contains the row (the screen changed)" } : verifyCountChange(plan.row, afterRow, expectation.key, expectation.delta);
     } else {
-      await sleep3(deps.settleMs);
+      await sleep4(deps.settleMs);
     }
     return withScreenshot(device, {
       action: "tap-row",
@@ -45231,10 +45883,10 @@ function registerUiTools(server, deps) {
 }
 
 // src/uitree-backend.ts
-import { execFile as execFile7 } from "node:child_process";
+import { execFile as execFile8 } from "node:child_process";
 import { createHash as createHash2 } from "node:crypto";
-import { chmodSync, existsSync as existsSync4, mkdirSync as mkdirSync4, readFileSync as readFileSync4, rmSync as rmSync2, statSync as statSync6, writeFileSync as writeFileSync2 } from "node:fs";
-import { delimiter as delimiter3, join as join12 } from "node:path";
+import { chmodSync, existsSync as existsSync5, mkdirSync as mkdirSync5, readFileSync as readFileSync5, rmSync as rmSync2, statSync as statSync8, writeFileSync as writeFileSync2 } from "node:fs";
+import { delimiter as delimiter4, join as join14 } from "node:path";
 var AXE_VERSION = "1.8.0";
 var AXE_RELEASE_URL = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz";
 var AXE_RELEASE_SHA256 = "7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834";
@@ -45246,26 +45898,26 @@ var DIGEST_FILE2 = ".ios-simulator-axe.sha256";
 var BREW_BIN_CANDIDATES = ["/opt/homebrew/bin/axe", "/usr/local/bin/axe"];
 function isExecutableFile3(path) {
   try {
-    const info = statSync6(path);
+    const info = statSync8(path);
     return info.isFile() && (info.mode & 73) !== 0;
   } catch {
     return false;
   }
 }
-function findOnPath3(command, env) {
-  for (const dir of (env.PATH ?? "").split(delimiter3)) {
+function findOnPath4(command, env) {
+  for (const dir of (env.PATH ?? "").split(delimiter4)) {
     if (dir === "") continue;
-    const candidate = join12(dir, command);
+    const candidate = join14(dir, command);
     if (isExecutableFile3(candidate)) return candidate;
   }
   return void 0;
 }
 function sha256File2(path) {
-  return createHash2("sha256").update(readFileSync4(path)).digest("hex");
+  return createHash2("sha256").update(readFileSync5(path)).digest("hex");
 }
 function run2(command, args, timeoutMs, signal) {
   return new Promise((resolve4, reject) => {
-    execFile7(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
+    execFile8(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
       if (error62 !== null) {
         reject(Object.assign(error62, { stdout, stderr }));
         return;
@@ -45285,13 +45937,13 @@ var AxeHelper = class {
     this.#env = options.env ?? process.env;
   }
   #installDir() {
-    return join12(this.#cacheDir, AXE_VERSION);
+    return join14(this.#cacheDir, AXE_VERSION);
   }
   #validCached() {
-    const binary = join12(this.#installDir(), "axe");
+    const binary = join14(this.#installDir(), "axe");
     if (!isExecutableFile3(binary)) return void 0;
     try {
-      const expected = readFileSync4(join12(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
+      const expected = readFileSync5(join14(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(expected)) return void 0;
       return sha256File2(binary) === expected ? binary : void 0;
     } catch {
@@ -45312,11 +45964,11 @@ var AxeHelper = class {
         reason: `IOS_SIM_AXE_BIN points at a missing or non-executable file: ${explicit}`
       };
     }
-    const onPath = findOnPath3("axe", this.#env) ?? BREW_BIN_CANDIDATES.find(isExecutableFile3);
+    const onPath = findOnPath4("axe", this.#env) ?? BREW_BIN_CANDIDATES.find(isExecutableFile3);
     if (onPath !== void 0) return { available: true, source: "path", command: onPath };
     const cached2 = this.#validCached();
     if (cached2 !== void 0) return { available: true, source: "cache", command: cached2 };
-    if (existsSync4(this.#installDir())) {
+    if (existsSync5(this.#installDir())) {
       return {
         available: false,
         source: "unavailable",
@@ -45353,8 +46005,8 @@ var AxeHelper = class {
    */
   async #download() {
     const installDir = this.#installDir();
-    mkdirSync4(this.#cacheDir, { recursive: true });
-    const archive = join12(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
+    mkdirSync5(this.#cacheDir, { recursive: true });
+    const archive = join14(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
     try {
       try {
         await run2("curl", [
@@ -45379,15 +46031,15 @@ var AxeHelper = class {
         throw new Error(`download integrity check failed: expected sha256 ${AXE_RELEASE_SHA256} but got ${digest}`);
       }
       rmSync2(installDir, { recursive: true, force: true });
-      mkdirSync4(installDir, { recursive: true });
+      mkdirSync5(installDir, { recursive: true });
       await run2("tar", ["-xzf", archive, "-C", installDir], AXE_DOWNLOAD_TIMEOUT_MS);
-      const binary = join12(installDir, "axe");
+      const binary = join14(installDir, "axe");
       if (!isExecutableFile3(binary)) chmodSync(binary, 493);
       const version2 = await run2(binary, ["--version"], AXE_EXEC_TIMEOUT_MS);
       if (!version2.stdout.includes(AXE_VERSION)) {
         throw new Error(`downloaded axe reports an unexpected version: ${version2.stdout.trim()}`);
       }
-      writeFileSync2(join12(installDir, DIGEST_FILE2), `${sha256File2(binary)}
+      writeFileSync2(join14(installDir, DIGEST_FILE2), `${sha256File2(binary)}
 `, "utf8");
       return binary;
     } finally {
@@ -45495,11 +46147,12 @@ async function main() {
   const host = new SimHostController();
   host.startKeepAlive();
   const stream = new SimStreamSource(host);
-  const screenshots = new ScreenshotStore({ dir: join13(root, "screenshots"), takeScreenshot });
-  const recorder = new Recorder({ dir: join13(root, "recordings") });
+  const screenshots = new ScreenshotStore({ dir: join15(root, "screenshots"), takeScreenshot });
+  const devtools = new DevTools();
+  const recorder = new Recorder({ dir: join15(root, "recordings") });
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
-    staticDir: join13(dirname5(fileURLToPath3(import.meta.url)), "panel"),
+    staticDir: join15(dirname5(fileURLToPath3(import.meta.url)), "panel"),
     preferredPort: preferredPanelPort(),
     host,
     stream,
@@ -45515,8 +46168,9 @@ async function main() {
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
-    axe: new AxeHelper({ cacheDir: join13(root, "bin", "axe") }),
-    ocr: new OcrHelper({ cacheDir: join13(root, "bin", "ocr") }),
+    axe: new AxeHelper({ cacheDir: join15(root, "bin", "axe") }),
+    ocr: new OcrHelper({ cacheDir: join15(root, "bin", "ocr") }),
+    devtools,
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
@@ -45528,6 +46182,7 @@ async function main() {
   registerAppTools(server, deps);
   registerEnvTools(server, deps);
   registerUiTools(server, deps);
+  registerDebugTools(server, deps);
   let shuttingDown = false;
   const logFailure = (step) => (error62) => {
     process.stderr.write(`${PLUGIN_NAME}: shutdown: ${step} failed: ${error62 instanceof Error ? error62.message : String(error62)}
@@ -45536,6 +46191,7 @@ async function main() {
   const shutdown = async () => {
     if (shuttingDown) return;
     shuttingDown = true;
+    devtools.dispose();
     await Promise.all([
       recorder.stopAll().catch(logFailure("finishing the recordings")),
       host.dispose().catch(logFailure("stopping the serve-sim stream"))
@@ -45555,6 +46211,7 @@ async function main() {
   process.on("exit", () => {
     host.terminateOnExit();
     recorder.interruptOnExit();
+    devtools.dispose();
   });
   server.server.onclose = () => {
     void shutdown();

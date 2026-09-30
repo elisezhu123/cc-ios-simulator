@@ -6,6 +6,7 @@
 
 import type { InstalledApp } from './app-list.js'
 import type { BuildRunOptions, BuildRunResult, ProjectTarget } from './build-run.js'
+import type { DevToolsApi } from './devtools.js'
 import type { OcrItem } from './ocr-backend.js'
 import type { RecordingInfo, RecordingResult } from './recorder.js'
 import type { ModelImage, ScreenshotCapture } from './screenshot.js'
@@ -84,6 +85,8 @@ export interface ToolDeps {
   listApps(udid: string, signal?: AbortSignal): Promise<InstalledApp[]>
   axe: AxeApi
   ocr: OcrApi
+  /** simctl / lldb / leaks / sample / log runner for the log and debug tools. */
+  devtools: DevToolsApi
   cacheRoot: string
   platform: NodeJS.Platform
   /** Delay before the effect screenshot of ios_sim_interact and the tap tools, ms. */

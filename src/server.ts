@@ -21,6 +21,7 @@ import {
   SERVER_VERSION,
 } from './config.js'
 import type { ToolDeps } from './deps.js'
+import { DevTools } from './devtools.js'
 import { OcrHelper } from './ocr-backend.js'
 import { PanelServer } from './panel/panel-server.js'
 import { Recorder } from './recorder.js'
@@ -30,6 +31,7 @@ import * as simctl from './simctl.js'
 import { SimStreamSource } from './stream-source.js'
 import { registerAppTools } from './tools/apps.js'
 import { registerCoreTools } from './tools/core.js'
+import { registerDebugTools } from './tools/debug.js'
 import { registerEnvTools } from './tools/env.js'
 import { registerUiTools } from './tools/ui.js'
 import { AxeHelper } from './uitree-backend.js'
@@ -40,6 +42,7 @@ async function main(): Promise<void> {
   host.startKeepAlive()
   const stream = new SimStreamSource(host)
   const screenshots = new ScreenshotStore({ dir: join(root, 'screenshots'), takeScreenshot: simctl.takeScreenshot })
+  const devtools = new DevTools()
   const recorder = new Recorder({ dir: join(root, 'recordings') })
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
@@ -61,6 +64,7 @@ async function main(): Promise<void> {
     listApps: listSimulatorApps,
     axe: new AxeHelper({ cacheDir: join(root, 'bin', 'axe') }),
     ocr: new OcrHelper({ cacheDir: join(root, 'bin', 'ocr') }),
+    devtools,
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
@@ -72,6 +76,7 @@ async function main(): Promise<void> {
   registerAppTools(server, deps)
   registerEnvTools(server, deps)
   registerUiTools(server, deps)
+  registerDebugTools(server, deps)
 
   let shuttingDown = false
   /** A failed shutdown step gets one stderr line and never blocks the exit. */
@@ -81,6 +86,8 @@ async function main(): Promise<void> {
   const shutdown = async (): Promise<void> => {
     if (shuttingDown) return
     shuttingDown = true
+    // A debugger or log capture still running dies with us.
+    devtools.dispose()
     // Side by side: a movie that takes seconds to finalize must not hold the
     // serve-sim kill back past the host's kill window.
     await Promise.all([
@@ -98,6 +105,7 @@ async function main(): Promise<void> {
   process.on('exit', () => {
     host.terminateOnExit()
     recorder.interruptOnExit()
+    devtools.dispose()
   })
   server.server.onclose = () => { void shutdown() }
 

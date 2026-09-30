@@ -1,6 +1,6 @@
 ---
 name: ios-ui-automation
-description: Use when operating an iOS Simulator through this plugin's ios_sim_* tools — booting a device, opening the live panel, launching or building apps, reading the screen (accessibility tree, OCR), tapping elements or text, typing, scrolling, waiting for text, working with list rows, and confirming that an action worked.
+description: Use when operating an iOS Simulator through this plugin's ios_sim_* tools — booting a device, opening the live panel, launching or building apps, reading the screen (accessibility tree, OCR), tapping elements or text, typing, scrolling, waiting for text, working with list rows, confirming that an action worked, and debugging an app (logs, processes, backtraces, leaks, app containers).
 ---
 
 # Driving the iOS Simulator with the ios_sim_* tools
@@ -74,6 +74,20 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 - `ios_sim_ui_rows` lists the visible rows: 0-based index, frame, aggregated label, and counters parsed from the label. Pass a counter key EXACTLY as listed.
 - `ios_sim_tap_row {row, x, y}` taps at a relative position inside that row (a right-side action is often near x=0.9). The row is re-located in a fresh read and an out-of-range index fails — re-read the rows instead of reusing a remembered position.
 - Confirm a row action with `expect_count: {key, delta: 1 or -1}`: the row is re-read and `countCheck.verified` says whether the counter moved by exactly that much. A key the row does not carry is refused before tapping — never tap an unidentified control to find out what it does. If a check is not verified, say so; do not re-tap blindly.
+
+## Debugging an app
+
+| Want to… | Call |
+| --- | --- |
+| see what the app printed | `ios_sim_logs {bundle_id}` (recent: `duration:"2m"`), narrowed with `grep` or a `predicate` |
+| catch what an action logs | `ios_sim_logs {mode:"follow", duration_seconds}` — it returns when the window closes, so start it, then act (or act right after it returns and read a snapshot) |
+| find the app's pid | `ios_sim_processes` |
+| see where a hung app is stuck | `ios_sim_backtrace {bundle_id or pid}` (`all_threads:false` for just the main thread) |
+| check for memory leaks | `ios_sim_leaks {bundle_id or pid}`; `mode:"memgraph"` writes a file for Instruments |
+| find the app's Documents / data folder or version | `ios_sim_app_info {bundle_id}` |
+
+- backtrace and leaks only target this simulator's app processes and always leave the app running. `engine: "sample"` plus a `note` about Developer Mode means LLDB could not attach — pass the note's command on to the user instead of retrying.
+- Logs are capped at the last ~300 lines; `truncated: true` means narrow the filter, not read again.
 
 ## Apps
 
