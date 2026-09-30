@@ -88,3 +88,71 @@ button:hover, select:hover { border-color: var(--muted); }
   transform-origin: center center;
 }
 .placeholder { position: absolute; left: 16px; right: 16px; bottom: 16px; text-align: center; color: var(--muted); }
+
+/* ── annotation ─────────────────────────────────────────────────────────── */
+.annotate-overlay { position: absolute; inset: 0; z-index: 2; cursor: crosshair; touch-action: none; }
+.annotate-overlay[data-tool="text"] { cursor: text; }
+.annotate-overlay canvas { display: block; width: 100%; height: 100%; }
+.annotate-input {
+  position: absolute;
+  min-width: 4em;
+  padding: 0 2px;
+  font: 600 16px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  background: rgb(255 255 255 / 70%);
+  border: 1px dashed currentColor;
+  border-radius: 4px;
+  outline: none;
+  resize: none;
+  field-sizing: content;
+}
+.annotate-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 16px);
+  padding: 6px 8px;
+  overflow-x: auto;
+  transform: translateX(-50%);
+  background: var(--bar);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 25%);
+}
+.annotate-bar[hidden] { display: none; }
+.annotate-button { width: 34px; height: 34px; padding: 0; border-color: transparent; border-radius: 8px; }
+.annotate-button.active { background: rgb(59 130 246 / 18%); color: #3b82f6; }
+.annotate-button:disabled { opacity: 0.35; cursor: default; }
+.annotate-color {
+  width: 24px;
+  height: 24px;
+  margin: 0 2px;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--swatch);
+}
+.annotate-color.active { box-shadow: 0 0 0 2px var(--bar), 0 0 0 4px var(--swatch); border-color: transparent; }
+.annotate-separator { width: 1px; height: 22px; margin: 0 4px; background: var(--line); }
+.annotate-text-button, .annotate-primary { flex: none; white-space: nowrap; }
+.annotate-text-button { margin-left: 4px; padding: 6px 12px; border-color: transparent; }
+.annotate-primary { padding: 6px 14px; color: #fff; background: #3b82f6; border-color: #3b82f6; border-radius: 8px; }
+.annotate-primary:disabled { opacity: 0.6; }
+body.annotating #btn-annotate { background: rgb(59 130 246 / 18%); color: #3b82f6; }
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  z-index: 11;
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  transform: translateX(-50%);
+  color: #fff;
+  background: rgb(29 29 31 / 90%);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 25%);
+}
+.toast[data-kind="error"] { background: rgb(255 69 58 / 92%); }

@@ -5,6 +5,7 @@
  * @module ios-simulator/panel/client/main
  */
 
+import { Annotator, PENCIL_ICON } from './annotate-ui.js'
 import { copyFor, REAL_DEVICE_ACTION_IDS, type DeviceActionId } from './copy.js'
 import {
   FALLBACK_BASE,
@@ -53,6 +54,8 @@ const ui = {
   picker: element<HTMLSelectElement>('device-picker'),
   status: element<HTMLSpanElement>('status'),
   home: element<HTMLButtonElement>('btn-home'),
+  annotate: element<HTMLButtonElement>('btn-annotate'),
+  toast: element<HTMLParagraphElement>('toast'),
   shot: element<HTMLButtonElement>('btn-screenshot'),
   rotate: element<HTMLButtonElement>('btn-rotate'),
   action: element<HTMLSelectElement>('device-action'),
@@ -240,6 +243,29 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return value as T
 }
 
+let toastTimer: number | undefined
+
+function notify(message: string, kind: 'ok' | 'error'): void {
+  window.clearTimeout(toastTimer)
+  ui.toast.textContent = message
+  ui.toast.dataset.kind = kind
+  ui.toast.hidden = false
+  toastTimer = window.setTimeout(() => { ui.toast.hidden = true }, kind === 'ok' ? 5000 : 8000)
+}
+
+const annotator = new Annotator({
+  screen: ui.screen,
+  copy,
+  capture: () => postJson<{ url: string }>('/api/capture', {}),
+  save: async image => { await postJson('/api/annotations', { image }) },
+  notify,
+})
+
+ui.annotate.addEventListener('click', () => {
+  if (annotator.isOpen) annotator.close()
+  else void annotator.open().catch(error => report(copy.captureFailed, error))
+})
+
 ui.home.addEventListener('click', () => send(simButtonFrame('home')))
 ui.home.addEventListener('dblclick', () => {
   void postJson('/api/device-action', { action: 'app-switcher' }).catch(error => report(copy.actionFailed, error))
@@ -380,6 +406,7 @@ function initControls(): void {
   document.documentElement.lang = copy.language
   const buttons: Array<[HTMLButtonElement, string, string]> = [
     [ui.home, ICONS.home, copy.homeHint],
+    [ui.annotate, PENCIL_ICON, copy.annotate],
     [ui.shot, ICONS.screenshot, copy.screenshot],
     [ui.rotate, ICONS.rotate, copy.rotate],
     [ui.refresh, ICONS.refresh, copy.refresh],

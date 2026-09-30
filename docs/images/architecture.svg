@@ -24,7 +24,7 @@
     <text x="475" y="46" text-anchor="middle" font-size="15" font-weight="700">MCP 服务 · dist/server.js</text>
 
     <rect x="310" y="64" width="330" height="184" rx="10" fill="#ffffff" stroke="#c9cdd8"/>
-    <text x="475" y="88" text-anchor="middle" font-weight="700">工具层（MCP SDK + zod，30 个工具）</text>
+    <text x="475" y="88" text-anchor="middle" font-weight="700">工具层（MCP SDK + zod，31 个工具）</text>
     <g font-size="12" fill="#3a3f4d">
       <text x="326" y="112">核心：devices · boot · shutdown · panel · real_start_wda</text>
       <text x="326" y="132">　　　screenshot · interact · preview（SwiftUI 热重载）</text>

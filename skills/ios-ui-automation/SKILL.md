@@ -96,6 +96,11 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 - One session at a time. `action: "stop"` removes the host app when you are done.
 - Nothing is written into the user's package: the host app and build products live in the plugin cache.
 
+## The user's annotations
+
+- In the live panel the user can annotate a screenshot (pen, arrows, boxes, text) and press "Add to chat". When they refer to "my annotation", "what I marked" or "the red box", or a screenshot result carries `userAnnotations`, call `ios_sim_annotation` and read the marks together with their message before acting.
+- The marks point at what the user means; they are not part of the app. Confirm on a fresh screenshot before tapping what was marked.
+
 ## Real iPhones and iPads
 
 - `ios_sim_devices` lists connected devices under `realDevices`. Pass one's udid or name to `ios_sim_list_apps`, `ios_sim_launch_app`, `ios_sim_install_app`, `ios_sim_processes` or `ios_sim_app_info`; those run through devicectl.

@@ -15,6 +15,7 @@ import { basename, join, sep } from 'node:path'
 import { pipeline, type Duplex } from 'node:stream'
 import { WebSocket, WebSocketServer, type RawData } from 'ws'
 import { PANEL_PORT_ATTEMPTS, PLUGIN_NAME } from '../config.js'
+import { isAnnotationFileName, MAX_ANNOTATION_BYTES, type AnnotationStore } from '../annotations.js'
 import type { RealDevice, RealDeviceApi } from '../devicectl.js'
 import type { ScreenshotService, SimctlApi, StreamHost, WdaApi } from '../deps.js'
 import { isDeviceAction } from '../device-actions.js'
@@ -39,6 +40,8 @@ export interface PanelServerOptions {
   /** WebDriverAgent: the live view and touch of a connected iPhone/iPad. */
   wda?: WdaApi
   realDevices?: Pick<RealDeviceApi, 'getDevice'>
+  /** Where "Add to chat" stores annotated screenshots for ios_sim_annotation. */
+  annotations?: Pick<AnnotationStore, 'save' | 'dir'>
 }
 
 const STATIC_FILES: Readonly<Record<string, { file: string; type: string }>> = {
@@ -91,13 +94,13 @@ function toBuffer(data: RawData): Buffer {
   return Buffer.from(data)
 }
 
-async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+async function readJsonBody(req: IncomingMessage, maxBytes = MAX_BODY_BYTES): Promise<Record<string, unknown>> {
   const chunks: Buffer[] = []
   let size = 0
   for await (const chunk of req) {
     const buffer = chunk as Buffer
     size += buffer.length
-    if (size > MAX_BODY_BYTES) throw new HttpError(413, 'request body too large')
+    if (size > maxBytes) throw new HttpError(413, 'request body too large')
     chunks.push(buffer)
   }
   if (size === 0) return {}
@@ -235,6 +238,11 @@ export class PanelServer {
       if (method === 'GET' && staticFile !== undefined) return await this.#serveStatic(res, staticFile)
       if (method === 'GET' && path === '/stream') return await this.#serveStream(res)
       if (method === 'GET' && path.startsWith('/shots/')) return this.#serveShot(res, path.slice('/shots/'.length))
+      if (method === 'GET' && path.startsWith('/annotations/')) return this.#serveAnnotation(res, path.slice('/annotations/'.length))
+      if (method === 'POST' && path === '/api/annotations') {
+        // A base64 data URL is 4/3 the size of the PNG, plus the JSON around it.
+        return sendJson(res, 200, await this.#saveAnnotation(await readJsonBody(req, Math.ceil(MAX_ANNOTATION_BYTES * 4 / 3) + 1024)))
+      }
       if (method === 'GET' && path === '/api/status') return sendJson(res, 200, await this.#status())
       if (method === 'GET' && path === '/api/devices') return sendJson(res, 200, await this.#devices())
       if (method === 'POST' && path === '/api/switch-device') {
@@ -361,7 +369,43 @@ export class PanelServer {
 
   #serveShot(res: ServerResponse, name: string): void {
     if (!isScreenshotFileName(name)) throw new HttpError(404, 'not found')
-    const dir = this.#options.screenshots.dir
+    this.#servePng(res, this.#options.screenshots.dir, name)
+  }
+
+  #serveAnnotation(res: ServerResponse, name: string): void {
+    const dir = this.#options.annotations?.dir
+    if (dir === undefined || !isAnnotationFileName(name)) throw new HttpError(404, 'not found')
+    this.#servePng(res, dir, name)
+  }
+
+  /** "Add to chat": store the annotated PNG (a data URL) with the device it shows. */
+  async #saveAnnotation(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const store = this.#options.annotations
+    if (store === undefined) throw new HttpError(501, 'annotations are not enabled')
+    const match = typeof body.image === 'string' ? /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/u.exec(body.image) : null
+    if (match === null) throw new HttpError(400, 'image must be a data:image/png;base64 URL')
+    let device: { udid: string; name: string } | undefined
+    if (this.#real !== undefined) {
+      device = { udid: this.#real.udid, name: this.#real.name }
+    } else {
+      const current = await this.#currentDevice().catch(() => undefined)
+      if (current !== undefined) device = { udid: current.udid, name: current.name }
+    }
+    let record
+    try {
+      record = store.save(Buffer.from(match[1]!, 'base64'), device)
+    } catch (error) {
+      throw new HttpError(400, errorMessage(error))
+    }
+    return {
+      ok: true,
+      id: record.id,
+      url: `/annotations/${basename(record.path)}`,
+      ...(record.width === undefined ? {} : { width: record.width, height: record.height }),
+    }
+  }
+
+  #servePng(res: ServerResponse, dir: string, name: string): void {
     let real: string
     try {
       const path = join(dir, name)

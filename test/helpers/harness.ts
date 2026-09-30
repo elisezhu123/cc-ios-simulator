@@ -5,6 +5,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
+import { AnnotationStore } from '../../src/annotations.js'
 import type { ToolDeps } from '../../src/deps.js'
 import { Recorder } from '../../src/recorder.js'
 import { ScreenshotStore } from '../../src/screenshot.js'
@@ -77,6 +78,7 @@ export async function toolHarness(
     ocr: fakeOcr().api,
     devtools: fakeDevtools().api,
     realDevices: fakeRealDevices().api,
+    annotations: new AnnotationStore({ dir: join(cacheRoot, 'annotations') }),
     wda: fakeWda({ notRunning: 'WebDriverAgent is not running on the device — run ios_real_start_wda first' }).api,
     preview: {
       start: async () => { throw new Error('test: no preview controller') },

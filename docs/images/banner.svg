@@ -31,7 +31,7 @@
       <rect x="320" y="252" width="118" height="32" rx="16" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.18"/>
       <text x="379" y="273" text-anchor="middle">构建 · 运行</text>
       <rect x="448" y="252" width="140" height="32" rx="16" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.18"/>
-      <text x="518" y="273" text-anchor="middle">30 个 MCP 工具</text>
+      <text x="518" y="273" text-anchor="middle">31 个 MCP 工具</text>
     </g>
   </g>
 

@@ -38,6 +38,12 @@ function resyncFailedWarning(orientation: string, error: unknown): string {
     + `{action: "rotate", orientation: "${orientation}"} (or the landscape orientation the screen shows), then retry`
 }
 
+/** Tells Claude the user annotated screenshots in the panel that it has not looked at yet. */
+function annotationHint(deps: ToolDeps): { userAnnotations?: string } {
+  const unseen = deps.annotations.unseenCount()
+  return unseen === 0 ? {} : { userAnnotations: `the user added ${unseen} annotated screenshot${unseen === 1 ? '' : 's'} in the panel — ios_sim_annotation shows them` }
+}
+
 export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
   /**
    * udid → whether the last model image returned for it was wider than tall.
@@ -230,6 +236,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
         ...(capture.width === undefined ? {} : { width: capture.width, height: capture.height }),
         image: { width: image.width, height: image.height },
         device: realDeviceSummary(target.device),
+        ...annotationHint(deps),
       }, image)
     }
     const device = target.device
@@ -246,6 +253,47 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       ...(capture.width === undefined ? {} : { width: capture.width, height: capture.height }),
       image: { width: image.width, height: image.height },
       device: deviceSummary(device),
+      ...annotationHint(deps),
+    }, image)
+  }))
+
+  server.registerTool('ios_sim_annotation', {
+    title: 'See what the user annotated',
+    description: 'Return a screenshot the user annotated in the live panel (pencil button → pen, arrows, boxes, '
+      + 'text → "Add to chat") as an image, newest first. The marks show what the user means ("this button", '
+      + '"this gap is wrong"): read them together with the user\'s message. index 1 is the one before the newest, and so '
+      + 'on; list:true lists them without images. Screenshot results carry userAnnotations when there are new ones.',
+    inputSchema: {
+      index: z.number().int().min(0).optional().describe('0 = the newest (default)'),
+      list: z.boolean().optional().describe('List the stored annotations (newest first) without returning an image'),
+    },
+    annotations: { readOnlyHint: true },
+  }, async args => runTool('ios_sim_annotation', async () => {
+    const records = deps.annotations.list()
+    if (args.list === true) {
+      return jsonResult({
+        count: records.length,
+        annotations: records.map(({ id, createdAt, device, width, height, seen }) => ({ id, createdAt, ...(device === undefined ? {} : { device }), width, height, seen })),
+      })
+    }
+    const index = args.index ?? 0
+    const record = records[index]
+    if (record === undefined) {
+      throw new Error(records.length === 0
+        ? 'the user has not annotated anything yet — in the live panel (ios_sim_panel) the pencil button opens the annotation tools, and "Add to chat" stores the result here'
+        : `there are only ${records.length} annotations (index 0..${records.length - 1})`)
+    }
+    const image = await deps.screenshots.toModelImage(record)
+    deps.annotations.markSeen([record.id])
+    return jsonResult({
+      id: record.id,
+      createdAt: record.createdAt,
+      ...(record.device === undefined ? {} : { device: record.device }),
+      path: record.path,
+      ...(record.width === undefined ? {} : { width: record.width, height: record.height }),
+      image: { width: image.width, height: image.height },
+      total: records.length,
+      unseen: deps.annotations.unseenCount(),
     }, image)
   }))
 
