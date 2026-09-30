@@ -6,11 +6,13 @@
 
 import type { InstalledApp } from './app-list.js'
 import type { BuildRunOptions, BuildRunResult, ProjectTarget } from './build-run.js'
+import type { OcrItem } from './ocr-backend.js'
 import type { RecordingInfo, RecordingResult } from './recorder.js'
 import type { ModelImage, ScreenshotCapture } from './screenshot.js'
 import type { SimHostController } from './sim-host.js'
 import type { SimulatorDevice } from './simctl.js'
 import type { StreamSource } from './stream-source.js'
+import type { AxeBinary, AxeElement } from './uitree-backend.js'
 
 /** The public slice of SimHostController that the tools and the panel use. */
 export type StreamHost = Pick<SimHostController, 'binary' | 'streamInfo' | 'status' | 'ensureRunning' | 'stop' | 'acquire' | 'control'>
@@ -56,6 +58,21 @@ export interface BuilderApi {
   readBundleIdentifier(appPath: string, signal?: AbortSignal): Promise<string>
 }
 
+/** The AXe accessibility helper (src/uitree-backend.ts AxeHelper satisfies it). */
+export interface AxeApi {
+  /** Resolve without downloading (cheap; used for best-effort probes). */
+  resolve(): AxeBinary
+  describeUi(udid: string, signal?: AbortSignal): Promise<AxeElement[]>
+  /** HID tap at device-point coordinates. */
+  tap(udid: string, x: number, y: number, signal?: AbortSignal): Promise<void>
+}
+
+/** The Vision OCR helper (src/ocr-backend.ts OcrHelper satisfies it). */
+export interface OcrApi {
+  /** Recognized text of one PNG, boxes in image pixels, confidence-sorted. */
+  recognize(imagePath: string, signal?: AbortSignal): Promise<OcrItem[]>
+}
+
 export interface ToolDeps {
   host: StreamHost
   stream: StreamSource
@@ -65,8 +82,14 @@ export interface ToolDeps {
   recorder: RecorderApi
   builder: BuilderApi
   listApps(udid: string, signal?: AbortSignal): Promise<InstalledApp[]>
+  axe: AxeApi
+  ocr: OcrApi
   cacheRoot: string
   platform: NodeJS.Platform
-  /** Delay before the effect screenshot of ios_sim_interact, ms. */
+  /** Delay before the effect screenshot of ios_sim_interact and the tap tools, ms. */
   settleMs: number
+  /** Poll interval of ios_sim_wait_for and the tap tools' expect_text / expect_gone, ms. */
+  pollIntervalMs: number
+  /** Delay before ios_sim_tap_row re-reads the row to verify expect_count, ms. */
+  rowSettleMs: number
 }

@@ -26,8 +26,8 @@ const client = new Client({ name: 'check-bundle', version: '0.0.0' })
 await client.connect(transport)
 const { tools } = await client.listTools()
 await client.close()
-if (tools.length !== 16) {
-  console.error(`expected 16 tools, got ${tools.length}: ${tools.map(tool => tool.name).join(', ')}`)
+if (tools.length !== 23) {
+  console.error(`expected 23 tools, got ${tools.length}: ${tools.map(tool => tool.name).join(', ')}`)
   process.exit(1)
 }
 console.log(`bundle OK: ${tools.length} tools`)

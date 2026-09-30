@@ -21,6 +21,12 @@ export const INTERACT_SETTLE_MS = 300
 export const RECORD_STOP_TIMEOUT_MS = 10_000
 /** How long `ios_sim_record start` waits for simctl's "Recording started". */
 export const RECORD_START_TIMEOUT_MS = 15_000
+/** Poll interval of ios_sim_wait_for and the tap tools' expect_text / expect_gone. */
+export const OCR_POLL_INTERVAL_MS = 600
+/** Poll budget of a tap tool's expect_text / expect_gone assertion. */
+export const TAP_EXPECTATION_BUDGET_MS = 4000
+/** Settle delay before ios_sim_tap_row re-reads the row to verify expect_count. */
+export const ROW_VERIFY_SETTLE_MS = 800
 /** Full-resolution screenshots kept in the cache (oldest pruned first). */
 export const SCREENSHOT_KEEP = 100
 /** Long edge of the JPEG handed to the model. */

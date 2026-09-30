@@ -9,7 +9,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PassThrough } from 'node:stream'
 import type { ServeSimBinary, SimHostController, SimHostStatus, SimStreamInfo } from '../../src/sim-host.js'
-import type { SimctlApi } from '../../src/deps.js'
+import type { AxeApi, OcrApi, SimctlApi } from '../../src/deps.js'
+import type { OcrItem } from '../../src/ocr-backend.js'
+import type { AxeElement } from '../../src/uitree-backend.js'
 import type { SimulatorDevice } from '../../src/simctl.js'
 import { tinyPng } from './png.js'
 
@@ -259,4 +261,45 @@ export function fakeSimctl(
     setAppearance: async (udid, appearance) => { calls.push(['appearance', udid, appearance]) },
   }
   return { api, calls, devices }
+}
+
+/**
+ * An AXe stand-in: `trees` are the describe-ui reads in order (the last one
+ * repeats); every tap is recorded.
+ */
+export function fakeAxe(trees: AxeElement[][] = [], options: { available?: boolean } = {}): {
+  api: AxeApi
+  taps: Array<{ udid: string; x: number; y: number }>
+  reads(): number
+} {
+  const taps: Array<{ udid: string; x: number; y: number }> = []
+  const available = options.available ?? true
+  let reads = 0
+  const api: AxeApi = {
+    resolve: () => available
+      ? { available: true, source: 'path', command: '/fake/axe' }
+      : { available: false, source: 'unavailable', reason: 'test: axe unavailable' },
+    describeUi: async () => {
+      if (!available) throw new Error('the AXe accessibility helper is unavailable (test: axe unavailable)')
+      const tree = trees[Math.min(reads, trees.length - 1)]
+      reads += 1
+      if (tree === undefined) throw new Error('fakeAxe: no tree configured')
+      return structuredClone(tree)
+    },
+    tap: async (udid, x, y) => { taps.push({ udid, x, y }) },
+  }
+  return { api, taps, reads: () => reads }
+}
+
+/** An OCR stand-in: `reads` are the recognitions in order (the last one repeats). */
+export function fakeOcr(reads: OcrItem[][] = [[]]): { api: OcrApi; paths: string[] } {
+  const paths: string[] = []
+  const api: OcrApi = {
+    recognize: async path => {
+      const items = reads[Math.min(paths.length, reads.length - 1)] ?? []
+      paths.push(path)
+      return structuredClone(items)
+    },
+  }
+  return { api, paths }
 }

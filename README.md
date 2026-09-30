@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Claude Code Plugin" src="https://img.shields.io/badge/Claude%20Code-Plugin-d97757">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-16%20tools-4f7cff">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-23%20tools-4f7cff">
   <img alt="Platform" src="https://img.shields.io/badge/macOS-Apple%20Silicon-1f2330?logo=apple">
   <img alt="Node" src="https://img.shields.io/badge/Node.js-%E2%89%A5%2020-339933?logo=node.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
@@ -12,7 +12,7 @@
 
 # iOS Simulator 插件（Claude Code）
 
-在 Claude Code 里直接驱动 iOS 模拟器：**实时画面面板**、点击和手势、安装和启动 App、从源码**构建并运行**、推送通知、定位、深色模式、录屏……Claude 能看截图、能点屏幕，你也能在同一个面板里亲手操作同一台模拟器。
+在 Claude Code 里直接驱动 iOS 模拟器：**实时画面面板**、点击和手势、**按无障碍树 / 文字识别（OCR）定位并点击**、安装和启动 App、从源码**构建并运行**、推送通知、定位、深色模式、录屏……Claude 能看截图、能读懂屏幕上的控件和文字，你也能在同一个面板里亲手操作同一台模拟器。
 
 > [!NOTE]
 > 本项目基于 **[dsh-ios](https://github.com/ZSeven-W/dsh-ios)** 二次开发。dsh-ios 是 DeepSeek Harness（DSH）的 iOS 插件（MIT，© 2026 ZSeven—W）。
@@ -24,7 +24,7 @@
 
 - [效果预览](#效果预览)
 - [支持的功能](#支持的功能)
-- [工具一览（16 个）](#工具一览16-个)
+- [工具一览（23 个）](#工具一览23-个)
 - [运行要求](#运行要求)
 - [安装](#安装)
 - [快速上手](#快速上手)
@@ -55,6 +55,8 @@
 |---|---|
 | 🎥 **实时画面** | 基于 serve-sim 的 MJPEG 视频流（不是轮询截图），浏览器里实时观看，断线按 1s → 2s → 5s 自动重连 |
 | 👆 **交互** | 点击、拖动 / 滑动手势、按内容方向滚动、输入文字、硬件按键（Home、锁屏、Siri、音量…）、四向旋转 |
+| 🧩 **UI 自动化** | 读取无障碍树，按 identifier / label 点控件；Vision OCR 识别屏幕文字（中英文），按文字点击；等待文字出现 / 消失；点击后在同一次调用里确认结果 |
+| 📰 **列表 / 信息流** | 把信息流拆成一行行，解析每行的计数（如「57 回复」「18 喜欢」）；在行内相对位置点击，并用计数 ±1 确认操作生效 |
 | 📱 **设备操作** | 后台 App（多任务）、锁屏、解锁、摇一摇、Siri、Action 按钮、窗口重新居中 |
 | 👀 **Claude 看屏** | 截图以**图片**直接返回给 Claude（JPEG，长边 ≤ 1024 px）；每次交互后自动附带结果截图 |
 | 🧭 **横竖屏** | 截图始终是正向的；Claude 给出的坐标会按当前方向自动换算到设备上 |
@@ -69,9 +71,9 @@
 
 ---
 
-## 工具一览（16 个）
+## 工具一览（23 个）
 
-所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。不传时依次使用：正在推流的设备 → 第一台已启动的设备。坐标一律是 **0..1 归一化值**。
+所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。不传时依次使用：正在推流的设备 → 第一台已启动的设备。`ios_sim_interact` 的坐标是 **0..1 归一化值**；UI 自动化工具返回的位置是设备的**点（point）**坐标。
 
 ### 设备与画面
 
@@ -104,6 +106,20 @@
 | `ios_sim_appearance` | 切换 `light` / `dark` |
 | `ios_sim_record` | `start` / `stop` 录屏，返回文件路径、大小和时长 |
 
+### UI 自动化
+
+| 工具 | 作用 |
+|---|---|
+| `ios_sim_ui_tree` | 读取前台 App 的无障碍树：类型、label、identifier、value、enabled / selected、坐标（点）；默认排除屏幕外元素，输出上限约 40 KB |
+| `ios_sim_tap_element` | 按 identifier 和 / 或 label 点击控件（先精确匹配，再不区分大小写的包含匹配）；屏幕外或禁用的控件会拒绝并说明原因 |
+| `ios_sim_find_text` | 用 Vision OCR 识别当前屏幕文字，返回文字、置信度和位置（点） |
+| `ios_sim_tap_text` | OCR 后点击匹配文字的中心；多处匹配时列出候选 |
+| `ios_sim_wait_for` | 轮询 OCR，等文字出现或消失；超时返回 `matched: false`，不算错误 |
+| `ios_sim_ui_rows` | 把列表 / 信息流拆成行：序号、坐标、合并后的 label，以及从 label 里解析出的计数 |
+| `ios_sim_tap_row` | 在第 N 行内按相对位置点击；`expect_count` 可校验某个计数正好变化 ±1 |
+
+`ios_sim_tap_element`、`ios_sim_tap_text` 支持 `expect_text` / `expect_gone`：点击后轮询 OCR，在同一次调用里告诉你预期文字有没有出现 / 消失。三个点击工具都会附带结果截图。
+
 <details>
 <summary><b>ios_sim_interact 的动作细节</b></summary>
 
@@ -128,6 +144,9 @@
 - **macOS + 完整 Xcode**（需要 `xcrun simctl`、`xcodebuild`）
 - **Apple Silicon**（serve-sim 只提供 arm64 版本；Intel Mac 上可启动设备、截图、管理 App，但没有实时画面和触控）
 - **Node.js ≥ 20**
+- UI 自动化：
+  - 无障碍树工具需要 [AXe](https://github.com/cameroncooke/AXe)。会依次查找 PATH 和 Homebrew（`brew install cameroncooke/axe/axe`），都没有时首次使用自动下载固定版本 v1.8.0，并校验 SHA-256。
+  - OCR 工具需要 `swiftc`（Xcode 或 Command Line Tools 自带），首次使用时把插件自带的 `assets/ocr.swift` 编译进缓存。
 - `device_action` 中除"锁屏"外的动作会操作 Simulator.app 菜单，需要在 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能** 中给运行 Claude 的应用授权
 
 ---
@@ -183,6 +202,9 @@ claude --plugin-dir /path/to/cc-ios-simulator
 给 com.example.myapp 发一条推送："订单已发货"
 把定位设到上海（31.2304, 121.4737），切换到深色模式，然后截图
 开始录屏，把引导页从头滑到尾，再停止录屏
+在"设置"里点"通用"，确认页面出现"关于本机"
+等"加载中"消失后，读一下屏幕上的所有文字
+在信息流第 2 条上点赞，并确认喜欢数加 1
 ```
 
 一次典型的交互流程：
@@ -242,9 +264,10 @@ sequenceDiagram
   plugin.json          # 插件清单，注册 MCP 服务
   marketplace.json     # 本仓库同时是一个 marketplace
 skills/ios-ui-automation/SKILL.md   # 教 Claude 操作模拟器的 Skill
+assets/ocr.swift                    # Vision OCR 助手源码（首次使用时编译）
 src/
   server.ts            # MCP 入口、组装、生命周期
-  tools/               # core.ts / apps.ts / env.ts：16 个工具
+  tools/               # core.ts / apps.ts / env.ts / ui.ts：23 个工具
   sim-host.ts          # serve-sim 生命周期
   stream-source.ts     # 视频流抽象（为真机预留）
   sim-gesture.ts       # WebSocket 手势通道
@@ -252,6 +275,10 @@ src/
   build-run.ts         # xcodebuild 构建流程
   app-list.ts          # 已安装 App 解析与本地化
   screenshot.ts        # 截图缓存与缩放
+  uitree-backend.ts    # AXe 查找 / 下载 / 调用
+  ocr-backend.ts       # Vision OCR 助手的编译与调用
+  uitree.ts            # 无障碍树裁剪、控件匹配、OCR 文字匹配
+  list-rows.ts         # 列表行识别与计数解析
   recorder.ts          # 录屏进程管理
   panel/               # 面板服务、安全边界 fence.ts、前端 client/
 dist/                  # 打包产物（已提交）
@@ -272,7 +299,8 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | 面板 | DSH 内嵌（侧栏停靠、对话卡片等） | 独立的本地网页，可在 Code 标签页或任意浏览器打开 |
 | 面板安全 | HMAC 签名 + 回环检查 | 独占 origin，沿用回环 / Host / Origin 检查 |
 | 新增工具 | — | `open_url`、`push`、`location`、`appearance`、`record` |
-| 真机 / OCR / 日志等 | 已支持 | 分期移植中，见 [路线图](#路线图) |
+| UI 自动化 | 模拟器 + 真机 | 已移植模拟器部分（7 个工具），点击工具额外返回结果截图 |
+| 日志调试、SwiftUI 预览、USB 真机 | 已支持 | **尚未支持**，计划分期移植，见 [路线图](#路线图) |
 
 移植的文件在第一行注明了来源（`Ported from dsh-ios (MIT) @ d9a9731 — src/<file>`），完整清单见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
@@ -285,8 +313,11 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | `IOS_SIM_PANEL_PORT` | 面板端口（被占用时依次尝试到 +20） | `3456` |
 | `IOS_SIM_CACHE_DIR` | 截图、录屏、构建产物的缓存目录 | `~/Library/Caches/ios-simulator` |
 | `IOS_SIM_SERVE_SIM_BIN` | 指定 serve-sim 可执行文件 | 插件自带，找不到时用 `npx -y serve-sim@0.1.47` |
+| `IOS_SIM_AXE_BIN` | 指定 axe 可执行文件（路径无效时直接报错，不会退回其他查找方式） | 依次查找 PATH、Homebrew、插件缓存，都没有就下载 |
+| `IOS_SIM_AXE_OFFLINE` | 设为 `1` 时不自动下载 AXe | 未设置 |
+| `IOS_SIM_SWIFTC` | 指定编译 OCR 助手用的 swiftc | PATH 中的 `swiftc` |
 
-缓存目录下：`screenshots/`（只保留最新 100 张）、`recordings/`、`builds/<slug>/DerivedData`、`tmp/`。
+缓存目录下：`screenshots/`（只保留最新 100 张）、`recordings/`、`builds/<slug>/DerivedData`、`bin/axe/`（下载的 AXe）、`bin/ocr/`（编译好的 OCR 助手）、`tmp/`。
 
 ---
 
@@ -325,6 +356,15 @@ printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
 </details>
 
 <details>
+<summary><b>UI 自动化工具提示 AXe 或 OCR 不可用？</b></summary>
+
+- **AXe**：可以运行 `brew install cameroncooke/axe/axe` 自己装，或者保证能访问 github.com，让插件自动下载。不能联网的环境里设置 `IOS_SIM_AXE_OFFLINE=1`，并用 `IOS_SIM_AXE_BIN` 指向已有的 axe。
+- **OCR**：需要 `swiftc`。运行 `xcode-select --install` 安装 Command Line Tools，或者安装完整 Xcode。
+- 没有 AXe 时 `ios_sim_find_text` 仍然能用，只是坐标会以截图像素返回，结果里的 `note` 会说明这一点。
+
+</details>
+
+<details>
 <summary><b>横屏后点击位置不对？</b></summary>
 
 如果设备是在 Simulator.app 里手动旋转的，视频流可能不知道当前方向，结果里会带 `warning`。按提示调用一次 `ios_sim_interact {action: "rotate", orientation: "landscape_left" 或 "landscape_right"}` 即可同步。
@@ -339,7 +379,7 @@ printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
 npm install
 npm test              # 单元与集成测试，不需要模拟器
 npm run build         # 类型检查 + 打包 dist/（dist 需要提交）
-npm run check:bundle  # 启动 dist/server.js 并确认 16 个工具
+npm run check:bundle  # 启动 dist/server.js 并确认 23 个工具
 IOS_SIM_SMOKE=1 npm run test:live   # 在真实模拟器上冒烟
 npm run dev:panel     # 启动一台模拟器并保持面板运行，用于在浏览器里调试
 npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTICES.md（依赖变化后运行）
@@ -351,13 +391,16 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 
 ## 路线图
 
+> [!IMPORTANT]
+> 目前完成了第 ① 期和第 ② 期（模拟器部分）。第 ③ – ⑤ 期**都还没有开始**，表中列出的这些工具现在都不能用，仅供了解后续规划。
+
 | 期 | 内容 | 状态 |
 |---|---|---|
-| ① 基础 | 插件骨架、MCP 服务、serve-sim 视频流与触控、实时面板、16 个工具、Skill | ✅ 当前版本 |
-| ② UI 自动化 | AXe 无障碍树 + Vision OCR：`ui_tree`、`tap_element`、`find_text`、`tap_text`、`wait_for` 等 | 🚧 计划中 |
-| ③ 日志与调试 | `logs`、`processes`、`backtrace`、`leaks`、`app_info` | 🗓️ 计划中 |
-| ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | 🗓️ 计划中 |
-| ⑤ USB 真机 | WebDriverAgent + usbmux + devicectl，同一面板驱动真实 iPhone | 🗓️ 计划中 |
+| ① 基础 | 插件骨架、MCP 服务、serve-sim 视频流与触控、实时面板、16 个工具、Skill | ✅ 已完成 |
+| ② UI 自动化 | AXe 无障碍树 + Vision OCR：`ui_tree`、`tap_element`、`find_text`、`tap_text`、`wait_for`、`ui_rows`、`tap_row` | ✅ 已完成（模拟器；真机随第 ⑤ 期） |
+| ③ 日志与调试 | `logs`、`processes`、`backtrace`、`leaks`、`app_info` | ⏳ 未开始 |
+| ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | ⏳ 未开始 |
+| ⑤ USB 真机 | WebDriverAgent + usbmux + devicectl，同一面板驱动真实 iPhone | ⏳ 未开始 |
 
 ---
 

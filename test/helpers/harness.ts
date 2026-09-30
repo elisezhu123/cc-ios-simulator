@@ -10,7 +10,7 @@ import { Recorder } from '../../src/recorder.js'
 import { ScreenshotStore } from '../../src/screenshot.js'
 import type { SimulatorDevice } from '../../src/simctl.js'
 import { SimStreamSource } from '../../src/stream-source.js'
-import { fakeHost, fakeRecordSpawn, fakeSimctl, type FakeHostOptions } from './fakes.js'
+import { fakeAxe, fakeHost, fakeOcr, fakeRecordSpawn, fakeSimctl, type FakeHostOptions } from './fakes.js'
 
 export interface Harness {
   deps: ToolDeps
@@ -68,9 +68,13 @@ export async function toolHarness(
       { bundleId: 'com.apple.mobilecal', name: '日历', baseName: 'Calendar', system: true },
       { bundleId: 'com.example.notes', name: 'Notes Pro', system: false },
     ],
+    axe: fakeAxe().api,
+    ocr: fakeOcr().api,
     cacheRoot,
     platform: 'darwin',
     settleMs: 0,
+    pollIntervalMs: 0,
+    rowSettleMs: 0,
     ...options.deps,
   }
   const server = new McpServer({ name: 'ios-simulator-test', version: '0.0.0' })

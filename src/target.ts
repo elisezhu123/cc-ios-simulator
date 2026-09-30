@@ -27,7 +27,8 @@ export function assertStreamAvailable(host: StreamHost): void {
     throw new Error(
       `serve-sim is unavailable (${host.binary.reason ?? 'unknown reason'}) — touch input and the live panel need it; `
       + 'the simctl-only tools (ios_sim_screenshot, ios_sim_list_apps, ios_sim_launch_app, ios_sim_open_url, '
-      + 'ios_sim_push, ios_sim_location, ios_sim_appearance, ios_sim_record) still work',
+      + 'ios_sim_push, ios_sim_location, ios_sim_appearance, ios_sim_record) still work, and so do the AXe and OCR '
+      + 'tools (ios_sim_ui_tree, ios_sim_tap_element, ios_sim_ui_rows, ios_sim_tap_row, ios_sim_find_text, ios_sim_wait_for)',
     )
   }
 }
