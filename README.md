@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Claude Code Plugin" src="https://img.shields.io/badge/Claude%20Code-Plugin-d97757">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-29%20tools-4f7cff">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-30%20tools-4f7cff">
   <img alt="Platform" src="https://img.shields.io/badge/macOS-Apple%20Silicon-1f2330?logo=apple">
   <img alt="Node" src="https://img.shields.io/badge/Node.js-%E2%89%A5%2020-339933?logo=node.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
@@ -24,7 +24,7 @@
 
 - [效果预览](#效果预览)
 - [支持的功能](#支持的功能)
-- [工具一览（29 个）](#工具一览29-个)
+- [工具一览（30 个）](#工具一览30-个)
 - [运行要求](#运行要求)
 - [安装](#安装)
 - [快速上手](#快速上手)
@@ -67,16 +67,21 @@
 | 🌐 **环境模拟** | 打开 URL / Deep Link、模拟推送通知（APNs payload）、设置 / 清除 GPS 定位、浅色 / 深色模式 |
 | 🎬 **录屏** | 开始 / 停止录屏，输出 `.mov` / `.mp4`，每台设备同时一个录屏 |
 | 🖥️ **多设备** | 列出、启动、关闭任意模拟器；面板里可一键切换（未启动的会自动启动） |
-| 📲 **USB 真机（部分）** | 列出连接的 iPhone / iPad；在真机上列出 / 启动 / 结束 App、安装已签名的 `.app`、查看进程和 App 信息（devicectl）。真机截图、点击、无障碍树等需要 WebDriverAgent，后续提供 |
+| 📲 **USB 真机** | 列出连接的 iPhone / iPad；在真机上列出 / 启动 / 结束 App、安装已签名的 `.app`、查看进程和 App 信息（devicectl）。用 `ios_real_start_wda` 启动 WebDriverAgent 后，截图、点击、输入、按键、滑动、旋转、无障碍树、OCR 找字 / 点字、列表行都能在真机上用（实时画面还未支持） |
 | 🧠 **内置 Skill** | `ios-ui-automation`：教 Claude 按"观察 → 操作 → 确认"的节奏工作，并避开常见坑（例如不猜 bundle id） |
 | 🔒 **安全** | 面板只监听 `127.0.0.1`，校验 Host / Origin 防 DNS 重绑定和跨站调用；所有命令用参数数组执行，无 shell 注入 |
 | 🌏 **中英双语** | 面板界面按浏览器语言自动切换中文 / 英文 |
 
 ---
 
-## 工具一览（29 个）
+## 工具一览（30 个）
 
-所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。`ios_sim_list_apps`、`ios_sim_launch_app`、`ios_sim_install_app`、`ios_sim_processes`、`ios_sim_app_info` 还可以传**连接的真机**的 udid 或名字（见 `ios_sim_devices` 返回的 `realDevices`）。不传时依次使用：正在推流的设备 → 第一台已启动的设备。`ios_sim_interact` 的坐标是 **0..1 归一化值**；UI 自动化工具返回的位置是设备的**点（point）**坐标。
+所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。以下工具还可以传**连接的真机**的 udid 或名字（见 `ios_sim_devices` 返回的 `realDevices`）：
+
+- 直接可用（devicectl）：`ios_sim_list_apps`、`ios_sim_launch_app`、`ios_sim_install_app`、`ios_sim_processes`、`ios_sim_app_info`；
+- 先用 `ios_real_start_wda` 启动 WebDriverAgent 后可用：`ios_sim_screenshot`、`ios_sim_interact`、`ios_sim_ui_tree`、`ios_sim_tap_element`、`ios_sim_find_text`、`ios_sim_tap_text`、`ios_sim_wait_for`、`ios_sim_ui_rows`、`ios_sim_tap_row`。
+
+不传时依次使用：正在推流的设备 → 第一台已启动的设备。`ios_sim_interact` 的坐标是 **0..1 归一化值**；UI 自动化工具返回的位置是设备的**点（point）**坐标。
 
 ### 设备与画面
 
@@ -88,6 +93,7 @@
 | `ios_sim_panel` | 为已启动的设备确保推流并返回 `panelUrl`，不会启动设备 |
 | `ios_sim_screenshot` | 截图，以图片返回给 Claude，同时给出原尺寸 PNG 路径 |
 | `ios_sim_interact` | 交互：`tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`，默认附带结果截图 |
+| `ios_real_start_wda` | 在 USB 连接的 iPhone / iPad 上启动 WebDriverAgent（已在运行就直接接管，否则签名、构建并启动，冷构建需要几分钟）；`status` 查看状态，`stop` 停止 |
 
 ### App
 
@@ -172,6 +178,10 @@
   - OCR 工具需要 `swiftc`（Xcode 或 Command Line Tools 自带），首次使用时把插件自带的 `assets/ocr.swift` 编译进缓存。
 - SwiftUI 预览：需要 Swift 包（有 `Package.swift`，至少一个 `.target`），iOS 最低版本按 17 起算（`#Preview` 宏需要）。第一次启动要完整编译整个包，可能需要一分钟左右。
 - 调试：`ios_sim_backtrace` 用 LLDB attach，`ios_sim_leaks` 要检查 App 进程，都需要开启 macOS 开发者模式（运行一次 `sudo DevToolsSecurity -enable`）。没开时 backtrace 会退回 `sample`，leaks 会报错并提示这条命令。
+- USB 真机：数据线连接、手机已解锁并"信任此电脑"、打开"开发者模式"。截图 / 点击 / UI 工具还需要：
+  - 在 Xcode ▸ Settings ▸ Accounts 登录 Apple ID（免费的个人团队也可以），或设置 `IOS_SIM_TEAM_ID`；
+  - 一份 [WebDriverAgent](https://github.com/appium/WebDriverAgent) 源码：`git clone https://github.com/appium/WebDriverAgent.git ~/Library/Caches/ios-simulator/WebDriverAgent`（或用 `IOS_SIM_WDA_DIR` 指向已有的目录）。插件不会修改这份源码，而是复制一份到缓存里，打上"只监听手机本机回环地址"的安全补丁再构建，所以 WDA 只能通过 USB 隧道访问，同一 Wi-Fi 下的其他设备连不上；
+  - 隧道优先直接走 usbmuxd，不行时用 `iproxy`（`brew install libimobiledevice`）。
 - `device_action` 中除"锁屏"外的动作会操作 Simulator.app 菜单，需要在 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能** 中给运行 Claude 的应用授权
 
 ---
@@ -296,7 +306,7 @@ assets/ocr.swift                    # Vision OCR 助手源码（首次使用时�
 assets/preview-host/                # SwiftUI 预览宿主 App 的源码
 src/
   server.ts            # MCP 入口、组装、生命周期
-  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts：29 个工具
+  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts：30 个工具
   sim-host.ts          # serve-sim 生命周期
   stream-source.ts     # 视频流抽象（为真机预留）
   sim-gesture.ts       # WebSocket 手势通道
@@ -310,6 +320,12 @@ src/
   list-rows.ts         # 列表行识别与计数解析
   devtools.ts          # 日志 / 调试子进程运行器与输出解析
   devicectl.ts         # 真机：xcrun devicectl 的封装
+  usbmux.ts            # 真机：直接走 usbmuxd 的端口转发
+  wda-setup.ts         # 真机：签名团队选择、WDA 源码暂存与安全补丁
+  wda-host.ts          # 真机：WDA 的接管 / 构建启动 / 隧道 / 停止
+  wda-client.ts        # 真机：WDA HTTP 客户端与启动失败分类
+  wda-uitree.ts        # 真机：WDA XML → 与模拟器相同的无障碍树结构
+  real-ui.ts           # 真机：截图、交互和无障碍树的 WDA 实现
   preview-source.ts    # Package.swift 解析、预览扫描、生成 Swift 代码
   preview-host.ts      # 预览会话：构建宿主 App、热替换、文件监听
   recorder.ts          # 录屏进程管理
@@ -332,10 +348,10 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | 面板 | DSH 内嵌（侧栏停靠、对话卡片等） | 独立的本地网页，可在 Code 标签页或任意浏览器打开 |
 | 面板安全 | HMAC 签名 + 回环检查 | 独占 origin，沿用回环 / Host / Origin 检查 |
 | 新增工具 | — | `open_url`、`push`、`location`、`appearance`、`record` |
-| UI 自动化 | 模拟器 + 真机 | 已移植模拟器部分（7 个工具），点击工具额外返回结果截图 |
+| UI 自动化 | 模拟器 + 真机 | 已移植（7 个工具，模拟器 + 真机），点击工具额外返回结果截图 |
 | 日志与调试 | 模拟器 + 真机 | 已移植模拟器部分（5 个工具） |
 | SwiftUI 预览热重载 | 已支持 | 已移植（`ios_sim_preview`） |
-| USB 真机 | 已支持 | 部分支持：devicectl 的设备 / App / 进程操作已移植；WebDriverAgent 的截图、点击、无障碍树和实时画面**尚未支持**，见 [路线图](#路线图) |
+| USB 真机 | 已支持 | devicectl 的设备 / App / 进程操作、WebDriverAgent 的截图 / 点击 / 无障碍树 / OCR 已移植（简化版：一次一台设备，工具调用中不会自动构建 WDA）；面板实时画面**尚未支持**，见 [路线图](#路线图)。卸载在真机上被拒绝 |
 
 移植的文件在第一行注明了来源（`Ported from dsh-ios (MIT) @ d9a9731 — src/<file>`），完整清单见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
@@ -351,6 +367,9 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | `IOS_SIM_AXE_BIN` | 指定 axe 可执行文件（路径无效时直接报错，不会退回其他查找方式） | 依次查找 PATH、Homebrew、插件缓存，都没有就下载 |
 | `IOS_SIM_AXE_OFFLINE` | 设为 `1` 时不自动下载 AXe | 未设置 |
 | `IOS_SIM_SWIFTC` | 指定编译 OCR 助手用的 swiftc | PATH 中的 `swiftc` |
+| `IOS_SIM_TEAM_ID` | 构建 WebDriverAgent 用的签名团队 ID（10 位） | 从 Xcode 登录的账号和钥匙串里的开发证书自动选择；找不到就报错并说明怎么设置，**没有内置默认值** |
+| `IOS_SIM_WDA_BUNDLE_ID` | WebDriverAgent 的 bundle id | `dev.ios-simulator.wda.t<团队ID>` |
+| `IOS_SIM_WDA_DIR` | 已有的 WebDriverAgent 源码目录 | `<缓存目录>/WebDriverAgent` |
 
 缓存目录下：`screenshots/`（只保留最新 100 张）、`recordings/`、`samples/`（`sample` 报告）、`memgraphs/`、`preview/`（预览宿主 App 和编译产物）、`builds/<slug>/DerivedData`、`bin/axe/`（下载的 AXe）、`bin/ocr/`（编译好的 OCR 助手）、`tmp/`。
 
@@ -423,6 +442,22 @@ printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
 </details>
 
 <details>
+<summary><b>`ios_real_start_wda` 失败了？</b></summary>
+
+错误信息会说明原因和处理方法，常见的有：
+
+- **手机锁着**：解锁即可，WDA 会自己继续；
+- **开发者证书不受信任**：在手机"设置 ▸ 通用 ▸ VPN 与设备管理"里信任你的开发者证书，然后重试；
+- **免费团队的描述文件过期**（7 天有效）：重新运行 `ios_real_start_wda`，xcodebuild 会重新签发；
+- **没有签名团队**：在 Xcode ▸ Settings ▸ Accounts 登录 Apple ID，或设置 `IOS_SIM_TEAM_ID`；
+- **没有 WebDriverAgent 源码**：按错误里给的 `git clone` 命令下载；
+- **安全补丁不匹配**：WebDriverAgent 更新后，插件找不到要修改的代码位置时会拒绝构建（不会构建一个对局域网开放的 WDA），换用经过验证的版本即可。
+
+其他工具在 WDA 没运行时只会提示先运行 `ios_real_start_wda`，不会在工具调用里偷偷构建。
+
+</details>
+
+<details>
 <summary><b>横屏后点击位置不对？</b></summary>
 
 如果设备是在 Simulator.app 里手动旋转的，视频流可能不知道当前方向，结果里会带 `warning`。按提示调用一次 `ios_sim_interact {action: "rotate", orientation: "landscape_left" 或 "landscape_right"}` 即可同步。
@@ -437,7 +472,7 @@ printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
 npm install
 npm test              # 单元与集成测试，不需要模拟器
 npm run build         # 类型检查 + 打包 dist/（dist 需要提交）
-npm run check:bundle  # 启动 dist/server.js 并确认 29 个工具
+npm run check:bundle  # 启动 dist/server.js 并确认 30 个工具
 IOS_SIM_SMOKE=1 npm run test:live   # 在真实模拟器上冒烟
 npm run dev:panel     # 启动一台模拟器并保持面板运行，用于在浏览器里调试
 npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTICES.md（依赖变化后运行）
@@ -450,16 +485,16 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 ## 路线图
 
 > [!IMPORTANT]
-> 目前完成了第 ①、④ 期，第 ②、③ 期的模拟器部分，以及第 ⑤ 期的第一步（devicectl）。第 ⑤ 期剩下的 WebDriverAgent 部分**还没有开始**。
+> 目前完成了第 ①、②、④ 期，第 ③ 期的模拟器部分，以及第 ⑤ 期的 devicectl 和 WebDriverAgent 部分。第 ⑤ 期剩下的面板实时画面**还没有开始**。真机部分目前只有单元测试，尚未在真机上验证。
 
 | 期 | 内容 | 状态 |
 |---|---|---|
 | ① 基础 | 插件骨架、MCP 服务、serve-sim 视频流与触控、实时面板、16 个工具、Skill | ✅ 已完成 |
-| ② UI 自动化 | AXe 无障碍树 + Vision OCR：`ui_tree`、`tap_element`、`find_text`、`tap_text`、`wait_for`、`ui_rows`、`tap_row` | ✅ 已完成（模拟器；真机随第 ⑤ 期） |
-| ③ 日志与调试 | `logs`、`processes`、`backtrace`、`leaks`、`app_info` | ✅ 已完成（模拟器；真机随第 ⑤ 期） |
+| ② UI 自动化 | AXe 无障碍树 + Vision OCR：`ui_tree`、`tap_element`、`find_text`、`tap_text`、`wait_for`、`ui_rows`、`tap_row` | ✅ 已完成（模拟器 + 真机） |
+| ③ 日志与调试 | `logs`、`processes`、`backtrace`、`leaks`、`app_info` | ✅ 已完成（模拟器；真机支持 `processes`、`app_info`） |
 | ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | ✅ 已完成 |
 | ⑤a USB 真机：devicectl | 列出真机；真机上的 App 列表 / 启动 / 安装、进程、App 信息 | ✅ 已完成 |
-| ⑤b USB 真机：WebDriverAgent | 构建启动 WDA、usbmux 转发；真机截图、点击、输入、无障碍树、OCR 点击 | ⏳ 未开始 |
+| ⑤b USB 真机：WebDriverAgent | `ios_real_start_wda`：签名、构建启动 WDA、usbmux 转发；真机截图、点击、输入、无障碍树、OCR 点击 | ✅ 已完成（待真机验证） |
 | ⑤c USB 真机：实时画面 | 面板显示真机画面 | ⏳ 未开始 |
 
 ---

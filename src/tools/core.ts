@@ -12,7 +12,8 @@ import type { ToolDeps } from '../deps.js'
 import { DEVICE_ACTIONS, isDeviceAction } from '../device-actions.js'
 import { interactControlArgs, performSimInteract, type SimInteractArgs, type SimInteractDelivery } from '../interact.js'
 import { isLandscape, readSimScreenConfig, toFramebufferArgs, type Landscape } from '../orientation.js'
-import { assertMac, assertStreamAvailable, ensureStreamFor, requireBooted, resolveTargetDevice, sortDevices } from '../target.js'
+import { captureWda, planWdaInteract, runWdaInteract } from '../real-ui.js'
+import { assertMac, assertStreamAvailable, ensureStreamFor, realDeviceSummary, requireBooted, resolveTargetDevice, resolveToolTarget, sortDevices } from '../target.js'
 import { deviceSummary, jsonResult, runTool, sleep, UDID_PARAM } from './result.js'
 
 export const ROTATE_ORIENTATIONS = ['portrait', 'landscape_left', 'portrait_upside_down', 'landscape_right'] as const
@@ -194,14 +195,28 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
 
   server.registerTool('ios_sim_screenshot', {
     title: 'Screenshot the simulator',
-    description: 'Capture the screen of a booted simulator. Returns the image (JPEG, long edge at most 1024 px) so you '
+    description: 'Capture the screen of a booted simulator, or of a connected iPhone/iPad through WebDriverAgent '
+      + '(start it once with ios_real_start_wda). Returns the image (JPEG, long edge at most 1024 px) so you '
       + 'can read the screen, plus JSON with the full-resolution PNG path and sizes. To tap something you see, '
       + 'normalize its pixel position by image.width / image.height.',
     inputSchema: { udid: UDID_PARAM },
     annotations: { readOnlyHint: true },
   }, async ({ udid }, extra) => runTool('ios_sim_screenshot', async () => {
     assertMac(deps.platform)
-    const device = await resolveTargetDevice(deps, udid)
+    const target = await resolveToolTarget(deps, udid)
+    if (target.kind === 'real') {
+      const client = await deps.wda.control(target.device)
+      const capture = await captureWda(client, deps.screenshots, target.device.udid, target.device.name)
+      const image = await deps.screenshots.toModelImage(capture)
+      return jsonResult({
+        path: capture.path,
+        bytes: capture.bytes,
+        ...(capture.width === undefined ? {} : { width: capture.width, height: capture.height }),
+        image: { width: image.width, height: image.height },
+        device: realDeviceSummary(target.device),
+      }, image)
+    }
+    const device = target.device
     requireBooted('ios_sim_screenshot', device)
     const capture = await deps.screenshots.capture(device.udid, extra.signal)
     const image = await deps.screenshots.toModelImage(capture)
@@ -225,7 +240,9 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       + 'lock, …), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, '
       + 'lock, unlock, shake, siri, action-button, re-center; all but lock drive Simulator.app and need the '
       + 'Accessibility permission). Starts the live stream when needed but never boots a device. About 300 ms after '
-      + 'the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions.',
+      + 'the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. '
+      + 'On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), '
+      + 'button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.',
     inputSchema: {
       action: z.enum(['tap', 'type', 'button', 'gesture', 'scroll', 'rotate', 'device_action']),
       udid: UDID_PARAM,
@@ -244,8 +261,31 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     },
   }, async (args, extra) => runTool('ios_sim_interact', async () => {
     assertMac(deps.platform)
+    const target = await resolveToolTarget(deps, args.udid)
+    if (target.kind === 'real') {
+      const plan = planWdaInteract(args.action, args)
+      const client = await deps.wda.control(target.device)
+      const { points } = await runWdaInteract(client, plan)
+      const result = {
+        action: args.action,
+        device: realDeviceSummary(target.device),
+        ...(points === undefined ? {} : { points }),
+      }
+      if (args.screenshot === false) return jsonResult(result)
+      await sleep(deps.settleMs)
+      const capture = await captureWda(client, deps.screenshots, target.device.udid, target.device.name)
+      const image = await deps.screenshots.toModelImage(capture)
+      return jsonResult({
+        ...result,
+        screenshot: {
+          path: capture.path,
+          ...(capture.width === undefined ? {} : { width: capture.width, height: capture.height }),
+          image: { width: image.width, height: image.height },
+        },
+      }, image)
+    }
     assertStreamAvailable(deps.host)
-    const device = await resolveTargetDevice(deps, args.udid)
+    const device = target.device
     requireBooted('ios_sim_interact', device)
     await ensureStreamFor(deps.host, device)
     let delivery: SimInteractDelivery | undefined
@@ -315,5 +355,36 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
         image: { width: image.width, height: image.height },
       },
     }, image)
+  }))
+  server.registerTool('ios_real_start_wda', {
+    title: 'Start WebDriverAgent on an iPhone',
+    description: 'Start WebDriverAgent (WDA) on a USB-connected iPhone or iPad (real devices only). WDA is what '
+      + 'ios_sim_screenshot, ios_sim_interact and the UI tools (ui_tree, tap_element, find_text, tap_text, wait_for, '
+      + 'ui_rows, tap_row) drive a real device through. Adopts a WDA already running on the device; otherwise signs '
+      + 'and builds a loopback-only copy of the WebDriverAgent checkout with xcodebuild (a cold build takes minutes) '
+      + 'and waits until it reports ready. Failures name the fix (unlock the device, trust the developer '
+      + 'certificate, re-issue an expired free-team profile, reconnect USB). action "status" reports without '
+      + 'starting; "stop" stops the runner this plugin launched.',
+    inputSchema: {
+      udid: z.string().optional().describe('iPhone/iPad udid, hardware udid or name from ios_sim_devices.realDevices (required for start)'),
+      action: z.enum(['start', 'status', 'stop']).optional().describe('Default "start"'),
+    },
+  }, async (args, extra) => runTool('ios_real_start_wda', async () => {
+    const action = args.action ?? 'start'
+    if (action === 'status') return jsonResult(deps.wda.status())
+    if (action === 'stop') return jsonResult(await deps.wda.stop())
+    assertMac(deps.platform)
+    const reference = args.udid?.trim() ?? ''
+    if (reference === '') throw new Error('pass udid: a connected iPhone/iPad from ios_sim_devices.realDevices')
+    const target = await resolveToolTarget(deps, reference)
+    if (target.kind !== 'real') {
+      throw new Error(`"${reference}" is a simulator — simulators need no WebDriverAgent; the screen and UI tools drive them directly`)
+    }
+    const status = await deps.wda.start(target.device, extra.signal)
+    return jsonResult({
+      ...status,
+      device: realDeviceSummary(target.device),
+      next: 'ios_sim_screenshot / ios_sim_interact / ios_sim_ui_tree … with this udid now drive the device',
+    })
   }))
 }

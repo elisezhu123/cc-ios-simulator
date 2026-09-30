@@ -24,9 +24,9 @@
     <text x="475" y="46" text-anchor="middle" font-size="15" font-weight="700">MCP 服务 · dist/server.js</text>
 
     <rect x="310" y="64" width="330" height="184" rx="10" fill="#ffffff" stroke="#c9cdd8"/>
-    <text x="475" y="88" text-anchor="middle" font-weight="700">工具层（MCP SDK + zod，29 个 ios_sim_*）</text>
+    <text x="475" y="88" text-anchor="middle" font-weight="700">工具层（MCP SDK + zod，30 个工具）</text>
     <g font-size="12" fill="#3a3f4d">
-      <text x="326" y="112">核心：devices · boot · shutdown · panel</text>
+      <text x="326" y="112">核心：devices · boot · shutdown · panel · real_start_wda</text>
       <text x="326" y="132">　　　screenshot · interact · preview（SwiftUI 热重载）</text>
       <text x="326" y="152">App：list_apps · launch_app · build_run · install / uninstall</text>
       <text x="326" y="172">环境：open_url · push · location · appearance · record</text>
@@ -39,7 +39,7 @@
     <text x="390" y="292" text-anchor="middle" font-weight="700">命令行助手</text>
     <text x="390" y="314" text-anchor="middle" font-size="12" fill="#6b7080">simctl · xcodebuild</text>
     <text x="390" y="332" text-anchor="middle" font-size="12" fill="#6b7080">AXe 无障碍树 · Vision OCR</text>
-    <text x="390" y="350" text-anchor="middle" font-size="12" fill="#6b7080">execFile 参数数组</text>
+    <text x="390" y="350" text-anchor="middle" font-size="12" fill="#6b7080">真机 devicectl · WDA</text>
 
     <rect x="480" y="266" width="160" height="100" rx="10" fill="#ffffff" stroke="#c9cdd8"/>
     <text x="560" y="292" text-anchor="middle" font-weight="700">SimHostController</text>

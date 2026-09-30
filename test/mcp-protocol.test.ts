@@ -13,6 +13,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 
 const EXPECTED_TOOLS = [
+  'ios_real_start_wda',
   'ios_sim_app_info',
   'ios_sim_appearance',
   'ios_sim_backtrace',
@@ -54,7 +55,7 @@ function childEnv(): Record<string, string> {
   return env
 }
 
-test('the stdio MCP server lists the 29 ios_sim tools and answers calls', async () => {
+test('the stdio MCP server lists the 30 tools and answers calls', async () => {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: ['--import', 'tsx', join(ROOT, 'src/server.ts')],

@@ -6,7 +6,7 @@
 
 import type { InstalledApp } from './app-list.js'
 import type { BuildRunOptions, BuildRunResult, ProjectTarget } from './build-run.js'
-import type { RealDeviceApi } from './devicectl.js'
+import type { RealDevice, RealDeviceApi } from './devicectl.js'
 import type { DevToolsApi } from './devtools.js'
 import type { OcrItem } from './ocr-backend.js'
 import type { PreviewStatus } from './preview-host.js'
@@ -16,6 +16,7 @@ import type { SimHostController } from './sim-host.js'
 import type { SimulatorDevice } from './simctl.js'
 import type { StreamSource } from './stream-source.js'
 import type { AxeBinary, AxeElement } from './uitree-backend.js'
+import type { WdaSessionClient, WdaStatus } from './wda-host.js'
 
 /** The public slice of SimHostController that the tools and the panel use. */
 export type StreamHost = Pick<SimHostController, 'binary' | 'streamInfo' | 'status' | 'ensureRunning' | 'stop' | 'acquire' | 'control'>
@@ -43,6 +44,8 @@ export interface SimctlApi {
 export interface ScreenshotService {
   readonly dir: string
   capture(udid: string, signal?: AbortSignal): Promise<ScreenshotCapture>
+  /** Store a PNG taken elsewhere (a real device's WebDriverAgent) in the same cache. */
+  save(udid: string, png: Buffer): ScreenshotCapture
   toModelImage(capture: ScreenshotCapture): Promise<ModelImage>
 }
 
@@ -85,6 +88,16 @@ export interface PreviewApi {
   stop(signal?: AbortSignal): Promise<{ stopped: boolean; device?: SimulatorDevice; reloads?: number }>
 }
 
+/** WebDriverAgent on a connected iPhone or iPad (src/wda-host.ts WdaController satisfies it). */
+export interface WdaApi {
+  status(): WdaStatus
+  /** Adopt or build + launch WDA; minutes on a cold build. */
+  start(device: RealDevice, signal?: AbortSignal): Promise<WdaStatus>
+  /** The running client, or an adopted one; never builds. */
+  control(device: RealDevice): Promise<WdaSessionClient>
+  stop(): Promise<{ stopped: boolean; device?: { udid: string; name: string } }>
+}
+
 export interface ToolDeps {
   host: StreamHost
   stream: StreamSource
@@ -101,6 +114,8 @@ export interface ToolDeps {
   preview: PreviewApi
   /** Connected iPhones and iPads (devicectl). */
   realDevices: RealDeviceApi
+  /** WebDriverAgent for the real-device screen, touch and UI tools. */
+  wda: WdaApi
   cacheRoot: string
   platform: NodeJS.Platform
   /** Delay before the effect screenshot of ios_sim_interact and the tap tools, ms. */

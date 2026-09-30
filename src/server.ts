@@ -23,6 +23,7 @@ import {
 import type { ToolDeps } from './deps.js'
 import { Devicectl, devicectlRunner } from './devicectl.js'
 import { DevTools } from './devtools.js'
+import { realWdaSeams, WdaController } from './wda-host.js'
 import { OcrHelper } from './ocr-backend.js'
 import { PreviewHostController, xcrunToolchain } from './preview-host.js'
 import { PanelServer } from './panel/panel-server.js'
@@ -52,6 +53,7 @@ async function main(): Promise<void> {
     toolchain: xcrunToolchain,
     log: line => process.stderr.write(`${line}\n`),
   })
+  const wda = new WdaController(realWdaSeams({ cacheRoot: root }))
   const recorder = new Recorder({ dir: join(root, 'recordings') })
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
@@ -76,6 +78,7 @@ async function main(): Promise<void> {
     devtools,
     preview,
     realDevices: new Devicectl({ run: devicectlRunner(options => devtools.run(options)) }),
+    wda,
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
@@ -106,6 +109,7 @@ async function main(): Promise<void> {
       recorder.stopAll().catch(logFailure('finishing the recordings')),
       host.dispose().catch(logFailure('stopping the serve-sim stream')),
       preview.dispose().catch(logFailure('removing the preview host app')),
+      wda.dispose().catch(logFailure('stopping WebDriverAgent')),
     ])
     await panel.dispose().catch(logFailure('closing the panel server'))
     process.exit(0)
@@ -118,6 +122,7 @@ async function main(): Promise<void> {
   process.on('exit', () => {
     host.terminateOnExit()
     recorder.interruptOnExit()
+    wda.terminateOnExit()
     devtools.dispose()
   })
   server.server.onclose = () => { void shutdown() }

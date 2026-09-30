@@ -10,7 +10,8 @@ import { Recorder } from '../../src/recorder.js'
 import { ScreenshotStore } from '../../src/screenshot.js'
 import type { SimulatorDevice } from '../../src/simctl.js'
 import { SimStreamSource } from '../../src/stream-source.js'
-import { fakeAxe, fakeDevtools, fakeHost, fakeOcr, fakeRealDevices, fakeRecordSpawn, fakeSimctl, type FakeHostOptions } from './fakes.js'
+import { fakeAxe, fakeDevtools, fakeHost, fakeOcr, fakeRealDevices,
+  fakeRecordSpawn, fakeSimctl, fakeWda, type FakeHostOptions } from './fakes.js'
 
 export interface Harness {
   deps: ToolDeps
@@ -72,6 +73,7 @@ export async function toolHarness(
     ocr: fakeOcr().api,
     devtools: fakeDevtools().api,
     realDevices: fakeRealDevices().api,
+    wda: fakeWda({ notRunning: 'WebDriverAgent is not running on the device — run ios_real_start_wda first' }).api,
     preview: {
       start: async () => { throw new Error('test: no preview controller') },
       status: () => ({ running: false }),

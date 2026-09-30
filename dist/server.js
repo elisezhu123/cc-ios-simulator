@@ -2990,7 +2990,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve6.call(this, root, ref);
+      let _sch = resolve7.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a3 = root.localRefs) === null || _a3 === void 0 ? void 0 : _a3[ref];
         const { schemaId } = this.opts;
@@ -3017,7 +3017,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve6(root, ref) {
+    function resolve7(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3847,7 +3847,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve6(baseURI, relativeURI, options) {
+    function resolve7(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const {
         parsed: baseParsed,
@@ -3880,49 +3880,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative, options, skipNormalization) {
+    function resolveComponent(base, relative2, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative = parse3(serialize(relative, options), options);
+        relative2 = parse3(serialize(relative2, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative.scheme) {
-        target.scheme = relative.scheme;
-        target.userinfo = relative.userinfo;
-        target.host = relative.host;
-        target.port = relative.port;
-        target.path = removeDotSegments(relative.path || "");
-        target.query = relative.query;
+      if (!options.tolerant && relative2.scheme) {
+        target.scheme = relative2.scheme;
+        target.userinfo = relative2.userinfo;
+        target.host = relative2.host;
+        target.port = relative2.port;
+        target.path = removeDotSegments(relative2.path || "");
+        target.query = relative2.query;
       } else {
-        if (relative.userinfo !== void 0 || relative.host !== void 0 || relative.port !== void 0) {
-          target.userinfo = relative.userinfo;
-          target.host = relative.host;
-          target.port = relative.port;
-          target.path = removeDotSegments(relative.path || "");
-          target.query = relative.query;
+        if (relative2.userinfo !== void 0 || relative2.host !== void 0 || relative2.port !== void 0) {
+          target.userinfo = relative2.userinfo;
+          target.host = relative2.host;
+          target.port = relative2.port;
+          target.path = removeDotSegments(relative2.path || "");
+          target.query = relative2.query;
         } else {
-          if (!relative.path) {
+          if (!relative2.path) {
             target.path = base.path;
-            if (relative.query !== void 0) {
-              target.query = relative.query;
+            if (relative2.query !== void 0) {
+              target.query = relative2.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative.path[0] === "/") {
-              target.path = removeDotSegments(relative.path);
+            if (relative2.path[0] === "/") {
+              target.path = removeDotSegments(relative2.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative.path;
+                target.path = "/" + relative2.path;
               } else if (!base.path) {
-                target.path = relative.path;
+                target.path = relative2.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative2.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative.query;
+            target.query = relative2.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3930,7 +3930,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative.fragment;
+      target.fragment = relative2.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -4216,7 +4216,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize: normalize2,
-      resolve: resolve6,
+      resolve: resolve7,
       resolveComponent,
       equal,
       serialize,
@@ -9444,7 +9444,7 @@ var require_websocket = __commonJS({
     var http = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes, createHash: createHash3 } = __require("crypto");
+    var { randomBytes, createHash: createHash4 } = __require("crypto");
     var { Duplex, Readable } = __require("stream");
     var { URL: URL2 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -10125,7 +10125,7 @@ var require_websocket = __commonJS({
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest = createHash3("sha1").update(key + GUID).digest("base64");
+        const digest = createHash4("sha1").update(key + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -10494,7 +10494,7 @@ var require_websocket_server = __commonJS({
     var EventEmitter = __require("events");
     var http = __require("http");
     var { Duplex } = __require("stream");
-    var { createHash: createHash3 } = __require("crypto");
+    var { createHash: createHash4 } = __require("crypto");
     var extension2 = require_extension();
     var PerMessageDeflate2 = require_permessage_deflate();
     var subprotocol2 = require_subprotocol();
@@ -10801,7 +10801,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest = createHash3("sha1").update(key + GUID).digest("base64");
+        const digest = createHash4("sha1").update(key + GUID).digest("base64");
         const headers = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -10889,7 +10889,7 @@ var require_websocket_server = __commonJS({
 });
 
 // src/server.ts
-import { dirname as dirname6, join as join18 } from "node:path";
+import { dirname as dirname6, join as join20 } from "node:path";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
@@ -11279,15 +11279,15 @@ var makeIssue = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage9 = "";
+  let errorMessage12 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map2 of maps) {
-    errorMessage9 = map2(fullIssue, { data, defaultError: errorMessage9 }).message;
+    errorMessage12 = map2(fullIssue, { data, defaultError: errorMessage12 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage9
+    message: errorMessage12
   };
 };
 function addIssueToContext(ctx, issueData) {
@@ -16521,8 +16521,8 @@ function emoji() {
 }
 var ipv4 = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 var ipv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;
-var mac = (delimiter5) => {
-  const escapedDelim = escapeRegex(delimiter5 ?? ":");
+var mac = (delimiter6) => {
+  const escapedDelim = escapeRegex(delimiter6 ?? ":");
   return new RegExp(`^(?:[0-9A-F]{2}${escapedDelim}){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}${escapedDelim}){5}[0-9a-f]{2}$`);
 };
 var cidrv4 = /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/;
@@ -19550,7 +19550,7 @@ var recursive = /* @__PURE__ */ new WeakMap();
 var NONE = 0;
 var ASSUMED = 1;
 var PROVEN = 2;
-function isRecursive(inst, stack, resolve6) {
+function isRecursive(inst, stack, resolve7) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -19560,7 +19560,7 @@ function isRecursive(inst, stack, resolve6) {
   let result = NONE;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack, resolve6);
+      const answer = isRecursive(child, stack, resolve7);
       if (answer > result)
         result = answer;
     }
@@ -19571,7 +19571,7 @@ function isRecursive(inst, stack, resolve6) {
       const desc = Object.getOwnPropertyDescriptor(sh, key);
       if (spread && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve6) : NONE;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve7) : NONE;
       if (child > answer)
         answer = child;
     }
@@ -19635,7 +19635,7 @@ function isRecursive(inst, stack, resolve6) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def._cachedInner ?? (resolve6 ? inst._zod.innerType : void 0);
+      const inner = def._cachedInner ?? (resolve7 ? inst._zod.innerType : void 0);
       merge2(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
     }
@@ -20220,8 +20220,8 @@ var error3 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
-          const unit = getBelarusianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435"} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.maximum.toString()} ${unit}`;
+          const unit2 = getBelarusianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435"} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.maximum.toString()} ${unit2}`;
         }
         return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435"} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 \u0431\u044B\u0446\u044C ${adj}${issue2.maximum.toString()}`;
       }
@@ -20230,8 +20230,8 @@ var error3 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const minValue = Number(issue2.minimum);
-          const unit = getBelarusianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.minimum.toString()} ${unit}`;
+          const unit2 = getBelarusianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.minimum.toString()} ${unit2}`;
         }
         return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 \u0431\u044B\u0446\u044C ${adj}${issue2.minimum.toString()}`;
       }
@@ -22858,8 +22858,8 @@ var error24 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
-          const unit = getArmenianPlural(maxValue, sizing.unit.one, sizing.unit.many);
-          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584")} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.maximum.toString()} ${unit}`;
+          const unit2 = getArmenianPlural(maxValue, sizing.unit.one, sizing.unit.many);
+          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584")} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.maximum.toString()} ${unit2}`;
         }
         return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584")} \u056C\u056B\u0576\u056B ${adj}${issue2.maximum.toString()}`;
       }
@@ -22868,8 +22868,8 @@ var error24 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const minValue = Number(issue2.minimum);
-          const unit = getArmenianPlural(minValue, sizing.unit.one, sizing.unit.many);
-          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin)} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.minimum.toString()} ${unit}`;
+          const unit2 = getArmenianPlural(minValue, sizing.unit.one, sizing.unit.many);
+          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin)} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.minimum.toString()} ${unit2}`;
         }
         return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin)} \u056C\u056B\u0576\u056B ${adj}${issue2.minimum.toString()}`;
       }
@@ -23783,18 +23783,18 @@ var error32 = () => {
         const adj = issue2.inclusive ? "\uC774\uD558" : "\uBBF8\uB9CC";
         const suffix = adj === "\uBBF8\uB9CC" ? "\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4" : "\uC5EC\uC57C \uD569\uB2C8\uB2E4";
         const sizing = getSizing(issue2.origin);
-        const unit = sizing?.unit ?? "\uC694\uC18C";
+        const unit2 = sizing?.unit ?? "\uC694\uC18C";
         if (sizing)
-          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ${issue2.maximum.toString()}${unit} ${adj}${suffix}`;
+          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ${issue2.maximum.toString()}${unit2} ${adj}${suffix}`;
         return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ${issue2.maximum.toString()} ${adj}${suffix}`;
       }
       case "too_small": {
         const adj = issue2.inclusive ? "\uC774\uC0C1" : "\uCD08\uACFC";
         const suffix = adj === "\uC774\uC0C1" ? "\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4" : "\uC5EC\uC57C \uD569\uB2C8\uB2E4";
         const sizing = getSizing(issue2.origin);
-        const unit = sizing?.unit ?? "\uC694\uC18C";
+        const unit2 = sizing?.unit ?? "\uC694\uC18C";
         if (sizing) {
-          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ${issue2.minimum.toString()}${unit} ${adj}${suffix}`;
+          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ${issue2.minimum.toString()}${unit2} ${adj}${suffix}`;
         }
         return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ${issue2.minimum.toString()} ${adj}${suffix}`;
       }
@@ -25607,8 +25607,8 @@ var error46 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
-          const unit = getRussianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435"} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.maximum.toString()} ${unit}`;
+          const unit2 = getRussianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435"} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.maximum.toString()} ${unit2}`;
         }
         return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435"} \u0431\u0443\u0434\u0435\u0442 ${adj}${issue2.maximum.toString()}`;
       }
@@ -25617,8 +25617,8 @@ var error46 = () => {
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const minValue = Number(issue2.minimum);
-          const unit = getRussianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.minimum.toString()} ${unit}`;
+          const unit2 = getRussianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
+          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.minimum.toString()} ${unit2}`;
         }
         return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin} \u0431\u0443\u0434\u0435\u0442 ${adj}${issue2.minimum.toString()}`;
       }
@@ -31519,7 +31519,7 @@ function visit(schema, fnOrHandlers) {
     return h ? h(node2, rewritten) : node2;
   };
   const cache = /* @__PURE__ */ new Map();
-  function run3(s) {
+  function run4(s) {
     const cached2 = cache.get(s);
     if (cached2 === RESOLVING) {
       return new $ZodLazy({
@@ -31545,21 +31545,21 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newShape = {};
         for (const k of keys) {
-          const mapped = run3(oldShape[k]);
+          const mapped = run4(oldShape[k]);
           if (mapped !== oldShape[k])
             changed = true;
           newShape[k] = mapped;
         }
         let newCatchall = def.catchall;
         if (def.catchall) {
-          newCatchall = run3(def.catchall);
+          newCatchall = run4(def.catchall);
           if (newCatchall !== def.catchall)
             changed = true;
         }
         return changed ? clone(s, { ...def, shape: newShape, catchall: newCatchall }) : s;
       }
       case "array": {
-        const mapped = run3(def.element);
+        const mapped = run4(def.element);
         return mapped === def.element ? s : clone(s, { ...def, element: mapped });
       }
       case "tuple": {
@@ -31567,14 +31567,14 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newItems = [];
         for (const item of oldItems) {
-          const mapped = run3(item);
+          const mapped = run4(item);
           if (mapped !== item)
             changed = true;
           newItems.push(mapped);
         }
         let newRest = def.rest;
         if (def.rest) {
-          newRest = run3(def.rest);
+          newRest = run4(def.rest);
           if (newRest !== def.rest)
             changed = true;
         }
@@ -31582,12 +31582,12 @@ function visit(schema, fnOrHandlers) {
       }
       case "record":
       case "map": {
-        const newKey = run3(def.keyType);
-        const newVal = run3(def.valueType);
+        const newKey = run4(def.keyType);
+        const newVal = run4(def.valueType);
         return newKey === def.keyType && newVal === def.valueType ? s : clone(s, { ...def, keyType: newKey, valueType: newVal });
       }
       case "set": {
-        const newVal = run3(def.valueType);
+        const newVal = run4(def.valueType);
         return newVal === def.valueType ? s : clone(s, { ...def, valueType: newVal });
       }
       case "union": {
@@ -31595,7 +31595,7 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newOptions = [];
         for (const opt of oldOptions) {
-          const mapped = run3(opt);
+          const mapped = run4(opt);
           if (mapped !== opt)
             changed = true;
           newOptions.push(mapped);
@@ -31603,8 +31603,8 @@ function visit(schema, fnOrHandlers) {
         return changed ? clone(s, { ...def, options: newOptions }) : s;
       }
       case "intersection": {
-        const newLeft = run3(def.left);
-        const newRight = run3(def.right);
+        const newLeft = run4(def.left);
+        const newRight = run4(def.right);
         return newLeft === def.left && newRight === def.right ? s : clone(s, { ...def, left: newLeft, right: newRight });
       }
       case "optional":
@@ -31616,23 +31616,23 @@ function visit(schema, fnOrHandlers) {
       case "nonoptional":
       case "promise":
       case "success": {
-        const newInner = run3(def.innerType);
+        const newInner = run4(def.innerType);
         return newInner === def.innerType ? s : clone(s, { ...def, innerType: newInner });
       }
       case "pipe": {
-        const newIn = run3(def.in);
-        const newOut = run3(def.out);
+        const newIn = run4(def.in);
+        const newOut = run4(def.out);
         return newIn === def.in && newOut === def.out ? s : clone(s, { ...def, in: newIn, out: newOut });
       }
       case "function": {
-        const newInput = run3(def.input);
-        const newOutput = run3(def.output);
+        const newInput = run4(def.input);
+        const newOutput = run4(def.output);
         return newInput === def.input && newOutput === def.output ? s : clone(s, { ...def, input: newInput, output: newOutput });
       }
       case "lazy": {
         const original = def.getter;
         const { _cachedInner, ...rest } = def;
-        return clone(s, { ...rest, getter: () => run3(original()) });
+        return clone(s, { ...rest, getter: () => run4(original()) });
       }
       // A leaf by choice: `parts` are regex fragments, not data positions.
       case "template_literal":
@@ -31663,7 +31663,7 @@ function visit(schema, fnOrHandlers) {
       }
     }
   }
-  return run3(schema);
+  return run4(schema);
 }
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
@@ -36273,19 +36273,19 @@ var getRefs = (options) => {
 };
 
 // node_modules/zod-to-json-schema/dist/esm/errorMessages.js
-function addErrorMessage(res, key, errorMessage9, refs) {
+function addErrorMessage(res, key, errorMessage12, refs) {
   if (!refs?.errorMessages)
     return;
-  if (errorMessage9) {
+  if (errorMessage12) {
     res.errorMessage = {
       ...res.errorMessage,
-      [key]: errorMessage9
+      [key]: errorMessage12
     };
   }
 }
-function setResponseValueAndErrors(res, key, value, errorMessage9, refs) {
+function setResponseValueAndErrors(res, key, value, errorMessage12, refs) {
   res[key] = value;
-  addErrorMessage(res, key, errorMessage9, refs);
+  addErrorMessage(res, key, errorMessage12, refs);
 }
 
 // node_modules/zod-to-json-schema/dist/esm/getRelativePath.js
@@ -37596,8 +37596,8 @@ var Protocol = class {
                   if (queuedMessage.type === "response") {
                     resolver(message);
                   } else {
-                    const errorMessage9 = message;
-                    const error62 = new McpError(errorMessage9.error.code, errorMessage9.error.message, errorMessage9.error.data);
+                    const errorMessage12 = message;
+                    const error62 = new McpError(errorMessage12.error.code, errorMessage12.error.message, errorMessage12.error.data);
                     resolver(error62);
                   }
                 } else {
@@ -38043,7 +38043,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve6) => setTimeout(resolve6, pollInterval));
+        await new Promise((resolve7) => setTimeout(resolve7, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error62) {
@@ -38060,7 +38060,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve6, reject) => {
+    return new Promise((resolve7, reject) => {
       const earlyReject = (error62) => {
         reject(error62);
       };
@@ -38138,7 +38138,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve6(parseResult.data);
+            resolve7(parseResult.data);
           }
         } catch (error62) {
           reject(error62);
@@ -38399,12 +38399,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve6, reject) => {
+    return new Promise((resolve7, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve6, interval);
+      const timeoutId = setTimeout(resolve7, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -38888,23 +38888,23 @@ var Server = class extends Protocol {
       const wrappedHandler = async (request, extra) => {
         const validatedRequest = safeParse2(CallToolRequestSchema, request);
         if (!validatedRequest.success) {
-          const errorMessage9 = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage9}`);
+          const errorMessage12 = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage12}`);
         }
         const { params } = validatedRequest.data;
         const result = await Promise.resolve(handler(request, extra));
         if (params.task) {
           const taskValidationResult = safeParse2(CreateTaskResultSchema, result);
           if (!taskValidationResult.success) {
-            const errorMessage9 = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage9}`);
+            const errorMessage12 = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage12}`);
           }
           return taskValidationResult.data;
         }
         const validationResult = safeParse2(CallToolResultSchema, result);
         if (!validationResult.success) {
-          const errorMessage9 = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage9}`);
+          const errorMessage12 = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call result: ${errorMessage12}`);
         }
         return validationResult.data;
       };
@@ -39398,12 +39398,12 @@ var McpServer = class {
    * @param errorMessage - The error message.
    * @returns The tool error result.
    */
-  createToolError(errorMessage9) {
+  createToolError(errorMessage12) {
     return {
       content: [
         {
           type: "text",
-          text: errorMessage9
+          text: errorMessage12
         }
       ],
       isError: true
@@ -39421,8 +39421,8 @@ var McpServer = class {
     const parseResult = await safeParseAsync2(schemaToParse, args);
     if (!parseResult.success) {
       const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage9 = getParseErrorMessage(error62);
-      throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage9}`);
+      const errorMessage12 = getParseErrorMessage(error62);
+      throw new McpError(ErrorCode.InvalidParams, `Input validation error: Invalid arguments for tool ${toolName}: ${errorMessage12}`);
     }
     return parseResult.data;
   }
@@ -39446,8 +39446,8 @@ var McpServer = class {
     const parseResult = await safeParseAsync2(outputObj, result.structuredContent);
     if (!parseResult.success) {
       const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-      const errorMessage9 = getParseErrorMessage(error62);
-      throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage9}`);
+      const errorMessage12 = getParseErrorMessage(error62);
+      throw new McpError(ErrorCode.InvalidParams, `Output validation error: Invalid structured content for tool ${toolName}: ${errorMessage12}`);
     }
   }
   /**
@@ -39495,7 +39495,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve6) => setTimeout(resolve6, pollInterval));
+      await new Promise((resolve7) => setTimeout(resolve7, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -39659,8 +39659,8 @@ var McpServer = class {
         const parseResult = await safeParseAsync2(argsObj, request.params.arguments);
         if (!parseResult.success) {
           const error62 = "error" in parseResult ? parseResult.error : "Unknown error";
-          const errorMessage9 = getParseErrorMessage(error62);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage9}`);
+          const errorMessage12 = getParseErrorMessage(error62);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid arguments for prompt ${request.params.name}: ${errorMessage12}`);
         }
         const args = parseResult.data;
         const cb = prompt.callback;
@@ -40159,12 +40159,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve6) => {
+    return new Promise((resolve7) => {
       const json2 = serializeMessage(message);
       if (this._stdout.write(json2)) {
-        resolve6();
+        resolve7();
       } else {
-        this._stdout.once("drain", resolve6);
+        this._stdout.once("drain", resolve7);
       }
     });
   }
@@ -40572,7 +40572,7 @@ var SIMCTL_TERMINATE_TIMEOUT_MS = 3e4;
 var SIMCTL_UNINSTALL_TIMEOUT_MS = 6e4;
 var SIMCTL_MAX_BUFFER_BYTES = 16 * 1024 * 1024;
 function runXcrunSimctl(args, timeoutMs, signal) {
-  return new Promise((resolve6, reject) => {
+  return new Promise((resolve7, reject) => {
     execFile("xcrun", ["simctl", ...args], {
       timeout: timeoutMs,
       maxBuffer: SIMCTL_MAX_BUFFER_BYTES,
@@ -40587,7 +40587,7 @@ function runXcrunSimctl(args, timeoutMs, signal) {
         ));
         return;
       }
-      resolve6(stdout);
+      resolve7(stdout);
     });
   });
 }
@@ -40848,7 +40848,7 @@ function toPublicApp(app) {
 async function mapWithLimit(items, limit, worker) {
   const results = new Array(items.length);
   let next = 0;
-  const run3 = async () => {
+  const run4 = async () => {
     for (; ; ) {
       const index = next;
       next += 1;
@@ -40857,7 +40857,7 @@ async function mapWithLimit(items, limit, worker) {
     }
   };
   const workers = [];
-  for (let w = 0; w < Math.max(1, Math.min(limit, items.length)); w += 1) workers.push(run3());
+  for (let w = 0; w < Math.max(1, Math.min(limit, items.length)); w += 1) workers.push(run4());
   await Promise.all(workers);
   return results;
 }
@@ -41226,7 +41226,7 @@ var APPS_TIMEOUT_MS = 9e4;
 var PROCESSES_TIMEOUT_MS = 3e4;
 var INSTALL_TIMEOUT_MS = 18e4;
 var ALL_APPS_FLAGS = ["--include-default-apps", "--include-app-clips", "--include-removable-apps"];
-function devicectlRunner(run3) {
+function devicectlRunner(run4) {
   let sequence = 0;
   return async (args, timeoutMs, signal) => {
     sequence += 1;
@@ -41235,7 +41235,7 @@ function devicectlRunner(run3) {
       const fullArgs = ["devicectl", "--timeout", String(Math.max(1, Math.ceil(timeoutMs / 1e3))), "--json-output", jsonPath, ...args];
       let outcome;
       try {
-        outcome = await run3({
+        outcome = await run4({
           command: "xcrun",
           args: fullArgs,
           label: `devicectl ${args.join(" ")}`,
@@ -41499,7 +41499,7 @@ function errorMessage2(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function sleep(milliseconds) {
-  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 function signalGroup(pid, kill, signal) {
   if (pid === void 0) {
@@ -41524,14 +41524,14 @@ var DevTools = class {
     this.#processStat = options.processStat ?? defaultProcessStat;
   }
   simctl(args, signal) {
-    return new Promise((resolve6, reject) => {
+    return new Promise((resolve7, reject) => {
       execFile3("xcrun", ["simctl", ...args], { timeout: SIMCTL_CALL_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024, signal }, (error62, stdout, stderr) => {
         if (error62 !== null) {
           const detail = stderr.trim();
           reject(new Error(`simctl ${args.join(" ")} failed${detail === "" ? "" : `: ${detail}`}`));
           return;
         }
-        resolve6(stdout);
+        resolve7(stdout);
       });
     });
   }
@@ -41567,7 +41567,7 @@ var DevTools = class {
   run(options) {
     const { command, args, label, timeoutMs, windowMs, resumePid, signal } = options;
     if (signal?.aborted === true) return Promise.reject(abortError(label, signal));
-    return new Promise((resolve6, reject) => {
+    return new Promise((resolve7, reject) => {
       let settled = false;
       let stdout = "";
       let stderr = "";
@@ -41618,7 +41618,7 @@ var DevTools = class {
             reject(new Error(`${label} exceeded its ${timeoutMs} ms deadline and was killed${resumeDetail}`));
             return;
           }
-          resolve6({ stdout, stderr, code, killed, ...resumed === void 0 ? {} : { resumed } });
+          resolve7({ stdout, stderr, code, killed, ...resumed === void 0 ? {} : { resumed } });
         })();
       }));
     });
@@ -41810,18 +41810,503 @@ function tailLogLines(text, options) {
   return { lines: lines.slice(start), truncated: start > 0 };
 }
 
-// src/ocr-backend.ts
+// src/wda-host.ts
+import { spawn as spawn4 } from "node:child_process";
+import { existsSync as existsSync4 } from "node:fs";
+import { connect, createServer as createServer3 } from "node:net";
+import { homedir as homedir3 } from "node:os";
+import { delimiter as delimiter3, join as join9 } from "node:path";
+
+// src/usbmux.ts
+import { existsSync as existsSync2 } from "node:fs";
+import { createConnection, createServer } from "node:net";
+var USBMUX_SOCKET_PATH = "/var/run/usbmuxd";
+var USBMUX_HEADER_BYTES = 16;
+var USBMUX_MESSAGE_TYPE_PLIST = 8;
+var USBMUX_VERSION = 1;
+var USBMUX_IO_TIMEOUT_MS = 1e4;
+var USBMUX_MAX_MESSAGE_BYTES = 1024 * 1024;
+function encodeUsbmuxHeader(header2) {
+  const buffer = Buffer.alloc(USBMUX_HEADER_BYTES);
+  buffer.writeUInt32LE(header2.totalLength >>> 0, 0);
+  buffer.writeUInt32LE(header2.version >>> 0, 4);
+  buffer.writeUInt32LE(header2.messageType >>> 0, 8);
+  buffer.writeUInt32LE(header2.tag >>> 0, 12);
+  return buffer;
+}
+function decodeUsbmuxHeader(buffer) {
+  if (buffer.length < USBMUX_HEADER_BYTES) {
+    throw new Error("ios-simulator: usbmux header is shorter than 16 bytes");
+  }
+  return {
+    totalLength: buffer.readUInt32LE(0),
+    version: buffer.readUInt32LE(4),
+    messageType: buffer.readUInt32LE(8),
+    tag: buffer.readUInt32LE(12)
+  };
+}
+function swapPortByteOrder(port) {
+  return (port << 8 | port >> 8) & 65535;
+}
+function escapeXml(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
+}
+function buildXmlPlist(dict) {
+  let body = "";
+  for (const [key, value] of Object.entries(dict)) {
+    body += `<key>${escapeXml(key)}</key>`;
+    if (typeof value === "string") body += `<string>${escapeXml(value)}</string>`;
+    else if (typeof value === "number") body += `<integer>${value}</integer>`;
+    else if (typeof value === "boolean") body += value ? "<true/>" : "<false/>";
+    else throw new Error(`ios-simulator: unsupported usbmux plist value for key "${key}"`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>${body}</dict></plist>`;
+}
+function parseUsbmuxPlist(payload) {
+  if (payload.toString("latin1", 0, 8) === "bplist00") return parseBinaryPlist(payload);
+  return parseXmlPlist(payload.toString("utf8"));
+}
+function connectUsbmux() {
+  return new Promise((resolve7, reject) => {
+    const socket = createConnection(USBMUX_SOCKET_PATH);
+    let settled = false;
+    const finish = (error62) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.off("connect", onConnect);
+      socket.off("error", onError);
+      if (error62 !== void 0) reject(error62);
+      else resolve7(socket);
+    };
+    const onConnect = () => finish(void 0);
+    const onError = (error62) => finish(error62);
+    const timer = setTimeout(() => {
+      socket.destroy();
+      finish(new Error(`ios-simulator: usbmuxd did not accept a connection on ${USBMUX_SOCKET_PATH} within ${USBMUX_IO_TIMEOUT_MS} ms`));
+    }, USBMUX_IO_TIMEOUT_MS);
+    timer.unref?.();
+    socket.once("connect", onConnect);
+    socket.once("error", onError);
+  });
+}
+function sendUsbmuxMessage(socket, message) {
+  const payload = Buffer.from(buildXmlPlist(message), "utf8");
+  const header2 = encodeUsbmuxHeader({
+    totalLength: USBMUX_HEADER_BYTES + payload.length,
+    version: USBMUX_VERSION,
+    messageType: USBMUX_MESSAGE_TYPE_PLIST,
+    tag: 0
+  });
+  return new Promise((resolve7, reject) => {
+    const onError = (error62) => {
+      socket.off("error", onError);
+      reject(error62);
+    };
+    socket.once("error", onError);
+    socket.write(Buffer.concat([header2, payload]), (error62) => {
+      socket.off("error", onError);
+      if (error62 !== void 0 && error62 !== null) reject(error62);
+      else resolve7();
+    });
+  });
+}
+function readUsbmuxMessage(socket) {
+  return new Promise((resolve7, reject) => {
+    let buffer = Buffer.alloc(0);
+    let settled = false;
+    const fail = (error62) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.off("data", onData);
+      socket.off("error", onError);
+      socket.off("close", onClose);
+      reject(error62);
+    };
+    const succeed = (header2, payload) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.off("data", onData);
+      socket.off("error", onError);
+      socket.off("close", onClose);
+      resolve7({ header: header2, payload });
+    };
+    const onData = (chunk) => {
+      buffer = buffer.length === 0 ? chunk : Buffer.concat([buffer, chunk]);
+      if (buffer.length < USBMUX_HEADER_BYTES) return;
+      const header2 = decodeUsbmuxHeader(buffer);
+      if (header2.totalLength < USBMUX_HEADER_BYTES || header2.totalLength > USBMUX_MAX_MESSAGE_BYTES) {
+        fail(new Error(`ios-simulator: usbmuxd message length ${header2.totalLength} is out of range`));
+        return;
+      }
+      if (buffer.length < header2.totalLength) return;
+      const payload = buffer.subarray(USBMUX_HEADER_BYTES, header2.totalLength);
+      const leftover = buffer.subarray(header2.totalLength);
+      socket.pause();
+      if (leftover.length > 0) socket.unshift(leftover);
+      succeed(header2, payload);
+    };
+    const onError = (error62) => fail(error62);
+    const onClose = () => fail(new Error("ios-simulator: usbmuxd closed the socket before replying"));
+    const timer = setTimeout(() => {
+      fail(new Error(`ios-simulator: usbmuxd did not reply within ${USBMUX_IO_TIMEOUT_MS} ms`));
+    }, USBMUX_IO_TIMEOUT_MS);
+    timer.unref?.();
+    socket.on("data", onData);
+    socket.once("error", onError);
+    socket.once("close", onClose);
+  });
+}
+async function readUsbmuxReply(socket) {
+  const { header: header2, payload } = await readUsbmuxMessage(socket);
+  if (header2.version !== USBMUX_VERSION) {
+    throw new Error(`ios-simulator: usbmuxd spoke version ${header2.version}, expected ${USBMUX_VERSION}`);
+  }
+  if (header2.messageType !== USBMUX_MESSAGE_TYPE_PLIST) {
+    throw new Error(`ios-simulator: usbmuxd message type ${header2.messageType} is not a plist`);
+  }
+  return parseUsbmuxPlist(payload);
+}
+async function usbmuxRequest(message) {
+  const socket = await connectUsbmux();
+  try {
+    await sendUsbmuxMessage(socket, message);
+    return await readUsbmuxReply(socket);
+  } finally {
+    socket.destroy();
+  }
+}
+function asDict(value, what) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`ios-simulator: usbmuxd ${what} is not a dict`);
+  }
+  return value;
+}
+function asString(value, what) {
+  if (typeof value !== "string") throw new Error(`ios-simulator: usbmuxd ${what} is not a string`);
+  return value;
+}
+function asNumber(value, what) {
+  if (typeof value !== "number" || !Number.isSafeInteger(value)) {
+    throw new Error(`ios-simulator: usbmuxd ${what} is not an integer`);
+  }
+  return value;
+}
+function parseUsbmuxDevice(entry) {
+  const dict = asDict(entry, "DeviceList entry");
+  const deviceId = asNumber(dict.DeviceID, "DeviceID");
+  const properties = asDict(dict.Properties, "Device properties");
+  const connectionType = asString(properties.ConnectionType, "ConnectionType");
+  const connection = connectionType === "USB" ? "usb" : connectionType === "Network" ? "network" : void 0;
+  if (connection === void 0) {
+    throw new Error(`ios-simulator: usbmuxd ConnectionType "${connectionType}" is neither USB nor Network`);
+  }
+  return { deviceId, udid: asString(properties.SerialNumber, "SerialNumber"), connection };
+}
+function usbmuxAvailable() {
+  return existsSync2(USBMUX_SOCKET_PATH);
+}
+async function listUsbmuxDevices() {
+  const reply = asDict(await usbmuxRequest({
+    MessageType: "ListDevices",
+    ClientVersionString: "ios-simulator",
+    ProgName: "ios-simulator",
+    kLibUSBMuxVersion: 3
+  }), "ListDevices reply");
+  const deviceList = reply.DeviceList;
+  if (!Array.isArray(deviceList)) throw new Error("ios-simulator: usbmuxd ListDevices reply has no DeviceList array");
+  return deviceList.map(parseUsbmuxDevice);
+}
+function pickUsbDeviceId(devices, udid) {
+  for (const device of devices) {
+    if (device.udid === udid && device.connection === "usb") return device.deviceId;
+  }
+  return void 0;
+}
+async function resolveUsbDeviceId(udid, list = listUsbmuxDevices) {
+  return pickUsbDeviceId(await list(), udid);
+}
+async function classifyUsbmuxTunnelFailure(udid, list = listUsbmuxDevices) {
+  if (!usbmuxAvailable()) return "not-attached";
+  let devices;
+  try {
+    devices = await list();
+  } catch {
+    return "not-attached";
+  }
+  const mine = devices.filter((device) => device.udid === udid);
+  if (mine.some((device) => device.connection === "usb")) return "usb-link-up";
+  if (mine.some((device) => device.connection === "network")) return "network-only";
+  return "not-attached";
+}
+function usbmuxTunnelFailureDetail(kind) {
+  switch (kind) {
+    case "usb-link-up":
+      return "the USB link is up but the port forward failed \u2014 WebDriverAgent may not be listening yet; re-run";
+    case "network-only":
+      return "this phone is reachable over Wi-Fi only; WebDriverAgent needs the USB cable \u2014 plug it in (Wi-Fi sync pairing cannot carry the port forward)";
+    case "not-attached":
+      return "the phone is not attached over USB \u2014 connect a data-capable cable and unlock the device";
+  }
+}
+var UsbmuxConnectError = class extends Error {
+  constructor(resultCode, message) {
+    super(message);
+    this.resultCode = resultCode;
+    this.name = "UsbmuxConnectError";
+  }
+  resultCode;
+};
+async function connectUsbmuxDevice(deviceId, devicePort) {
+  const socket = await connectUsbmux();
+  try {
+    await sendUsbmuxMessage(socket, {
+      MessageType: "Connect",
+      DeviceID: deviceId,
+      PortNumber: swapPortByteOrder(devicePort),
+      ClientVersionString: "ios-simulator",
+      ProgName: "ios-simulator",
+      kLibUSBMuxVersion: 3
+    });
+    const reply = asDict(await readUsbmuxReply(socket), "Connect reply");
+    if (reply.MessageType !== "Result") {
+      throw new Error(`ios-simulator: usbmuxd Connect reply is "${String(reply.MessageType)}", not Result`);
+    }
+    const number4 = asNumber(reply.Number, "Connect result Number");
+    if (number4 !== 0) {
+      const reason = number4 === 2 ? "device not connected" : number4 === 3 ? "port refused" : "unknown error";
+      throw new UsbmuxConnectError(number4, `ios-simulator: usbmuxd Connect to device ${deviceId} port ${devicePort} failed: ${reason} (code ${number4})`);
+    }
+    return socket;
+  } catch (error62) {
+    socket.destroy();
+    throw error62;
+  }
+}
+async function pipeUsbmuxConnection(client, deviceId, devicePort) {
+  let device;
+  try {
+    device = await connectUsbmuxDevice(deviceId, devicePort);
+  } catch {
+    client.destroy();
+    return;
+  }
+  client.on("error", () => {
+  });
+  device.on("error", () => {
+  });
+  client.pipe(device);
+  device.pipe(client);
+  client.once("close", () => device.destroy());
+  device.once("close", () => client.destroy());
+}
+async function createUsbmuxForward(options) {
+  const deviceId = await resolveUsbDeviceId(options.udid);
+  if (deviceId === void 0) {
+    throw new Error(`ios-simulator: no USB record for ${options.udid} \u2014 cannot forward device port ${options.devicePort}`);
+  }
+  const host = options.host ?? "127.0.0.1";
+  const localPort = options.localPort;
+  let connections = 0;
+  let closed = false;
+  const clients = /* @__PURE__ */ new Set();
+  const server = createServer((client) => {
+    connections += 1;
+    clients.add(client);
+    client.once("close", () => {
+      connections -= 1;
+      clients.delete(client);
+    });
+    void pipeUsbmuxConnection(client, deviceId, options.devicePort);
+  });
+  server.unref();
+  await new Promise((resolveListen, rejectListen) => {
+    const onError = (error62) => {
+      server.off("listening", onListening);
+      rejectListen(error62);
+    };
+    const onListening = () => {
+      server.off("error", onError);
+      resolveListen();
+    };
+    server.once("error", onError);
+    server.once("listening", onListening);
+    server.listen({ host, port: localPort });
+  });
+  const close = async () => {
+    if (closed) return;
+    closed = true;
+    for (const client of clients) client.destroy();
+    clients.clear();
+    await new Promise((resolveClose) => server.close(() => resolveClose()));
+  };
+  return {
+    get localPort() {
+      return localPort;
+    },
+    get connections() {
+      return connections;
+    },
+    close
+  };
+}
+
+// src/wda-client.ts
+import { request as httpRequest2 } from "node:http";
+
+// src/stream-source.ts
+import { readFileSync as readFileSync3, unlinkSync } from "node:fs";
+import { tmpdir as tmpdir2 } from "node:os";
+import { join as join7 } from "node:path";
+
+// src/device-actions.ts
 import { execFile as execFile4 } from "node:child_process";
-import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync as readFileSync2, renameSync, rmSync as rmSync2, statSync as statSync3, writeFileSync } from "node:fs";
+var OSASCRIPT_TIMEOUT_MS = 8e3;
+var DEVICE_ACTIONS = [
+  "app-switcher",
+  "lock",
+  "unlock",
+  "shake",
+  "siri",
+  "action-button",
+  "re-center"
+];
+function isDeviceAction(value) {
+  return typeof value === "string" && DEVICE_ACTIONS.includes(value);
+}
+var DEVICE_ACTION_SPECS = [
+  { action: "app-switcher", transport: { kind: "menu", item: "App Switcher" }, realDevice: true },
+  { action: "lock", transport: { kind: "serve-sim", button: "lock" }, realDevice: true },
+  // ⇧⌘H twice: the lock screen has no menu item, and the swipe is unusable.
+  { action: "unlock", transport: { kind: "keystroke", repeat: 2 }, realDevice: true },
+  { action: "shake", transport: { kind: "menu", item: "Shake" }, realDevice: false },
+  { action: "siri", transport: { kind: "menu", item: "Siri" }, realDevice: true },
+  { action: "action-button", transport: { kind: "menu", item: "Action Button" }, realDevice: false },
+  { action: "re-center", transport: { kind: "menu", item: "Re-Center Open Apps" }, realDevice: false }
+];
+function deviceActionSpec(action) {
+  const spec = DEVICE_ACTION_SPECS.find((entry) => entry.action === action);
+  if (spec === void 0) throw new Error(`ios-simulator: unknown device action ${action}`);
+  return spec;
+}
+var DEVICE_ACTION_PERMISSION_HINT = "macOS needs permission to drive Simulator.app: System Settings \u25B8 Privacy & Security \u25B8 Accessibility, then enable the app running Claude Code (Terminal / iTerm / the Claude app)";
+var DEVICE_ACTION_SIMULATOR_HINT = "the Simulator app is not running \u2014 boot a simulator first (ios_sim_boot)";
+function deviceActionFailureHint(message) {
+  if (/simulator-not-running/.test(message)) return DEVICE_ACTION_SIMULATOR_HINT;
+  if (/not allowed assistive|osascript is not allowed|-1719|1002|assistive access/i.test(message)) {
+    return DEVICE_ACTION_PERMISSION_HINT;
+  }
+  if (/menu-item-missing/.test(message)) {
+    return "this Xcode's Simulator has no such Device menu item \u2014 the action is unavailable on this host";
+  }
+  if (/simulator-not-frontmost/.test(message)) {
+    return "Simulator.app would not come to the front \u2014 another app may be holding focus; try again";
+  }
+  return message;
+}
+function appleScriptString(value) {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+function focusedSimulatorScript(body) {
+  return `
+tell application "System Events"
+  if not (exists process "Simulator") then error "ios-simulator: simulator-not-running"
+  set previousName to ""
+  try
+    set previousName to name of first process whose frontmost is true
+  end try
+  tell application "Simulator" to activate
+  set raised to false
+  repeat 40 times
+    if frontmost of process "Simulator" then
+      set raised to true
+      exit repeat
+    end if
+    delay 0.05
+  end repeat
+  if not raised then error "ios-simulator: simulator-not-frontmost"
+${body}
+  delay 0.15
+  if previousName is not "" and previousName is not "Simulator" then
+    try
+      set frontmost of process previousName to true
+    end try
+  end if
+end tell
+`;
+}
+function simulatorMenuItemScript(item) {
+  return focusedSimulatorScript(`  tell process "Simulator"
+    if not (exists menu item ${appleScriptString(item)} of menu 1 of menu bar item "Device" of menu bar 1) then error "ios-simulator: menu-item-missing"
+    click menu item ${appleScriptString(item)} of menu 1 of menu bar item "Device" of menu bar 1
+  end tell`);
+}
+function simulatorHomeKeystrokeScript(repeat) {
+  const presses = Array.from({ length: Math.max(1, repeat) }, (_, index) => `  key code 4 using {command down, shift down}${index + 1 < repeat ? "\n  delay 0.25" : ""}`).join("\n");
+  return focusedSimulatorScript(presses);
+}
+function runOsascript(script, timeoutMs) {
+  return new Promise((resolve7, reject) => {
+    execFile4("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
+      if (error62 === null) {
+        resolve7();
+        return;
+      }
+      const detail = `${stderr === "" ? error62.message : stderr}`.trim();
+      reject(new Error(detail));
+    });
+  });
+}
+async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRIPT_TIMEOUT_MS) {
+  const spec = deviceActionSpec(action);
+  try {
+    if (spec.transport.kind === "serve-sim") {
+      await pressButton(spec.transport.button);
+      return;
+    }
+    const script = spec.transport.kind === "menu" ? simulatorMenuItemScript(spec.transport.item) : simulatorHomeKeystrokeScript(spec.transport.repeat);
+    await runOsascript(script, timeoutMs);
+  } catch (error62) {
+    const message = error62 instanceof Error ? error62.message : String(error62);
+    throw new Error(`ios-simulator: the ${action} action failed \u2014 ${deviceActionFailureHint(message)}`);
+  }
+}
+
+// src/sim-host.ts
+import {
+  execFile as execFile5,
+  spawn as spawn3
+} from "node:child_process";
+import { readFileSync as readFileSync2, statSync as statSync3 } from "node:fs";
+import { request as httpRequest } from "node:http";
+import { createRequire } from "node:module";
+import { createServer as createServer2 } from "node:net";
 import { delimiter as delimiter2, dirname as dirname2, join as join6 } from "node:path";
 import { fileURLToPath } from "node:url";
-var OCR_INSTALL_HINT = 'the plugin compiles its bundled Vision OCR helper with swiftc on first use \u2014 install Xcode (or the Command Line Tools: run "xcode-select --install") so ios_sim_find_text / ios_sim_tap_text / ios_sim_wait_for can run';
-var SWIFTC_CANDIDATES = ["/usr/bin/swiftc", "/usr/local/bin/swiftc"];
-var OCR_COMPILE_TIMEOUT_MS = 5 * 60 * 1e3;
-var OCR_EXEC_TIMEOUT_MS = 12e4;
-var OCR_MAX_BUFFER_BYTES = 8 * 1024 * 1024;
-var DIGEST_FILE = ".ios-simulator-ocr.sha256";
+var SERVE_SIM_PACKAGE = "serve-sim";
+var STREAM_PORT_RANGE_START = 3181;
+var STREAM_PORT_RANGE_LENGTH = 64;
+var DEFAULT_IDLE_TIMEOUT_MS = 5 * 60 * 1e3;
+var DEFAULT_RESTART_DELAY_MS = 5e3;
+var DEFAULT_START_TIMEOUT_MS = 12e4;
+var KEEP_ALIVE_TICK_MS = 1e3;
+var STOP_TIMEOUT_MS = 1e4;
+var CONTROL_TIMEOUT_MS = 3e4;
+var MAX_HANDSHAKE_BYTES = 16 * 1024;
+var STDERR_RING_LINES = 40;
+var STDERR_LINE_MAX_CHARS = 240;
+var ADOPT_GRACE_MS = 1500;
+var ADOPTED_PROBE_TIMEOUT_MS = 2e3;
+function errorMessage3(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+function sleep2(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
+}
 function isExecutableFile(path) {
   try {
     const info = statSync3(path);
@@ -41837,30 +42322,1877 @@ function isFile(path) {
     return false;
   }
 }
-function findOnPath2(command, env) {
-  for (const dir of (env.PATH ?? "").split(delimiter2)) {
+function findOnPath2(command) {
+  for (const dir of (process.env.PATH ?? "").split(delimiter2)) {
     if (dir === "") continue;
     const candidate = join6(dir, command);
     if (isExecutableFile(candidate)) return candidate;
   }
   return void 0;
 }
-function sha256File(path) {
-  return createHash("sha256").update(readFileSync2(path)).digest("hex");
+function resolvePackageManifest(packageName) {
+  try {
+    return createRequire(import.meta.url).resolve(`${packageName}/package.json`);
+  } catch {
+  }
+  let current = dirname2(fileURLToPath(import.meta.url));
+  for (; ; ) {
+    const candidate = join6(current, "node_modules", packageName, "package.json");
+    if (isFile(candidate)) return candidate;
+    const parent = dirname2(current);
+    if (parent === current) return void 0;
+    current = parent;
+  }
 }
-function run(command, args, timeoutMs, signal) {
-  return new Promise((resolve6, reject) => {
-    execFile4(command, [...args], { timeout: timeoutMs, maxBuffer: OCR_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
+function tryResolvePackageBin() {
+  const manifestPath = resolvePackageManifest(SERVE_SIM_PACKAGE);
+  if (manifestPath === void 0) return void 0;
+  try {
+    const manifest = JSON.parse(readFileSync2(manifestPath, "utf8"));
+    const bin = manifest.bin;
+    let binPath;
+    if (typeof bin === "string") binPath = bin;
+    else if (typeof bin === "object" && bin !== null && !Array.isArray(bin)) {
+      const candidate = bin[SERVE_SIM_PACKAGE];
+      if (typeof candidate === "string") binPath = candidate;
+    }
+    if (binPath === void 0) return void 0;
+    const resolved = join6(dirname2(manifestPath), binPath);
+    return isExecutableFile(resolved) ? resolved : void 0;
+  } catch {
+    return void 0;
+  }
+}
+function resolveServeSimBinary(options = {}) {
+  const platform = options.platform ?? process.platform;
+  if (platform !== "darwin") {
+    return { available: false, source: "unavailable", args: [], reason: "serve-sim only runs on macOS" };
+  }
+  const arch = options.arch ?? process.arch;
+  if (arch !== "arm64") {
+    return { available: false, source: "unavailable", args: [], reason: `serve-sim ships an arm64-only helper; this Mac is ${arch}` };
+  }
+  const override = "override" in options ? options.override : serveSimBinOverride();
+  if (override !== void 0) {
+    return isExecutableFile(override) ? { available: true, source: "package-bin", command: override, args: [] } : { available: false, source: "unavailable", args: [], reason: `IOS_SIM_SERVE_SIM_BIN is not an executable file: ${override}` };
+  }
+  const packageBin = (options.packageBin ?? tryResolvePackageBin)();
+  if (packageBin !== void 0) {
+    return { available: true, source: "package-bin", command: packageBin, args: [] };
+  }
+  const npx = (options.findNpx ?? (() => findOnPath2("npx")))();
+  if (npx === void 0) {
+    return { available: false, source: "unavailable", args: [], reason: "serve-sim is not installed and npx is not on PATH" };
+  }
+  return { available: true, source: "npx", command: npx, args: ["-y", `${SERVE_SIM_PACKAGE}@${SERVE_SIM_VERSION}`] };
+}
+function parseServeSimHandshake(line) {
+  let value;
+  try {
+    value = JSON.parse(line);
+  } catch {
+    throw new Error("serve-sim returned a non-JSON handshake");
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("serve-sim returned an invalid handshake");
+  }
+  const record3 = value;
+  if (typeof record3.url !== "string" || !/^https?:\/\//.test(record3.url) || typeof record3.streamUrl !== "string" || !/^https?:\/\//.test(record3.streamUrl) || typeof record3.wsUrl !== "string" || !/^wss?:\/\//.test(record3.wsUrl) || typeof record3.port !== "number" || !Number.isSafeInteger(record3.port) || record3.port < 1 || record3.port > 65535 || typeof record3.device !== "string" || record3.device === "") {
+    throw new Error("serve-sim returned an incomplete handshake");
+  }
+  return {
+    url: record3.url,
+    streamUrl: record3.streamUrl,
+    wsUrl: record3.wsUrl,
+    port: record3.port,
+    device: record3.device
+  };
+}
+function waitForStreamHandshake(child, timeoutMs, diagnostics) {
+  return new Promise((resolve7, reject) => {
+    let settled = false;
+    let stdout = "";
+    const finish = (error62, info) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.stdout.off("data", onData);
+      child.off("error", onError);
+      child.off("close", onClose);
+      if (error62 !== void 0) reject(error62);
+      else resolve7(info);
+    };
+    const onData = (chunk) => {
+      stdout += chunk.toString("utf8");
+      if (stdout.length > MAX_HANDSHAKE_BYTES) {
+        finish(new Error("serve-sim handshake exceeded its size limit"));
+        return;
+      }
+      const newline = stdout.indexOf("\n");
+      if (newline < 0) return;
+      try {
+        finish(void 0, parseServeSimHandshake(stdout.slice(0, newline).trim()));
+      } catch (error62) {
+        finish(error62 instanceof Error ? error62 : new Error(String(error62)));
+      }
+    };
+    const onError = (error62) => {
+      finish(error62);
+    };
+    const onClose = (code) => {
+      const detail = diagnostics();
+      finish(new Error(
+        `serve-sim exited before streaming (code ${String(code)})${detail === "" ? "" : `: ${detail}`}`
+      ));
+    };
+    const timer = setTimeout(() => {
+      const detail = diagnostics();
+      finish(new Error(
+        `serve-sim did not print its handshake within ${timeoutMs} ms${detail === "" ? "" : `: ${detail}`}`
+      ));
+    }, timeoutMs);
+    child.stdout.on("data", onData);
+    child.once("error", onError);
+    child.once("close", onClose);
+  });
+}
+function waitForChildClose(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve(true);
+  return new Promise((resolveClosed) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.off("close", onClose);
+      resolveClosed(value);
+    };
+    const onClose = () => {
+      finish(true);
+    };
+    const timer = setTimeout(() => {
+      finish(false);
+    }, timeoutMs);
+    child.once("close", onClose);
+  });
+}
+function signalProcessGroup(child, signal) {
+  const pid = child.pid;
+  if (pid === void 0) {
+    child.kill(signal);
+    return;
+  }
+  try {
+    process.kill(-pid, signal);
+  } catch {
+    child.kill(signal);
+  }
+}
+async function killProcessGroup(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) return true;
+  signalProcessGroup(child, "SIGTERM");
+  const closed = await waitForChildClose(child, timeoutMs);
+  if (!closed && child.exitCode === null && child.signalCode === null) {
+    signalProcessGroup(child, "SIGKILL");
+    return waitForChildClose(child, timeoutMs);
+  }
+  return closed;
+}
+function canBindLoopbackPort(port) {
+  return new Promise((resolveBind) => {
+    const probe = createServer2();
+    probe.unref();
+    probe.once("error", () => resolveBind(false));
+    probe.listen({ host: "127.0.0.1", port }, () => {
+      probe.close(() => resolveBind(true));
+    });
+  });
+}
+function adoptedProbeUrl(info) {
+  const health = info.streamUrl.replace(/\/stream\.mjpeg$/, "/health");
+  if (health !== info.streamUrl) return health;
+  try {
+    return `${new URL(info.streamUrl).origin}/`;
+  } catch {
+    return info.url;
+  }
+}
+function probeHttpAlive(url2, timeoutMs) {
+  return new Promise((resolveProbe) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolveProbe(value);
+    };
+    const req = httpRequest(url2, { method: "GET", timeout: timeoutMs }, (res) => {
+      res.on("error", () => {
+      });
+      res.destroy();
+      finish(true);
+    });
+    req.on("error", () => finish(false));
+    req.on("timeout", () => {
+      req.destroy();
+      finish(false);
+    });
+    const timer = setTimeout(() => {
+      req.destroy();
+      finish(false);
+    }, timeoutMs);
+    timer.unref?.();
+    req.end();
+  });
+}
+function serveSimControlArgs(command, udid, positionals) {
+  return [command, "-d", udid, "--", ...positionals];
+}
+function execServeSim(binary, args, timeoutMs) {
+  return new Promise((resolve7, reject) => {
+    execFile5(binary.command, [...binary.args, ...args], {
+      timeout: timeoutMs,
+      maxBuffer: 4 * 1024 * 1024
+    }, (error62, stdout, stderr) => {
+      if (error62 !== null) {
+        const detail = stderr.trim();
+        const killed = error62.killed === true;
+        const signal = error62.signal ?? null;
+        const cause = killed ? `timed out after ${timeoutMs} ms` : signal !== null ? `killed by ${signal}` : `exit ${String(error62.code)}`;
+        reject(new Error(
+          `serve-sim ${args.join(" ")} failed (${cause})${detail === "" ? "" : `: ${detail}`}`
+        ));
+        return;
+      }
+      resolve7({ stdout, stderr });
+    });
+  });
+}
+var SimHostController = class {
+  binary;
+  #options;
+  #child;
+  #info;
+  #starting;
+  #launchQueue = Promise.resolve();
+  #consumers = 0;
+  #keepAliveRunning = false;
+  #keepAliveTimer;
+  #idleTimer;
+  #restarts = 0;
+  #startedAt;
+  #exitAt;
+  #lastError;
+  #lastDevice;
+  #intentionalStop = false;
+  #lastStopAt = 0;
+  #disposed = false;
+  #disposePromise;
+  #stderrRing = [];
+  #stderrPartial = "";
+  /** True while the stream is an adopted helper instead of an owned child. */
+  #adopted = false;
+  /** Guards against overlapping liveness probes of the adopted helper. */
+  #probeInFlight = false;
+  /**
+   * Bumped by `stop()`; an in-flight launch whose handshake classification
+   * resumes afterwards must not land (e.g. adopt a helper after a stop).
+   */
+  #launchEpoch = 0;
+  constructor(options = {}) {
+    this.binary = options.binary ?? resolveServeSimBinary();
+    this.#options = {
+      portRangeStart: options.portRangeStart ?? STREAM_PORT_RANGE_START,
+      restartDelayMs: options.restartDelayMs ?? DEFAULT_RESTART_DELAY_MS,
+      idleTimeoutMs: options.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS,
+      startTimeoutMs: options.startTimeoutMs ?? DEFAULT_START_TIMEOUT_MS
+    };
+    if (!Number.isSafeInteger(this.#options.portRangeStart) || this.#options.portRangeStart < 1024 || this.#options.portRangeStart > 65535) {
+      throw new RangeError("ios-simulator: portRangeStart must be an integer between 1024 and 65535");
+    }
+  }
+  get available() {
+    return this.binary.available;
+  }
+  /**
+   * True while a stream is available: either a live owned child whose
+   * handshake is current, or an adopted helper that has not been stopped
+   * (its liveness is verified by the keep-alive probe).
+   */
+  get running() {
+    const child = this.#child;
+    if (child !== void 0 && child.exitCode === null && child.signalCode === null && this.#info !== void 0) {
+      return true;
+    }
+    return this.#adopted && this.#info !== void 0;
+  }
+  /**
+   * The live stream's handshake (url/streamUrl/wsUrl/port/device), or undefined
+   * when nothing is streaming. Read-only and non-starting on purpose: the
+   * gesture path (src/sim-gesture.ts) needs `wsUrl` for the control socket but
+   * must NOT launch a stream to get it — a tool call can arrive before the
+   * stream exists, and then it falls back to the serve-sim CLI.
+   */
+  get streamInfo() {
+    return this.running ? this.#info : void 0;
+  }
+  /**
+   * Boot the simulator if needed and make sure one serve-sim stream child is
+   * alive for it. Concurrent callers share a single launch; callers for a
+   * different device wait for the current one to be replaced.
+   */
+  async ensureRunning({ udid }) {
+    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
+    if (typeof udid !== "string" || udid === "") throw new TypeError("ios-simulator: ensureRunning requires a non-empty udid");
+    const startFor = async () => {
+      const current = this.#child;
+      if (current !== void 0 && current.exitCode === null && current.signalCode === null && this.#info?.device === udid) {
+        return this.#info;
+      }
+      const adoptedInfo = this.#adopted ? this.#info : void 0;
+      if (adoptedInfo !== void 0 && adoptedInfo.device === udid) {
+        return adoptedInfo;
+      }
+      if (current !== void 0 && current.exitCode === null && current.signalCode === null) {
+        await killProcessGroup(current, STOP_TIMEOUT_MS);
+        this.#exitAt = void 0;
+        this.#intentionalStop = true;
+      }
+      if (adoptedInfo !== void 0) {
+        this.#adopted = false;
+        this.#info = void 0;
+        if (this.binary.available) {
+          await execServeSim(this.binary, ["-k", adoptedInfo.device], CONTROL_TIMEOUT_MS).catch(() => {
+          });
+        }
+      }
+      const info = await this.#startFor(udid);
+      this.#lastDevice = udid;
+      return info;
+    };
+    let starting = this.#starting;
+    if (starting !== void 0) {
+      try {
+        await starting;
+      } catch {
+      }
+      if (this.#info !== void 0 && this.#info.device === udid && this.running) {
+        this.#armIdle();
+        return this.#info;
+      }
+      starting = void 0;
+    }
+    if (starting === void 0) {
+      starting = this.#serializeLaunch(startFor);
+      this.#starting = starting;
+    }
+    try {
+      const info = await starting;
+      this.#lastError = void 0;
+      this.#armIdle();
+      return info;
+    } catch (error62) {
+      this.#lastError = errorMessage3(error62);
+      throw error62;
+    } finally {
+      if (this.#starting === starting) this.#starting = void 0;
+    }
+  }
+  /**
+   * Start the crash keep-alive loop. While enabled, a stream that exited on
+   * its own is restarted in the background after `restartDelayMs`; intentional
+   * `stop()` calls are never fought.
+   */
+  startKeepAlive() {
+    if (this.#keepAliveRunning || this.#disposed) return;
+    this.#keepAliveRunning = true;
+    const tick = () => {
+      if (this.#disposed || !this.#keepAliveRunning) return;
+      void this.#keepAliveTick().catch(() => {
+      });
+    };
+    this.#keepAliveTimer = setInterval(tick, KEEP_ALIVE_TICK_MS);
+    this.#keepAliveTimer.unref?.();
+  }
+  /** Stop the keep-alive loop. */
+  stopKeepAlive() {
+    this.#keepAliveRunning = false;
+    if (this.#keepAliveTimer !== void 0) clearInterval(this.#keepAliveTimer);
+    this.#keepAliveTimer = void 0;
+  }
+  /**
+   * Stop the stream child. Intentional: the keep-alive loop will not bring it
+   * back until the next `ensureRunning` or `restart`.
+   */
+  async stop() {
+    this.#clearIdle();
+    this.#intentionalStop = true;
+    this.#lastStopAt = Date.now();
+    const child = this.#child;
+    const udid = this.#info?.device ?? this.#lastDevice;
+    const adopted = this.#adopted;
+    this.#child = void 0;
+    this.#info = void 0;
+    this.#startedAt = void 0;
+    this.#exitAt = void 0;
+    this.#adopted = false;
+    this.#launchEpoch += 1;
+    if (child === void 0) {
+      await this.#starting?.catch(() => {
+      });
+      const landed = this.#child;
+      if (landed !== void 0) {
+        this.#child = void 0;
+        this.#info = void 0;
+        this.#startedAt = void 0;
+        await killProcessGroup(landed, STOP_TIMEOUT_MS);
+      }
+      if (adopted && udid !== void 0 && this.binary.available) {
+        await execServeSim(this.binary, ["-k", udid], CONTROL_TIMEOUT_MS).catch(() => {
+        });
+      }
+      return;
+    }
+    const closed = await killProcessGroup(child, STOP_TIMEOUT_MS);
+    if (adopted && udid !== void 0 && this.binary.available) {
+      await execServeSim(this.binary, ["-k", udid], CONTROL_TIMEOUT_MS).catch(() => {
+      });
+    } else if (!closed && udid !== void 0 && this.binary.available) {
+      await execServeSim(this.binary, ["-k", udid], CONTROL_TIMEOUT_MS).catch(() => {
+      });
+    }
+  }
+  /** Stop (if running) and start again, defaulting to the current device. */
+  async restart(udid) {
+    const device = udid ?? this.#info?.device ?? this.#lastDevice;
+    if (device === void 0) {
+      throw new Error("ios-simulator: restart requires a device; call ensureRunning first");
+    }
+    await this.stop();
+    this.#lastStopAt = 0;
+    return this.ensureRunning({ udid: device });
+  }
+  /** Snapshot of lifecycle state, launcher, refcount and recent stderr. */
+  status() {
+    return {
+      available: this.available,
+      running: this.running,
+      ...this.#info === void 0 ? {} : { device: this.#info.device, port: this.#info.port },
+      ...this.#startedAt === void 0 ? {} : { startedAt: this.#startedAt },
+      restarts: this.#restarts,
+      ...this.#lastError === void 0 ? {} : { lastError: this.#lastError },
+      serveSimSource: this.binary.source,
+      ...this.binary.command === void 0 ? {} : { serveSimCommand: this.binary.command },
+      consumers: this.#consumers,
+      ...this.#adopted ? { adopted: true } : {},
+      stderr: [...this.#stderrRing]
+    };
+  }
+  /**
+   * Run a serve-sim control subcommand (`tap`, `gesture`, `type`, `button`,
+   * `-l`, `-k`, …) through the same binary resolution used for the stream.
+   */
+  async control(args, options = {}) {
+    if (!this.binary.available) {
+      throw new Error(`ios-simulator: serve-sim is unavailable${this.binary.reason === void 0 ? "" : ` (${this.binary.reason})`}`);
+    }
+    return execServeSim(this.binary, args, options.timeoutMs ?? CONTROL_TIMEOUT_MS);
+  }
+  /**
+   * Hold the stream alive for one consumer (the web-route proxy uses this).
+   * Returns a release function; each acquire must be released exactly once.
+   */
+  acquire() {
+    this.#consumers += 1;
+    this.#armIdle();
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.#consumers = Math.max(0, this.#consumers - 1);
+      this.#armIdle();
+    };
+  }
+  /** Tear down for plugin disposal: kill the child, refuse new work. */
+  dispose() {
+    if (this.#disposePromise !== void 0) return this.#disposePromise;
+    this.#disposed = true;
+    this.stopKeepAlive();
+    this.#disposePromise = (async () => {
+      await this.stop();
+      await this.#starting?.catch(() => {
+      });
+      await this.stop();
+      await this.#launchQueue;
+    })();
+    return this.#disposePromise;
+  }
+  /**
+   * Exit backstop for a process that exits without awaiting dispose() (an
+   * uncaught exception, a fatal error): SIGTERM a still-running serve-sim
+   * process group. Synchronous, because 'exit' handlers cannot await.
+   */
+  terminateOnExit(kill = (pid, signal) => {
+    process.kill(pid, signal);
+  }) {
+    const child = this.#child;
+    if (child?.pid === void 0 || child.exitCode !== null || child.signalCode !== null) return;
+    try {
+      kill(-child.pid, "SIGTERM");
+    } catch (error62) {
+      if (error62.code !== "ESRCH") {
+        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage3(error62)}
+`);
+      }
+    }
+  }
+  async #keepAliveTick() {
+    const now = Date.now();
+    if (this.#disposed) return;
+    if (this.#adopted) {
+      await this.#probeAdoptedHelper();
+      return;
+    }
+    const exitAt = this.#exitAt;
+    const device = this.#lastDevice;
+    if (exitAt === void 0 || this.#intentionalStop || device === void 0) return;
+    if (now - exitAt < this.#options.restartDelayMs) return;
+    if (!this.binary.available) return;
+    this.#exitAt = void 0;
+    try {
+      if (!await this.#isBooted(device)) {
+        this.#intentionalStop = true;
+        this.#noteStderr(`${device} is no longer booted; the stream stays stopped until the next ensureRunning`);
+        return;
+      }
+      this.#restarts += 1;
+      await this.ensureRunning({ udid: device });
+    } catch (error62) {
+      this.#lastError = errorMessage3(error62);
+      if (this.#exitAt === void 0) this.#exitAt = Date.now();
+    }
+  }
+  /** Whether simctl lists `udid` as Booted; a failed listing rejects (the keep-alive retries later). */
+  async #isBooted(udid) {
+    return (await listDevices()).some((device) => device.udid === udid && device.state === "Booted");
+  }
+  /**
+   * Poll the adopted helper's health route (derived from the stream URL)
+   * with a cheap GET request. When it no longer answers, record the death
+   * like a child exit so the keep-alive loop respawns a fresh (owned)
+   * stream after the usual restart delay.
+   */
+  async #probeAdoptedHelper() {
+    const info = this.#info;
+    if (info === void 0 || this.#intentionalStop || this.#disposed || this.#probeInFlight) return;
+    this.#probeInFlight = true;
+    try {
+      const alive = await probeHttpAlive(adoptedProbeUrl(info), ADOPTED_PROBE_TIMEOUT_MS);
+      if (alive) return;
+      if (this.#disposed || this.#intentionalStop || this.#info !== info) return;
+      this.#noteStderr(`adopted serve-sim helper for ${info.device} no longer answers on ${info.streamUrl}; respawning after the restart delay`);
+      this.#info = void 0;
+      this.#startedAt = void 0;
+      this.#adopted = false;
+      this.#exitAt = Date.now();
+    } finally {
+      this.#probeInFlight = false;
+    }
+  }
+  async #startFor(udid, reclaim = false) {
+    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
+    if (!this.binary.available) {
+      throw new Error(`ios-simulator: serve-sim is unavailable${this.binary.reason === void 0 ? "" : ` (${this.binary.reason})`}`);
+    }
+    const sinceStop = Date.now() - this.#lastStopAt;
+    if (sinceStop < this.#options.restartDelayMs) {
+      await sleep2(this.#options.restartDelayMs - sinceStop);
+    }
+    await bootDevice(udid);
+    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
+    const port = await this.#findFreePort();
+    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
+    const outcome = await this.#launchStream(udid, port);
+    if (outcome.kind === "mismatch") {
+      if (reclaim) {
+        throw new Error(`serve-sim targeted ${outcome.info.device} instead of ${udid}`);
+      }
+      this.#noteStderr(`serve-sim reported device ${outcome.info.device} instead of ${udid}; reclaiming the stale helper`);
+      await this.#reclaimStaleHelper(outcome.info.device);
+      return this.#startFor(udid, true);
+    }
+    this.#info = outcome.info;
+    this.#startedAt = Date.now();
+    this.#exitAt = void 0;
+    this.#intentionalStop = false;
+    this.#adopted = outcome.kind === "adopted";
+    if (outcome.kind === "adopted") {
+      this.#noteStderr(`adopted existing serve-sim helper for ${udid} on port ${outcome.info.port} (requested ${port})`);
+    }
+    return outcome.info;
+  }
+  /**
+   * Ask serve-sim itself to reap a helper we do not own (`-k <udid>`, with
+   * a blanket `-k` as the last resort when the targeted kill errors out).
+   */
+  async #reclaimStaleHelper(udid) {
+    if (!this.binary.available) return;
+    try {
+      await execServeSim(this.binary, ["-k", udid], CONTROL_TIMEOUT_MS);
+    } catch {
+      await execServeSim(this.binary, ["-k"], CONTROL_TIMEOUT_MS).catch(() => {
+      });
+    }
+  }
+  async #findFreePort() {
+    const start = this.#options.portRangeStart;
+    for (let offset = 0; offset < STREAM_PORT_RANGE_LENGTH; offset += 1) {
+      const port = start + offset;
+      if (port > 65535) break;
+      if (await canBindLoopbackPort(port)) return port;
+    }
+    throw new Error(`ios-simulator: no free port for serve-sim in range ${start}..${start + STREAM_PORT_RANGE_LENGTH - 1}`);
+  }
+  #launchStream(udid, port) {
+    const child = spawn3(this.binary.command, [
+      ...this.binary.args,
+      "--no-preview",
+      "--quiet",
+      "--port",
+      String(port),
+      udid
+    ], {
+      stdio: ["ignore", "pipe", "pipe"],
+      // Group leader so stop() can reap npx → CLI → stream helper at once.
+      detached: true
+    });
+    this.#child = child;
+    const epoch = this.#launchEpoch;
+    child.stderr.on("data", (chunk) => this.#recordStderr(chunk));
+    child.once("close", () => {
+      if (this.#child !== child) return;
+      this.#child = void 0;
+      this.#info = void 0;
+      this.#startedAt = void 0;
+      this.#exitAt = Date.now();
+    });
+    const launched = waitForStreamHandshake(
+      child,
+      this.#options.startTimeoutMs,
+      () => this.#stderrRing.join("\n")
+    );
+    return launched.then(async (info) => {
+      if (this.#launchEpoch !== epoch) {
+        throw new Error("ios-simulator: serve-sim launch was superseded by stop()");
+      }
+      if (info.device !== udid) {
+        await killProcessGroup(child, STOP_TIMEOUT_MS);
+        return { kind: "mismatch", info };
+      }
+      if (info.port !== port) {
+        const childExited = await Promise.race([
+          waitForChildClose(child, ADOPT_GRACE_MS),
+          sleep2(ADOPT_GRACE_MS).then(() => false)
+        ]);
+        if (this.#launchEpoch !== epoch) {
+          throw new Error("ios-simulator: serve-sim launch was superseded by stop()");
+        }
+        return childExited ? { kind: "adopted", info } : { kind: "own", info };
+      }
+      return { kind: "own", info };
+    }, async (error62) => {
+      await killProcessGroup(child, STOP_TIMEOUT_MS);
+      throw error62 instanceof Error ? error62 : new Error(String(error62));
+    });
+  }
+  #recordStderr(chunk) {
+    const text = this.#stderrPartial + chunk.toString("utf8");
+    const lines = text.split("\n");
+    this.#stderrPartial = lines.pop() ?? "";
+    for (const line of lines) {
+      const trimmed = line.trimEnd();
+      this.#stderrRing.push(trimmed.length > STDERR_LINE_MAX_CHARS ? `${trimmed.slice(0, STDERR_LINE_MAX_CHARS)}\u2026` : trimmed);
+      if (this.#stderrRing.length > STDERR_RING_LINES) this.#stderrRing.shift();
+    }
+  }
+  /** Append a controller-authored diagnostic line to the stderr ring. */
+  #noteStderr(line) {
+    this.#stderrRing.push(line.length > STDERR_LINE_MAX_CHARS ? `${line.slice(0, STDERR_LINE_MAX_CHARS)}\u2026` : line);
+    if (this.#stderrRing.length > STDERR_RING_LINES) this.#stderrRing.shift();
+  }
+  #armIdle() {
+    this.#clearIdle();
+    const idleMs = this.#options.idleTimeoutMs;
+    if (idleMs <= 0) return;
+    this.#idleTimer = setTimeout(() => {
+      this.#idleTimer = void 0;
+      if (this.#consumers > 0) {
+        this.#armIdle();
+        return;
+      }
+      void this.stop();
+    }, idleMs);
+    this.#idleTimer.unref?.();
+  }
+  #clearIdle() {
+    if (this.#idleTimer !== void 0) clearTimeout(this.#idleTimer);
+    this.#idleTimer = void 0;
+  }
+  #serializeLaunch(task) {
+    const run4 = this.#launchQueue.then(task, task);
+    this.#launchQueue = run4.then(() => void 0, () => void 0);
+    return run4;
+  }
+};
+
+// src/stream-source.ts
+function errorMessage4(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+function sleep3(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
+}
+function requireNormalized(x, y) {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 1 || y < 0 || y > 1) {
+    throw new RangeError("ios-simulator: tap/drag coordinates must be normalized 0..1 of the streamed frame");
+  }
+}
+function pngDimensionsFromBase64(base643) {
+  const buffer = Buffer.from(base643, "base64");
+  if (buffer.length < 24) return void 0;
+  if (buffer.readUInt32BE(0) !== 2303741511) return void 0;
+  if (buffer.readUInt32BE(12) !== 1229472850) return void 0;
+  return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+}
+var SimStreamSource = class {
+  constructor(host) {
+    this.host = host;
+  }
+  host;
+  kind = "simulator";
+  #lastInfo;
+  #releases = [];
+  get mjpegUrl() {
+    if (this.#lastInfo !== void 0) return this.#lastInfo.streamUrl;
+    const status = this.host.status();
+    if (status.running && status.port !== void 0) {
+      return `http://127.0.0.1:${status.port}/stream.mjpeg`;
+    }
+    return void 0;
+  }
+  async ensureRunning(udid) {
+    const info = await this.host.ensureRunning({ udid });
+    this.#lastInfo = info;
+    return { udid: info.device, mjpegUrl: info.streamUrl, controlUrl: info.url };
+  }
+  status() {
+    const status = this.host.status();
+    return {
+      kind: this.kind,
+      available: status.available,
+      running: status.running,
+      ...status.device === void 0 ? {} : { device: status.device },
+      consumers: status.consumers,
+      ...status.lastError === void 0 ? {} : { lastError: status.lastError },
+      ...this.mjpegUrl === void 0 ? {} : { mjpegUrl: this.mjpegUrl },
+      ...this.#lastInfo === void 0 ? {} : { controlUrl: this.#lastInfo.url }
+    };
+  }
+  stop() {
+    return this.host.stop();
+  }
+  acquire() {
+    const release = this.host.acquire();
+    this.#releases.push(release);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const index = this.#releases.indexOf(release);
+      if (index >= 0) this.#releases.splice(index, 1);
+      release();
+    };
+  }
+  release() {
+    this.#releases.pop()?.();
+  }
+  control = {
+    tap: async (x, y) => {
+      requireNormalized(x, y);
+      await this.#run("tap", String(x), String(y));
+    },
+    drag: async (drag) => {
+      requireNormalized(drag.fromX, drag.fromY);
+      requireNormalized(drag.toX, drag.toY);
+      const holdMs = Math.min(2e3, Math.max(20, Math.round((drag.duration ?? 0.3) * 500)));
+      await this.#run("gesture", JSON.stringify({ type: "begin", x: drag.fromX, y: drag.fromY }));
+      await sleep3(holdMs);
+      await this.#run("gesture", JSON.stringify({ type: "move", x: drag.toX, y: drag.toY }));
+      await sleep3(holdMs);
+      await this.#run("gesture", JSON.stringify({ type: "end", x: drag.toX, y: drag.toY }));
+    },
+    button: async (name = "home") => {
+      await this.#run("button", name);
+    },
+    type: async (text) => {
+      if (typeof text !== "string" || text === "") throw new TypeError("ios-simulator: type requires a non-empty text");
+      await this.#run("type", text);
+    },
+    rotate: async (orientation) => {
+      await this.#run("rotate", orientation);
+    },
+    deviceAction: (action) => runSimulatorDeviceAction(
+      action,
+      async (name) => {
+        await this.#run("button", name);
+      }
+    ),
+    screenshot: async () => {
+      const udid = this.#requireDevice();
+      const path = join7(tmpdir2(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
+      try {
+        await takeScreenshot(udid, path);
+        const pngBase64 = readFileSync3(path).toString("base64");
+        const size = pngDimensionsFromBase64(pngBase64);
+        return { pngBase64, ...size === void 0 ? {} : size };
+      } catch (error62) {
+        throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage4(error62)}`);
+      } finally {
+        try {
+          unlinkSync(path);
+        } catch {
+        }
+      }
+    }
+  };
+  /** One serve-sim control call for the streamed device; `--` precedes the positionals (see serveSimControlArgs). */
+  async #run(command, ...positionals) {
+    const udid = this.#requireDevice();
+    await this.host.control(serveSimControlArgs(command, udid, positionals));
+  }
+  #requireDevice() {
+    const udid = this.host.status().device ?? this.#lastInfo?.device;
+    if (udid === void 0) {
+      throw new Error("ios-simulator: no simulator is streaming; call ensureRunning first");
+    }
+    return udid;
+  }
+};
+
+// src/wda-client.ts
+var WdaError = class extends Error {
+  constructor(reason, message, cause) {
+    super(message);
+    this.reason = reason;
+    this.cause = cause;
+    this.name = "WdaError";
+  }
+  reason;
+  cause;
+};
+var WdaHttpError = class extends Error {
+  constructor(message, status, body, value) {
+    super(message);
+    this.status = status;
+    this.body = body;
+    this.value = value;
+    this.name = "WdaHttpError";
+  }
+  status;
+  body;
+  value;
+};
+var WDA_DEFAULT_SNAPSHOT_DEPTH = 15;
+var REQUEST_TIMEOUT_MS = 3e4;
+var WDA_FAST_TIMEOUT_MS = 5e3;
+var WDA_BUSY_COOLDOWN_MS = 1e4;
+var WDA_WINDOW_SIZE_CACHE_TTL_MS = 3e3;
+var TRANSIENT_RETRY_DELAY_MS = 250;
+var MAX_BODY_BYTES = 64 * 1024 * 1024;
+function errorMessage5(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+function sleep4(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
+}
+var WDA_LOCKED_PATTERN = /deviceprep\s+code\s*=\s*-3|unlock[^\n]*to continue|waiting for the destination to become ready/i;
+function classifyWdaFailure(text) {
+  if (WDA_LOCKED_PATTERN.test(text)) return "device-locked";
+  if (/developer app certificate is not trusted/i.test(text)) return "cert-untrusted";
+  if (/provisioning profile[^\n]{0,120}expired|profile[^\n]{0,80}has expired|has expired[^\n]{0,80}provisioning profile/i.test(text)) {
+    return "profile-expired";
+  }
+  if (/unable to find a destination matching|no connected physical device matches|is not available \(state|could not find the requested device|requested device could not be found|device [^\n]{0,60}was disconnected|unplug/i.test(text)) {
+    return "device-unplugged";
+  }
+  if (/\*\* test build failed \*\*|\*\* build failed \*\*|testing failed|test execute failed|xcodebuild: error|command phasescriptexecution failed/i.test(text)) {
+    return "build-failed";
+  }
+  return void 0;
+}
+function wdaFailureDetail(reason, deviceName, startTimeoutMs) {
+  switch (reason) {
+    case "device-locked":
+      return `unlock "${deviceName}" \u2014 WDA keeps waiting and recovers by itself once the device is unlocked`;
+    case "cert-untrusted":
+      return `trust the Developer App certificate once in Settings \u2192 General \u2192 VPN & Device Management on "${deviceName}", then re-run`;
+    case "profile-expired":
+      return "the free-team provisioning profile expired (7-day lifetime) \u2014 re-run so xcodebuild re-issues it";
+    case "device-unplugged":
+      return `connect "${deviceName}" over USB, then re-run`;
+    case "build-failed":
+      return "the WebDriverAgentRunner build failed \u2014 fix the error and re-run";
+    case "launch-timeout":
+      return `no ServerURLHere within ${Math.round(startTimeoutMs / 1e3)} s \u2014 re-run (a cold build can take minutes)`;
+    case "tunnel-failed":
+      return usbmuxTunnelFailureDetail("usb-link-up");
+    case "wda-not-ready":
+      return "WDA answered but did not become ready \u2014 re-run";
+    case "unavailable":
+      return "WDA tooling is unavailable on this host";
+    case "wda-already-running":
+      return "a foreign WDA is already running on the control port \u2014 stop it or explicitly allow adoption";
+  }
+}
+function parseServerUrlHere(text) {
+  const match = /ServerURLHere->(https?:\/\/[^\s<]+)<-ServerURLHere/.exec(text);
+  return match?.[1];
+}
+function isInvalidSessionError(error62) {
+  if (!(error62 instanceof WdaHttpError)) return false;
+  const text = String(error62.body ?? "");
+  if (/invalid session|session does not exist|no such driver/i.test(text)) return true;
+  if (error62.status === 404 && /session/i.test(text)) return true;
+  if (typeof error62.value === "object" && error62.value !== null) {
+    const value = error62.value;
+    if (typeof value.error === "string" && /invalid session/i.test(value.error)) return true;
+  }
+  return false;
+}
+function isTransientWdaTransportError(error62) {
+  const text = errorMessage5(error62);
+  if (/\bECONNREFUSED\b/i.test(text)) return false;
+  return /\bECONNRESET\b/i.test(text) || /\bsocket hang up\b/i.test(text) || /\bEPIPE\b/i.test(text);
+}
+function isIdempotentWdaGet(method, path) {
+  return method === "GET" && (path === "/status" || path.endsWith("/source") || path.endsWith("/screenshot") || path.endsWith("/window/size"));
+}
+function isFastWdaPath(method, path) {
+  return method === "GET" && (path.endsWith("/window/size") || path.endsWith("/orientation"));
+}
+var WdaClient = class {
+  controlUrl;
+  #options;
+  #sessionId;
+  #sessionPromise;
+  /** Clock time until which new requests fail fast with a busy error. */
+  #busyUntil = 0;
+  /** Cached active-app point size (windowSize); dropped on rotation/session. */
+  #sizeCache;
+  constructor(controlUrl, options = {}) {
+    this.controlUrl = controlUrl.replace(/\/+$/, "");
+    this.#options = {
+      requestTimeoutMs: options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS,
+      shortTimeoutMs: options.shortTimeoutMs ?? WDA_FAST_TIMEOUT_MS,
+      busyCooldownMs: options.busyCooldownMs ?? WDA_BUSY_COOLDOWN_MS,
+      now: options.now ?? Date.now,
+      maxBodyBytes: options.maxBodyBytes ?? MAX_BODY_BYTES,
+      onSuccess: options.onSuccess ?? (() => {
+      })
+    };
+  }
+  get sessionId() {
+    return this.#sessionId;
+  }
+  /** Drop the cached session so the next call recreates it. */
+  invalidateSession() {
+    this.#sessionId = void 0;
+    this.#sizeCache = void 0;
+  }
+  /** `GET /status` health view. */
+  async health() {
+    const doc = await this.#raw("GET", "/status");
+    const value = typeof doc === "object" && doc !== null ? doc.value : void 0;
+    const record3 = typeof value === "object" && value !== null ? value : {};
+    const ios = typeof record3.ios === "object" && record3.ios !== null ? record3.ios : {};
+    return {
+      ready: record3.ready === true,
+      ...typeof record3.state === "string" ? { state: record3.state } : {},
+      ...typeof record3.device === "string" ? { device: record3.device } : {},
+      ...typeof ios.ip === "string" ? { ip: ios.ip } : {},
+      ...typeof record3.message === "string" ? { message: record3.message } : {}
+    };
+  }
+  /** Create the session lazily and reuse it; concurrent callers share one POST. */
+  async ensureSession() {
+    if (this.#sessionId !== void 0) return this.#sessionId;
+    if (this.#sessionPromise !== void 0) return this.#sessionPromise;
+    this.#sessionPromise = this.#createSession();
+    try {
+      return await this.#sessionPromise;
+    } finally {
+      this.#sessionPromise = void 0;
+    }
+  }
+  /** Raw request returning the parsed `value` of the WDA response envelope. */
+  async request(method, path, body) {
+    return this.#requestValue(method, path, body);
+  }
+  /**
+   * `POST /wda/pressButton` `{name}` — verified: really moves the phone.
+   *
+   * `home` takes WDA's SESSIONLESS `/wda/homescreen` instead, measured on an
+   * iPhone 17 Pro at ~30 ms against ~470 ms for the session-scoped press —
+   * same effect (the springboard), a fifteenth of the wait, and Home is the
+   * button pressed most. Any failure falls back to the
+   * session route, so an older WDA without that endpoint still works.
+   */
+  async pressButton(name) {
+    if (typeof name !== "string" || name === "") throw new TypeError("ios-simulator: pressButton requires a button name");
+    if (name === "home") {
+      try {
+        await this.#requestValue("POST", "/wda/homescreen", {});
+        return;
+      } catch {
+      }
+    }
+    await this.#withSession("POST", "/wda/pressButton", { name });
+  }
+  /** `POST /wda/tap` `{x, y}` — absolute POINT coordinates of the active app. */
+  async tap(x, y) {
+    if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0) {
+      throw new RangeError("ios-simulator: tap requires non-negative point coordinates");
+    }
+    await this.#withSession("POST", "/wda/tap", { x, y });
+  }
+  /** `POST /wda/dragfromtoforduration` `{fromX, fromY, toX, toY, duration}`. */
+  async dragFromToForDuration(drag) {
+    const { fromX, fromY, toX, toY, duration: duration3 } = drag;
+    if (![fromX, fromY, toX, toY, duration3].every((value) => Number.isFinite(value)) || duration3 < 0) {
+      throw new RangeError("ios-simulator: dragFromToForDuration requires finite coordinates and a non-negative duration");
+    }
+    await this.#withSession("POST", "/wda/dragfromtoforduration", { fromX, fromY, toX, toY, duration: duration3 });
+  }
+  /** `POST /wda/keys` `{value: [text]}` (the handler joins the value array). */
+  async typeText(text) {
+    if (typeof text !== "string" || text === "") throw new TypeError("ios-simulator: typeText requires a non-empty text");
+    await this.#withSession("POST", "/wda/keys", { value: [text] });
+  }
+  /** `POST /wda/lock` — lock the device screen. */
+  async lock() {
+    await this.#withSession("POST", "/wda/lock", {});
+  }
+  /** `POST /wda/unlock` — dismiss the lock screen (no passcode entry). */
+  async unlock() {
+    await this.#withSession("POST", "/wda/unlock", {});
+  }
+  /** `POST /wda/siri/activate` `{text}` — bring up Siri (optionally with an
+   * utterance). */
+  async activateSiri(text = "") {
+    await this.#withSession("POST", "/wda/siri/activate", { text });
+  }
+  /** `GET /wda/activeAppInfo` → frontmost app identity as WDA reports it. */
+  async activeAppInfo() {
+    const value = await this.#withSession("GET", "/wda/activeAppInfo");
+    return typeof value === "object" && value !== null && !Array.isArray(value) ? value : {};
+  }
+  /** `GET /screenshot` → base64 PNG (1206×2622 pixels on this device). */
+  async screenshot() {
+    const value = await this.#withSession("GET", "/screenshot");
+    if (typeof value !== "string" || value === "") {
+      throw new WdaHttpError("WDA /screenshot returned no image data", void 0, void 0, value);
+    }
+    const size = pngDimensionsFromBase64(value);
+    return { pngBase64: value, ...size === void 0 ? {} : size };
+  }
+  /** `GET /source` → accessibility tree (XML by default). */
+  async source() {
+    const value = await this.#withSession("GET", "/source");
+    return typeof value === "string" ? value : JSON.stringify(value);
+  }
+  /** `POST /session/<sid>/appium/settings` `{settings: {snapshotMaxDepth}}` —
+   * caps the accessibility-tree walk WDA performs for `/source` so a busy
+   * app is snapshotted in ~2 s instead of ~33 s. */
+  async setSnapshotDepth(depth) {
+    if (!Number.isSafeInteger(depth) || depth < 0) {
+      throw new RangeError("ios-simulator: setSnapshotDepth requires a non-negative integer");
+    }
+    await this.#withSession("POST", "/appium/settings", { settings: { snapshotMaxDepth: depth } });
+  }
+  /** `GET /orientation` → e.g. `PORTRAIT`. */
+  async getOrientation() {
+    const value = await this.#withSession("GET", "/orientation");
+    if (typeof value !== "string" || value === "") {
+      throw new WdaHttpError("WDA /orientation returned no value", void 0, void 0, value);
+    }
+    return value;
+  }
+  /** `POST /orientation` `{orientation}` (PORTRAIT, LANDSCAPELEFT, …). */
+  async setOrientation(orientation) {
+    if (typeof orientation !== "string" || orientation === "") throw new TypeError("ios-simulator: setOrientation requires an orientation name");
+    await this.#withSession("POST", "/orientation", { orientation });
+    this.#sizeCache = void 0;
+  }
+  /**
+   * `GET /window/size` → active app size in POINTS (the gesture space).
+   * Reused across callers for {@link WDA_WINDOW_SIZE_CACHE_TTL_MS}: the value
+   * only changes on rotation (invalidated here and by setOrientation) or a
+   * foreground-app switch (bounded by the TTL), and each skipped round trip
+   * is one less request queued behind a stuck command while the device is
+   * busy (video playback is the observed worst case).
+   */
+  async windowSize() {
+    const cached2 = this.#sizeCache;
+    if (cached2 !== void 0 && this.#options.now() - cached2.at < WDA_WINDOW_SIZE_CACHE_TTL_MS) {
+      return cached2.size;
+    }
+    const value = await this.#withSession("GET", "/window/size");
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+      throw new WdaHttpError("WDA /window/size returned an invalid value", void 0, void 0, value);
+    }
+    const record3 = value;
+    const width = record3.width;
+    const height = record3.height;
+    if (typeof width !== "number" || typeof height !== "number" || width <= 0 || height <= 0) {
+      throw new WdaHttpError("WDA /window/size returned an invalid size", void 0, void 0, value);
+    }
+    const size = { width, height };
+    this.#sizeCache = { size, at: this.#options.now() };
+    return size;
+  }
+  async #createSession() {
+    const { doc, value } = await this.#request("POST", "/session", {
+      capabilities: { alwaysMatch: { platformName: "iOS" } }
+    });
+    const valueRecord = typeof value === "object" && value !== null ? value : {};
+    const sid = typeof doc.sessionId === "string" && doc.sessionId !== "" ? doc.sessionId : typeof valueRecord.sessionId === "string" && valueRecord.sessionId !== "" ? valueRecord.sessionId : void 0;
+    if (sid === void 0) {
+      throw new WdaHttpError("WDA created a session without a sessionId", void 0, JSON.stringify(doc), value);
+    }
+    this.#sessionId = sid;
+    this.#sizeCache = void 0;
+    return sid;
+  }
+  async #withSession(method, path, body) {
+    let sid = await this.ensureSession();
+    try {
+      return await this.#requestValue(method, `/session/${sid}${path}`, body);
+    } catch (error62) {
+      if (!isInvalidSessionError(error62)) throw error62;
+      this.#sessionId = void 0;
+      sid = await this.ensureSession();
+      return this.#requestValue(method, `/session/${sid}${path}`, body);
+    }
+  }
+  async #requestValue(method, path, body) {
+    const { value } = await this.#request(method, path, body);
+    return value;
+  }
+  async #request(method, path, body) {
+    const raw = await this.#raw(method, path, body);
+    const doc = typeof raw === "object" && raw !== null && !Array.isArray(raw) ? raw : {};
+    const value = doc.value;
+    if (typeof value === "object" && value !== null) {
+      const error62 = value.error;
+      if (typeof error62 === "string" && error62 !== "") {
+        const message = value.message;
+        throw new WdaHttpError(
+          `WDA ${method} ${path} failed: ${error62}${typeof message === "string" && message !== "" ? ` \u2014 ${message}` : ""}`,
+          void 0,
+          JSON.stringify(doc),
+          value
+        );
+      }
+    }
+    return { doc, value };
+  }
+  /**
+   * The busy gate plus the single transport-reset retry. While the cooldown
+   * after a timeout lasts, EVERY request fails fast with a busy error: WDA
+   * serves requests serially and a client-side timeout does not cancel the
+   * command on the device, so anything sent now would only queue behind the
+   * stuck command and burn its own timeout (the reported timeout cascade).
+   * The gate bounds that pile-up at the one request that already timed out.
+   *
+   * A transport reset (ECONNRESET / socket hang up / EPIPE) is then retried
+   * exactly once, and only for idempotent GETs: WDA drops connections under
+   * load, so a dropped snapshot/screenshot read is not a real failure. POSTs
+   * are never retried (a retried tap taps twice).
+   */
+  async #raw(method, path, body) {
+    if (this.#options.now() < this.#busyUntil) {
+      throw new WdaHttpError(
+        "WDA " + method + " " + path + " rejected while the device is busy: a recent request timed out and its command is still draining on the device \u2014 retry shortly [wda-busy]",
+        void 0,
+        void 0,
+        void 0
+      );
+    }
+    const timeoutMs = isFastWdaPath(method, path) ? this.#options.shortTimeoutMs : this.#options.requestTimeoutMs;
+    try {
+      return await this.#rawOnce(method, path, body, timeoutMs);
+    } catch (error62) {
+      if (!isIdempotentWdaGet(method, path) || !isTransientWdaTransportError(error62)) throw error62;
+      await sleep4(TRANSIENT_RETRY_DELAY_MS);
+      return this.#rawOnce(method, path, body, timeoutMs);
+    }
+  }
+  #rawOnce(method, path, body, timeoutMs) {
+    const url2 = `${this.controlUrl}${path}`;
+    return new Promise((resolve7, reject) => {
+      let settled = false;
+      const failWith = (error62) => {
+        if (error62 instanceof WdaHttpError && /timed out after/i.test(error62.message)) {
+          this.#busyUntil = this.#options.now() + this.#options.busyCooldownMs;
+        }
+        reject(error62);
+      };
+      const finish = (done) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        done();
+      };
+      const payload = body === void 0 ? void 0 : JSON.stringify(body);
+      const req = httpRequest2(url2, {
+        method,
+        timeout: timeoutMs,
+        ...payload === void 0 ? {} : { headers: { "Content-Type": "application/json", "Content-Length": String(Buffer.byteLength(payload)) } }
+      }, (res) => {
+        const chunks = [];
+        let total = 0;
+        res.on("data", (chunk) => {
+          total += chunk.length;
+          if (total > this.#options.maxBodyBytes) {
+            res.destroy();
+            finish(() => failWith(new WdaHttpError(
+              `WDA ${method} ${path} response exceeded ${this.#options.maxBodyBytes} bytes`,
+              res.statusCode,
+              void 0,
+              void 0
+            )));
+            return;
+          }
+          chunks.push(chunk);
+        });
+        res.on("error", (error62) => {
+          finish(() => failWith(new WdaHttpError(
+            `WDA ${method} ${path} connection error: ${errorMessage5(error62)}`,
+            res.statusCode,
+            void 0,
+            void 0
+          )));
+        });
+        res.on("end", () => {
+          const text = Buffer.concat(chunks).toString("utf8");
+          let doc;
+          try {
+            doc = text === "" ? void 0 : JSON.parse(text);
+          } catch {
+            doc = void 0;
+          }
+          if (res.statusCode === void 0 || res.statusCode >= 400) {
+            const value = typeof doc === "object" && doc !== null ? doc.value : void 0;
+            const detail = typeof value === "object" && value !== null ? `${String(value.error ?? "")}${value.message === void 0 ? "" : ` \u2014 ${value.message}`}`.trim() : text.slice(0, 400);
+            finish(() => failWith(new WdaHttpError(
+              `WDA ${method} ${path} returned HTTP ${res.statusCode}${detail === "" ? "" : `: ${detail}`}`,
+              res.statusCode,
+              text,
+              value
+            )));
+            return;
+          }
+          try {
+            this.#options.onSuccess();
+          } catch {
+          }
+          finish(() => resolve7(doc));
+        });
+      });
+      req.on("error", (error62) => {
+        finish(() => failWith(new WdaHttpError(`WDA ${method} ${path} request failed: ${errorMessage5(error62)}`, void 0, void 0, void 0)));
+      });
+      req.on("timeout", () => {
+        req.destroy();
+        finish(() => failWith(new WdaHttpError(`WDA ${method} ${path} timed out after ${timeoutMs} ms`, void 0, void 0, void 0)));
+      });
+      const timer = setTimeout(() => {
+        req.destroy();
+        finish(() => failWith(new WdaHttpError(`WDA ${method} ${path} timed out after ${timeoutMs} ms`, void 0, void 0, void 0)));
+      }, timeoutMs);
+      timer.unref?.();
+      if (payload !== void 0) req.write(payload);
+      req.end();
+    });
+  }
+};
+
+// src/wda-setup.ts
+import { execFile as execFile6 } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync as existsSync3 } from "node:fs";
+import { chmod, lstat, mkdir, readdir, readFile as readFile3, rename, rm, writeFile } from "node:fs/promises";
+import { join as join8, relative, resolve as resolve2 } from "node:path";
+function parseSigningIdentities(stdout) {
+  const identities = [];
+  for (const match of stdout.matchAll(/^\s*\d+\)\s+([0-9A-Fa-f]{40})\s+"(Apple Development(?:[^"]*))"/gmu)) {
+    const name = match[2].trim();
+    const teamId = /\(([0-9A-Z]{10})\)\s*$/u.exec(name)?.[1];
+    identities.push({ hash: match[1], name, ...teamId === void 0 ? {} : { teamId } });
+  }
+  return identities;
+}
+function parseXcodeTeams(json2) {
+  let parsed;
+  try {
+    parsed = JSON.parse(json2);
+  } catch {
+    return [];
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return [];
+  const teams = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const entries of Object.values(parsed)) {
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) {
+      if (typeof entry !== "object" || entry === null) continue;
+      const record3 = entry;
+      const teamId = typeof record3.teamID === "string" ? record3.teamID.trim() : "";
+      if (teamId === "" || seen.has(teamId)) continue;
+      seen.add(teamId);
+      teams.push({
+        teamId,
+        ...typeof record3.teamName === "string" ? { teamName: record3.teamName.trim() } : {},
+        ...typeof record3.teamType === "string" ? { teamType: record3.teamType.trim() } : {},
+        isFree: record3.isFreeProvisioningTeam === true
+      });
+    }
+  }
+  return teams;
+}
+function chooseSigningTeam(options) {
+  const explicit = options.explicit?.trim() ?? "";
+  if (explicit !== "") return { teamId: explicit, source: "option", detail: "the teamId argument" };
+  const env = options.env?.trim() ?? "";
+  if (env !== "") return { teamId: env, source: "env", detail: "IOS_SIM_TEAM_ID" };
+  const teams = options.xcodeTeams ?? [];
+  const identities = options.identities ?? [];
+  const identityTeams = new Set(identities.map((identity2) => identity2.teamId?.toUpperCase()).filter((id) => id !== void 0));
+  const label = (team) => team.teamName || team.teamId;
+  const matching = teams.find((team) => identityTeams.has(team.teamId.toUpperCase()));
+  if (matching !== void 0) {
+    return { teamId: matching.teamId, source: "xcode-account", detail: `Xcode team "${label(matching)}" (it has an Apple Development certificate in the keychain)` };
+  }
+  const free = teams.find((team) => team.isFree || team.teamType?.toLowerCase() === "personal team");
+  if (free !== void 0) return { teamId: free.teamId, source: "xcode-account", detail: `Xcode personal team "${label(free)}"` };
+  if (teams[0] !== void 0) return { teamId: teams[0].teamId, source: "xcode-account", detail: `Xcode team "${label(teams[0])}"` };
+  const identity = identities.find((candidate) => candidate.teamId !== void 0);
+  if (identity?.teamId !== void 0) return { teamId: identity.teamId, source: "identity", detail: `keychain identity "${identity.name}"` };
+  return {
+    source: "none",
+    detail: "no signing team found \u2014 sign in to your Apple ID in Xcode \u25B8 Settings \u25B8 Accounts (a free personal team works), or set IOS_SIM_TEAM_ID to your 10-character team id"
+  };
+}
+function run(command, args, signal) {
+  return new Promise((resolveRun, reject) => {
+    execFile6(command, [...args], { timeout: 3e4, maxBuffer: 4 * 1024 * 1024, signal }, (error62, stdout, stderr) => {
+      if (error62 !== null) reject(new Error(`${command} failed${stderr.trim() === "" ? "" : `: ${stderr.trim()}`}`));
+      else resolveRun(stdout);
+    });
+  });
+}
+async function resolveSigningTeam(options) {
+  if ((options.explicit?.trim() ?? "") !== "" || (options.env?.trim() ?? "") !== "") return chooseSigningTeam(options);
+  const xcodeTeams = await run("plutil", [
+    "-extract",
+    "IDEProvisioningTeams",
+    "json",
+    "-o",
+    "-",
+    join8(options.home, "Library", "Preferences", "com.apple.dt.Xcode.plist")
+  ], options.signal).then(parseXcodeTeams, () => []);
+  const identities = await run("security", ["find-identity", "-v", "-p", "codesigning"], options.signal).then(parseSigningIdentities, () => []);
+  return chooseSigningTeam({ xcodeTeams, identities });
+}
+function wdaBundleId(teamId, override) {
+  const explicit = override?.trim() ?? "";
+  return explicit !== "" ? explicit : `dev.ios-simulator.wda.t${teamId.toLowerCase().replace(/[^a-z0-9]/gu, "")}`;
+}
+var WDA_SAFETY_PATCHES = [
+  {
+    id: "http-loopback-only",
+    file: "WebDriverAgentLib/Utilities/FBConfiguration.m",
+    oldText: '- (NSString *)bindingIPAddress\n{\n  // Existence of USE_IP in the environment allows specifying which interface to bind to\n  if (NSProcessInfo.processInfo.environment[@"USE_IP"] &&\n      [NSProcessInfo.processInfo.environment[@"USE_IP"] length] > 0) {\n    return NSProcessInfo.processInfo.environment[@"USE_IP"];\n  }\n\n  return nil;\n}',
+    newText: '- (NSString *)bindingIPAddress\n{\n  // ios-simulator safety patch: HTTP binds to device loopback only, reached\n  // through the USB tunnel. The environment cannot turn this off.\n  return @"127.0.0.1";\n}'
+  },
+  {
+    id: "mjpeg-loopback-only",
+    file: "WebDriverAgentLib/Routing/FBWebServer.m",
+    oldText: "  self.screenshotsBroadcaster = [[FBTCPSocket alloc]\n                                 initWithPort:(uint16_t)FBConfiguration.sharedInstance.mjpegServerPort];",
+    newText: '  self.screenshotsBroadcaster = [[FBTCPSocket alloc]\n                                 initWithPort:(uint16_t)FBConfiguration.sharedInstance.mjpegServerPort];\n  // ios-simulator safety patch: the MJPEG broadcaster binds to device\n  // loopback only (nil would expose the video stream on the device LAN).\n  self.screenshotsBroadcaster.interface = @"127.0.0.1";'
+  }
+];
+var SKIPPED = /* @__PURE__ */ new Set([".git", "DerivedData", "node_modules", ".DS_Store", "build"]);
+var MANIFEST = "ios-simulator-wda-stage.json";
+async function copyTree(source, destination) {
+  await mkdir(destination, { recursive: true });
+  for (const entry of await readdir(source, { withFileTypes: true })) {
+    if (SKIPPED.has(entry.name)) continue;
+    const from = join8(source, entry.name);
+    const to = join8(destination, entry.name);
+    const info = await lstat(from);
+    if (info.isSymbolicLink()) throw new Error(`symbolic links are not allowed in the WDA checkout: ${relative(source, from)}`);
+    if (info.isDirectory()) await copyTree(from, to);
+    else if (info.isFile()) {
+      await writeFile(to, await readFile3(from));
+      if ((info.mode & 73) !== 0) await chmod(to, 493);
+    }
+  }
+}
+async function treeDigest(root) {
+  const hash2 = createHash("sha256");
+  const walk = async (dir) => {
+    for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+      if (SKIPPED.has(entry.name) || entry.name === MANIFEST) continue;
+      const path = join8(dir, entry.name);
+      const info = await lstat(path);
+      if (info.isSymbolicLink()) throw new Error(`symbolic links are not allowed in the WDA checkout: ${relative(root, path)}`);
+      if (info.isDirectory()) {
+        hash2.update(`D\0${relative(root, path)}\0`);
+        await walk(path);
+      } else if (info.isFile()) {
+        hash2.update(`F\0${relative(root, path)}\0`).update(await readFile3(path)).update("\0");
+      }
+    }
+  };
+  await walk(root);
+  return hash2.digest("hex");
+}
+async function stageWdaSource(sourceDir, stateDir, patches = WDA_SAFETY_PATCHES) {
+  const source = resolve2(sourceDir);
+  if (!existsSync3(join8(source, "WebDriverAgent.xcodeproj"))) {
+    throw new Error(`no WebDriverAgent checkout at ${source} \u2014 clone it there first: git clone https://github.com/appium/WebDriverAgent.git "${source}" (or set IOS_SIM_WDA_DIR to an existing checkout)`);
+  }
+  const sourceDigest = await treeDigest(source);
+  const patchDigest = createHash("sha256").update(JSON.stringify(patches)).digest("hex");
+  const staged = join8(resolve2(stateDir), `wda-${sourceDigest.slice(0, 12)}-${patchDigest.slice(0, 12)}`);
+  try {
+    const manifest = JSON.parse(await readFile3(join8(staged, MANIFEST), "utf8"));
+    if (manifest.stagedDigest === await treeDigest(staged)) return staged;
+  } catch {
+  }
+  const temporary = `${staged}.tmp-${process.pid}-${Date.now()}`;
+  try {
+    await copyTree(source, temporary);
+    for (const patch of patches) {
+      const file2 = join8(temporary, ...patch.file.split("/"));
+      const text = await readFile3(file2, "utf8").catch(() => {
+        throw new Error(`the WDA checkout has no ${patch.file} \u2014 this WebDriverAgent version is not supported (safety patch ${patch.id})`);
+      });
+      const occurrences = text.split(patch.oldText).length - 1;
+      if (occurrences !== 1) {
+        throw new Error(`safety patch ${patch.id} does not apply to ${patch.file} (anchor found ${occurrences} times) \u2014 this WebDriverAgent version is not supported; refusing to build a WDA that would listen on every network interface`);
+      }
+      await writeFile(file2, text.replace(patch.oldText, patch.newText), "utf8");
+    }
+    await writeFile(join8(temporary, MANIFEST), JSON.stringify({ sourceDir: source, patches: patches.map((patch) => patch.id), stagedDigest: await treeDigest(temporary) }, null, 2));
+    await rm(staged, { recursive: true, force: true });
+    await rename(temporary, staged);
+    return staged;
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+}
+
+// src/wda-host.ts
+var WDA_DEVICE_PORT = 8100;
+var WDA_START_TIMEOUT_MS = 3e5;
+var WDA_READY_TIMEOUT_MS = 3e4;
+var ADOPT_PROBE_TIMEOUT_MS = 3e3;
+var READY_POLL_MS = 1e3;
+var MAX_OUTPUT_BYTES = 64 * 1024;
+function errorMessage6(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+function xcodebuildTestArgs(hardwareUdid, teamId, bundleId) {
+  return [
+    "-project",
+    "WebDriverAgent.xcodeproj",
+    "-scheme",
+    "WebDriverAgentRunner",
+    "-destination",
+    `id=${hardwareUdid}`,
+    "-allowProvisioningUpdates",
+    `DEVELOPMENT_TEAM=${teamId}`,
+    "CODE_SIGN_STYLE=Automatic",
+    `PRODUCT_BUNDLE_IDENTIFIER=${bundleId}`,
+    "test"
+  ];
+}
+function iproxyArgs(localPort, devicePort, udid) {
+  return [String(localPort), String(devicePort), udid];
+}
+var WdaController = class {
+  #seams;
+  #startTimeoutMs;
+  #readyTimeoutMs;
+  #running;
+  #starting;
+  #failure;
+  constructor(seams, options = {}) {
+    this.#seams = seams;
+    this.#startTimeoutMs = options.startTimeoutMs ?? WDA_START_TIMEOUT_MS;
+    this.#readyTimeoutMs = options.readyTimeoutMs ?? WDA_READY_TIMEOUT_MS;
+  }
+  status() {
+    const running = this.#running;
+    if (running !== void 0) {
+      return {
+        phase: "running",
+        device: { udid: running.device.udid, name: running.device.name },
+        controlPort: running.tunnel.localPort,
+        tunnel: running.tunnel.kind,
+        adopted: running.adopted,
+        ...running.signingTeam === void 0 ? {} : { signingTeam: running.signingTeam }
+      };
+    }
+    if (this.#starting !== void 0) {
+      const { device } = this.#starting;
+      return { phase: "starting", device: { udid: device.udid, name: device.name } };
+    }
+    const failure2 = this.#failure;
+    if (failure2 !== void 0) {
+      return { phase: "failed", device: { udid: failure2.device.udid, name: failure2.device.name }, reason: failure2.reason, detail: failure2.detail };
+    }
+    return { phase: "idle" };
+  }
+  /**
+   * Adopt or launch WDA on `device`; resolves once it is ready and has a
+   * session. Concurrent calls for one device share the attempt; a start for
+   * another device stops the current one first (one device at a time).
+   */
+  async start(device, signal) {
+    if (this.#seams.platform !== "darwin") throw new WdaError("unavailable", "WebDriverAgent needs macOS with Xcode");
+    if (this.#running?.device.udid === device.udid) return this.status();
+    if (this.#starting !== void 0) {
+      if (this.#starting.device.udid === device.udid) return this.#starting.promise;
+      throw new Error(`WebDriverAgent is still starting on "${this.#starting.device.name}"; wait for it to finish first`);
+    }
+    const promise2 = (async () => {
+      await this.stop();
+      this.#failure = void 0;
+      try {
+        this.#running = await this.#launch(device, signal);
+        return this.status();
+      } catch (error62) {
+        const reason = error62 instanceof WdaError ? error62.reason : "build-failed";
+        this.#failure = { device, reason, detail: errorMessage6(error62) };
+        throw error62;
+      }
+    })();
+    this.#starting = { device, promise: promise2 };
+    try {
+      return await promise2;
+    } finally {
+      this.#starting = void 0;
+    }
+  }
+  /**
+   * The WDA client for `device`, never building: the running one, or a WDA
+   * that already answers on the device (adopted), else an error naming
+   * ios_real_start_wda and, when the last start failed, why.
+   */
+  async control(device) {
+    if (this.#running?.device.udid === device.udid) return this.#running.client;
+    if (this.#starting?.device.udid === device.udid) {
+      throw new WdaError("launch-timeout", `WebDriverAgent is still starting on "${device.name}" \u2014 wait for ios_real_start_wda to finish`);
+    }
+    if (this.#seams.platform === "darwin" && this.#starting === void 0) {
+      const adopted = await this.#adopt(device).catch(() => void 0);
+      if (adopted !== void 0) {
+        await this.stop();
+        this.#running = adopted;
+        this.#failure = void 0;
+        return adopted.client;
+      }
+    }
+    const failure2 = this.#failure?.device.udid === device.udid ? this.#failure : void 0;
+    throw new WdaError(
+      failure2?.reason ?? "wda-not-ready",
+      `WebDriverAgent is not running on "${device.name}" \u2014 run ios_real_start_wda first (a cold build can take minutes)` + (failure2 === void 0 ? "" : `; the last start failed: ${failure2.detail}`)
+    );
+  }
+  /** Stop the runner this controller launched and close its tunnel. An adopted WDA keeps running on the device. */
+  async stop() {
+    const running = this.#running;
+    if (running === void 0) return { stopped: false };
+    this.#running = void 0;
+    running.runner?.kill();
+    await running.tunnel.close().catch(() => void 0);
+    return { stopped: true, device: { udid: running.device.udid, name: running.device.name } };
+  }
+  async dispose() {
+    await this.stop();
+  }
+  /** Synchronous exit backstop: kill the runner this controller launched. */
+  terminateOnExit() {
+    this.#running?.runner?.kill();
+  }
+  async #adopt(device) {
+    const tunnel = await this.#seams.openTunnel(hardwareUdidOf(device), WDA_DEVICE_PORT);
+    const client = this.#seams.createClient(`http://127.0.0.1:${tunnel.localPort}`);
+    try {
+      const probe = this.#seams.createClient(`http://127.0.0.1:${tunnel.localPort}`, { requestTimeoutMs: ADOPT_PROBE_TIMEOUT_MS });
+      if (!(await probe.health()).ready) throw new Error("not ready");
+      await client.ensureSession();
+      await client.setSnapshotDepth(WDA_DEFAULT_SNAPSHOT_DEPTH).catch(() => void 0);
+      return { device, tunnel, client, adopted: true };
+    } catch {
+      await tunnel.close().catch(() => void 0);
+      return void 0;
+    }
+  }
+  async #launch(device, signal) {
+    const adopted = await this.#adopt(device).catch((error62) => {
+      if (error62 instanceof WdaError) throw error62;
+      throw new WdaError("tunnel-failed", `no USB tunnel to "${device.name}": ${errorMessage6(error62)}`, error62);
+    });
+    if (adopted !== void 0) return adopted;
+    const team = await this.#seams.resolveTeam(signal);
+    if (team.teamId === void 0) throw new WdaError("unavailable", `no signing team for WebDriverAgent \u2014 ${team.detail}`);
+    let stagedDir;
+    try {
+      stagedDir = await this.#seams.stageSource();
+    } catch (error62) {
+      throw new WdaError("unavailable", errorMessage6(error62), error62);
+    }
+    const hardwareUdid = hardwareUdidOf(device);
+    const runner2 = this.#seams.spawnRunner(xcodebuildTestArgs(hardwareUdid, team.teamId, this.#seams.bundleId(team.teamId)), stagedDir);
+    let tunnel;
+    try {
+      await this.#waitForServerUrl(runner2, device, signal);
+      tunnel = await this.#seams.openTunnel(hardwareUdid, WDA_DEVICE_PORT);
+      const client = this.#seams.createClient(`http://127.0.0.1:${tunnel.localPort}`);
+      await this.#waitForReady(client, device, signal);
+      await client.ensureSession();
+      await client.setSnapshotDepth(WDA_DEFAULT_SNAPSHOT_DEPTH).catch(() => void 0);
+      const running = { device, tunnel, client, runner: runner2, adopted: false, signingTeam: `${team.teamId} (${team.source})` };
+      void runner2.exited.then(() => {
+        if (this.#running === running) {
+          this.#running = void 0;
+          void running.tunnel.close().catch(() => void 0);
+          this.#failure = { device, reason: "wda-not-ready", detail: "the WebDriverAgent runner (xcodebuild) exited \u2014 run ios_real_start_wda again" };
+        }
+      });
+      return running;
+    } catch (error62) {
+      runner2.kill();
+      await tunnel?.close().catch(() => void 0);
+      throw error62;
+    }
+  }
+  #waitForServerUrl(runner2, device, signal) {
+    return new Promise((resolve7, reject) => {
+      let output2 = "";
+      let settled = false;
+      const finish = (error62) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        signal?.removeEventListener("abort", onAbort);
+        if (error62 === void 0) resolve7();
+        else reject(error62);
+      };
+      const classified = (fallback, what) => {
+        const reason = classifyWdaFailure(output2) ?? fallback;
+        const tail = output2.trim().split("\n").slice(-15).join("\n");
+        return new WdaError(reason, `${what} \u2014 ${wdaFailureDetail(reason, device.name, this.#startTimeoutMs)}${tail === "" ? "" : `
+xcodebuild output (tail):
+${tail}`}`);
+      };
+      const onAbort = () => finish(new Error("the WebDriverAgent start was cancelled"));
+      const timer = setTimeout(() => finish(classified("launch-timeout", "WebDriverAgent did not come up in time")), this.#startTimeoutMs);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      if (signal?.aborted === true) onAbort();
+      runner2.onOutput((text) => {
+        output2 = (output2 + text).slice(-MAX_OUTPUT_BYTES);
+        if (parseServerUrlHere(output2) !== void 0) finish();
+      });
+      void runner2.exited.then((code) => finish(classified("build-failed", `xcodebuild exited (code ${String(code)}) before WebDriverAgent came up`)));
+    });
+  }
+  async #waitForReady(client, device, signal) {
+    const deadline = this.#seams.now() + this.#readyTimeoutMs;
+    let last = "";
+    while (this.#seams.now() < deadline) {
+      if (signal?.aborted === true) throw new Error("the WebDriverAgent start was cancelled");
+      try {
+        const health = await client.health();
+        if (health.ready) return;
+        last = health.message ?? health.state ?? "not ready";
+      } catch (error62) {
+        last = errorMessage6(error62);
+      }
+      await this.#seams.sleep(READY_POLL_MS);
+    }
+    throw new WdaError("wda-not-ready", `WebDriverAgent on "${device.name}" did not report ready within ${Math.round(this.#readyTimeoutMs / 1e3)} s (${last}) \u2014 re-run ios_real_start_wda`);
+  }
+};
+function hardwareUdidOf(device) {
+  return device.hardwareUdid ?? device.udid;
+}
+function findOnPath3(command) {
+  for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
+    if (dir !== "" && existsSync4(join9(dir, command))) return join9(dir, command);
+  }
+  return void 0;
+}
+function spawnGroup(command, args, cwd) {
+  const child = spawn4(command, [...args], { cwd, detached: true, stdio: ["ignore", "pipe", "pipe"] });
+  const listeners = [];
+  const emit = (chunk) => {
+    const text = chunk.toString("utf8");
+    for (const listener of listeners) listener(text);
+  };
+  child.stdout.on("data", emit);
+  child.stderr.on("data", emit);
+  const exited = new Promise((resolve7) => {
+    child.once("error", () => resolve7(null));
+    child.once("close", (code) => resolve7(code));
+  });
+  return {
+    onOutput: (listener) => {
+      listeners.push(listener);
+    },
+    exited,
+    kill: () => {
+      if (child.exitCode !== null || child.signalCode !== null) return;
+      try {
+        if (child.pid !== void 0) process.kill(-child.pid, "SIGTERM");
+        else child.kill("SIGTERM");
+      } catch {
+        child.kill("SIGTERM");
+      }
+    }
+  };
+}
+function freeLoopbackPort() {
+  return new Promise((resolve7, reject) => {
+    const server = createServer3();
+    server.unref();
+    server.once("error", reject);
+    server.listen({ host: "127.0.0.1", port: 0 }, () => {
+      const address = server.address();
+      const port = typeof address === "object" && address !== null ? address.port : 0;
+      server.close(() => resolve7(port));
+    });
+  });
+}
+function portAccepts(port) {
+  return new Promise((resolve7) => {
+    const socket = connect({ host: "127.0.0.1", port });
+    socket.setTimeout(500);
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve7(true);
+    });
+    socket.once("error", () => resolve7(false));
+    socket.once("timeout", () => {
+      socket.destroy();
+      resolve7(false);
+    });
+  });
+}
+async function openRealTunnel(hardwareUdid, devicePort) {
+  const localPort = await freeLoopbackPort();
+  if (usbmuxAvailable() && await resolveUsbDeviceId(hardwareUdid).catch(() => void 0) !== void 0) {
+    const forward = await createUsbmuxForward({ udid: hardwareUdid, devicePort, localPort });
+    return { localPort: forward.localPort, kind: "usbmux", close: () => forward.close() };
+  }
+  const iproxy = findOnPath3("iproxy");
+  if (iproxy === void 0) {
+    const kind = usbmuxAvailable() ? await classifyUsbmuxTunnelFailure(hardwareUdid).catch(() => "not-attached") : "not-attached";
+    throw new WdaError("tunnel-failed", `${usbmuxTunnelFailureDetail(kind)} (no usbmux record for the device, and iproxy is not installed: brew install libimobiledevice)`);
+  }
+  const child = spawnGroup(iproxy, iproxyArgs(localPort, devicePort, hardwareUdid));
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (await portAccepts(localPort)) {
+      return { localPort, kind: "iproxy", close: async () => {
+        child.kill();
+      } };
+    }
+    await new Promise((resolve7) => setTimeout(resolve7, 150));
+  }
+  child.kill();
+  throw new WdaError("tunnel-failed", `iproxy did not open 127.0.0.1:${localPort} for the device`);
+}
+function realWdaSeams(options) {
+  const env = options.env ?? process.env;
+  const sourceDir = (env.IOS_SIM_WDA_DIR?.trim() ?? "") !== "" ? env.IOS_SIM_WDA_DIR.trim() : join9(options.cacheRoot, "WebDriverAgent");
+  return {
+    platform: options.platform ?? process.platform,
+    resolveTeam: (signal) => resolveSigningTeam({ ...env.IOS_SIM_TEAM_ID === void 0 ? {} : { env: env.IOS_SIM_TEAM_ID }, home: homedir3(), ...signal === void 0 ? {} : { signal } }),
+    stageSource: () => stageWdaSource(sourceDir, join9(options.cacheRoot, "wda")),
+    bundleId: (teamId) => wdaBundleId(teamId, env.IOS_SIM_WDA_BUNDLE_ID),
+    spawnRunner: (args, cwd) => spawnGroup("xcodebuild", args, cwd),
+    openTunnel: openRealTunnel,
+    createClient: (url2, clientOptions) => new WdaClient(url2, clientOptions),
+    sleep: (milliseconds) => new Promise((resolve7) => setTimeout(resolve7, milliseconds)),
+    now: Date.now
+  };
+}
+
+// src/ocr-backend.ts
+import { execFile as execFile7 } from "node:child_process";
+import { createHash as createHash2 } from "node:crypto";
+import { mkdirSync, readFileSync as readFileSync4, renameSync, rmSync as rmSync2, statSync as statSync4, writeFileSync } from "node:fs";
+import { delimiter as delimiter4, dirname as dirname3, join as join10 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+var OCR_INSTALL_HINT = 'the plugin compiles its bundled Vision OCR helper with swiftc on first use \u2014 install Xcode (or the Command Line Tools: run "xcode-select --install") so ios_sim_find_text / ios_sim_tap_text / ios_sim_wait_for can run';
+var SWIFTC_CANDIDATES = ["/usr/bin/swiftc", "/usr/local/bin/swiftc"];
+var OCR_COMPILE_TIMEOUT_MS = 5 * 60 * 1e3;
+var OCR_EXEC_TIMEOUT_MS = 12e4;
+var OCR_MAX_BUFFER_BYTES = 8 * 1024 * 1024;
+var DIGEST_FILE = ".ios-simulator-ocr.sha256";
+function isExecutableFile2(path) {
+  try {
+    const info = statSync4(path);
+    return info.isFile() && (info.mode & 73) !== 0;
+  } catch {
+    return false;
+  }
+}
+function isFile2(path) {
+  try {
+    return statSync4(path).isFile();
+  } catch {
+    return false;
+  }
+}
+function findOnPath4(command, env) {
+  for (const dir of (env.PATH ?? "").split(delimiter4)) {
+    if (dir === "") continue;
+    const candidate = join10(dir, command);
+    if (isExecutableFile2(candidate)) return candidate;
+  }
+  return void 0;
+}
+function sha256File(path) {
+  return createHash2("sha256").update(readFileSync4(path)).digest("hex");
+}
+function run2(command, args, timeoutMs, signal) {
+  return new Promise((resolve7, reject) => {
+    execFile7(command, [...args], { timeout: timeoutMs, maxBuffer: OCR_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
       if (error62 !== null) {
         reject(Object.assign(error62, { stdout, stderr }));
         return;
       }
-      resolve6({ stdout, stderr });
+      resolve7({ stdout, stderr });
     });
   });
 }
 function defaultOcrSourcePath() {
-  return join6(dirname2(fileURLToPath(import.meta.url)), "..", "assets", "ocr.swift");
+  return join10(dirname3(fileURLToPath2(import.meta.url)), "..", "assets", "ocr.swift");
 }
 var OcrHelper = class {
   #cacheDir;
@@ -41878,24 +44210,24 @@ var OcrHelper = class {
   #swiftc() {
     const explicit = this.#env.IOS_SIM_SWIFTC?.trim();
     if (explicit !== void 0 && explicit !== "") {
-      if (isExecutableFile(explicit)) return { command: explicit };
+      if (isExecutableFile2(explicit)) return { command: explicit };
       return { reason: `IOS_SIM_SWIFTC points at a missing or non-executable file: ${explicit}` };
     }
-    const onPath = findOnPath2("swiftc", this.#env);
+    const onPath = findOnPath4("swiftc", this.#env);
     if (onPath !== void 0) return { command: onPath };
-    const known = SWIFTC_CANDIDATES.find(isExecutableFile);
+    const known = SWIFTC_CANDIDATES.find(isExecutableFile2);
     if (known !== void 0) return { command: known };
     return { reason: "swiftc (the Swift compiler) was not found on PATH \u2014 install Xcode or the Command Line Tools" };
   }
   #slot(sourceSha256) {
-    return join6(this.#cacheDir, sourceSha256.slice(0, 16));
+    return join10(this.#cacheDir, sourceSha256.slice(0, 16));
   }
   /** A cached compile whose recorded digest still matches the binary's bytes. */
   #validCached(sourceSha256) {
-    const binary = join6(this.#slot(sourceSha256), "ocr");
-    if (!isExecutableFile(binary)) return void 0;
+    const binary = join10(this.#slot(sourceSha256), "ocr");
+    if (!isExecutableFile2(binary)) return void 0;
     try {
-      const recorded = readFileSync2(join6(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
+      const recorded = readFileSync4(join10(this.#slot(sourceSha256), DIGEST_FILE), "utf8").trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/u.test(recorded)) return void 0;
       return recorded === sha256File(binary) ? binary : void 0;
     } catch {
@@ -41905,7 +44237,7 @@ var OcrHelper = class {
   /** Resolve without compiling: source + swiftc probe + cache validation. */
   resolve() {
     if (this.#platform !== "darwin") return { available: false, reason: "Vision OCR only runs on macOS with Xcode" };
-    if (!isFile(this.#sourcePath)) {
+    if (!isFile2(this.#sourcePath)) {
       return { available: false, reason: `the bundled OCR Swift source was not found at ${this.#sourcePath}` };
     }
     const cached2 = this.#validCached(sha256File(this.#sourcePath));
@@ -41946,24 +44278,24 @@ var OcrHelper = class {
     if (cached2 !== void 0) return cached2;
     const slot = this.#slot(sourceSha256);
     mkdirSync(slot, { recursive: true });
-    const tmp = join6(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
+    const tmp = join10(this.#cacheDir, `.ocr-${sourceSha256.slice(0, 16)}-${process.pid}-${Date.now()}.tmp`);
     try {
       try {
-        await run(swiftc.command, ["-O", this.#sourcePath, "-o", tmp], OCR_COMPILE_TIMEOUT_MS);
+        await run2(swiftc.command, ["-O", this.#sourcePath, "-o", tmp], OCR_COMPILE_TIMEOUT_MS);
       } catch (error62) {
         const detail = error62.stderr?.trim();
         throw new Error(`swiftc -O ${this.#sourcePath} failed${detail === void 0 || detail === "" ? "" : `: ${detail}`}`);
       }
       try {
-        await run(tmp, [], 6e4);
+        await run2(tmp, [], 6e4);
       } catch (error62) {
         if (error62.code !== 2) {
           throw new Error(`the compiled OCR helper failed its sanity launch: ${error62 instanceof Error ? error62.message : String(error62)}`);
         }
       }
-      const binary = join6(slot, "ocr");
+      const binary = join10(slot, "ocr");
       renameSync(tmp, binary);
-      writeFileSync(join6(slot, DIGEST_FILE), `${sha256File(binary)}
+      writeFileSync(join10(slot, DIGEST_FILE), `${sha256File(binary)}
 `, "utf8");
       return binary;
     } finally {
@@ -41978,7 +44310,7 @@ var OcrHelper = class {
     }
     let stdout;
     try {
-      stdout = (await run(binary.command, [imagePath], OCR_EXEC_TIMEOUT_MS, signal)).stdout;
+      stdout = (await run2(binary.command, [imagePath], OCR_EXEC_TIMEOUT_MS, signal)).stdout;
     } catch (error62) {
       const { stdout: out, stderr } = error62;
       const detail = stderr?.trim() || out?.trim() || (error62 instanceof Error ? error62.message : String(error62));
@@ -42049,14 +44381,14 @@ function pixelRectToNormalizedCenter(rect, pixelSize) {
 }
 
 // src/preview-host.ts
-import { execFile as execFile5, spawn as spawn3 } from "node:child_process";
-import { copyFileSync, existsSync as existsSync3, mkdirSync as mkdirSync2, readdirSync as readdirSync3, readFileSync as readFileSync4, renameSync as renameSync2, rmSync as rmSync3, statSync as statSync4, watch, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname as dirname3, join as join8, resolve as resolve3 } from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
+import { execFile as execFile8, spawn as spawn5 } from "node:child_process";
+import { copyFileSync, existsSync as existsSync6, mkdirSync as mkdirSync2, readdirSync as readdirSync3, readFileSync as readFileSync6, renameSync as renameSync2, rmSync as rmSync3, statSync as statSync5, watch, writeFileSync as writeFileSync2 } from "node:fs";
+import { dirname as dirname4, join as join12, resolve as resolve4 } from "node:path";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // src/preview-source.ts
-import { existsSync as existsSync2, readdirSync as readdirSync2, readFileSync as readFileSync3 } from "node:fs";
-import { join as join7, resolve as resolve2, sep } from "node:path";
+import { existsSync as existsSync5, readdirSync as readdirSync2, readFileSync as readFileSync5 } from "node:fs";
+import { join as join11, resolve as resolve3, sep } from "node:path";
 var PREVIEW_HOST_BUNDLE_ID = "dev.ios-simulator.preview-host";
 var HOST_TARGET_NAME = "IosSimPreviewHost";
 var DYLIB_TARGET_NAME = "IosSimPreviewDylib";
@@ -42089,9 +44421,9 @@ function extractCallArguments(text, selector) {
   return found;
 }
 function readPackageManifest(packageDir) {
-  const manifestPath = join7(packageDir, "Package.swift");
-  if (!existsSync2(manifestPath)) throw new Error(`no Package.swift found in ${packageDir}`);
-  const text = stripStringsAndComments(readFileSync3(manifestPath, "utf8"), { keepStrings: true });
+  const manifestPath = join11(packageDir, "Package.swift");
+  if (!existsSync5(manifestPath)) throw new Error(`no Package.swift found in ${packageDir}`);
+  const text = stripStringsAndComments(readFileSync5(manifestPath, "utf8"), { keepStrings: true });
   const name = /name\s*:\s*"([^"]+)"/u.exec(text)?.[1] ?? "Package";
   const iosVersionMatch = /\.iOS\(\s*\.v(\d+)/u.exec(text);
   const libraryTargets = [];
@@ -42101,7 +44433,7 @@ function readPackageManifest(packageDir) {
     if (targetName === void 0 || targetDirs.has(targetName)) continue;
     const path = /path\s*:\s*"([^"]+)"/u.exec(args)?.[1];
     libraryTargets.push(targetName);
-    targetDirs.set(targetName, path === void 0 ? join7(packageDir, "Sources", targetName) : resolve2(packageDir, path));
+    targetDirs.set(targetName, path === void 0 ? join11(packageDir, "Sources", targetName) : resolve3(packageDir, path));
   }
   const productNames = extractCallArguments(text, "library").flatMap((args) => /name\s*:\s*"([^"]+)"/u.exec(args)?.slice(1) ?? []);
   return {
@@ -42203,7 +44535,7 @@ function walkSwiftFiles(root, depth = 0) {
   }
   const files = [];
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-    const path = join7(root, entry.name);
+    const path = join11(root, entry.name);
     if (entry.isDirectory()) {
       if (depth < 12 && !IGNORED_DIRS.has(entry.name)) files.push(...walkSwiftFiles(path, depth + 1));
     } else if (entry.isFile() && entry.name.endsWith(".swift") && !entry.name.startsWith(".")) {
@@ -42218,7 +44550,7 @@ function scanPackagePreviews(manifest) {
     for (const file2 of walkSwiftFiles(dir)) {
       let text;
       try {
-        text = readFileSync3(file2, "utf8");
+        text = readFileSync5(file2, "utf8");
       } catch {
         continue;
       }
@@ -42382,28 +44714,28 @@ var SWIFT_OUTPUT_RING_LINES = 1e3;
 var KEPT_DYLIB_GENERATIONS = 3;
 var HOST_SOURCES = ["PreviewHostApp.swift", "PreviewSession.swift", "PreviewRootView.swift"];
 var DEFAULT_PREVIEW_TIMINGS = { debounceMs: 300, hostConfirmMs: 3e4, reloadConfirmMs: 15e3, pollMs: 500 };
-function errorMessage3(error62) {
+function errorMessage7(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep2(milliseconds) {
-  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
+function sleep5(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 function readJsonObject(path) {
   try {
-    const parsed = JSON.parse(readFileSync4(path, "utf8"));
+    const parsed = JSON.parse(readFileSync6(path, "utf8"));
     return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
   } catch {
     return {};
   }
 }
 function writeJsonAtomic(path, value) {
-  mkdirSync2(dirname3(path), { recursive: true });
+  mkdirSync2(dirname4(path), { recursive: true });
   const temporary = `${path}.tmp-${process.pid}`;
   writeFileSync2(temporary, JSON.stringify(value));
   renameSync2(temporary, path);
 }
 function defaultPreviewAssetsDir() {
-  return join8(dirname3(fileURLToPath2(import.meta.url)), "..", "assets", "preview-host");
+  return join12(dirname4(fileURLToPath3(import.meta.url)), "..", "assets", "preview-host");
 }
 var PreviewHostController = class {
   #options;
@@ -42427,8 +44759,8 @@ var PreviewHostController = class {
     if (this.#session !== void 0 || this.#starting) {
       throw new Error(`a preview session is already running for ${this.#session?.packagePath ?? "another package"} \u2014 only one at a time; stop it first (action "stop") or inspect it (action "status")`);
     }
-    const packagePath = resolve3(options.packagePath);
-    if (!existsSync3(join8(packagePath, "Package.swift")) || !statSync4(packagePath).isDirectory()) {
+    const packagePath = resolve4(options.packagePath);
+    if (!existsSync6(join12(packagePath, "Package.swift")) || !statSync5(packagePath).isDirectory()) {
       throw new Error(`packagePath must be a Swift package directory containing Package.swift: ${packagePath}`);
     }
     const manifest = readPackageManifest(packagePath);
@@ -42444,7 +44776,7 @@ var PreviewHostController = class {
     this.#starting = true;
     const platformVersion = Math.max(DEFAULT_IOS_PLATFORM_VERSION, manifest.iosVersion ?? DEFAULT_IOS_PLATFORM_VERSION);
     const arch = this.#options.arch ?? (process.arch === "x64" ? "x86_64" : "arm64");
-    const sessionDir = join8(this.#options.cacheDir, projectSlug(packagePath));
+    const sessionDir = join12(this.#options.cacheDir, projectSlug(packagePath));
     const session = {
       packagePath,
       packageName: manifest.name,
@@ -42452,7 +44784,7 @@ var PreviewHostController = class {
       pid: "",
       ...filter === void 0 ? {} : { filter },
       dropDir: "",
-      dylibPackageDir: join8(sessionDir, "dylib-package"),
+      dylibPackageDir: join12(sessionDir, "dylib-package"),
       triple: `${arch}-apple-ios${platformVersion}.0-simulator`,
       platformVersion,
       sdk: "",
@@ -42475,7 +44807,7 @@ var PreviewHostController = class {
       await this.#options.simctl.installApp(udid, appPath, options.signal);
       const launched = await this.#options.simctl.launchApp(udid, PREVIEW_HOST_BUNDLE_ID, options.signal);
       session.pid = /:\s*(\d+)\s*$/u.exec(launched.trim())?.[1] ?? "";
-      session.dropDir = join8(await this.#options.simctl.getAppContainer(udid, PREVIEW_HOST_BUNDLE_ID, options.signal), "Documents", DROP_DIR_NAME);
+      session.dropDir = join12(await this.#options.simctl.getAppContainer(udid, PREVIEW_HOST_BUNDLE_ID, options.signal), "Documents", DROP_DIR_NAME);
       this.#writeDylibPackage(session, manifest.productNames, platformVersion, matching, manifest.libraryTargets);
       const build = await this.#options.toolchain.swiftBuild(session.dylibPackageDir, session.triple, session.sdk, options.signal);
       if (build.exitCode !== 0) {
@@ -42543,58 +44875,58 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
     await this.#options.simctl.uninstallApp(udid, PREVIEW_HOST_BUNDLE_ID, signal).catch(() => void 0);
   }
   async #buildHostApp(sessionDir, session, platformVersion, signal) {
-    const packageDir = join8(sessionDir, "host-package");
-    const sources = join8(packageDir, "Sources", HOST_TARGET_NAME);
+    const packageDir = join12(sessionDir, "host-package");
+    const sources = join12(packageDir, "Sources", HOST_TARGET_NAME);
     mkdirSync2(sources, { recursive: true });
     const assetsDir = this.#options.assetsDir ?? defaultPreviewAssetsDir();
     for (const name of HOST_SOURCES) {
-      if (!existsSync3(join8(assetsDir, name))) throw new Error(`the preview host sources are missing (${join8(assetsDir, name)}) \u2014 reinstall the plugin`);
-      copyFileSync(join8(assetsDir, name), join8(sources, name));
+      if (!existsSync6(join12(assetsDir, name))) throw new Error(`the preview host sources are missing (${join12(assetsDir, name)}) \u2014 reinstall the plugin`);
+      copyFileSync(join12(assetsDir, name), join12(sources, name));
     }
-    writeFileSync2(join8(packageDir, "Package.swift"), generateHostPackageSwift(platformVersion));
+    writeFileSync2(join12(packageDir, "Package.swift"), generateHostPackageSwift(platformVersion));
     const build = await this.#options.toolchain.swiftBuild(packageDir, session.triple, session.sdk, signal);
     if (build.exitCode !== 0) {
       throw new Error(`swift build failed (exit ${String(build.exitCode)}) for the preview host:
 ${filterSwiftBuildErrors(build.lines).join("\n")}`);
     }
-    const executable = join8(await this.#options.toolchain.binPath(packageDir, session.triple, session.sdk, signal), HOST_TARGET_NAME);
-    if (!existsSync3(executable)) throw new Error(`the built preview host executable is missing: ${executable}`);
-    const appDir = join8(sessionDir, `${HOST_TARGET_NAME}.app`);
+    const executable = join12(await this.#options.toolchain.binPath(packageDir, session.triple, session.sdk, signal), HOST_TARGET_NAME);
+    if (!existsSync6(executable)) throw new Error(`the built preview host executable is missing: ${executable}`);
+    const appDir = join12(sessionDir, `${HOST_TARGET_NAME}.app`);
     rmSync3(appDir, { recursive: true, force: true });
     mkdirSync2(appDir, { recursive: true });
-    copyFileSync(executable, join8(appDir, HOST_TARGET_NAME));
-    writeFileSync2(join8(appDir, "Info.plist"), generateInfoPlist(platformVersion));
+    copyFileSync(executable, join12(appDir, HOST_TARGET_NAME));
+    writeFileSync2(join12(appDir, "Info.plist"), generateInfoPlist(platformVersion));
     await this.#options.toolchain.codesign(appDir, signal);
     return appDir;
   }
   /** Write the dylib package (kept between rebuilds so SwiftPM builds incrementally). */
   #writeDylibPackage(session, productNames, platformVersion, previews, modules) {
-    const entryDir = join8(session.dylibPackageDir, "Sources", "PreviewEntry");
+    const entryDir = join12(session.dylibPackageDir, "Sources", "PreviewEntry");
     mkdirSync2(entryDir, { recursive: true });
-    const manifestPath = join8(session.dylibPackageDir, "Package.swift");
+    const manifestPath = join12(session.dylibPackageDir, "Package.swift");
     const manifestText = generateDylibPackageSwift(session.packagePath, session.packageName, productNames, platformVersion);
-    if (!existsSync3(manifestPath) || readFileSync4(manifestPath, "utf8") !== manifestText) writeFileSync2(manifestPath, manifestText);
-    const entryPath = join8(entryDir, "Entry.swift");
+    if (!existsSync6(manifestPath) || readFileSync6(manifestPath, "utf8") !== manifestText) writeFileSync2(manifestPath, manifestText);
+    const entryPath = join12(entryDir, "Entry.swift");
     const entryText = generateEntrySwift(previews, modules);
-    if (!existsSync3(entryPath) || readFileSync4(entryPath, "utf8") !== entryText) writeFileSync2(entryPath, entryText);
+    if (!existsSync6(entryPath) || readFileSync6(entryPath, "utf8") !== entryText) writeFileSync2(entryPath, entryText);
   }
   async #pushGeneration(session, previews, signal) {
-    const dylib = join8(await this.#options.toolchain.binPath(session.dylibPackageDir, session.triple, session.sdk, signal), DYLIB_LIBRARY_NAME);
-    if (!existsSync3(dylib)) throw new Error(`the built preview dylib is missing: ${dylib}`);
+    const dylib = join12(await this.#options.toolchain.binPath(session.dylibPackageDir, session.triple, session.sdk, signal), DYLIB_LIBRARY_NAME);
+    if (!existsSync6(dylib)) throw new Error(`the built preview dylib is missing: ${dylib}`);
     const generation = session.generation + 1;
     mkdirSync2(session.dropDir, { recursive: true });
-    const target = join8(session.dropDir, `preview_${generation}.dylib`);
+    const target = join12(session.dropDir, `preview_${generation}.dylib`);
     copyFileSync(dylib, target);
     await this.#options.toolchain.codesign(target, signal);
     session.generation = generation;
-    writeJsonAtomic(join8(session.dropDir, "manifest.json"), {
+    writeJsonAtomic(join12(session.dropDir, "manifest.json"), {
       generation,
       dylib: `preview_${generation}.dylib`,
       previews: previews.map((preview) => preview.name)
     });
     for (const entry of readdirSync3(session.dropDir)) {
       const old = /^preview_(\d+)\.dylib$/u.exec(entry);
-      if (old !== null && Number(old[1]) <= generation - KEPT_DYLIB_GENERATIONS) rmSync3(join8(session.dropDir, entry), { force: true });
+      if (old !== null && Number(old[1]) <= generation - KEPT_DYLIB_GENERATIONS) rmSync3(join12(session.dropDir, entry), { force: true });
     }
   }
   async #waitForHost(session, generation, timeoutMs) {
@@ -42603,11 +44935,11 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
       const live = this.#hostResult(session).generation;
       if (typeof live === "number" && live >= generation) return true;
       if (Date.now() >= deadline) return false;
-      await sleep2(this.#timings.pollMs);
+      await sleep5(this.#timings.pollMs);
     }
   }
   #hostResult(session) {
-    return session.dropDir === "" ? {} : readJsonObject(join8(session.dropDir, "result.json"));
+    return session.dropDir === "" ? {} : readJsonObject(join12(session.dropDir, "result.json"));
   }
   #scheduleRebuild(session) {
     if (session.disposed) return;
@@ -42654,7 +44986,7 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
         session.lastRuntimeError = `the host did not confirm generation ${session.generation} within ${this.#timings.reloadConfirmMs / 1e3}s \u2014 keeping the last good preview`;
       }
     } catch (error62) {
-      session.lastRuntimeError = errorMessage3(error62);
+      session.lastRuntimeError = errorMessage7(error62);
     } finally {
       session.rebuildRunning = false;
       if (session.rebuildQueued && !session.disposed) {
@@ -42683,7 +45015,7 @@ function watchPackageTree(root, onChange) {
         return;
       }
       for (const entry of entries) {
-        if (entry.isDirectory() && !IGNORED_DIRS.has(entry.name)) attach(join8(dir, entry.name));
+        if (entry.isDirectory() && !IGNORED_DIRS.has(entry.name)) attach(join12(dir, entry.name));
       }
     };
     attach(root);
@@ -42697,13 +45029,13 @@ function watchPackageTree(root, onChange) {
 }
 var xcrunToolchain = {
   sdkPath: (signal) => new Promise((resolveSdk, reject) => {
-    execFile5("xcrun", ["--show-sdk-path", "--sdk", "iphonesimulator"], { timeout: 3e4, signal }, (error62, stdout) => {
+    execFile8("xcrun", ["--show-sdk-path", "--sdk", "iphonesimulator"], { timeout: 3e4, signal }, (error62, stdout) => {
       if (error62 !== null) reject(new Error(`xcrun --show-sdk-path --sdk iphonesimulator failed: ${error62.message}`));
       else resolveSdk(stdout.trim());
     });
   }),
   swiftBuild: (packageDir, triple, sdk, signal) => new Promise((resolveBuild) => {
-    const child = spawn3("xcrun", ["swift", "build", "--sdk", sdk, "--triple", triple, "--disable-index-store"], { cwd: packageDir, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn5("xcrun", ["swift", "build", "--sdk", sdk, "--triple", triple, "--disable-index-store"], { cwd: packageDir, stdio: ["ignore", "pipe", "pipe"] });
     const lines = [];
     let partial2 = "";
     const collect = (chunk) => {
@@ -42734,7 +45066,7 @@ var xcrunToolchain = {
     child.once("close", finish);
   }),
   binPath: (packageDir, triple, sdk, signal) => new Promise((resolvePath, reject) => {
-    execFile5(
+    execFile8(
       "xcrun",
       ["swift", "build", "--sdk", sdk, "--triple", triple, "--disable-index-store", "--show-bin-path"],
       { cwd: packageDir, timeout: 6e4, maxBuffer: 1024 * 1024, signal },
@@ -42746,7 +45078,7 @@ var xcrunToolchain = {
     );
   }),
   codesign: (path, signal) => new Promise((resolveSign, reject) => {
-    execFile5("codesign", ["--force", "--sign", "-", path], { timeout: 12e4, signal }, (error62, _stdout, stderr) => {
+    execFile8("codesign", ["--force", "--sign", "-", path], { timeout: 12e4, signal }, (error62, _stdout, stderr) => {
       if (error62 !== null) reject(new Error(`codesign failed for ${path}${stderr.trim() === "" ? "" : `: ${stderr.trim()}`}`));
       else resolveSign();
     });
@@ -42755,9 +45087,9 @@ var xcrunToolchain = {
 
 // src/panel/panel-server.ts
 import { createReadStream, lstatSync, realpathSync } from "node:fs";
-import { readFile as readFile4 } from "node:fs/promises";
-import { createServer, get as httpGet } from "node:http";
-import { basename as basename2, join as join10, sep as sep2 } from "node:path";
+import { readFile as readFile5 } from "node:fs/promises";
+import { createServer as createServer4, get as httpGet } from "node:http";
+import { basename as basename2, join as join14, sep as sep2 } from "node:path";
 import { pipeline } from "node:stream";
 
 // node_modules/ws/wrapper.mjs
@@ -42770,124 +45102,11 @@ var import_subprotocol = __toESM(require_subprotocol(), 1);
 var import_websocket = __toESM(require_websocket(), 1);
 var import_websocket_server = __toESM(require_websocket_server(), 1);
 
-// src/device-actions.ts
-import { execFile as execFile6 } from "node:child_process";
-var OSASCRIPT_TIMEOUT_MS = 8e3;
-var DEVICE_ACTIONS = [
-  "app-switcher",
-  "lock",
-  "unlock",
-  "shake",
-  "siri",
-  "action-button",
-  "re-center"
-];
-function isDeviceAction(value) {
-  return typeof value === "string" && DEVICE_ACTIONS.includes(value);
-}
-var DEVICE_ACTION_SPECS = [
-  { action: "app-switcher", transport: { kind: "menu", item: "App Switcher" }, realDevice: true },
-  { action: "lock", transport: { kind: "serve-sim", button: "lock" }, realDevice: true },
-  // ⇧⌘H twice: the lock screen has no menu item, and the swipe is unusable.
-  { action: "unlock", transport: { kind: "keystroke", repeat: 2 }, realDevice: true },
-  { action: "shake", transport: { kind: "menu", item: "Shake" }, realDevice: false },
-  { action: "siri", transport: { kind: "menu", item: "Siri" }, realDevice: true },
-  { action: "action-button", transport: { kind: "menu", item: "Action Button" }, realDevice: false },
-  { action: "re-center", transport: { kind: "menu", item: "Re-Center Open Apps" }, realDevice: false }
-];
-function deviceActionSpec(action) {
-  const spec = DEVICE_ACTION_SPECS.find((entry) => entry.action === action);
-  if (spec === void 0) throw new Error(`ios-simulator: unknown device action ${action}`);
-  return spec;
-}
-var DEVICE_ACTION_PERMISSION_HINT = "macOS needs permission to drive Simulator.app: System Settings \u25B8 Privacy & Security \u25B8 Accessibility, then enable the app running Claude Code (Terminal / iTerm / the Claude app)";
-var DEVICE_ACTION_SIMULATOR_HINT = "the Simulator app is not running \u2014 boot a simulator first (ios_sim_boot)";
-function deviceActionFailureHint(message) {
-  if (/simulator-not-running/.test(message)) return DEVICE_ACTION_SIMULATOR_HINT;
-  if (/not allowed assistive|osascript is not allowed|-1719|1002|assistive access/i.test(message)) {
-    return DEVICE_ACTION_PERMISSION_HINT;
-  }
-  if (/menu-item-missing/.test(message)) {
-    return "this Xcode's Simulator has no such Device menu item \u2014 the action is unavailable on this host";
-  }
-  if (/simulator-not-frontmost/.test(message)) {
-    return "Simulator.app would not come to the front \u2014 another app may be holding focus; try again";
-  }
-  return message;
-}
-function appleScriptString(value) {
-  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-}
-function focusedSimulatorScript(body) {
-  return `
-tell application "System Events"
-  if not (exists process "Simulator") then error "ios-simulator: simulator-not-running"
-  set previousName to ""
-  try
-    set previousName to name of first process whose frontmost is true
-  end try
-  tell application "Simulator" to activate
-  set raised to false
-  repeat 40 times
-    if frontmost of process "Simulator" then
-      set raised to true
-      exit repeat
-    end if
-    delay 0.05
-  end repeat
-  if not raised then error "ios-simulator: simulator-not-frontmost"
-${body}
-  delay 0.15
-  if previousName is not "" and previousName is not "Simulator" then
-    try
-      set frontmost of process previousName to true
-    end try
-  end if
-end tell
-`;
-}
-function simulatorMenuItemScript(item) {
-  return focusedSimulatorScript(`  tell process "Simulator"
-    if not (exists menu item ${appleScriptString(item)} of menu 1 of menu bar item "Device" of menu bar 1) then error "ios-simulator: menu-item-missing"
-    click menu item ${appleScriptString(item)} of menu 1 of menu bar item "Device" of menu bar 1
-  end tell`);
-}
-function simulatorHomeKeystrokeScript(repeat) {
-  const presses = Array.from({ length: Math.max(1, repeat) }, (_, index) => `  key code 4 using {command down, shift down}${index + 1 < repeat ? "\n  delay 0.25" : ""}`).join("\n");
-  return focusedSimulatorScript(presses);
-}
-function runOsascript(script, timeoutMs) {
-  return new Promise((resolve6, reject) => {
-    execFile6("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
-      if (error62 === null) {
-        resolve6();
-        return;
-      }
-      const detail = `${stderr === "" ? error62.message : stderr}`.trim();
-      reject(new Error(detail));
-    });
-  });
-}
-async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRIPT_TIMEOUT_MS) {
-  const spec = deviceActionSpec(action);
-  try {
-    if (spec.transport.kind === "serve-sim") {
-      await pressButton(spec.transport.button);
-      return;
-    }
-    const script = spec.transport.kind === "menu" ? simulatorMenuItemScript(spec.transport.item) : simulatorHomeKeystrokeScript(spec.transport.repeat);
-    await runOsascript(script, timeoutMs);
-  } catch (error62) {
-    const message = error62 instanceof Error ? error62.message : String(error62);
-    throw new Error(`ios-simulator: the ${action} action failed \u2014 ${deviceActionFailureHint(message)}`);
-  }
-}
-
 // src/screenshot.ts
-import { execFile as execFile7 } from "node:child_process";
-import { closeSync, existsSync as existsSync4, mkdirSync as mkdirSync3, openSync, readSync, readdirSync as readdirSync4, statSync as statSync5, unlinkSync } from "node:fs";
-import { readFile as readFile3, rm } from "node:fs/promises";
-import { join as join9 } from "node:path";
+import { execFile as execFile9 } from "node:child_process";
+import { closeSync, existsSync as existsSync7, mkdirSync as mkdirSync3, openSync, readSync, readdirSync as readdirSync4, statSync as statSync6, unlinkSync as unlinkSync2, writeFileSync as writeFileSync3 } from "node:fs";
+import { readFile as readFile4, rm as rm2 } from "node:fs/promises";
+import { join as join13 } from "node:path";
 var FILE_PATTERN = /^screenshot-[A-Za-z0-9_-]+-(\d+)\.png$/u;
 var SIPS_TIMEOUT_MS = 3e4;
 function isScreenshotFileName(name) {
@@ -42934,10 +45153,10 @@ function jpegSize(buffer) {
   return void 0;
 }
 function runSips(args) {
-  return new Promise((resolve6, reject) => {
-    execFile7("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
+  return new Promise((resolve7, reject) => {
+    execFile9("sips", [...args], { timeout: SIPS_TIMEOUT_MS }, (error62, _stdout, stderr) => {
       if (error62 === null) {
-        resolve6();
+        resolve7();
         return;
       }
       reject(new Error(`sips failed: ${stderr.trim() === "" ? error62.message : stderr.trim()}`));
@@ -42975,10 +45194,10 @@ var ScreenshotStore = class {
         if (Number.isInteger(index) && index >= next) next = index + 1;
       }
     }
-    let path = join9(this.dir, `screenshot-${safe}-${next}.png`);
-    while (existsSync4(path)) {
+    let path = join13(this.dir, `screenshot-${safe}-${next}.png`);
+    while (existsSync7(path)) {
       next += 1;
-      path = join9(this.dir, `screenshot-${safe}-${next}.png`);
+      path = join13(this.dir, `screenshot-${safe}-${next}.png`);
     }
     this.#next.set(safe, next + 1);
     return path;
@@ -42987,10 +45206,18 @@ var ScreenshotStore = class {
   async capture(udid, signal) {
     const path = this.nextPath(udid);
     await this.#take(udid, path, signal);
-    const bytes = statSync5(path).size;
+    const bytes = statSync6(path).size;
     const size = readPngSize(path);
     this.prune();
     return { path, bytes, ...size === void 0 ? {} : size };
+  }
+  /** Store a PNG taken elsewhere (a real device's WebDriverAgent) like a capture, then prune. */
+  save(udid, png) {
+    const path = this.nextPath(udid);
+    writeFileSync3(path, png);
+    const size = readPngSize(path);
+    this.prune();
+    return { path, bytes: png.length, ...size === void 0 ? {} : size };
   }
   /** Keep the newest `keep` screenshots (by mtime, then index). */
   prune() {
@@ -43002,10 +45229,10 @@ var ScreenshotStore = class {
     }
     if (names.length <= this.#keep) return;
     const entries = names.map((name) => {
-      const path = join9(this.dir, name);
+      const path = join13(this.dir, name);
       let mtime = 0;
       try {
-        mtime = statSync5(path).mtimeMs;
+        mtime = statSync6(path).mtimeMs;
       } catch {
       }
       return { path, mtime, index: Number(FILE_PATTERN.exec(name)?.[1] ?? 0) };
@@ -43013,7 +45240,7 @@ var ScreenshotStore = class {
     entries.sort((a, b) => b.mtime - a.mtime || b.index - a.index);
     for (const entry of entries.slice(this.#keep)) {
       try {
-        unlinkSync(entry.path);
+        unlinkSync2(entry.path);
       } catch {
       }
     }
@@ -43027,12 +45254,12 @@ var ScreenshotStore = class {
     args.push(capture.path, "--out", out);
     try {
       await runSips(args);
-      const buffer = await readFile3(out);
+      const buffer = await readFile4(out);
       const size = jpegSize(buffer);
       if (size === void 0) throw new Error(`sips produced an unreadable JPEG for ${capture.path}`);
       return { data: buffer.toString("base64"), mimeType: "image/jpeg", ...size };
     } finally {
-      await rm(out, { force: true });
+      await rm2(out, { force: true });
     }
   }
 };
@@ -43065,14 +45292,14 @@ function pickPreferred(devices) {
   if (picked === void 0) throw new Error("No simulator devices are installed \u2014 install an iOS Simulator runtime in Xcode, then retry");
   return picked;
 }
-var REAL_DEVICE_TOOLS = "ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes and ios_sim_app_info";
+var REAL_DEVICE_TOOLS = "ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes, ios_sim_app_info, and \u2014 once ios_real_start_wda has started WebDriverAgent \u2014 ios_sim_screenshot, ios_sim_interact, ios_sim_ui_tree, ios_sim_tap_element, ios_sim_find_text, ios_sim_tap_text, ios_sim_wait_for, ios_sim_ui_rows and ios_sim_tap_row";
 async function resolveTargetDevice(deps, reference, options = {}) {
   if (reference !== void 0 && reference.trim() !== "") {
     try {
       return await deps.simctl.getDevice(reference);
     } catch (error62) {
       if (deps.realDevices !== void 0 && await deps.realDevices.matches(reference)) {
-        throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only \u2014 on a real device use ${REAL_DEVICE_TOOLS} (screen, touch and UI tools need WebDriverAgent, which is not supported yet)`);
+        throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only \u2014 on a real device use ${REAL_DEVICE_TOOLS}`);
       }
       throw error62;
     }
@@ -43179,7 +45406,7 @@ var STATIC_FILES = {
   "/main.js": { file: "main.js", type: "text/javascript; charset=utf-8" },
   "/styles.css": { file: "styles.css", type: "text/css; charset=utf-8" }
 };
-var MAX_BODY_BYTES = 16 * 1024;
+var MAX_BODY_BYTES2 = 16 * 1024;
 var MAX_PENDING_WS_FRAMES = 64;
 var WEBSOCKET_KEY_PATTERN = /^[A-Za-z0-9+/]{22}==$/u;
 var STATUS_TEXT = {
@@ -43196,7 +45423,7 @@ var HttpError = class extends Error {
   }
   status;
 };
-function errorMessage4(error62) {
+function errorMessage8(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function sendJson(res, status, value) {
@@ -43229,7 +45456,7 @@ async function readJsonBody(req) {
   for await (const chunk of req) {
     const buffer = chunk;
     size += buffer.length;
-    if (size > MAX_BODY_BYTES) throw new HttpError(413, "request body too large");
+    if (size > MAX_BODY_BYTES2) throw new HttpError(413, "request body too large");
     chunks.push(buffer);
   }
   if (size === 0) return {};
@@ -43277,7 +45504,7 @@ var PanelServer = class {
     this.#server = void 0;
     if (server !== void 0) {
       server.closeAllConnections();
-      await new Promise((resolve6) => server.close(() => resolve6()));
+      await new Promise((resolve7) => server.close(() => resolve7()));
     }
   }
   async #listen() {
@@ -43286,18 +45513,18 @@ var PanelServer = class {
     for (let offset = 0; offset < attempts; offset += 1) {
       const port = this.#options.preferredPort + offset;
       if (port > 65535) break;
-      const server = createServer((req, res) => {
+      const server = createServer4((req, res) => {
         void this.#handle(req, res);
       });
       server.on("upgrade", (req, socket, head) => {
         void this.#handleUpgrade(req, socket, head);
       });
       try {
-        await new Promise((resolve6, reject) => {
+        await new Promise((resolve7, reject) => {
           server.once("error", reject);
           server.listen(port, "127.0.0.1", () => {
             server.off("error", reject);
-            resolve6();
+            resolve7();
           });
         });
       } catch (error62) {
@@ -43306,14 +45533,14 @@ var PanelServer = class {
         break;
       }
       server.on("error", (error62) => {
-        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage4(error62)}
+        process.stderr.write(`${PLUGIN_NAME}: panel server error (still serving): ${errorMessage8(error62)}
 `);
       });
       this.#server = server;
       this.#port = server.address().port;
       return `http://127.0.0.1:${this.#port}/`;
     }
-    throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage4(lastError)}`);
+    throw new Error(`could not start the panel server on 127.0.0.1:${this.#options.preferredPort}+: ${errorMessage8(lastError)}`);
   }
   #allowed(req, kind) {
     return checkRequest({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, this.#port, kind).ok;
@@ -43348,11 +45575,11 @@ var PanelServer = class {
         res.destroy();
         return;
       }
-      sendJson(res, error62 instanceof HttpError ? error62.status : 500, { ok: false, error: errorMessage4(error62) });
+      sendJson(res, error62 instanceof HttpError ? error62.status : 500, { ok: false, error: errorMessage8(error62) });
     }
   }
   async #serveStatic(res, entry) {
-    const body = await readFile4(join10(this.#options.staticDir, entry.file));
+    const body = await readFile5(join14(this.#options.staticDir, entry.file));
     const port = this.#port;
     res.writeHead(200, {
       "content-type": entry.type,
@@ -43388,7 +45615,7 @@ var PanelServer = class {
       streamUrl = (await this.#options.host.ensureRunning({ udid: status.device })).streamUrl;
     } catch (error62) {
       release();
-      throw new HttpError(502, `the simulator stream failed to start: ${errorMessage4(error62)}`);
+      throw new HttpError(502, `the simulator stream failed to start: ${errorMessage8(error62)}`);
     }
     if (this.#disposed || res.destroyed) {
       release();
@@ -43439,7 +45666,7 @@ var PanelServer = class {
     const dir = this.#options.screenshots.dir;
     let real;
     try {
-      const path = join10(dir, name);
+      const path = join14(dir, name);
       const stat = lstatSync(path);
       if (stat.isSymbolicLink() || !stat.isFile()) throw new HttpError(404, "not found");
       real = realpathSync(path);
@@ -43490,7 +45717,7 @@ var PanelServer = class {
     try {
       device = await this.#options.simctl.getDevice(udid);
     } catch (error62) {
-      throw new HttpError(409, errorMessage4(error62));
+      throw new HttpError(409, errorMessage8(error62));
     }
     if (device.state !== "Booted") await this.#options.simctl.bootDevice(device.udid);
     await this.#options.host.ensureRunning({ udid: device.udid });
@@ -43512,9 +45739,9 @@ var PanelServer = class {
     const device = await this.#currentDevice();
     if (device === void 0) throw new HttpError(409, "no booted simulator");
     await this.#options.host.ensureRunning({ udid: device.udid });
-    const run3 = this.#options.stream.control.deviceAction;
-    if (run3 === void 0) throw new HttpError(501, "device actions are not supported by this backend");
-    await run3(action);
+    const run4 = this.#options.stream.control.deviceAction;
+    if (run4 === void 0) throw new HttpError(501, "device actions are not supported by this backend");
+    await run4(action);
     return { ok: true, action };
   }
   async #handleUpgrade(req, socket, head) {
@@ -43592,19 +45819,19 @@ var PanelServer = class {
 };
 
 // src/recorder.ts
-import { spawn as spawn4 } from "node:child_process";
-import { mkdirSync as mkdirSync4, statSync as statSync6 } from "node:fs";
-import { dirname as dirname4, join as join11 } from "node:path";
+import { spawn as spawn6 } from "node:child_process";
+import { mkdirSync as mkdirSync4, statSync as statSync7 } from "node:fs";
+import { dirname as dirname5, join as join15 } from "node:path";
 function recordVideoArgs(udid, path) {
   return ["simctl", "io", udid, "recordVideo", "--codec=h264", "--force", path];
 }
-var spawnXcrunRecord = (udid, path) => spawn4("xcrun", recordVideoArgs(udid, path), { stdio: ["ignore", "ignore", "pipe"] });
+var spawnXcrunRecord = (udid, path) => spawn6("xcrun", recordVideoArgs(udid, path), { stdio: ["ignore", "ignore", "pipe"] });
 function safeName(udid) {
   return udid.replace(/[^A-Za-z0-9_-]/g, "_");
 }
 function fileSize(path) {
   try {
-    return statSync6(path).size;
+    return statSync7(path).size;
   } catch {
     return 0;
   }
@@ -43631,7 +45858,7 @@ var Recorder = class {
   }
   defaultPath(udid) {
     const stamp = new Date(this.#now()).toISOString().replace(/[:.]/g, "-");
-    return join11(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
+    return join15(this.#dir, `recording-${safeName(udid)}-${stamp}.mov`);
   }
   async start(udid, outputPath) {
     const running = this.#active.get(udid);
@@ -43646,11 +45873,11 @@ var Recorder = class {
       const requested = outputPath?.trim() ?? "";
       const path = requested === "" ? this.defaultPath(udid) : requested;
       if (!/\.(mov|mp4)$/iu.test(path)) throw new Error(`outputPath must end with .mov or .mp4, got ${path}`);
-      mkdirSync4(dirname4(path), { recursive: true });
+      mkdirSync4(dirname5(path), { recursive: true });
       const child = this.#spawnRecord(udid, path);
-      const exited = new Promise((resolve6) => {
-        child.once("exit", (code) => resolve6(code));
-        child.once("error", () => resolve6(null));
+      const exited = new Promise((resolve7) => {
+        child.once("exit", (code) => resolve7(code));
+        child.once("error", () => resolve7(null));
       });
       await this.#waitForStart(child, exited);
       const info = { udid, path, startedAt: this.#now() };
@@ -43675,8 +45902,8 @@ var Recorder = class {
     let timer;
     const outcome = await Promise.race([
       recording.exited.then((code) => ({ code })),
-      new Promise((resolve6) => {
-        timer = setTimeout(() => resolve6("timeout"), this.#stopTimeoutMs);
+      new Promise((resolve7) => {
+        timer = setTimeout(() => resolve7("timeout"), this.#stopTimeoutMs);
       })
     ]);
     if (timer !== void 0) clearTimeout(timer);
@@ -43719,7 +45946,7 @@ var Recorder = class {
     };
   }
   #waitForStart(child, exited) {
-    return new Promise((resolve6, reject) => {
+    return new Promise((resolve7, reject) => {
       let stderr = "";
       let settled = false;
       const onData = (chunk) => {
@@ -43731,7 +45958,7 @@ var Recorder = class {
         settled = true;
         clearTimeout(timer);
         child.stderr?.off("data", onData);
-        if (error62 === void 0) resolve6();
+        if (error62 === void 0) resolve7();
         else reject(error62);
       };
       const detail = () => stderr.trim() === "" ? "" : `: ${stderr.trim()}`;
@@ -43747,918 +45974,12 @@ var Recorder = class {
   }
 };
 
-// src/sim-host.ts
-import {
-  execFile as execFile8,
-  spawn as spawn5
-} from "node:child_process";
-import { readFileSync as readFileSync5, statSync as statSync7 } from "node:fs";
-import { request as httpRequest } from "node:http";
-import { createRequire } from "node:module";
-import { createServer as createServer2 } from "node:net";
-import { delimiter as delimiter3, dirname as dirname5, join as join12 } from "node:path";
-import { fileURLToPath as fileURLToPath3 } from "node:url";
-var SERVE_SIM_PACKAGE = "serve-sim";
-var STREAM_PORT_RANGE_START = 3181;
-var STREAM_PORT_RANGE_LENGTH = 64;
-var DEFAULT_IDLE_TIMEOUT_MS = 5 * 60 * 1e3;
-var DEFAULT_RESTART_DELAY_MS = 5e3;
-var DEFAULT_START_TIMEOUT_MS = 12e4;
-var KEEP_ALIVE_TICK_MS = 1e3;
-var STOP_TIMEOUT_MS = 1e4;
-var CONTROL_TIMEOUT_MS = 3e4;
-var MAX_HANDSHAKE_BYTES = 16 * 1024;
-var STDERR_RING_LINES = 40;
-var STDERR_LINE_MAX_CHARS = 240;
-var ADOPT_GRACE_MS = 1500;
-var ADOPTED_PROBE_TIMEOUT_MS = 2e3;
-function errorMessage5(error62) {
-  return error62 instanceof Error ? error62.message : String(error62);
-}
-function sleep3(milliseconds) {
-  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
-}
-function isExecutableFile2(path) {
-  try {
-    const info = statSync7(path);
-    return info.isFile() && (info.mode & 73) !== 0;
-  } catch {
-    return false;
-  }
-}
-function isFile2(path) {
-  try {
-    return statSync7(path).isFile();
-  } catch {
-    return false;
-  }
-}
-function findOnPath3(command) {
-  for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
-    if (dir === "") continue;
-    const candidate = join12(dir, command);
-    if (isExecutableFile2(candidate)) return candidate;
-  }
-  return void 0;
-}
-function resolvePackageManifest(packageName) {
-  try {
-    return createRequire(import.meta.url).resolve(`${packageName}/package.json`);
-  } catch {
-  }
-  let current = dirname5(fileURLToPath3(import.meta.url));
-  for (; ; ) {
-    const candidate = join12(current, "node_modules", packageName, "package.json");
-    if (isFile2(candidate)) return candidate;
-    const parent = dirname5(current);
-    if (parent === current) return void 0;
-    current = parent;
-  }
-}
-function tryResolvePackageBin() {
-  const manifestPath = resolvePackageManifest(SERVE_SIM_PACKAGE);
-  if (manifestPath === void 0) return void 0;
-  try {
-    const manifest = JSON.parse(readFileSync5(manifestPath, "utf8"));
-    const bin = manifest.bin;
-    let binPath;
-    if (typeof bin === "string") binPath = bin;
-    else if (typeof bin === "object" && bin !== null && !Array.isArray(bin)) {
-      const candidate = bin[SERVE_SIM_PACKAGE];
-      if (typeof candidate === "string") binPath = candidate;
-    }
-    if (binPath === void 0) return void 0;
-    const resolved = join12(dirname5(manifestPath), binPath);
-    return isExecutableFile2(resolved) ? resolved : void 0;
-  } catch {
-    return void 0;
-  }
-}
-function resolveServeSimBinary(options = {}) {
-  const platform = options.platform ?? process.platform;
-  if (platform !== "darwin") {
-    return { available: false, source: "unavailable", args: [], reason: "serve-sim only runs on macOS" };
-  }
-  const arch = options.arch ?? process.arch;
-  if (arch !== "arm64") {
-    return { available: false, source: "unavailable", args: [], reason: `serve-sim ships an arm64-only helper; this Mac is ${arch}` };
-  }
-  const override = "override" in options ? options.override : serveSimBinOverride();
-  if (override !== void 0) {
-    return isExecutableFile2(override) ? { available: true, source: "package-bin", command: override, args: [] } : { available: false, source: "unavailable", args: [], reason: `IOS_SIM_SERVE_SIM_BIN is not an executable file: ${override}` };
-  }
-  const packageBin = (options.packageBin ?? tryResolvePackageBin)();
-  if (packageBin !== void 0) {
-    return { available: true, source: "package-bin", command: packageBin, args: [] };
-  }
-  const npx = (options.findNpx ?? (() => findOnPath3("npx")))();
-  if (npx === void 0) {
-    return { available: false, source: "unavailable", args: [], reason: "serve-sim is not installed and npx is not on PATH" };
-  }
-  return { available: true, source: "npx", command: npx, args: ["-y", `${SERVE_SIM_PACKAGE}@${SERVE_SIM_VERSION}`] };
-}
-function parseServeSimHandshake(line) {
-  let value;
-  try {
-    value = JSON.parse(line);
-  } catch {
-    throw new Error("serve-sim returned a non-JSON handshake");
-  }
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error("serve-sim returned an invalid handshake");
-  }
-  const record3 = value;
-  if (typeof record3.url !== "string" || !/^https?:\/\//.test(record3.url) || typeof record3.streamUrl !== "string" || !/^https?:\/\//.test(record3.streamUrl) || typeof record3.wsUrl !== "string" || !/^wss?:\/\//.test(record3.wsUrl) || typeof record3.port !== "number" || !Number.isSafeInteger(record3.port) || record3.port < 1 || record3.port > 65535 || typeof record3.device !== "string" || record3.device === "") {
-    throw new Error("serve-sim returned an incomplete handshake");
-  }
-  return {
-    url: record3.url,
-    streamUrl: record3.streamUrl,
-    wsUrl: record3.wsUrl,
-    port: record3.port,
-    device: record3.device
-  };
-}
-function waitForStreamHandshake(child, timeoutMs, diagnostics) {
-  return new Promise((resolve6, reject) => {
-    let settled = false;
-    let stdout = "";
-    const finish = (error62, info) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      child.stdout.off("data", onData);
-      child.off("error", onError);
-      child.off("close", onClose);
-      if (error62 !== void 0) reject(error62);
-      else resolve6(info);
-    };
-    const onData = (chunk) => {
-      stdout += chunk.toString("utf8");
-      if (stdout.length > MAX_HANDSHAKE_BYTES) {
-        finish(new Error("serve-sim handshake exceeded its size limit"));
-        return;
-      }
-      const newline = stdout.indexOf("\n");
-      if (newline < 0) return;
-      try {
-        finish(void 0, parseServeSimHandshake(stdout.slice(0, newline).trim()));
-      } catch (error62) {
-        finish(error62 instanceof Error ? error62 : new Error(String(error62)));
-      }
-    };
-    const onError = (error62) => {
-      finish(error62);
-    };
-    const onClose = (code) => {
-      const detail = diagnostics();
-      finish(new Error(
-        `serve-sim exited before streaming (code ${String(code)})${detail === "" ? "" : `: ${detail}`}`
-      ));
-    };
-    const timer = setTimeout(() => {
-      const detail = diagnostics();
-      finish(new Error(
-        `serve-sim did not print its handshake within ${timeoutMs} ms${detail === "" ? "" : `: ${detail}`}`
-      ));
-    }, timeoutMs);
-    child.stdout.on("data", onData);
-    child.once("error", onError);
-    child.once("close", onClose);
-  });
-}
-function waitForChildClose(child, timeoutMs) {
-  if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve(true);
-  return new Promise((resolveClosed) => {
-    let settled = false;
-    const finish = (value) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      child.off("close", onClose);
-      resolveClosed(value);
-    };
-    const onClose = () => {
-      finish(true);
-    };
-    const timer = setTimeout(() => {
-      finish(false);
-    }, timeoutMs);
-    child.once("close", onClose);
-  });
-}
-function signalProcessGroup(child, signal) {
-  const pid = child.pid;
-  if (pid === void 0) {
-    child.kill(signal);
-    return;
-  }
-  try {
-    process.kill(-pid, signal);
-  } catch {
-    child.kill(signal);
-  }
-}
-async function killProcessGroup(child, timeoutMs) {
-  if (child.exitCode !== null || child.signalCode !== null) return true;
-  signalProcessGroup(child, "SIGTERM");
-  const closed = await waitForChildClose(child, timeoutMs);
-  if (!closed && child.exitCode === null && child.signalCode === null) {
-    signalProcessGroup(child, "SIGKILL");
-    return waitForChildClose(child, timeoutMs);
-  }
-  return closed;
-}
-function canBindLoopbackPort(port) {
-  return new Promise((resolveBind) => {
-    const probe = createServer2();
-    probe.unref();
-    probe.once("error", () => resolveBind(false));
-    probe.listen({ host: "127.0.0.1", port }, () => {
-      probe.close(() => resolveBind(true));
-    });
-  });
-}
-function adoptedProbeUrl(info) {
-  const health = info.streamUrl.replace(/\/stream\.mjpeg$/, "/health");
-  if (health !== info.streamUrl) return health;
-  try {
-    return `${new URL(info.streamUrl).origin}/`;
-  } catch {
-    return info.url;
-  }
-}
-function probeHttpAlive(url2, timeoutMs) {
-  return new Promise((resolveProbe) => {
-    let settled = false;
-    const finish = (value) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolveProbe(value);
-    };
-    const req = httpRequest(url2, { method: "GET", timeout: timeoutMs }, (res) => {
-      res.on("error", () => {
-      });
-      res.destroy();
-      finish(true);
-    });
-    req.on("error", () => finish(false));
-    req.on("timeout", () => {
-      req.destroy();
-      finish(false);
-    });
-    const timer = setTimeout(() => {
-      req.destroy();
-      finish(false);
-    }, timeoutMs);
-    timer.unref?.();
-    req.end();
-  });
-}
-function serveSimControlArgs(command, udid, positionals) {
-  return [command, "-d", udid, "--", ...positionals];
-}
-function execServeSim(binary, args, timeoutMs) {
-  return new Promise((resolve6, reject) => {
-    execFile8(binary.command, [...binary.args, ...args], {
-      timeout: timeoutMs,
-      maxBuffer: 4 * 1024 * 1024
-    }, (error62, stdout, stderr) => {
-      if (error62 !== null) {
-        const detail = stderr.trim();
-        const killed = error62.killed === true;
-        const signal = error62.signal ?? null;
-        const cause = killed ? `timed out after ${timeoutMs} ms` : signal !== null ? `killed by ${signal}` : `exit ${String(error62.code)}`;
-        reject(new Error(
-          `serve-sim ${args.join(" ")} failed (${cause})${detail === "" ? "" : `: ${detail}`}`
-        ));
-        return;
-      }
-      resolve6({ stdout, stderr });
-    });
-  });
-}
-var SimHostController = class {
-  binary;
-  #options;
-  #child;
-  #info;
-  #starting;
-  #launchQueue = Promise.resolve();
-  #consumers = 0;
-  #keepAliveRunning = false;
-  #keepAliveTimer;
-  #idleTimer;
-  #restarts = 0;
-  #startedAt;
-  #exitAt;
-  #lastError;
-  #lastDevice;
-  #intentionalStop = false;
-  #lastStopAt = 0;
-  #disposed = false;
-  #disposePromise;
-  #stderrRing = [];
-  #stderrPartial = "";
-  /** True while the stream is an adopted helper instead of an owned child. */
-  #adopted = false;
-  /** Guards against overlapping liveness probes of the adopted helper. */
-  #probeInFlight = false;
-  /**
-   * Bumped by `stop()`; an in-flight launch whose handshake classification
-   * resumes afterwards must not land (e.g. adopt a helper after a stop).
-   */
-  #launchEpoch = 0;
-  constructor(options = {}) {
-    this.binary = options.binary ?? resolveServeSimBinary();
-    this.#options = {
-      portRangeStart: options.portRangeStart ?? STREAM_PORT_RANGE_START,
-      restartDelayMs: options.restartDelayMs ?? DEFAULT_RESTART_DELAY_MS,
-      idleTimeoutMs: options.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS,
-      startTimeoutMs: options.startTimeoutMs ?? DEFAULT_START_TIMEOUT_MS
-    };
-    if (!Number.isSafeInteger(this.#options.portRangeStart) || this.#options.portRangeStart < 1024 || this.#options.portRangeStart > 65535) {
-      throw new RangeError("ios-simulator: portRangeStart must be an integer between 1024 and 65535");
-    }
-  }
-  get available() {
-    return this.binary.available;
-  }
-  /**
-   * True while a stream is available: either a live owned child whose
-   * handshake is current, or an adopted helper that has not been stopped
-   * (its liveness is verified by the keep-alive probe).
-   */
-  get running() {
-    const child = this.#child;
-    if (child !== void 0 && child.exitCode === null && child.signalCode === null && this.#info !== void 0) {
-      return true;
-    }
-    return this.#adopted && this.#info !== void 0;
-  }
-  /**
-   * The live stream's handshake (url/streamUrl/wsUrl/port/device), or undefined
-   * when nothing is streaming. Read-only and non-starting on purpose: the
-   * gesture path (src/sim-gesture.ts) needs `wsUrl` for the control socket but
-   * must NOT launch a stream to get it — a tool call can arrive before the
-   * stream exists, and then it falls back to the serve-sim CLI.
-   */
-  get streamInfo() {
-    return this.running ? this.#info : void 0;
-  }
-  /**
-   * Boot the simulator if needed and make sure one serve-sim stream child is
-   * alive for it. Concurrent callers share a single launch; callers for a
-   * different device wait for the current one to be replaced.
-   */
-  async ensureRunning({ udid }) {
-    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
-    if (typeof udid !== "string" || udid === "") throw new TypeError("ios-simulator: ensureRunning requires a non-empty udid");
-    const startFor = async () => {
-      const current = this.#child;
-      if (current !== void 0 && current.exitCode === null && current.signalCode === null && this.#info?.device === udid) {
-        return this.#info;
-      }
-      const adoptedInfo = this.#adopted ? this.#info : void 0;
-      if (adoptedInfo !== void 0 && adoptedInfo.device === udid) {
-        return adoptedInfo;
-      }
-      if (current !== void 0 && current.exitCode === null && current.signalCode === null) {
-        await killProcessGroup(current, STOP_TIMEOUT_MS);
-        this.#exitAt = void 0;
-        this.#intentionalStop = true;
-      }
-      if (adoptedInfo !== void 0) {
-        this.#adopted = false;
-        this.#info = void 0;
-        if (this.binary.available) {
-          await execServeSim(this.binary, ["-k", adoptedInfo.device], CONTROL_TIMEOUT_MS).catch(() => {
-          });
-        }
-      }
-      const info = await this.#startFor(udid);
-      this.#lastDevice = udid;
-      return info;
-    };
-    let starting = this.#starting;
-    if (starting !== void 0) {
-      try {
-        await starting;
-      } catch {
-      }
-      if (this.#info !== void 0 && this.#info.device === udid && this.running) {
-        this.#armIdle();
-        return this.#info;
-      }
-      starting = void 0;
-    }
-    if (starting === void 0) {
-      starting = this.#serializeLaunch(startFor);
-      this.#starting = starting;
-    }
-    try {
-      const info = await starting;
-      this.#lastError = void 0;
-      this.#armIdle();
-      return info;
-    } catch (error62) {
-      this.#lastError = errorMessage5(error62);
-      throw error62;
-    } finally {
-      if (this.#starting === starting) this.#starting = void 0;
-    }
-  }
-  /**
-   * Start the crash keep-alive loop. While enabled, a stream that exited on
-   * its own is restarted in the background after `restartDelayMs`; intentional
-   * `stop()` calls are never fought.
-   */
-  startKeepAlive() {
-    if (this.#keepAliveRunning || this.#disposed) return;
-    this.#keepAliveRunning = true;
-    const tick = () => {
-      if (this.#disposed || !this.#keepAliveRunning) return;
-      void this.#keepAliveTick().catch(() => {
-      });
-    };
-    this.#keepAliveTimer = setInterval(tick, KEEP_ALIVE_TICK_MS);
-    this.#keepAliveTimer.unref?.();
-  }
-  /** Stop the keep-alive loop. */
-  stopKeepAlive() {
-    this.#keepAliveRunning = false;
-    if (this.#keepAliveTimer !== void 0) clearInterval(this.#keepAliveTimer);
-    this.#keepAliveTimer = void 0;
-  }
-  /**
-   * Stop the stream child. Intentional: the keep-alive loop will not bring it
-   * back until the next `ensureRunning` or `restart`.
-   */
-  async stop() {
-    this.#clearIdle();
-    this.#intentionalStop = true;
-    this.#lastStopAt = Date.now();
-    const child = this.#child;
-    const udid = this.#info?.device ?? this.#lastDevice;
-    const adopted = this.#adopted;
-    this.#child = void 0;
-    this.#info = void 0;
-    this.#startedAt = void 0;
-    this.#exitAt = void 0;
-    this.#adopted = false;
-    this.#launchEpoch += 1;
-    if (child === void 0) {
-      await this.#starting?.catch(() => {
-      });
-      const landed = this.#child;
-      if (landed !== void 0) {
-        this.#child = void 0;
-        this.#info = void 0;
-        this.#startedAt = void 0;
-        await killProcessGroup(landed, STOP_TIMEOUT_MS);
-      }
-      if (adopted && udid !== void 0 && this.binary.available) {
-        await execServeSim(this.binary, ["-k", udid], CONTROL_TIMEOUT_MS).catch(() => {
-        });
-      }
-      return;
-    }
-    const closed = await killProcessGroup(child, STOP_TIMEOUT_MS);
-    if (adopted && udid !== void 0 && this.binary.available) {
-      await execServeSim(this.binary, ["-k", udid], CONTROL_TIMEOUT_MS).catch(() => {
-      });
-    } else if (!closed && udid !== void 0 && this.binary.available) {
-      await execServeSim(this.binary, ["-k", udid], CONTROL_TIMEOUT_MS).catch(() => {
-      });
-    }
-  }
-  /** Stop (if running) and start again, defaulting to the current device. */
-  async restart(udid) {
-    const device = udid ?? this.#info?.device ?? this.#lastDevice;
-    if (device === void 0) {
-      throw new Error("ios-simulator: restart requires a device; call ensureRunning first");
-    }
-    await this.stop();
-    this.#lastStopAt = 0;
-    return this.ensureRunning({ udid: device });
-  }
-  /** Snapshot of lifecycle state, launcher, refcount and recent stderr. */
-  status() {
-    return {
-      available: this.available,
-      running: this.running,
-      ...this.#info === void 0 ? {} : { device: this.#info.device, port: this.#info.port },
-      ...this.#startedAt === void 0 ? {} : { startedAt: this.#startedAt },
-      restarts: this.#restarts,
-      ...this.#lastError === void 0 ? {} : { lastError: this.#lastError },
-      serveSimSource: this.binary.source,
-      ...this.binary.command === void 0 ? {} : { serveSimCommand: this.binary.command },
-      consumers: this.#consumers,
-      ...this.#adopted ? { adopted: true } : {},
-      stderr: [...this.#stderrRing]
-    };
-  }
-  /**
-   * Run a serve-sim control subcommand (`tap`, `gesture`, `type`, `button`,
-   * `-l`, `-k`, …) through the same binary resolution used for the stream.
-   */
-  async control(args, options = {}) {
-    if (!this.binary.available) {
-      throw new Error(`ios-simulator: serve-sim is unavailable${this.binary.reason === void 0 ? "" : ` (${this.binary.reason})`}`);
-    }
-    return execServeSim(this.binary, args, options.timeoutMs ?? CONTROL_TIMEOUT_MS);
-  }
-  /**
-   * Hold the stream alive for one consumer (the web-route proxy uses this).
-   * Returns a release function; each acquire must be released exactly once.
-   */
-  acquire() {
-    this.#consumers += 1;
-    this.#armIdle();
-    let released = false;
-    return () => {
-      if (released) return;
-      released = true;
-      this.#consumers = Math.max(0, this.#consumers - 1);
-      this.#armIdle();
-    };
-  }
-  /** Tear down for plugin disposal: kill the child, refuse new work. */
-  dispose() {
-    if (this.#disposePromise !== void 0) return this.#disposePromise;
-    this.#disposed = true;
-    this.stopKeepAlive();
-    this.#disposePromise = (async () => {
-      await this.stop();
-      await this.#starting?.catch(() => {
-      });
-      await this.stop();
-      await this.#launchQueue;
-    })();
-    return this.#disposePromise;
-  }
-  /**
-   * Exit backstop for a process that exits without awaiting dispose() (an
-   * uncaught exception, a fatal error): SIGTERM a still-running serve-sim
-   * process group. Synchronous, because 'exit' handlers cannot await.
-   */
-  terminateOnExit(kill = (pid, signal) => {
-    process.kill(pid, signal);
-  }) {
-    const child = this.#child;
-    if (child?.pid === void 0 || child.exitCode !== null || child.signalCode !== null) return;
-    try {
-      kill(-child.pid, "SIGTERM");
-    } catch (error62) {
-      if (error62.code !== "ESRCH") {
-        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage5(error62)}
-`);
-      }
-    }
-  }
-  async #keepAliveTick() {
-    const now = Date.now();
-    if (this.#disposed) return;
-    if (this.#adopted) {
-      await this.#probeAdoptedHelper();
-      return;
-    }
-    const exitAt = this.#exitAt;
-    const device = this.#lastDevice;
-    if (exitAt === void 0 || this.#intentionalStop || device === void 0) return;
-    if (now - exitAt < this.#options.restartDelayMs) return;
-    if (!this.binary.available) return;
-    this.#exitAt = void 0;
-    try {
-      if (!await this.#isBooted(device)) {
-        this.#intentionalStop = true;
-        this.#noteStderr(`${device} is no longer booted; the stream stays stopped until the next ensureRunning`);
-        return;
-      }
-      this.#restarts += 1;
-      await this.ensureRunning({ udid: device });
-    } catch (error62) {
-      this.#lastError = errorMessage5(error62);
-      if (this.#exitAt === void 0) this.#exitAt = Date.now();
-    }
-  }
-  /** Whether simctl lists `udid` as Booted; a failed listing rejects (the keep-alive retries later). */
-  async #isBooted(udid) {
-    return (await listDevices()).some((device) => device.udid === udid && device.state === "Booted");
-  }
-  /**
-   * Poll the adopted helper's health route (derived from the stream URL)
-   * with a cheap GET request. When it no longer answers, record the death
-   * like a child exit so the keep-alive loop respawns a fresh (owned)
-   * stream after the usual restart delay.
-   */
-  async #probeAdoptedHelper() {
-    const info = this.#info;
-    if (info === void 0 || this.#intentionalStop || this.#disposed || this.#probeInFlight) return;
-    this.#probeInFlight = true;
-    try {
-      const alive = await probeHttpAlive(adoptedProbeUrl(info), ADOPTED_PROBE_TIMEOUT_MS);
-      if (alive) return;
-      if (this.#disposed || this.#intentionalStop || this.#info !== info) return;
-      this.#noteStderr(`adopted serve-sim helper for ${info.device} no longer answers on ${info.streamUrl}; respawning after the restart delay`);
-      this.#info = void 0;
-      this.#startedAt = void 0;
-      this.#adopted = false;
-      this.#exitAt = Date.now();
-    } finally {
-      this.#probeInFlight = false;
-    }
-  }
-  async #startFor(udid, reclaim = false) {
-    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
-    if (!this.binary.available) {
-      throw new Error(`ios-simulator: serve-sim is unavailable${this.binary.reason === void 0 ? "" : ` (${this.binary.reason})`}`);
-    }
-    const sinceStop = Date.now() - this.#lastStopAt;
-    if (sinceStop < this.#options.restartDelayMs) {
-      await sleep3(this.#options.restartDelayMs - sinceStop);
-    }
-    await bootDevice(udid);
-    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
-    const port = await this.#findFreePort();
-    if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
-    const outcome = await this.#launchStream(udid, port);
-    if (outcome.kind === "mismatch") {
-      if (reclaim) {
-        throw new Error(`serve-sim targeted ${outcome.info.device} instead of ${udid}`);
-      }
-      this.#noteStderr(`serve-sim reported device ${outcome.info.device} instead of ${udid}; reclaiming the stale helper`);
-      await this.#reclaimStaleHelper(outcome.info.device);
-      return this.#startFor(udid, true);
-    }
-    this.#info = outcome.info;
-    this.#startedAt = Date.now();
-    this.#exitAt = void 0;
-    this.#intentionalStop = false;
-    this.#adopted = outcome.kind === "adopted";
-    if (outcome.kind === "adopted") {
-      this.#noteStderr(`adopted existing serve-sim helper for ${udid} on port ${outcome.info.port} (requested ${port})`);
-    }
-    return outcome.info;
-  }
-  /**
-   * Ask serve-sim itself to reap a helper we do not own (`-k <udid>`, with
-   * a blanket `-k` as the last resort when the targeted kill errors out).
-   */
-  async #reclaimStaleHelper(udid) {
-    if (!this.binary.available) return;
-    try {
-      await execServeSim(this.binary, ["-k", udid], CONTROL_TIMEOUT_MS);
-    } catch {
-      await execServeSim(this.binary, ["-k"], CONTROL_TIMEOUT_MS).catch(() => {
-      });
-    }
-  }
-  async #findFreePort() {
-    const start = this.#options.portRangeStart;
-    for (let offset = 0; offset < STREAM_PORT_RANGE_LENGTH; offset += 1) {
-      const port = start + offset;
-      if (port > 65535) break;
-      if (await canBindLoopbackPort(port)) return port;
-    }
-    throw new Error(`ios-simulator: no free port for serve-sim in range ${start}..${start + STREAM_PORT_RANGE_LENGTH - 1}`);
-  }
-  #launchStream(udid, port) {
-    const child = spawn5(this.binary.command, [
-      ...this.binary.args,
-      "--no-preview",
-      "--quiet",
-      "--port",
-      String(port),
-      udid
-    ], {
-      stdio: ["ignore", "pipe", "pipe"],
-      // Group leader so stop() can reap npx → CLI → stream helper at once.
-      detached: true
-    });
-    this.#child = child;
-    const epoch = this.#launchEpoch;
-    child.stderr.on("data", (chunk) => this.#recordStderr(chunk));
-    child.once("close", () => {
-      if (this.#child !== child) return;
-      this.#child = void 0;
-      this.#info = void 0;
-      this.#startedAt = void 0;
-      this.#exitAt = Date.now();
-    });
-    const launched = waitForStreamHandshake(
-      child,
-      this.#options.startTimeoutMs,
-      () => this.#stderrRing.join("\n")
-    );
-    return launched.then(async (info) => {
-      if (this.#launchEpoch !== epoch) {
-        throw new Error("ios-simulator: serve-sim launch was superseded by stop()");
-      }
-      if (info.device !== udid) {
-        await killProcessGroup(child, STOP_TIMEOUT_MS);
-        return { kind: "mismatch", info };
-      }
-      if (info.port !== port) {
-        const childExited = await Promise.race([
-          waitForChildClose(child, ADOPT_GRACE_MS),
-          sleep3(ADOPT_GRACE_MS).then(() => false)
-        ]);
-        if (this.#launchEpoch !== epoch) {
-          throw new Error("ios-simulator: serve-sim launch was superseded by stop()");
-        }
-        return childExited ? { kind: "adopted", info } : { kind: "own", info };
-      }
-      return { kind: "own", info };
-    }, async (error62) => {
-      await killProcessGroup(child, STOP_TIMEOUT_MS);
-      throw error62 instanceof Error ? error62 : new Error(String(error62));
-    });
-  }
-  #recordStderr(chunk) {
-    const text = this.#stderrPartial + chunk.toString("utf8");
-    const lines = text.split("\n");
-    this.#stderrPartial = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trimEnd();
-      this.#stderrRing.push(trimmed.length > STDERR_LINE_MAX_CHARS ? `${trimmed.slice(0, STDERR_LINE_MAX_CHARS)}\u2026` : trimmed);
-      if (this.#stderrRing.length > STDERR_RING_LINES) this.#stderrRing.shift();
-    }
-  }
-  /** Append a controller-authored diagnostic line to the stderr ring. */
-  #noteStderr(line) {
-    this.#stderrRing.push(line.length > STDERR_LINE_MAX_CHARS ? `${line.slice(0, STDERR_LINE_MAX_CHARS)}\u2026` : line);
-    if (this.#stderrRing.length > STDERR_RING_LINES) this.#stderrRing.shift();
-  }
-  #armIdle() {
-    this.#clearIdle();
-    const idleMs = this.#options.idleTimeoutMs;
-    if (idleMs <= 0) return;
-    this.#idleTimer = setTimeout(() => {
-      this.#idleTimer = void 0;
-      if (this.#consumers > 0) {
-        this.#armIdle();
-        return;
-      }
-      void this.stop();
-    }, idleMs);
-    this.#idleTimer.unref?.();
-  }
-  #clearIdle() {
-    if (this.#idleTimer !== void 0) clearTimeout(this.#idleTimer);
-    this.#idleTimer = void 0;
-  }
-  #serializeLaunch(task) {
-    const run3 = this.#launchQueue.then(task, task);
-    this.#launchQueue = run3.then(() => void 0, () => void 0);
-    return run3;
-  }
-};
-
-// src/stream-source.ts
-import { readFileSync as readFileSync6, unlinkSync as unlinkSync2 } from "node:fs";
-import { tmpdir as tmpdir2 } from "node:os";
-import { join as join13 } from "node:path";
-function errorMessage6(error62) {
-  return error62 instanceof Error ? error62.message : String(error62);
-}
-function sleep4(milliseconds) {
-  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
-}
-function requireNormalized(x, y) {
-  if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 1 || y < 0 || y > 1) {
-    throw new RangeError("ios-simulator: tap/drag coordinates must be normalized 0..1 of the streamed frame");
-  }
-}
-function pngDimensionsFromBase64(base643) {
-  const buffer = Buffer.from(base643, "base64");
-  if (buffer.length < 24) return void 0;
-  if (buffer.readUInt32BE(0) !== 2303741511) return void 0;
-  if (buffer.readUInt32BE(12) !== 1229472850) return void 0;
-  return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
-}
-var SimStreamSource = class {
-  constructor(host) {
-    this.host = host;
-  }
-  host;
-  kind = "simulator";
-  #lastInfo;
-  #releases = [];
-  get mjpegUrl() {
-    if (this.#lastInfo !== void 0) return this.#lastInfo.streamUrl;
-    const status = this.host.status();
-    if (status.running && status.port !== void 0) {
-      return `http://127.0.0.1:${status.port}/stream.mjpeg`;
-    }
-    return void 0;
-  }
-  async ensureRunning(udid) {
-    const info = await this.host.ensureRunning({ udid });
-    this.#lastInfo = info;
-    return { udid: info.device, mjpegUrl: info.streamUrl, controlUrl: info.url };
-  }
-  status() {
-    const status = this.host.status();
-    return {
-      kind: this.kind,
-      available: status.available,
-      running: status.running,
-      ...status.device === void 0 ? {} : { device: status.device },
-      consumers: status.consumers,
-      ...status.lastError === void 0 ? {} : { lastError: status.lastError },
-      ...this.mjpegUrl === void 0 ? {} : { mjpegUrl: this.mjpegUrl },
-      ...this.#lastInfo === void 0 ? {} : { controlUrl: this.#lastInfo.url }
-    };
-  }
-  stop() {
-    return this.host.stop();
-  }
-  acquire() {
-    const release = this.host.acquire();
-    this.#releases.push(release);
-    let released = false;
-    return () => {
-      if (released) return;
-      released = true;
-      const index = this.#releases.indexOf(release);
-      if (index >= 0) this.#releases.splice(index, 1);
-      release();
-    };
-  }
-  release() {
-    this.#releases.pop()?.();
-  }
-  control = {
-    tap: async (x, y) => {
-      requireNormalized(x, y);
-      await this.#run("tap", String(x), String(y));
-    },
-    drag: async (drag) => {
-      requireNormalized(drag.fromX, drag.fromY);
-      requireNormalized(drag.toX, drag.toY);
-      const holdMs = Math.min(2e3, Math.max(20, Math.round((drag.duration ?? 0.3) * 500)));
-      await this.#run("gesture", JSON.stringify({ type: "begin", x: drag.fromX, y: drag.fromY }));
-      await sleep4(holdMs);
-      await this.#run("gesture", JSON.stringify({ type: "move", x: drag.toX, y: drag.toY }));
-      await sleep4(holdMs);
-      await this.#run("gesture", JSON.stringify({ type: "end", x: drag.toX, y: drag.toY }));
-    },
-    button: async (name = "home") => {
-      await this.#run("button", name);
-    },
-    type: async (text) => {
-      if (typeof text !== "string" || text === "") throw new TypeError("ios-simulator: type requires a non-empty text");
-      await this.#run("type", text);
-    },
-    rotate: async (orientation) => {
-      await this.#run("rotate", orientation);
-    },
-    deviceAction: (action) => runSimulatorDeviceAction(
-      action,
-      async (name) => {
-        await this.#run("button", name);
-      }
-    ),
-    screenshot: async () => {
-      const udid = this.#requireDevice();
-      const path = join13(tmpdir2(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
-      try {
-        await takeScreenshot(udid, path);
-        const pngBase64 = readFileSync6(path).toString("base64");
-        const size = pngDimensionsFromBase64(pngBase64);
-        return { pngBase64, ...size === void 0 ? {} : size };
-      } catch (error62) {
-        throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage6(error62)}`);
-      } finally {
-        try {
-          unlinkSync2(path);
-        } catch {
-        }
-      }
-    }
-  };
-  /** One serve-sim control call for the streamed device; `--` precedes the positionals (see serveSimControlArgs). */
-  async #run(command, ...positionals) {
-    const udid = this.#requireDevice();
-    await this.host.control(serveSimControlArgs(command, udid, positionals));
-  }
-  #requireDevice() {
-    const udid = this.host.status().device ?? this.#lastInfo?.device;
-    if (udid === void 0) {
-      throw new Error("ios-simulator: no simulator is streaming; call ensureRunning first");
-    }
-    return udid;
-  }
-};
-
 // src/tools/apps.ts
-import { existsSync as existsSync5 } from "node:fs";
-import { join as join14, resolve as resolve4 } from "node:path";
+import { existsSync as existsSync8 } from "node:fs";
+import { join as join16, resolve as resolve5 } from "node:path";
 
 // src/tools/result.ts
-var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name. Default: the streamed device, else the newest-runtime booted iPhone.");
+var UDID_PARAM = external_exports.string().optional().describe("Simulator udid or device name (tools that support it also take a connected iPhone/iPad from ios_sim_devices.realDevices). Default: the streamed device, else the newest-runtime booted iPhone.");
 function deviceSummary(device, state = device.state) {
   return { udid: device.udid, name: device.name, runtime: device.runtime, state };
 }
@@ -44681,8 +46002,8 @@ async function runTool(tool, body) {
     return errorResult(tool, error62);
   }
 }
-function sleep5(milliseconds) {
-  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
+function sleep6(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 
 // src/tools/apps.ts
@@ -44825,8 +46146,8 @@ function registerAppTools(server, deps) {
     inputSchema: { appPath: external_exports.string().min(1), udid: UDID_PARAM }
   }, async (args, extra) => runTool("ios_sim_install_app", async () => {
     assertMac(deps.platform);
-    const appPath = resolve4(args.appPath);
-    if (!existsSync5(join14(appPath, "Info.plist"))) {
+    const appPath = resolve5(args.appPath);
+    if (!existsSync8(join16(appPath, "Info.plist"))) {
       throw new Error(`appPath must be a built .app bundle directory containing Info.plist: ${args.appPath}`);
     }
     const target = await targetOf("ios_sim_install_app", args.udid);
@@ -44934,11 +46255,11 @@ function simDragRequestOf(payload) {
 function loadWs() {
   return { WebSocket: import_websocket.default };
 }
-function errorMessage7(error62) {
+function errorMessage9(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep6(milliseconds) {
-  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
+function sleep7(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 function gestureUnavailable(wsUrl, detail) {
   return new Error(
@@ -44975,7 +46296,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
   let broken;
   let finished = false;
   socket.on("error", (error62) => {
-    broken ??= `the control socket errored (${errorMessage7(error62)})`;
+    broken ??= `the control socket errored (${errorMessage9(error62)})`;
   });
   socket.on("close", (code, reason) => {
     if (finished) return;
@@ -44987,15 +46308,15 @@ async function sendSimGesture(wsUrl, points, options = {}) {
     await openSocket(socket, connectTimeoutMs, url2, () => broken);
     for (const [index, point] of path.entries()) {
       if (broken !== void 0) throw gestureUnavailable(url2, broken);
-      if (index > 0 && stepMs > 0) await sleep6(stepMs);
+      if (index > 0 && stepMs > 0) await sleep7(stepMs);
       socket.send(encodeSimTouchFrame(index === 0 ? "begin" : "move", point.x, point.y));
     }
     if (broken !== void 0) throw gestureUnavailable(url2, broken);
-    await new Promise((resolve6, reject) => {
+    await new Promise((resolve7, reject) => {
       const last = path[path.length - 1];
       socket.send(encodeSimTouchFrame("end", last.x, last.y), (error62) => {
-        if (error62 === void 0 || error62 === null) resolve6();
-        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage7(error62)})`));
+        if (error62 === void 0 || error62 === null) resolve7();
+        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage9(error62)})`));
       });
     });
     const elapsedMs = Date.now() - started;
@@ -45007,7 +46328,7 @@ async function sendSimGesture(wsUrl, points, options = {}) {
   }
 }
 function openSocket(socket, timeoutMs, url2, broken) {
-  return new Promise((resolve6, reject) => {
+  return new Promise((resolve7, reject) => {
     let settled = false;
     const timer = setTimeout(() => {
       if (settled) return;
@@ -45018,7 +46339,7 @@ function openSocket(socket, timeoutMs, url2, broken) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve6();
+      resolve7();
     });
     socket.once("close", () => {
       if (settled) return;
@@ -45030,13 +46351,13 @@ function openSocket(socket, timeoutMs, url2, broken) {
 }
 function closeSocket(socket, closedState) {
   if (socket.readyState === closedState) return Promise.resolve();
-  return new Promise((resolve6) => {
+  return new Promise((resolve7) => {
     let settled = false;
     const done = () => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve6();
+      resolve7();
     };
     const timer = setTimeout(() => {
       socket.terminate();
@@ -45071,10 +46392,10 @@ var SERVE_SIM_BUTTONS = [
   "digital-crown",
   "left-side-button"
 ];
-function sleep7(milliseconds) {
-  return new Promise((resolve6) => setTimeout(resolve6, milliseconds));
+function sleep8(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
-function errorMessage8(error62) {
+function errorMessage10(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function scrollRequestOf(args) {
@@ -45161,7 +46482,7 @@ async function performSimInteractControl(host, deviceUdid, payloads) {
     if (command === void 0) continue;
     await host.control(serveSimControlArgs(command, deviceUdid, positionals));
     if (payloads.length > 1 && payload !== payloads[payloads.length - 1]) {
-      await sleep7(SCROLL_HOLD_MS);
+      await sleep8(SCROLL_HOLD_MS);
     }
   }
 }
@@ -45186,7 +46507,7 @@ async function performSimInteract(host, deviceUdid, args, payloads, options = {}
         const report = await sendSimGesture(wsUrl, points, { stepMs: options.stepMs ?? SIM_GESTURE_STEP_MS });
         return { channel: "ws", frames: report.frames, elapsedMs: report.elapsedMs };
       } catch (error62) {
-        wsError = errorMessage8(error62);
+        wsError = errorMessage10(error62);
       }
     }
   }
@@ -45249,7 +46570,7 @@ var SILENT_RETRY_MS = 6e4;
 function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
   const since = givenUpAt.get(wsUrl);
   if (since !== void 0 && now() - since < SILENT_RETRY_MS) return Promise.resolve(void 0);
-  return new Promise((resolve6) => {
+  return new Promise((resolve7) => {
     let settled = false;
     const socket = new import_websocket.default(wsUrl, { perMessageDeflate: false });
     const finish = (config2) => {
@@ -45257,7 +46578,7 @@ function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
       settled = true;
       clearTimeout(timer);
       socket.terminate();
-      resolve6(config2);
+      resolve7(config2);
     };
     const timer = setTimeout(() => {
       const timeouts = (timeoutsInARow.get(wsUrl) ?? 0) + 1;
@@ -45312,6 +46633,954 @@ function toFramebufferArgs(orientation, args) {
     }
     default:
       return args;
+  }
+}
+
+// src/uitree.ts
+var OUTPUT_CAP_BYTES = 40 * 1024;
+var OCR_DEFAULT_MIN_CONFIDENCE = 0.3;
+var TAPPABLE_TYPES = /* @__PURE__ */ new Set([
+  "Button",
+  "Cell",
+  "Link",
+  "Switch",
+  "TextField",
+  "SearchField",
+  "TextArea",
+  "Tab",
+  "TabButton",
+  "Menu",
+  "MenuItem",
+  "MenuBarItem",
+  "Slider",
+  "Stepper",
+  "Incrementor",
+  "PickerWheel",
+  "Handle",
+  "RadioButton",
+  "CheckBox",
+  "DisclosureTriangle",
+  "PopUpButton",
+  "ComboBox",
+  "ScrollBar",
+  "Window"
+]);
+var FRAME_EPSILON = 1;
+var OCR_FALLBACK_HINT = "The accessibility tree is empty or degenerate (no labeled elements), so the app exposes little or no accessibility information \u2014 run ios_sim_find_text to OCR the screen instead.";
+function round2(value) {
+  const rounded = Math.round(value * 100) / 100;
+  return rounded === 0 ? 0 : rounded;
+}
+function roundFrame(frame) {
+  return { x: round2(frame.x), y: round2(frame.y), w: round2(frame.w), h: round2(frame.h) };
+}
+function toUiTreeNode(element) {
+  const node2 = { type: element.type, frame: roundFrame(element.frame), children: [] };
+  if (element.label !== void 0) node2.label = element.label;
+  if (element.identifier !== void 0) node2.identifier = element.identifier;
+  if (element.value !== void 0) node2.value = element.value;
+  if (element.visible !== void 0) node2.visible = element.visible;
+  if (element.enabled !== void 0) node2.enabled = element.enabled;
+  if (element.selected !== void 0) node2.selected = element.selected;
+  return node2;
+}
+function buildCompactTree(roots, maxDepth, filter) {
+  const needle = filter !== void 0 && filter.trim() !== "" ? filter.trim().toLowerCase() : void 0;
+  let count = 0;
+  const walk = (element, depth) => {
+    const selfMatches = needle === void 0 || [element.type, element.label, element.identifier].some((value) => value?.toLowerCase().includes(needle) === true);
+    const children = [];
+    if (maxDepth === void 0 || depth < maxDepth) {
+      for (const child of element.children) {
+        const compact = walk(child, depth + 1);
+        if (compact !== void 0) children.push(compact);
+      }
+    }
+    if (!selfMatches && children.length === 0) return void 0;
+    const node2 = toUiTreeNode(element);
+    node2.children = children;
+    count += 1;
+    return node2;
+  };
+  const tree = [];
+  for (const root of roots) {
+    const compact = walk(root, 0);
+    if (compact !== void 0) tree.push(compact);
+  }
+  return { tree, count };
+}
+function treeDepth(nodes) {
+  let depth = 0;
+  for (const node2 of nodes) {
+    if (node2.children.length > 0) depth = Math.max(depth, 1 + treeDepth(node2.children));
+  }
+  return depth;
+}
+function pruneDeepestLevel(nodes) {
+  const depth = treeDepth(nodes);
+  if (depth === 0) return;
+  const pruneAt = (list, level) => {
+    for (const node2 of list) {
+      if (level === depth - 1) node2.children = [];
+      else pruneAt(node2.children, level + 1);
+    }
+  };
+  pruneAt(nodes, 0);
+}
+function jsonBytes(value) {
+  return Buffer.byteLength(JSON.stringify(value), "utf8");
+}
+function capTreeToBytes(tree, capBytes = OUTPUT_CAP_BYTES) {
+  let truncated = jsonBytes(tree) > capBytes;
+  while (jsonBytes(tree) > capBytes && treeDepth(tree) > 0) pruneDeepestLevel(tree);
+  if (!truncated) truncated = jsonBytes(tree) > capBytes;
+  return { tree, truncated };
+}
+function isOffscreenFrame(frame, bounds) {
+  if (bounds.width <= 0 || bounds.height <= 0) return false;
+  return frame.x + frame.w <= 0 || frame.y + frame.h <= 0 || frame.x >= bounds.width || frame.y >= bounds.height;
+}
+function isOffscreenElement(element, bounds) {
+  return element.visible === false || isOffscreenFrame(element.frame, bounds);
+}
+function pruneOffscreenTree(tree, bounds) {
+  let omitted = 0;
+  const countAll = (node2) => 1 + node2.children.reduce((sum, child) => sum + countAll(child), 0);
+  const walk = (node2, isRoot) => {
+    if (!isRoot && isOffscreenElement(node2, bounds)) {
+      omitted += countAll(node2);
+      return void 0;
+    }
+    const children = [];
+    for (const child of node2.children) {
+      const kept2 = walk(child, false);
+      if (kept2 !== void 0) children.push(kept2);
+    }
+    node2.children = children;
+    return node2;
+  };
+  const kept = [];
+  for (const root of tree) {
+    const node2 = walk(root, true);
+    if (node2 !== void 0) kept.push(node2);
+  }
+  return { tree: kept, omitted };
+}
+function hasLabeledNode(tree) {
+  for (const node2 of tree) {
+    if (node2.type !== "Application" && node2.label !== void 0 && node2.label !== "") return true;
+    if (hasLabeledNode(node2.children)) return true;
+  }
+  return false;
+}
+function countNodes(node2) {
+  return 1 + node2.children.reduce((sum, child) => sum + countNodes(child), 0);
+}
+function screenBounds(roots) {
+  let width = 0;
+  let height = 0;
+  for (const root of roots) {
+    width = Math.max(width, root.frame.x + root.frame.w);
+    height = Math.max(height, root.frame.y + root.frame.h);
+  }
+  if (width <= 0 || height <= 0) {
+    width = roots[0]?.frame.w ?? 0;
+    height = roots[0]?.frame.h ?? 0;
+  }
+  return { width, height };
+}
+function containsFrame(outer, inner) {
+  return outer.x <= inner.x + FRAME_EPSILON && outer.y <= inner.y + FRAME_EPSILON && outer.x + outer.w >= inner.x + inner.w - FRAME_EPSILON && outer.y + outer.h >= inner.y + inner.h - FRAME_EPSILON;
+}
+function sameFrame(a, b) {
+  return containsFrame(a, b) && containsFrame(b, a);
+}
+function buildTreeResult(roots, size, args) {
+  const built = buildCompactTree(roots, args.max_depth, args.filter);
+  const pruned = args.include_offscreen === true ? { tree: built.tree, omitted: 0 } : pruneOffscreenTree(built.tree, size);
+  const capped = capTreeToBytes(pruned.tree);
+  const hints = [];
+  if (capped.truncated) {
+    hints.push("The tree exceeded the 40 KB output cap and its deepest levels were pruned. Re-run with max_depth or filter to narrow the subtree.");
+  }
+  const filter = args.filter?.trim() ?? "";
+  if (filter !== "" && built.count === 0) {
+    hints.push(`The filter ${JSON.stringify(filter)} matched nothing. A filter miss says nothing about the app \u2014 re-run WITHOUT a filter to see what is actually there.`);
+  } else if (!hasLabeledNode(capped.tree)) {
+    if (args.max_depth !== void 0) {
+      hints.push(`max_depth ${args.max_depth} shows only container chrome \u2014 the labeled controls live deeper; re-run without max_depth.`);
+    } else if (capped.truncated) {
+      hints.push("The tree was pruned to fit the output cap, so the surviving levels carry no labels \u2014 narrow it with a filter before concluding anything about the app.");
+    } else if (pruned.omitted > 0) {
+      hints.push(`The visible tree carries no labels \u2014 every labeled element is among the ${pruned.omitted} off-screen element(s) excluded from the output. Scroll, or re-run with include_offscreen=true.`);
+    } else {
+      hints.push(OCR_FALLBACK_HINT);
+    }
+  }
+  return {
+    size: { width: round2(size.width), height: round2(size.height) },
+    nodeCount: capped.tree.reduce((count, node2) => count + countNodes(node2), 0),
+    omittedOffscreen: pruned.omitted,
+    ...capped.truncated ? { truncated: true } : {},
+    ...hints.length > 0 ? { hint: hints.join(" ") } : {},
+    tree: capped.tree
+  };
+}
+function flattenElements(roots) {
+  const flat = [];
+  const walk = (element, depth) => {
+    const entry = { type: element.type, frame: element.frame, depth };
+    if (element.label !== void 0) entry.label = element.label;
+    if (element.identifier !== void 0) entry.identifier = element.identifier;
+    if (element.value !== void 0) entry.value = element.value;
+    if (element.visible !== void 0) entry.visible = element.visible;
+    if (element.enabled !== void 0) entry.enabled = element.enabled;
+    flat.push(entry);
+    for (const child of element.children) walk(child, depth + 1);
+  };
+  for (const root of roots) walk(root, 0);
+  return flat;
+}
+function describeCandidate(element, index) {
+  const label = element.label === void 0 ? "" : ` label=${JSON.stringify(element.label)}`;
+  const identifier = element.identifier === void 0 ? "" : ` identifier=${JSON.stringify(element.identifier)}`;
+  const flags = `${element.visible === false ? " visible=false" : ""}${element.enabled === false ? " enabled=false" : ""}`;
+  const frame = roundFrame(element.frame);
+  return `${index}) type=${element.type}${label}${identifier}${flags} frame={x:${frame.x},y:${frame.y},w:${frame.w},h:${frame.h}}`;
+}
+function tapGateFailure(representatives, bounds, wanted, allowOffscreen) {
+  const offscreen = representatives.filter((element) => isOffscreenElement(element, bounds));
+  const disabled = representatives.filter((element) => element.enabled === false);
+  const hint = allowOffscreen ? " (allow_offscreen=true bypasses only the off-screen check \u2014 disabled stays refused)" : "";
+  if (offscreen.length > 0 && disabled.length > 0) {
+    throw new Error(`${wanted} matched ${representatives.length} element(s) that are off-screen or disabled \u2014 scroll the off-screen ones into view first and enable the disabled ones${hint}`);
+  }
+  if (offscreen.length > 0) {
+    const noun2 = representatives.length === 1 ? "matched an off-screen element" : `matched ${representatives.length} off-screen elements`;
+    throw new Error(`${wanted} ${noun2} \u2014 scroll it into view first, then retry; pass allow_offscreen=true to tap the recorded coordinates anyway${hint}`);
+  }
+  const noun = representatives.length === 1 ? "matched a disabled element" : `matched ${representatives.length} disabled elements`;
+  throw new Error(`${wanted} ${noun} \u2014 the control is disabled, so a tap would do nothing; enable it first${hint}`);
+}
+function resolveTapTarget(roots, selector, options = {}) {
+  const identifier = selector.identifier?.trim() || void 0;
+  const label = selector.label?.trim() || void 0;
+  if (identifier === void 0 && label === void 0) {
+    throw new Error("an element selector is required: identifier and/or label");
+  }
+  const wantedFields = [];
+  if (identifier !== void 0) wantedFields.push(["identifier", identifier]);
+  if (label !== void 0) wantedFields.push(["label", label]);
+  const flat = flattenElements(roots);
+  const matches = (mode) => flat.filter((element) => wantedFields.every(([field, value]) => {
+    const actual = element[field];
+    if (actual === void 0) return false;
+    return mode === "exact" ? actual === value : actual.toLowerCase().includes(value.toLowerCase());
+  }));
+  let candidates = matches("exact");
+  let matchedBy = "exact";
+  if (candidates.length === 0) {
+    candidates = matches("contains");
+    matchedBy = "contains";
+  }
+  if (candidates.length === 0) {
+    const wanted2 = wantedFields.map(([field, value]) => `${field}=${value}`).join(" and ");
+    throw new Error(`no accessibility element matches ${wanted2} on the current screen \u2014 run ios_sim_ui_tree to inspect the visible elements (a control inside a feed row is not an element of its own: use ios_sim_ui_rows)`);
+  }
+  const unique = candidates.filter((element, index) => !candidates.slice(0, index).some((other) => sameFrame(element.frame, other.frame) && element.type === other.type));
+  const chains = [];
+  for (const element of unique) {
+    const chain = chains.find((group) => group.some((other) => !sameFrame(element.frame, other.frame) && (containsFrame(element.frame, other.frame) || containsFrame(other.frame, element.frame))));
+    if (chain === void 0) chains.push([element]);
+    else chain.push(element);
+  }
+  const representatives = chains.map((chain) => {
+    const tappable = chain.filter((element) => TAPPABLE_TYPES.has(element.type));
+    if (tappable.length > 0) {
+      return tappable.find((element) => !tappable.some((other) => other !== element && containsFrame(other.frame, element.frame) && !sameFrame(other.frame, element.frame))) ?? tappable[0];
+    }
+    return chain.reduce((deepest, element) => element.depth > deepest.depth ? element : deepest, chain[0]);
+  });
+  const wanted = wantedFields.map(([field, value]) => `${field} ${JSON.stringify(value)}`).join(" and ");
+  const bounds = screenBounds(roots);
+  const allowOffscreen = options.allowOffscreen === true;
+  const viable = representatives.filter((element) => element.enabled !== false && (allowOffscreen || !isOffscreenElement(element, bounds)));
+  if (viable.length === 0) tapGateFailure(representatives, bounds, wanted, allowOffscreen);
+  if (viable.length > 1) {
+    const skipped = representatives.length - viable.length;
+    const shown = representatives.slice(0, 8);
+    const more = representatives.length - shown.length;
+    throw new Error(`${representatives.length} elements match ${wanted}${skipped > 0 ? ` (${skipped} skipped: off-screen or disabled)` : ""} \u2014 use a more specific selector (exact label, identifier, or ios_sim_ui_tree to disambiguate). Candidates:
+` + shown.map((element, index) => `  ${describeCandidate(element, index + 1)}`).join("\n") + (more > 0 ? `
+  \u2026and ${more} more` : ""));
+  }
+  return { element: viable[0], matchedBy };
+}
+function frameCenter(frame) {
+  const round1 = (value) => {
+    const rounded = Math.round(value * 10) / 10;
+    return rounded === 0 ? 0 : rounded;
+  };
+  return { x: round1(frame.x + frame.w / 2), y: round1(frame.y + frame.h / 2) };
+}
+function sanitizeMinConfidence(value) {
+  if (value === void 0) return OCR_DEFAULT_MIN_CONFIDENCE;
+  if (!Number.isFinite(value) || value < 0 || value > 1) throw new Error("min_confidence must be a number within 0..1");
+  return value;
+}
+function tapExpectation(args) {
+  const expectText = args.expect_text?.trim() || void 0;
+  const expectGone = args.expect_gone?.trim() || void 0;
+  if (expectText !== void 0 && expectGone !== void 0) {
+    throw new Error("pass expect_text OR expect_gone, not both \u2014 they assert opposite outcomes");
+  }
+  if (expectText !== void 0) return { text: expectText, mode: "appear" };
+  if (expectGone !== void 0) return { text: expectGone, mode: "disappear" };
+  return void 0;
+}
+function ocrTextPresent(items, text) {
+  const needle = text.toLowerCase();
+  return items.find((item) => item.text === text) ?? items.find((item) => item.text.toLowerCase().includes(needle));
+}
+async function pollForText(read, text, mode, timeoutMs, intervalMs, minConfidence, signal) {
+  const startedAt = Date.now();
+  const deadline = startedAt + timeoutMs;
+  for (; ; ) {
+    const present = ocrTextPresent(filterOcrItems(await read(), text, minConfidence), text);
+    const matched = mode === "appear" ? present !== void 0 : present === void 0;
+    const waitedMs = Date.now() - startedAt;
+    if (matched) return mode === "appear" && present !== void 0 ? { matched, waitedMs, item: present } : { matched, waitedMs };
+    if (signal?.aborted === true || Date.now() >= deadline) return { matched: false, waitedMs };
+    await new Promise((resolve7) => setTimeout(resolve7, Math.min(intervalMs, Math.max(0, deadline - Date.now()))));
+  }
+}
+function resolveOcrTextTarget(items, query, unfiltered = items, minConfidence = 0) {
+  const matches = (pool2, mode) => mode === "exact" ? pool2.filter((item) => item.text === query) : pool2.filter((item) => item.text.toLowerCase().includes(query.toLowerCase()));
+  let pool = matches(items, "exact");
+  let matchedBy = "exact";
+  if (pool.length === 0) {
+    pool = matches(items, "contains");
+    matchedBy = "contains";
+  }
+  if (pool.length === 0) {
+    const nearMiss = [...matches(unfiltered, "exact"), ...matches(unfiltered, "contains")].filter((item) => item.confidence < minConfidence).sort((a, b) => b.confidence - a.confidence)[0];
+    if (nearMiss !== void 0) {
+      throw new Error(`${JSON.stringify(nearMiss.text)} IS on the current screen, but its OCR confidence ${nearMiss.confidence.toFixed(2)} is below min_confidence ${minConfidence.toFixed(2)} \u2014 pass a lower min_confidence (CJK labels commonly read 0.3\u20130.6) or tap it by identifier with ios_sim_tap_element`);
+    }
+    throw new Error(`no recognized text matches ${JSON.stringify(query)} on the current screen \u2014 run ios_sim_find_text to see everything the OCR read`);
+  }
+  const unique = pool.filter((item, index) => !pool.slice(0, index).some((other) => other.text === item.text && other.rect.x === item.rect.x && other.rect.y === item.rect.y && other.rect.w === item.rect.w && other.rect.h === item.rect.h));
+  if (unique.length > 1) {
+    const shown = unique.slice(0, 8);
+    const more = unique.length - shown.length;
+    throw new Error(`${unique.length} OCR matches for ${JSON.stringify(query)} \u2014 use a more specific query, or raise min_confidence to drop weak matches. Candidates:
+` + shown.map((item, index) => {
+      const rect = roundFrame(item.rect);
+      return `  ${index + 1}) text=${JSON.stringify(item.text)} confidence=${round2(item.confidence)} rect={x:${rect.x},y:${rect.y},w:${rect.w},h:${rect.h}}`;
+    }).join("\n") + (more > 0 ? `
+  \u2026and ${more} more` : ""));
+  }
+  return { item: unique[0], matchedBy };
+}
+function capList(items, capBytes = OUTPUT_CAP_BYTES) {
+  if (jsonBytes(items) <= capBytes) return { items: [...items], truncated: false };
+  const kept = [...items];
+  while (jsonBytes(kept) > capBytes && kept.length > 1) kept.pop();
+  return { items: kept, truncated: true };
+}
+
+// src/uitree-backend.ts
+import { execFile as execFile10 } from "node:child_process";
+import { createHash as createHash3 } from "node:crypto";
+import { chmodSync, existsSync as existsSync9, mkdirSync as mkdirSync5, readFileSync as readFileSync7, rmSync as rmSync4, statSync as statSync8, writeFileSync as writeFileSync4 } from "node:fs";
+import { delimiter as delimiter5, join as join17 } from "node:path";
+var AXE_VERSION = "1.8.0";
+var AXE_RELEASE_URL = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz";
+var AXE_RELEASE_SHA256 = "7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834";
+var AXE_INSTALL_HINT = 'install the AXe accessibility CLI with "brew install cameroncooke/axe/axe", or let the plugin download the pinned release into its cache (needs network access to github.com); set IOS_SIM_AXE_BIN to an existing axe executable to override resolution';
+var AXE_DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1e3;
+var AXE_EXEC_TIMEOUT_MS = 6e4;
+var AXE_MAX_BUFFER_BYTES = 32 * 1024 * 1024;
+var DIGEST_FILE2 = ".ios-simulator-axe.sha256";
+var BREW_BIN_CANDIDATES = ["/opt/homebrew/bin/axe", "/usr/local/bin/axe"];
+function isExecutableFile3(path) {
+  try {
+    const info = statSync8(path);
+    return info.isFile() && (info.mode & 73) !== 0;
+  } catch {
+    return false;
+  }
+}
+function findOnPath5(command, env) {
+  for (const dir of (env.PATH ?? "").split(delimiter5)) {
+    if (dir === "") continue;
+    const candidate = join17(dir, command);
+    if (isExecutableFile3(candidate)) return candidate;
+  }
+  return void 0;
+}
+function sha256File2(path) {
+  return createHash3("sha256").update(readFileSync7(path)).digest("hex");
+}
+function run3(command, args, timeoutMs, signal) {
+  return new Promise((resolve7, reject) => {
+    execFile10(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
+      if (error62 !== null) {
+        reject(Object.assign(error62, { stdout, stderr }));
+        return;
+      }
+      resolve7({ stdout, stderr });
+    });
+  });
+}
+var AxeHelper = class {
+  #cacheDir;
+  #platform;
+  #env;
+  #downloading;
+  constructor(options) {
+    this.#cacheDir = options.cacheDir;
+    this.#platform = options.platform ?? process.platform;
+    this.#env = options.env ?? process.env;
+  }
+  #installDir() {
+    return join17(this.#cacheDir, AXE_VERSION);
+  }
+  #validCached() {
+    const binary = join17(this.#installDir(), "axe");
+    if (!isExecutableFile3(binary)) return void 0;
+    try {
+      const expected = readFileSync7(join17(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
+      if (!/^[0-9a-f]{64}$/u.test(expected)) return void 0;
+      return sha256File2(binary) === expected ? binary : void 0;
+    } catch {
+      return void 0;
+    }
+  }
+  /** Resolve without network access: env override → PATH → Homebrew → cache. */
+  resolve() {
+    if (this.#platform !== "darwin") {
+      return { available: false, source: "unavailable", reason: "AXe only runs on macOS with Xcode" };
+    }
+    const explicit = this.#env.IOS_SIM_AXE_BIN?.trim();
+    if (explicit !== void 0 && explicit !== "") {
+      if (isExecutableFile3(explicit)) return { available: true, source: "path", command: explicit };
+      return {
+        available: false,
+        source: "unavailable",
+        reason: `IOS_SIM_AXE_BIN points at a missing or non-executable file: ${explicit}`
+      };
+    }
+    const onPath = findOnPath5("axe", this.#env) ?? BREW_BIN_CANDIDATES.find(isExecutableFile3);
+    if (onPath !== void 0) return { available: true, source: "path", command: onPath };
+    const cached2 = this.#validCached();
+    if (cached2 !== void 0) return { available: true, source: "cache", command: cached2 };
+    if (existsSync9(this.#installDir())) {
+      return {
+        available: false,
+        source: "unavailable",
+        reason: `the cached axe install under ${this.#installDir()} failed integrity verification`
+      };
+    }
+    return { available: false, source: "unavailable", reason: "no axe binary found on PATH, in Homebrew, or in the plugin cache" };
+  }
+  /** Resolve, downloading the pinned release when absent. Never throws. */
+  async ensure() {
+    const resolved = this.resolve();
+    if (resolved.available || this.#platform !== "darwin") return resolved;
+    if (this.#env.IOS_SIM_AXE_OFFLINE === "1") return resolved;
+    if (this.#env.IOS_SIM_AXE_BIN?.trim()) return resolved;
+    if (this.#downloading === void 0) {
+      this.#downloading = this.#download().finally(() => {
+        this.#downloading = void 0;
+      });
+    }
+    try {
+      await this.#downloading;
+    } catch (error62) {
+      return {
+        available: false,
+        source: "unavailable",
+        reason: `axe download failed (${error62 instanceof Error ? error62.message : String(error62)})`
+      };
+    }
+    return this.resolve();
+  }
+  /**
+   * curl the pinned tarball (system curl, so proxy variables apply), verify
+   * its SHA-256, extract it, sanity-check `axe --version`, record the digest.
+   */
+  async #download() {
+    const installDir = this.#installDir();
+    mkdirSync5(this.#cacheDir, { recursive: true });
+    const archive = join17(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
+    try {
+      try {
+        await run3("curl", [
+          "-fsSL",
+          "--retry",
+          "3",
+          "--retry-delay",
+          "1",
+          "--connect-timeout",
+          "30",
+          "--max-time",
+          "240",
+          "-o",
+          archive,
+          AXE_RELEASE_URL
+        ], AXE_DOWNLOAD_TIMEOUT_MS);
+      } catch (error62) {
+        throw new Error(`curl download failed (${error62 instanceof Error && error62.message.includes("ETIMEDOUT") ? "timeout" : "HTTP or network error"})`);
+      }
+      const digest = sha256File2(archive);
+      if (digest !== AXE_RELEASE_SHA256) {
+        throw new Error(`download integrity check failed: expected sha256 ${AXE_RELEASE_SHA256} but got ${digest}`);
+      }
+      rmSync4(installDir, { recursive: true, force: true });
+      mkdirSync5(installDir, { recursive: true });
+      await run3("tar", ["-xzf", archive, "-C", installDir], AXE_DOWNLOAD_TIMEOUT_MS);
+      const binary = join17(installDir, "axe");
+      if (!isExecutableFile3(binary)) chmodSync(binary, 493);
+      const version2 = await run3(binary, ["--version"], AXE_EXEC_TIMEOUT_MS);
+      if (!version2.stdout.includes(AXE_VERSION)) {
+        throw new Error(`downloaded axe reports an unexpected version: ${version2.stdout.trim()}`);
+      }
+      writeFileSync4(join17(installDir, DIGEST_FILE2), `${sha256File2(binary)}
+`, "utf8");
+      return binary;
+    } finally {
+      rmSync4(archive, { force: true });
+    }
+  }
+  async #require() {
+    const binary = await this.ensure();
+    if (!binary.available || binary.command === void 0) {
+      throw new Error(`the AXe accessibility helper is unavailable${binary.reason === void 0 ? "" : ` (${binary.reason})`}; ${AXE_INSTALL_HINT}`);
+    }
+    return { ...binary, command: binary.command };
+  }
+  /**
+   * Run one axe subcommand. A non-zero exit raises with the tool output (axe
+   * prints its errors on stdout), as does an "Error:" prefix on stdout.
+   */
+  async exec(args, signal) {
+    const binary = await this.#require();
+    let stdout;
+    try {
+      stdout = (await run3(binary.command, args, AXE_EXEC_TIMEOUT_MS, signal)).stdout;
+    } catch (error62) {
+      const { stdout: out, stderr } = error62;
+      const detail = out?.trim() || stderr?.trim() || "";
+      throw new Error(`axe ${args.join(" ")} failed${detail === "" ? "" : `: ${detail}`}`);
+    }
+    if (stdout.trimStart().startsWith("Error:")) throw new Error(`axe ${args.join(" ")} failed: ${stdout.trim()}`);
+    return stdout;
+  }
+  /** The sanitized accessibility tree of a booted simulator. */
+  async describeUi(udid, signal) {
+    return parseDescribeUi(await this.exec(["describe-ui", "--udid", udid], signal));
+  }
+  /** HID tap at device-point coordinates. */
+  async tap(udid, x, y, signal) {
+    await this.exec(["tap", "-x", String(x), "-y", String(y), "--udid", udid], signal);
+  }
+};
+function finiteNumber(value) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return void 0;
+  return value === 0 ? 0 : value;
+}
+function optionalString(value) {
+  if (typeof value !== "string") return void 0;
+  const trimmed = value.trim();
+  return trimmed === "" ? void 0 : trimmed;
+}
+function sanitizeAxeNode(raw) {
+  const rawFrame = raw.frame;
+  const children = [];
+  if (Array.isArray(raw.children)) {
+    for (const child of raw.children) {
+      if (typeof child === "object" && child !== null) children.push(sanitizeAxeNode(child));
+    }
+  }
+  const node2 = {
+    type: typeof raw.type === "string" && raw.type !== "" ? raw.type : "Element",
+    frame: {
+      x: finiteNumber(rawFrame?.x) ?? 0,
+      y: finiteNumber(rawFrame?.y) ?? 0,
+      w: finiteNumber(rawFrame?.width ?? rawFrame?.w) ?? 0,
+      h: finiteNumber(rawFrame?.height ?? rawFrame?.h) ?? 0
+    },
+    children
+  };
+  const label = optionalString(raw.AXLabel ?? raw.label);
+  const identifier = optionalString(raw.AXUniqueId ?? raw.identifier);
+  const value = optionalString(raw.AXValue ?? raw.value);
+  if (label !== void 0) node2.label = label;
+  if (identifier !== void 0) node2.identifier = identifier;
+  if (value !== void 0) node2.value = value;
+  if (typeof raw.enabled === "boolean") node2.enabled = raw.enabled;
+  if (typeof raw.visible === "boolean") node2.visible = raw.visible;
+  if (typeof raw.selected === "boolean") node2.selected = raw.selected;
+  if (raw.secure === true) node2.secure = true;
+  else if (raw.subrole === "AXSecureTextField" || raw.role === "AXSecureTextField") node2.secure = true;
+  else if (typeof raw.type === "string" && raw.type.includes("Secure")) node2.secure = true;
+  if (typeof raw.focused === "boolean") node2.focused = raw.focused;
+  const pid = finiteNumber(raw.pid);
+  if (pid !== void 0 && Number.isSafeInteger(pid) && pid >= 0) node2.pid = pid;
+  return node2;
+}
+function parseDescribeUi(stdout) {
+  let parsed;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch (error62) {
+    throw new Error(`axe describe-ui returned non-JSON output: ${error62 instanceof Error ? error62.message : String(error62)}`);
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error("axe describe-ui returned an unexpected payload (expected a JSON array of application roots)");
+  }
+  const roots = [];
+  for (const entry of parsed) {
+    if (typeof entry === "object" && entry !== null) roots.push(sanitizeAxeNode(entry));
+  }
+  if (roots.length === 0) throw new Error("axe describe-ui returned an empty element tree");
+  return roots;
+}
+
+// src/wda-uitree.ts
+function decodeXmlEntities2(text) {
+  return text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#x([0-9a-fA-F]+);/g, (_match, hex3) => String.fromCodePoint(Number.parseInt(hex3, 16))).replace(/&#([0-9]+);/g, (_match, dec) => String.fromCodePoint(Number.parseInt(dec, 10))).replace(/&amp;/g, "&");
+}
+function scanXmlTags(xml) {
+  const tags = [];
+  let index = 0;
+  for (; ; ) {
+    const lt = xml.indexOf("<", index);
+    if (lt < 0) break;
+    let cursor = lt + 1;
+    let quote = "";
+    let end = -1;
+    while (cursor < xml.length) {
+      const char = xml[cursor];
+      if (quote !== "") {
+        if (char === quote) quote = "";
+      } else if (char === '"' || char === "'") {
+        quote = char;
+      } else if (char === ">") {
+        end = cursor;
+        break;
+      }
+      cursor += 1;
+    }
+    if (end < 0) break;
+    const inner = xml.slice(lt + 1, end).trim();
+    index = end + 1;
+    if (inner === "" || inner.startsWith("?") || inner.startsWith("!")) continue;
+    if (inner.startsWith("/")) {
+      tags.push({ kind: "close", name: inner.slice(1).trim() });
+      continue;
+    }
+    let body = inner;
+    let selfClosing = false;
+    if (body.endsWith("/")) {
+      selfClosing = true;
+      body = body.slice(0, -1).trimEnd();
+    }
+    const split = body.search(/\s/u);
+    const name = split < 0 ? body : body.slice(0, split);
+    const attributes = parseAttributes(split < 0 ? "" : body.slice(split));
+    tags.push({ kind: "open", name, attributes, selfClosing });
+  }
+  return tags;
+}
+function parseAttributes(rest) {
+  const attributes = {};
+  let index = 0;
+  while (index < rest.length) {
+    while (index < rest.length && /\s/u.test(rest[index])) index += 1;
+    if (index >= rest.length) break;
+    const nameStart = index;
+    while (index < rest.length && !/\s/u.test(rest[index]) && rest[index] !== "=") index += 1;
+    const name = rest.slice(nameStart, index);
+    while (index < rest.length && /\s/u.test(rest[index])) index += 1;
+    if (rest[index] !== "=") continue;
+    index += 1;
+    while (index < rest.length && /\s/u.test(rest[index])) index += 1;
+    const quote = rest[index];
+    if (quote !== '"' && quote !== "'") continue;
+    index += 1;
+    const valueStart = index;
+    while (index < rest.length && rest[index] !== quote) index += 1;
+    attributes[name] = decodeXmlEntities2(rest.slice(valueStart, index));
+    index += 1;
+  }
+  return attributes;
+}
+function parseWdaXml(xml) {
+  const roots = [];
+  const stack = [];
+  for (const tag of scanXmlTags(xml)) {
+    if (tag.kind === "open") {
+      const node2 = { tag: tag.name, attributes: tag.attributes, children: [] };
+      if (stack.length === 0) roots.push(node2);
+      else stack[stack.length - 1].children.push(node2);
+      if (!tag.selfClosing) stack.push(node2);
+    } else {
+      const matchIndex = stack.map((node2) => node2.tag).lastIndexOf(tag.name);
+      if (matchIndex >= 0) stack.length = matchIndex;
+    }
+  }
+  return roots;
+}
+function stripXcuiPrefix(value) {
+  const trimmed = value.trim();
+  if (trimmed === "") return void 0;
+  const stripped = trimmed.startsWith("XCUIElementType") ? trimmed.slice("XCUIElementType".length) : trimmed;
+  return stripped === "" ? void 0 : stripped;
+}
+function wdaElementType(tag, attributes) {
+  const fromTag = stripXcuiPrefix(tag);
+  if (fromTag !== void 0) return fromTag;
+  const typeAttr = attributes.type?.trim();
+  if (typeAttr !== void 0 && typeAttr !== "") return stripXcuiPrefix(typeAttr) ?? typeAttr;
+  return "Element";
+}
+function optionalString2(value) {
+  if (value === void 0) return void 0;
+  const trimmed = value.trim();
+  return trimmed === "" ? void 0 : trimmed;
+}
+function finiteNumber2(value) {
+  if (value === void 0) return void 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : void 0;
+}
+function wdaBoolean(value) {
+  const trimmed = optionalString2(value);
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  return void 0;
+}
+function wdaXmlNodeToAxe(node2) {
+  const name = optionalString2(node2.attributes.name);
+  const labelAttr = optionalString2(node2.attributes.label);
+  const identifierAttr = optionalString2(node2.attributes.identifier);
+  const label = labelAttr ?? name;
+  const identifier = identifierAttr ?? (labelAttr !== void 0 && labelAttr !== name ? name : void 0);
+  const valueAttr = optionalString2(node2.attributes.value);
+  const value = valueAttr !== void 0 && valueAttr !== label && valueAttr !== name ? valueAttr : void 0;
+  const children = node2.children.map(wdaXmlNodeToAxe);
+  const raw = {
+    type: wdaElementType(node2.tag, node2.attributes),
+    ...label === void 0 ? {} : { AXLabel: label },
+    ...identifier === void 0 ? {} : { AXUniqueId: identifier },
+    ...value === void 0 ? {} : { AXValue: value },
+    // WDA emits both flags per element; parse them so the compact node keeps
+    // them (off-screen rows in long lists and disabled controls are the
+    // silent mis-tap / dead-tap traps this layer guards against).
+    ...wdaBoolean(node2.attributes.enabled) === void 0 ? {} : { enabled: wdaBoolean(node2.attributes.enabled) },
+    ...wdaBoolean(node2.attributes.visible) === void 0 ? {} : { visible: wdaBoolean(node2.attributes.visible) },
+    ...node2.tag === "XCUIElementTypeSecureTextField" ? { secure: true } : {},
+    // Selection state. WDA exposes selected="true"|"false" on picker
+    // and table rows; it is the ONLY way to confirm which option in a list is
+    // chosen without reading pixels. Emitted only when the attribute is
+    // present, so absent stays "unknown" rather than invented false.
+    ...wdaBoolean(node2.attributes.selected) === void 0 ? {} : { selected: wdaBoolean(node2.attributes.selected) },
+    frame: {
+      x: finiteNumber2(node2.attributes.x) ?? 0,
+      y: finiteNumber2(node2.attributes.y) ?? 0,
+      width: finiteNumber2(node2.attributes.width) ?? 0,
+      height: finiteNumber2(node2.attributes.height) ?? 0
+    },
+    children
+  };
+  return sanitizeAxeNode(raw);
+}
+var FRAME_EPSILON2 = 1;
+function framesEqual(a, b) {
+  return Math.abs(a.x - b.x) <= FRAME_EPSILON2 && Math.abs(a.y - b.y) <= FRAME_EPSILON2 && Math.abs(a.w - b.w) <= FRAME_EPSILON2 && Math.abs(a.h - b.h) <= FRAME_EPSILON2;
+}
+function addsNoInfo(parent, child) {
+  return (child.label === void 0 || child.label === parent.label) && (child.identifier === void 0 || child.identifier === parent.identifier) && (child.value === void 0 || child.value === parent.value) && (child.enabled === void 0 || child.enabled === parent.enabled) && (child.visible === void 0 || child.visible === parent.visible) && (child.selected === void 0 || child.selected === parent.selected);
+}
+function collapseFrameDuplicates(roots) {
+  const walk = (element) => {
+    const children = [];
+    for (const rawChild of element.children) {
+      const child = walk(rawChild);
+      const duplicate = children.find((kept) => framesEqual(kept.frame, child.frame) && addsNoInfo(kept, child));
+      if (duplicate !== void 0) {
+        duplicate.children.push(...child.children);
+        continue;
+      }
+      if (framesEqual(element.frame, child.frame) && addsNoInfo(element, child)) {
+        children.push(...child.children);
+        continue;
+      }
+      children.push(child);
+    }
+    return { ...element, children };
+  };
+  return roots.map(walk);
+}
+function wdaSourceToElements(xml) {
+  const parsed = parseWdaXml(xml).flatMap((node2) => node2.tag === "AppiumAUT" ? node2.children : [node2]);
+  const roots = collapseFrameDuplicates(parsed.map(wdaXmlNodeToAxe));
+  if (roots.length === 0) {
+    throw new Error("the WebDriverAgent source() payload contained no accessibility elements");
+  }
+  return roots;
+}
+
+// src/real-ui.ts
+var DEEPEN_SNAPSHOT_DEPTH = 40;
+var ROW_SNAPSHOT_DEPTH = 60;
+function errorMessage11(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+async function wdaTree(client, deviceName, depth) {
+  const snapshotAt = async (snapshotDepth) => {
+    await client.setSnapshotDepth(snapshotDepth).catch(() => void 0);
+    let xml;
+    try {
+      xml = await client.source();
+    } catch (error62) {
+      throw new Error(`the WebDriverAgent source read failed for ${deviceName}: ${errorMessage11(error62)}`);
+    }
+    try {
+      return wdaSourceToElements(xml);
+    } catch (error62) {
+      throw new Error(`could not parse the accessibility tree of ${deviceName}: ${errorMessage11(error62)}`);
+    }
+  };
+  if (depth !== void 0) return { roots: await snapshotAt(depth), sampledDepth: depth, deepened: false };
+  const first = await snapshotAt(WDA_DEFAULT_SNAPSHOT_DEPTH);
+  if (hasLabeledNode(first)) return { roots: first, sampledDepth: WDA_DEFAULT_SNAPSHOT_DEPTH, deepened: false };
+  return { roots: await snapshotAt(DEEPEN_SNAPSHOT_DEPTH), sampledDepth: DEEPEN_SNAPSHOT_DEPTH, deepened: true };
+}
+async function captureWda(client, screenshots, udid, deviceName) {
+  let pngBase64;
+  try {
+    pngBase64 = (await client.screenshot()).pngBase64;
+  } catch (error62) {
+    throw new Error(`the WebDriverAgent screenshot failed for ${deviceName}: ${errorMessage11(error62)}`);
+  }
+  return screenshots.save(udid, Buffer.from(pngBase64, "base64"));
+}
+var WDA_ORIENTATIONS = {
+  portrait: "PORTRAIT",
+  landscape_left: "LANDSCAPE",
+  landscape_right: "UIA_DEVICE_ORIENTATION_LANDSCAPERIGHT",
+  portrait_upside_down: "UIA_DEVICE_ORIENTATION_PORTRAIT_UPSIDEDOWN"
+};
+var WDA_DEVICE_ACTIONS = ["lock", "unlock", "siri"];
+var BUTTON_ALIASES = {
+  home: "home",
+  lock: "lock",
+  "volume-up": "volumeUp",
+  volumeup: "volumeUp",
+  "volume-down": "volumeDown",
+  volumedown: "volumeDown"
+};
+function unit(value, what) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(`${what} must be a number within 0..1 (normalized), got ${JSON.stringify(value)}`);
+  }
+  return value;
+}
+function planWdaInteract(action, args) {
+  switch (action) {
+    case "tap":
+      return { kind: "tap", x: unit(args.x, "tap x"), y: unit(args.y, "tap y") };
+    case "type":
+      if (typeof args.text !== "string" || args.text === "") throw new Error('action "type" requires a non-empty text');
+      return { kind: "type", text: args.text };
+    case "button": {
+      const button = BUTTON_ALIASES[(args.name ?? "").trim().toLowerCase()];
+      if (button === void 0) {
+        throw new Error(`unknown button ${JSON.stringify(args.name)} \u2014 on a real device WebDriverAgent supports home, lock, volume-up and volume-down`);
+      }
+      return button === "lock" ? { kind: "lock" } : { kind: "button", name: button };
+    }
+    case "gesture": {
+      const json2 = typeof args.json === "object" && args.json !== null && !Array.isArray(args.json) ? args.json : {};
+      if (!["fromX", "fromY", "toX", "toY"].every((key) => key in json2)) {
+        throw new Error('on a real device action "gesture" takes a drag {"fromX","fromY","toX","toY","duration"} (normalized); single touch frames are simulator-only');
+      }
+      const duration3 = json2.duration ?? 0.3;
+      if (typeof duration3 !== "number" || !Number.isFinite(duration3) || duration3 < 0 || duration3 > 10) {
+        throw new Error(`gesture duration must be seconds within 0..10, got ${JSON.stringify(duration3)}`);
+      }
+      return {
+        kind: "drag",
+        fromX: unit(json2.fromX, "gesture fromX"),
+        fromY: unit(json2.fromY, "gesture fromY"),
+        toX: unit(json2.toX, "gesture toX"),
+        toY: unit(json2.toY, "gesture toY"),
+        duration: duration3
+      };
+    }
+    case "scroll": {
+      const points = simScrollPath(scrollRequestOf({ ...args, action: "scroll" }));
+      const from = points[0];
+      const to = points[points.length - 1];
+      return { kind: "drag", fromX: from.x, fromY: from.y, toX: to.x, toY: to.y, duration: 0.3 };
+    }
+    case "rotate": {
+      const orientation = WDA_ORIENTATIONS[args.orientation ?? ""];
+      if (orientation === void 0) throw new Error(`action "rotate" requires orientation: ${Object.keys(WDA_ORIENTATIONS).join(", ")}`);
+      return { kind: "rotate", orientation };
+    }
+    case "device_action":
+      if (args.name === "lock") return { kind: "lock" };
+      if (args.name === "unlock") return { kind: "unlock" };
+      if (args.name === "siri") return { kind: "siri" };
+      throw new Error(`on a real device device_action supports ${WDA_DEVICE_ACTIONS.join(", ")} (the others drive Simulator.app)`);
+    default:
+      throw new Error(`unknown action ${JSON.stringify(action)}`);
+  }
+}
+async function runWdaInteract(client, plan) {
+  const round = (value) => Math.round(value * 100) / 100;
+  switch (plan.kind) {
+    case "tap": {
+      const size = await client.windowSize();
+      const x = round(plan.x * size.width);
+      const y = round(plan.y * size.height);
+      await client.tap(x, y);
+      return { points: { x, y } };
+    }
+    case "drag": {
+      const size = await client.windowSize();
+      const drag = {
+        fromX: round(plan.fromX * size.width),
+        fromY: round(plan.fromY * size.height),
+        toX: round(plan.toX * size.width),
+        toY: round(plan.toY * size.height),
+        duration: plan.duration
+      };
+      await client.dragFromToForDuration(drag);
+      return { points: drag };
+    }
+    case "type":
+      await client.typeText(plan.text);
+      return {};
+    case "button":
+      await client.pressButton(plan.name);
+      return {};
+    case "lock":
+      await client.lock();
+      return {};
+    case "unlock":
+      await client.unlock();
+      return {};
+    case "siri":
+      await client.activateSiri();
+      return {};
+    case "rotate":
+      await client.setOrientation(plan.orientation);
+      return {};
   }
 }
 
@@ -45437,12 +47706,25 @@ function registerCoreTools(server, deps) {
   }));
   server.registerTool("ios_sim_screenshot", {
     title: "Screenshot the simulator",
-    description: "Capture the screen of a booted simulator. Returns the image (JPEG, long edge at most 1024 px) so you can read the screen, plus JSON with the full-resolution PNG path and sizes. To tap something you see, normalize its pixel position by image.width / image.height.",
+    description: "Capture the screen of a booted simulator, or of a connected iPhone/iPad through WebDriverAgent (start it once with ios_real_start_wda). Returns the image (JPEG, long edge at most 1024 px) so you can read the screen, plus JSON with the full-resolution PNG path and sizes. To tap something you see, normalize its pixel position by image.width / image.height.",
     inputSchema: { udid: UDID_PARAM },
     annotations: { readOnlyHint: true }
   }, async ({ udid }, extra) => runTool("ios_sim_screenshot", async () => {
     assertMac(deps.platform);
-    const device = await resolveTargetDevice(deps, udid);
+    const target = await resolveToolTarget(deps, udid);
+    if (target.kind === "real") {
+      const client = await deps.wda.control(target.device);
+      const capture2 = await captureWda(client, deps.screenshots, target.device.udid, target.device.name);
+      const image2 = await deps.screenshots.toModelImage(capture2);
+      return jsonResult({
+        path: capture2.path,
+        bytes: capture2.bytes,
+        ...capture2.width === void 0 ? {} : { width: capture2.width, height: capture2.height },
+        image: { width: image2.width, height: image2.height },
+        device: realDeviceSummary(target.device)
+      }, image2);
+    }
+    const device = target.device;
     requireBooted("ios_sim_screenshot", device);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
     const image = await deps.screenshots.toModelImage(capture);
@@ -45460,7 +47742,7 @@ function registerCoreTools(server, deps) {
   }));
   server.registerTool("ios_sim_interact", {
     title: "Interact with the simulator",
-    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type US-keyboard text, press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center; all but lock drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions.",
+    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type US-keyboard text, press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center; all but lock drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
     inputSchema: {
       action: external_exports.enum(["tap", "type", "button", "gesture", "scroll", "rotate", "device_action"]),
       udid: UDID_PARAM,
@@ -45476,8 +47758,31 @@ function registerCoreTools(server, deps) {
     }
   }, async (args, extra) => runTool("ios_sim_interact", async () => {
     assertMac(deps.platform);
+    const target = await resolveToolTarget(deps, args.udid);
+    if (target.kind === "real") {
+      const plan = planWdaInteract(args.action, args);
+      const client = await deps.wda.control(target.device);
+      const { points } = await runWdaInteract(client, plan);
+      const result2 = {
+        action: args.action,
+        device: realDeviceSummary(target.device),
+        ...points === void 0 ? {} : { points }
+      };
+      if (args.screenshot === false) return jsonResult(result2);
+      await sleep6(deps.settleMs);
+      const capture2 = await captureWda(client, deps.screenshots, target.device.udid, target.device.name);
+      const image2 = await deps.screenshots.toModelImage(capture2);
+      return jsonResult({
+        ...result2,
+        screenshot: {
+          path: capture2.path,
+          ...capture2.width === void 0 ? {} : { width: capture2.width, height: capture2.height },
+          image: { width: image2.width, height: image2.height }
+        }
+      }, image2);
+    }
     assertStreamAvailable(deps.host);
-    const device = await resolveTargetDevice(deps, args.udid);
+    const device = target.device;
     requireBooted("ios_sim_interact", device);
     await ensureStreamFor(deps.host, device);
     let delivery;
@@ -45496,9 +47801,9 @@ function registerCoreTools(server, deps) {
       if (!isDeviceAction(action)) {
         throw new Error(`action "device_action" requires name \u2014 one of ${DEVICE_ACTIONS.join(", ")}`);
       }
-      const run3 = deps.stream.control.deviceAction;
-      if (run3 === void 0) throw new Error("this stream backend has no device actions");
-      await run3(action);
+      const run4 = deps.stream.control.deviceAction;
+      if (run4 === void 0) throw new Error("this stream backend has no device actions");
+      await run4(action);
     } else {
       const simArgs = {
         action: args.action,
@@ -45533,7 +47838,7 @@ function registerCoreTools(server, deps) {
       ...warning === void 0 ? {} : { warning }
     };
     if (args.screenshot === false) return jsonResult(result);
-    await sleep5(deps.settleMs);
+    await sleep6(deps.settleMs);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
     const image = await deps.screenshots.toModelImage(capture);
     lastImageLandscape.set(device.udid, image.width > image.height);
@@ -45546,11 +47851,36 @@ function registerCoreTools(server, deps) {
       }
     }, image);
   }));
+  server.registerTool("ios_real_start_wda", {
+    title: "Start WebDriverAgent on an iPhone",
+    description: 'Start WebDriverAgent (WDA) on a USB-connected iPhone or iPad (real devices only). WDA is what ios_sim_screenshot, ios_sim_interact and the UI tools (ui_tree, tap_element, find_text, tap_text, wait_for, ui_rows, tap_row) drive a real device through. Adopts a WDA already running on the device; otherwise signs and builds a loopback-only copy of the WebDriverAgent checkout with xcodebuild (a cold build takes minutes) and waits until it reports ready. Failures name the fix (unlock the device, trust the developer certificate, re-issue an expired free-team profile, reconnect USB). action "status" reports without starting; "stop" stops the runner this plugin launched.',
+    inputSchema: {
+      udid: external_exports.string().optional().describe("iPhone/iPad udid, hardware udid or name from ios_sim_devices.realDevices (required for start)"),
+      action: external_exports.enum(["start", "status", "stop"]).optional().describe('Default "start"')
+    }
+  }, async (args, extra) => runTool("ios_real_start_wda", async () => {
+    const action = args.action ?? "start";
+    if (action === "status") return jsonResult(deps.wda.status());
+    if (action === "stop") return jsonResult(await deps.wda.stop());
+    assertMac(deps.platform);
+    const reference = args.udid?.trim() ?? "";
+    if (reference === "") throw new Error("pass udid: a connected iPhone/iPad from ios_sim_devices.realDevices");
+    const target = await resolveToolTarget(deps, reference);
+    if (target.kind !== "real") {
+      throw new Error(`"${reference}" is a simulator \u2014 simulators need no WebDriverAgent; the screen and UI tools drive them directly`);
+    }
+    const status = await deps.wda.start(target.device, extra.signal);
+    return jsonResult({
+      ...status,
+      device: realDeviceSummary(target.device),
+      next: "ios_sim_screenshot / ios_sim_interact / ios_sim_ui_tree \u2026 with this udid now drive the device"
+    });
+  }));
 }
 
 // src/tools/debug.ts
-import { mkdirSync as mkdirSync5, statSync as statSync8, existsSync as existsSync6, readFileSync as readFileSync7 } from "node:fs";
-import { join as join15 } from "node:path";
+import { mkdirSync as mkdirSync6, statSync as statSync9, existsSync as existsSync10, readFileSync as readFileSync8 } from "node:fs";
+import { join as join18 } from "node:path";
 var MAX_LOG_LINES = 300;
 var MAX_LOG_BYTES = 30 * 1024;
 var SNAPSHOT_TIMEOUT_MS = 8 * 60 * 1e3;
@@ -45739,9 +48069,9 @@ function registerDebugTools(server, deps) {
       if (sample === void 0) {
         throw new Error(`LLDB capture is unavailable${note === void 0 ? "" : ` (${note})`} and Xcode's sample tool is not installed \u2014 install Xcode or the Command Line Tools`);
       }
-      const dir = join15(deps.cacheRoot, "samples");
-      mkdirSync5(dir, { recursive: true });
-      reportPath = join15(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
+      const dir = join18(deps.cacheRoot, "samples");
+      mkdirSync6(dir, { recursive: true });
+      reportPath = join18(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
       const outcome = await deps.devtools.run({
         command: sample,
         args: [String(target.pid), "1", "1", "-file", reportPath],
@@ -45749,11 +48079,11 @@ function registerDebugTools(server, deps) {
         timeoutMs: BACKTRACE_TIMEOUT_MS,
         signal: extra.signal
       });
-      if (!existsSync6(reportPath)) {
+      if (!existsSync10(reportPath)) {
         const detail = tailDiagnostic(outcome.stderr === "" ? outcome.stdout : outcome.stderr, 3);
         throw new Error(`sample of pid ${target.pid} produced no report${detail === "" ? "" : `: ${detail}`}`);
       }
-      threads = parseSampleThreads(readFileSync7(reportPath, "utf8"));
+      threads = parseSampleThreads(readFileSync8(reportPath, "utf8"));
       if (threads.length === 0) throw new Error(`sample of pid ${target.pid} produced no thread sections (report: ${reportPath})`);
     }
     const kept = orderThreads(threads, allThreads);
@@ -45793,9 +48123,9 @@ function registerDebugTools(server, deps) {
     const unavailable = (fatal2) => new Error(`leaks could not analyze pid ${target.pid}: ${fatal2} \u2014 ${DEVELOPER_MODE_HINT}`);
     const base = { device: deviceSummary(device), ...processSummary(target), mode };
     if (mode === "memgraph") {
-      const dir = join15(deps.cacheRoot, "memgraphs");
-      mkdirSync5(dir, { recursive: true });
-      const path = join15(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
+      const dir = join18(deps.cacheRoot, "memgraphs");
+      mkdirSync6(dir, { recursive: true });
+      const path = join18(dir, `leaks-${slug(target.name)}-${target.pid}-${Date.now()}.memgraph`);
       const outcome2 = await deps.devtools.run({
         command: leaks,
         args: [`--outputGraph=${path}`, String(target.pid)],
@@ -45806,7 +48136,7 @@ function registerDebugTools(server, deps) {
       });
       const fatal2 = leaksFatalDiagnostic(outcome2.stderr, outcome2.stdout);
       if (fatal2 !== void 0) throw unavailable(fatal2);
-      if (!existsSync6(path)) {
+      if (!existsSync10(path)) {
         const detail = tailDiagnostic(outcome2.stderr === "" ? outcome2.stdout : outcome2.stderr, 3);
         throw new Error(`leaks wrote no memgraph${detail === "" ? "" : `: ${detail}`}`);
       }
@@ -45814,7 +48144,7 @@ function registerDebugTools(server, deps) {
       return jsonResult({
         ...base,
         path,
-        bytes: statSync8(path).size,
+        bytes: statSync9(path).size,
         resumed: resumed2,
         ...resumed2 ? {} : { note: "the app was not observed running after the capture \u2014 check ios_sim_processes" }
       });
@@ -45904,8 +48234,8 @@ function registerDebugTools(server, deps) {
 
 // src/tools/env.ts
 import { randomUUID } from "node:crypto";
-import { mkdir, rm as rm2, writeFile } from "node:fs/promises";
-import { join as join16, resolve as resolve5 } from "node:path";
+import { mkdir as mkdir2, rm as rm3, writeFile as writeFile2 } from "node:fs/promises";
+import { join as join19, resolve as resolve6 } from "node:path";
 function registerEnvTools(server, deps) {
   const bootedDevice = async (tool, udid) => {
     assertMac(deps.platform);
@@ -45937,14 +48267,14 @@ function registerEnvTools(server, deps) {
     }
     const bundleId = args.bundleId.trim();
     const device = await bootedDevice("ios_sim_push", args.udid);
-    const dir = join16(deps.cacheRoot, "tmp");
-    await mkdir(dir, { recursive: true });
-    const file2 = join16(dir, `push-${randomUUID()}.json`);
-    await writeFile(file2, JSON.stringify(args.payload), { mode: 384 });
+    const dir = join19(deps.cacheRoot, "tmp");
+    await mkdir2(dir, { recursive: true });
+    const file2 = join19(dir, `push-${randomUUID()}.json`);
+    await writeFile2(file2, JSON.stringify(args.payload), { mode: 384 });
     try {
       await deps.simctl.sendPush(device.udid, bundleId, file2, extra.signal);
     } finally {
-      await rm2(file2, { force: true });
+      await rm3(file2, { force: true });
     }
     return jsonResult({ device: deviceSummary(device), bundleId, sent: true });
   }));
@@ -45987,7 +48317,7 @@ function registerEnvTools(server, deps) {
   }, async (args) => runTool("ios_sim_record", async () => {
     if (args.action === "start") {
       const device2 = await bootedDevice("ios_sim_record", args.udid);
-      const info = await deps.recorder.start(device2.udid, args.outputPath === void 0 ? void 0 : resolve5(args.outputPath));
+      const info = await deps.recorder.start(device2.udid, args.outputPath === void 0 ? void 0 : resolve6(args.outputPath));
       return jsonResult({ device: deviceSummary(device2), recording: true, path: info.path });
     }
     assertMac(deps.platform);
@@ -46084,7 +48414,7 @@ var SHAPE_EPSILON = 2;
 var MIN_ROW_HEIGHT = 24;
 var MAX_ROW_HEIGHT = 600;
 var MIN_ROW_WIDTH_FRACTION = 0.4;
-function round2(value) {
+function round22(value) {
   const rounded = Math.round(value * 100) / 100;
   return rounded === 0 ? 0 : rounded;
 }
@@ -46162,7 +48492,7 @@ function flatten(roots) {
   for (const root of roots) walk(root, 0);
   return entries;
 }
-function sameFrame(a, b) {
+function sameFrame2(a, b) {
   return Math.abs(a.x - b.x) <= SHAPE_EPSILON && Math.abs(a.y - b.y) <= SHAPE_EPSILON && Math.abs(a.w - b.w) <= SHAPE_EPSILON && Math.abs(a.h - b.h) <= SHAPE_EPSILON;
 }
 function shapeKey(element) {
@@ -46181,7 +48511,7 @@ function detectListRows(roots, options) {
       omittedOffscreen += 1;
       continue;
     }
-    const duplicate = [...candidates.entries()].find(([element]) => sameFrame(element.frame, entry.element.frame));
+    const duplicate = [...candidates.entries()].find(([element]) => sameFrame2(element.frame, entry.element.frame));
     if (duplicate === void 0) candidates.set(entry.element, entry);
   }
   const fallbackShapes = /* @__PURE__ */ new Map();
@@ -46205,7 +48535,7 @@ function detectListRows(roots, options) {
   for (const group of fallbackShapes.values()) {
     if (group.length < minRepeatedRows) continue;
     for (const entry of group) {
-      const duplicate = [...candidates.entries()].find(([element]) => sameFrame(element.frame, entry.element.frame));
+      const duplicate = [...candidates.entries()].find(([element]) => sameFrame2(element.frame, entry.element.frame));
       if (duplicate === void 0) {
         candidates.set(entry.element, entry);
         fallbackRows += 1;
@@ -46231,10 +48561,10 @@ function detectListRows(roots, options) {
       index,
       type: element.type,
       frame: {
-        x: round2(element.frame.x),
-        y: round2(element.frame.y),
-        w: round2(element.frame.w),
-        h: round2(element.frame.h)
+        x: round22(element.frame.x),
+        y: round22(element.frame.y),
+        w: round22(element.frame.w),
+        h: round22(element.frame.h)
       },
       ...label === void 0 ? {} : { label },
       counts: label === void 0 ? [] : parseCountsFromLabel(label),
@@ -46267,8 +48597,8 @@ function planRowTap(rows, index, fractionX, fractionY, bounds) {
     row,
     inRow: { x: fractionX, y: fractionY },
     tap: {
-      x: round2(row.frame.x + fractionX * row.frame.w),
-      y: round2(row.frame.y + fractionY * row.frame.h)
+      x: round22(row.frame.x + fractionX * row.frame.w),
+      y: round22(row.frame.y + fractionY * row.frame.h)
     }
   };
 }
@@ -46318,359 +48648,6 @@ function verifyCountChange(before, after, key, delta) {
   };
 }
 
-// src/uitree.ts
-var OUTPUT_CAP_BYTES = 40 * 1024;
-var OCR_DEFAULT_MIN_CONFIDENCE = 0.3;
-var TAPPABLE_TYPES = /* @__PURE__ */ new Set([
-  "Button",
-  "Cell",
-  "Link",
-  "Switch",
-  "TextField",
-  "SearchField",
-  "TextArea",
-  "Tab",
-  "TabButton",
-  "Menu",
-  "MenuItem",
-  "MenuBarItem",
-  "Slider",
-  "Stepper",
-  "Incrementor",
-  "PickerWheel",
-  "Handle",
-  "RadioButton",
-  "CheckBox",
-  "DisclosureTriangle",
-  "PopUpButton",
-  "ComboBox",
-  "ScrollBar",
-  "Window"
-]);
-var FRAME_EPSILON = 1;
-var OCR_FALLBACK_HINT = "The accessibility tree is empty or degenerate (no labeled elements), so the app exposes little or no accessibility information \u2014 run ios_sim_find_text to OCR the screen instead.";
-function round22(value) {
-  const rounded = Math.round(value * 100) / 100;
-  return rounded === 0 ? 0 : rounded;
-}
-function roundFrame(frame) {
-  return { x: round22(frame.x), y: round22(frame.y), w: round22(frame.w), h: round22(frame.h) };
-}
-function toUiTreeNode(element) {
-  const node2 = { type: element.type, frame: roundFrame(element.frame), children: [] };
-  if (element.label !== void 0) node2.label = element.label;
-  if (element.identifier !== void 0) node2.identifier = element.identifier;
-  if (element.value !== void 0) node2.value = element.value;
-  if (element.visible !== void 0) node2.visible = element.visible;
-  if (element.enabled !== void 0) node2.enabled = element.enabled;
-  if (element.selected !== void 0) node2.selected = element.selected;
-  return node2;
-}
-function buildCompactTree(roots, maxDepth, filter) {
-  const needle = filter !== void 0 && filter.trim() !== "" ? filter.trim().toLowerCase() : void 0;
-  let count = 0;
-  const walk = (element, depth) => {
-    const selfMatches = needle === void 0 || [element.type, element.label, element.identifier].some((value) => value?.toLowerCase().includes(needle) === true);
-    const children = [];
-    if (maxDepth === void 0 || depth < maxDepth) {
-      for (const child of element.children) {
-        const compact = walk(child, depth + 1);
-        if (compact !== void 0) children.push(compact);
-      }
-    }
-    if (!selfMatches && children.length === 0) return void 0;
-    const node2 = toUiTreeNode(element);
-    node2.children = children;
-    count += 1;
-    return node2;
-  };
-  const tree = [];
-  for (const root of roots) {
-    const compact = walk(root, 0);
-    if (compact !== void 0) tree.push(compact);
-  }
-  return { tree, count };
-}
-function treeDepth(nodes) {
-  let depth = 0;
-  for (const node2 of nodes) {
-    if (node2.children.length > 0) depth = Math.max(depth, 1 + treeDepth(node2.children));
-  }
-  return depth;
-}
-function pruneDeepestLevel(nodes) {
-  const depth = treeDepth(nodes);
-  if (depth === 0) return;
-  const pruneAt = (list, level) => {
-    for (const node2 of list) {
-      if (level === depth - 1) node2.children = [];
-      else pruneAt(node2.children, level + 1);
-    }
-  };
-  pruneAt(nodes, 0);
-}
-function jsonBytes(value) {
-  return Buffer.byteLength(JSON.stringify(value), "utf8");
-}
-function capTreeToBytes(tree, capBytes = OUTPUT_CAP_BYTES) {
-  let truncated = jsonBytes(tree) > capBytes;
-  while (jsonBytes(tree) > capBytes && treeDepth(tree) > 0) pruneDeepestLevel(tree);
-  if (!truncated) truncated = jsonBytes(tree) > capBytes;
-  return { tree, truncated };
-}
-function isOffscreenFrame(frame, bounds) {
-  if (bounds.width <= 0 || bounds.height <= 0) return false;
-  return frame.x + frame.w <= 0 || frame.y + frame.h <= 0 || frame.x >= bounds.width || frame.y >= bounds.height;
-}
-function isOffscreenElement(element, bounds) {
-  return element.visible === false || isOffscreenFrame(element.frame, bounds);
-}
-function pruneOffscreenTree(tree, bounds) {
-  let omitted = 0;
-  const countAll = (node2) => 1 + node2.children.reduce((sum, child) => sum + countAll(child), 0);
-  const walk = (node2, isRoot) => {
-    if (!isRoot && isOffscreenElement(node2, bounds)) {
-      omitted += countAll(node2);
-      return void 0;
-    }
-    const children = [];
-    for (const child of node2.children) {
-      const kept2 = walk(child, false);
-      if (kept2 !== void 0) children.push(kept2);
-    }
-    node2.children = children;
-    return node2;
-  };
-  const kept = [];
-  for (const root of tree) {
-    const node2 = walk(root, true);
-    if (node2 !== void 0) kept.push(node2);
-  }
-  return { tree: kept, omitted };
-}
-function hasLabeledNode(tree) {
-  for (const node2 of tree) {
-    if (node2.type !== "Application" && node2.label !== void 0 && node2.label !== "") return true;
-    if (hasLabeledNode(node2.children)) return true;
-  }
-  return false;
-}
-function countNodes(node2) {
-  return 1 + node2.children.reduce((sum, child) => sum + countNodes(child), 0);
-}
-function screenBounds(roots) {
-  let width = 0;
-  let height = 0;
-  for (const root of roots) {
-    width = Math.max(width, root.frame.x + root.frame.w);
-    height = Math.max(height, root.frame.y + root.frame.h);
-  }
-  if (width <= 0 || height <= 0) {
-    width = roots[0]?.frame.w ?? 0;
-    height = roots[0]?.frame.h ?? 0;
-  }
-  return { width, height };
-}
-function containsFrame(outer, inner) {
-  return outer.x <= inner.x + FRAME_EPSILON && outer.y <= inner.y + FRAME_EPSILON && outer.x + outer.w >= inner.x + inner.w - FRAME_EPSILON && outer.y + outer.h >= inner.y + inner.h - FRAME_EPSILON;
-}
-function sameFrame2(a, b) {
-  return containsFrame(a, b) && containsFrame(b, a);
-}
-function buildTreeResult(roots, size, args) {
-  const built = buildCompactTree(roots, args.max_depth, args.filter);
-  const pruned = args.include_offscreen === true ? { tree: built.tree, omitted: 0 } : pruneOffscreenTree(built.tree, size);
-  const capped = capTreeToBytes(pruned.tree);
-  const hints = [];
-  if (capped.truncated) {
-    hints.push("The tree exceeded the 40 KB output cap and its deepest levels were pruned. Re-run with max_depth or filter to narrow the subtree.");
-  }
-  const filter = args.filter?.trim() ?? "";
-  if (filter !== "" && built.count === 0) {
-    hints.push(`The filter ${JSON.stringify(filter)} matched nothing. A filter miss says nothing about the app \u2014 re-run WITHOUT a filter to see what is actually there.`);
-  } else if (!hasLabeledNode(capped.tree)) {
-    if (args.max_depth !== void 0) {
-      hints.push(`max_depth ${args.max_depth} shows only container chrome \u2014 the labeled controls live deeper; re-run without max_depth.`);
-    } else if (capped.truncated) {
-      hints.push("The tree was pruned to fit the output cap, so the surviving levels carry no labels \u2014 narrow it with a filter before concluding anything about the app.");
-    } else if (pruned.omitted > 0) {
-      hints.push(`The visible tree carries no labels \u2014 every labeled element is among the ${pruned.omitted} off-screen element(s) excluded from the output. Scroll, or re-run with include_offscreen=true.`);
-    } else {
-      hints.push(OCR_FALLBACK_HINT);
-    }
-  }
-  return {
-    size: { width: round22(size.width), height: round22(size.height) },
-    nodeCount: capped.tree.reduce((count, node2) => count + countNodes(node2), 0),
-    omittedOffscreen: pruned.omitted,
-    ...capped.truncated ? { truncated: true } : {},
-    ...hints.length > 0 ? { hint: hints.join(" ") } : {},
-    tree: capped.tree
-  };
-}
-function flattenElements(roots) {
-  const flat = [];
-  const walk = (element, depth) => {
-    const entry = { type: element.type, frame: element.frame, depth };
-    if (element.label !== void 0) entry.label = element.label;
-    if (element.identifier !== void 0) entry.identifier = element.identifier;
-    if (element.value !== void 0) entry.value = element.value;
-    if (element.visible !== void 0) entry.visible = element.visible;
-    if (element.enabled !== void 0) entry.enabled = element.enabled;
-    flat.push(entry);
-    for (const child of element.children) walk(child, depth + 1);
-  };
-  for (const root of roots) walk(root, 0);
-  return flat;
-}
-function describeCandidate(element, index) {
-  const label = element.label === void 0 ? "" : ` label=${JSON.stringify(element.label)}`;
-  const identifier = element.identifier === void 0 ? "" : ` identifier=${JSON.stringify(element.identifier)}`;
-  const flags = `${element.visible === false ? " visible=false" : ""}${element.enabled === false ? " enabled=false" : ""}`;
-  const frame = roundFrame(element.frame);
-  return `${index}) type=${element.type}${label}${identifier}${flags} frame={x:${frame.x},y:${frame.y},w:${frame.w},h:${frame.h}}`;
-}
-function tapGateFailure(representatives, bounds, wanted, allowOffscreen) {
-  const offscreen = representatives.filter((element) => isOffscreenElement(element, bounds));
-  const disabled = representatives.filter((element) => element.enabled === false);
-  const hint = allowOffscreen ? " (allow_offscreen=true bypasses only the off-screen check \u2014 disabled stays refused)" : "";
-  if (offscreen.length > 0 && disabled.length > 0) {
-    throw new Error(`${wanted} matched ${representatives.length} element(s) that are off-screen or disabled \u2014 scroll the off-screen ones into view first and enable the disabled ones${hint}`);
-  }
-  if (offscreen.length > 0) {
-    const noun2 = representatives.length === 1 ? "matched an off-screen element" : `matched ${representatives.length} off-screen elements`;
-    throw new Error(`${wanted} ${noun2} \u2014 scroll it into view first, then retry; pass allow_offscreen=true to tap the recorded coordinates anyway${hint}`);
-  }
-  const noun = representatives.length === 1 ? "matched a disabled element" : `matched ${representatives.length} disabled elements`;
-  throw new Error(`${wanted} ${noun} \u2014 the control is disabled, so a tap would do nothing; enable it first${hint}`);
-}
-function resolveTapTarget(roots, selector, options = {}) {
-  const identifier = selector.identifier?.trim() || void 0;
-  const label = selector.label?.trim() || void 0;
-  if (identifier === void 0 && label === void 0) {
-    throw new Error("an element selector is required: identifier and/or label");
-  }
-  const wantedFields = [];
-  if (identifier !== void 0) wantedFields.push(["identifier", identifier]);
-  if (label !== void 0) wantedFields.push(["label", label]);
-  const flat = flattenElements(roots);
-  const matches = (mode) => flat.filter((element) => wantedFields.every(([field, value]) => {
-    const actual = element[field];
-    if (actual === void 0) return false;
-    return mode === "exact" ? actual === value : actual.toLowerCase().includes(value.toLowerCase());
-  }));
-  let candidates = matches("exact");
-  let matchedBy = "exact";
-  if (candidates.length === 0) {
-    candidates = matches("contains");
-    matchedBy = "contains";
-  }
-  if (candidates.length === 0) {
-    const wanted2 = wantedFields.map(([field, value]) => `${field}=${value}`).join(" and ");
-    throw new Error(`no accessibility element matches ${wanted2} on the current screen \u2014 run ios_sim_ui_tree to inspect the visible elements (a control inside a feed row is not an element of its own: use ios_sim_ui_rows)`);
-  }
-  const unique = candidates.filter((element, index) => !candidates.slice(0, index).some((other) => sameFrame2(element.frame, other.frame) && element.type === other.type));
-  const chains = [];
-  for (const element of unique) {
-    const chain = chains.find((group) => group.some((other) => !sameFrame2(element.frame, other.frame) && (containsFrame(element.frame, other.frame) || containsFrame(other.frame, element.frame))));
-    if (chain === void 0) chains.push([element]);
-    else chain.push(element);
-  }
-  const representatives = chains.map((chain) => {
-    const tappable = chain.filter((element) => TAPPABLE_TYPES.has(element.type));
-    if (tappable.length > 0) {
-      return tappable.find((element) => !tappable.some((other) => other !== element && containsFrame(other.frame, element.frame) && !sameFrame2(other.frame, element.frame))) ?? tappable[0];
-    }
-    return chain.reduce((deepest, element) => element.depth > deepest.depth ? element : deepest, chain[0]);
-  });
-  const wanted = wantedFields.map(([field, value]) => `${field} ${JSON.stringify(value)}`).join(" and ");
-  const bounds = screenBounds(roots);
-  const allowOffscreen = options.allowOffscreen === true;
-  const viable = representatives.filter((element) => element.enabled !== false && (allowOffscreen || !isOffscreenElement(element, bounds)));
-  if (viable.length === 0) tapGateFailure(representatives, bounds, wanted, allowOffscreen);
-  if (viable.length > 1) {
-    const skipped = representatives.length - viable.length;
-    const shown = representatives.slice(0, 8);
-    const more = representatives.length - shown.length;
-    throw new Error(`${representatives.length} elements match ${wanted}${skipped > 0 ? ` (${skipped} skipped: off-screen or disabled)` : ""} \u2014 use a more specific selector (exact label, identifier, or ios_sim_ui_tree to disambiguate). Candidates:
-` + shown.map((element, index) => `  ${describeCandidate(element, index + 1)}`).join("\n") + (more > 0 ? `
-  \u2026and ${more} more` : ""));
-  }
-  return { element: viable[0], matchedBy };
-}
-function frameCenter(frame) {
-  const round1 = (value) => {
-    const rounded = Math.round(value * 10) / 10;
-    return rounded === 0 ? 0 : rounded;
-  };
-  return { x: round1(frame.x + frame.w / 2), y: round1(frame.y + frame.h / 2) };
-}
-function sanitizeMinConfidence(value) {
-  if (value === void 0) return OCR_DEFAULT_MIN_CONFIDENCE;
-  if (!Number.isFinite(value) || value < 0 || value > 1) throw new Error("min_confidence must be a number within 0..1");
-  return value;
-}
-function tapExpectation(args) {
-  const expectText = args.expect_text?.trim() || void 0;
-  const expectGone = args.expect_gone?.trim() || void 0;
-  if (expectText !== void 0 && expectGone !== void 0) {
-    throw new Error("pass expect_text OR expect_gone, not both \u2014 they assert opposite outcomes");
-  }
-  if (expectText !== void 0) return { text: expectText, mode: "appear" };
-  if (expectGone !== void 0) return { text: expectGone, mode: "disappear" };
-  return void 0;
-}
-function ocrTextPresent(items, text) {
-  const needle = text.toLowerCase();
-  return items.find((item) => item.text === text) ?? items.find((item) => item.text.toLowerCase().includes(needle));
-}
-async function pollForText(read, text, mode, timeoutMs, intervalMs, minConfidence, signal) {
-  const startedAt = Date.now();
-  const deadline = startedAt + timeoutMs;
-  for (; ; ) {
-    const present = ocrTextPresent(filterOcrItems(await read(), text, minConfidence), text);
-    const matched = mode === "appear" ? present !== void 0 : present === void 0;
-    const waitedMs = Date.now() - startedAt;
-    if (matched) return mode === "appear" && present !== void 0 ? { matched, waitedMs, item: present } : { matched, waitedMs };
-    if (signal?.aborted === true || Date.now() >= deadline) return { matched: false, waitedMs };
-    await new Promise((resolve6) => setTimeout(resolve6, Math.min(intervalMs, Math.max(0, deadline - Date.now()))));
-  }
-}
-function resolveOcrTextTarget(items, query, unfiltered = items, minConfidence = 0) {
-  const matches = (pool2, mode) => mode === "exact" ? pool2.filter((item) => item.text === query) : pool2.filter((item) => item.text.toLowerCase().includes(query.toLowerCase()));
-  let pool = matches(items, "exact");
-  let matchedBy = "exact";
-  if (pool.length === 0) {
-    pool = matches(items, "contains");
-    matchedBy = "contains";
-  }
-  if (pool.length === 0) {
-    const nearMiss = [...matches(unfiltered, "exact"), ...matches(unfiltered, "contains")].filter((item) => item.confidence < minConfidence).sort((a, b) => b.confidence - a.confidence)[0];
-    if (nearMiss !== void 0) {
-      throw new Error(`${JSON.stringify(nearMiss.text)} IS on the current screen, but its OCR confidence ${nearMiss.confidence.toFixed(2)} is below min_confidence ${minConfidence.toFixed(2)} \u2014 pass a lower min_confidence (CJK labels commonly read 0.3\u20130.6) or tap it by identifier with ios_sim_tap_element`);
-    }
-    throw new Error(`no recognized text matches ${JSON.stringify(query)} on the current screen \u2014 run ios_sim_find_text to see everything the OCR read`);
-  }
-  const unique = pool.filter((item, index) => !pool.slice(0, index).some((other) => other.text === item.text && other.rect.x === item.rect.x && other.rect.y === item.rect.y && other.rect.w === item.rect.w && other.rect.h === item.rect.h));
-  if (unique.length > 1) {
-    const shown = unique.slice(0, 8);
-    const more = unique.length - shown.length;
-    throw new Error(`${unique.length} OCR matches for ${JSON.stringify(query)} \u2014 use a more specific query, or raise min_confidence to drop weak matches. Candidates:
-` + shown.map((item, index) => {
-      const rect = roundFrame(item.rect);
-      return `  ${index + 1}) text=${JSON.stringify(item.text)} confidence=${round22(item.confidence)} rect={x:${rect.x},y:${rect.y},w:${rect.w},h:${rect.h}}`;
-    }).join("\n") + (more > 0 ? `
-  \u2026and ${more} more` : ""));
-  }
-  return { item: unique[0], matchedBy };
-}
-function capList(items, capBytes = OUTPUT_CAP_BYTES) {
-  if (jsonBytes(items) <= capBytes) return { items: [...items], truncated: false };
-  const kept = [...items];
-  while (jsonBytes(kept) > capBytes && kept.length > 1) kept.pop();
-  return { items: kept, truncated: true };
-}
-
 // src/tools/ui.ts
 var SCREENSHOT_PARAM = external_exports.boolean().optional().describe("Return a screenshot of the result as an image (default true); pass false when chaining actions");
 var EXPECT_TEXT_PARAM = external_exports.string().optional().describe("Text that should APPEAR after the tap: screen OCR is polled for up to ~4 s and reported as expected.matched");
@@ -46679,12 +48656,6 @@ var MIN_CONFIDENCE_PARAM = external_exports.number().min(0).max(1).optional().de
 var IMAGE_LANDSCAPE_UNSYNCED_WARNING = 'the screen looks landscape, but the live stream does not report a landscape orientation, so the tap went out without the landscape mapping and may miss \u2014 send ios_sim_interact {action: "rotate", orientation: "landscape_left" or "landscape_right"} matching the screen, then retry';
 function registerUiTools(server, deps) {
   const pointSizes = /* @__PURE__ */ new Map();
-  const bootedTarget = async (tool, udid) => {
-    assertMac(deps.platform);
-    const device = await resolveTargetDevice(deps, udid);
-    requireBooted(tool, device);
-    return device;
-  };
   const readTree = async (device, signal) => {
     try {
       return await deps.axe.describeUi(device.udid, signal);
@@ -46712,13 +48683,56 @@ function registerUiTools(server, deps) {
       note: "the simulator point size could not be resolved (the AXe helper is not installed yet, or describe-ui failed) \u2014 size and rects are in image pixels instead of points"
     };
   };
+  const uiTarget = async (tool, udid) => {
+    assertMac(deps.platform);
+    const target = await resolveToolTarget(deps, udid);
+    if (target.kind === "real") {
+      const device2 = target.device;
+      const client = await deps.wda.control(device2);
+      return {
+        kind: "real",
+        udid: device2.udid,
+        name: device2.name,
+        summary: realDeviceSummary(device2),
+        readTree: async (_signal, depth) => wdaTree(client, device2.name, depth),
+        tap: async (x, y) => {
+          try {
+            await client.tap(x, y);
+          } catch (error62) {
+            throw new Error(`WebDriverAgent tap at (${x}, ${y}) failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
+          }
+        },
+        capture: async () => captureWda(client, deps.screenshots, device2.udid, device2.name),
+        pointSize: async () => ({ size: await client.windowSize() })
+      };
+    }
+    const device = target.device;
+    requireBooted(tool, device);
+    return {
+      kind: "simulator",
+      udid: device.udid,
+      name: device.name,
+      summary: deviceSummary(device),
+      simulator: device,
+      readTree: async (signal) => ({ roots: await readTree(device, signal) }),
+      tap: async (x, y, signal) => {
+        try {
+          await deps.axe.tap(device.udid, x, y, signal);
+        } catch (error62) {
+          throw new Error(`AXe tap at (${x}, ${y}) failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
+        }
+      },
+      capture: (signal) => deps.screenshots.capture(device.udid, signal),
+      pointSize: (pixelSize, signal) => pointSizeOf(device.udid, pixelSize, signal)
+    };
+  };
   const readOcr = async (device, signal) => {
-    const capture = await deps.screenshots.capture(device.udid, signal);
+    const capture = await device.capture(signal);
     if (capture.width === void 0 || capture.height === void 0 || capture.width <= 0 || capture.height <= 0) {
       throw new Error(`could not determine the screenshot pixel size of ${device.name} (unreadable PNG header)`);
     }
     const pixelSize = { width: capture.width, height: capture.height };
-    const point = await pointSizeOf(device.udid, pixelSize, signal);
+    const point = await device.pointSize(pixelSize, signal);
     let items;
     try {
       items = await deps.ocr.recognize(capture.path, signal);
@@ -46729,7 +48743,7 @@ function registerUiTools(server, deps) {
   };
   const pointsItem = (item, snapshot) => ({
     text: item.text,
-    confidence: round22(item.confidence),
+    confidence: round2(item.confidence),
     rect: roundFrame(pixelRectToPoints(item.rect, snapshot.pixelSize, snapshot.pointSize))
   });
   const runExpectation = async (device, expectation, signal) => {
@@ -46747,7 +48761,7 @@ function registerUiTools(server, deps) {
   };
   const withScreenshot = async (device, body, screenshot, signal) => {
     if (screenshot === false) return jsonResult(body);
-    const capture = await deps.screenshots.capture(device.udid, signal);
+    const capture = await device.capture(signal);
     const image = await deps.screenshots.toModelImage(capture);
     return jsonResult({
       ...body,
@@ -46769,11 +48783,16 @@ function registerUiTools(server, deps) {
     },
     annotations: { readOnlyHint: true }
   }, async (args, extra) => runTool("ios_sim_ui_tree", async () => {
-    const device = await bootedTarget("ios_sim_ui_tree", args.udid);
-    const roots = await readTree(device, extra.signal);
+    const device = await uiTarget("ios_sim_ui_tree", args.udid);
+    const { roots, sampledDepth, deepened } = await device.readTree(extra.signal, args.max_depth);
     const result = buildTreeResult(roots, screenBounds(roots), args);
     const { tree, ...summary } = result;
-    return jsonResult({ ...summary, device: deviceSummary(device), tree });
+    return jsonResult({
+      ...summary,
+      device: device.summary,
+      ...sampledDepth === void 0 ? {} : { snapshotDepth: sampledDepth, ...deepened === true ? { deepened } : {} },
+      tree
+    });
   }));
   server.registerTool("ios_sim_tap_element", {
     title: "Tap an accessibility element",
@@ -46789,16 +48808,12 @@ function registerUiTools(server, deps) {
     }
   }, async (args, extra) => runTool("ios_sim_tap_element", async () => {
     const expectation = tapExpectation(args);
-    const device = await bootedTarget("ios_sim_tap_element", args.udid);
-    const roots = await readTree(device, extra.signal);
+    const device = await uiTarget("ios_sim_tap_element", args.udid);
+    const { roots } = await device.readTree(extra.signal);
     const { element, matchedBy } = resolveTapTarget(roots, args, { allowOffscreen: args.allow_offscreen === true });
     const center = frameCenter(element.frame);
-    try {
-      await deps.axe.tap(device.udid, center.x, center.y, extra.signal);
-    } catch (error62) {
-      throw new Error(`AXe tap at (${center.x}, ${center.y}) failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
-    }
-    await sleep5(deps.settleMs);
+    await device.tap(center.x, center.y, extra.signal);
+    await sleep6(deps.settleMs);
     const expected = await runExpectation(device, expectation, extra.signal);
     return withScreenshot(device, {
       action: "tap-element",
@@ -46811,7 +48826,7 @@ function registerUiTools(server, deps) {
       },
       matchedBy,
       center,
-      device: deviceSummary(device),
+      device: device.summary,
       ...expected === void 0 ? {} : { expected }
     }, args.screenshot, extra.signal);
   }));
@@ -46826,13 +48841,13 @@ function registerUiTools(server, deps) {
     annotations: { readOnlyHint: true }
   }, async (args, extra) => runTool("ios_sim_find_text", async () => {
     const minConfidence = sanitizeMinConfidence(args.min_confidence);
-    const device = await bootedTarget("ios_sim_find_text", args.udid);
+    const device = await uiTarget("ios_sim_find_text", args.udid);
     const snapshot = await readOcr(device, extra.signal);
     const items = filterOcrItems(snapshot.items, args.query, minConfidence).map((item) => pointsItem(item, snapshot));
     const capped = capList(items);
     return jsonResult({
-      device: deviceSummary(device),
-      size: { width: round22(snapshot.pointSize.width), height: round22(snapshot.pointSize.height) },
+      device: device.summary,
+      size: { width: round2(snapshot.pointSize.width), height: round2(snapshot.pointSize.height) },
       count: capped.items.length,
       items: capped.items,
       ...capped.truncated ? { truncated: true, hint: "The item list exceeded the 40 KB output cap and the lowest-confidence items were dropped. Narrow with query or raise min_confidence." } : {},
@@ -46853,14 +48868,14 @@ function registerUiTools(server, deps) {
   }, async (args, extra) => runTool("ios_sim_wait_for", async () => {
     const minConfidence = sanitizeMinConfidence(args.min_confidence);
     const mode = args.mode ?? "appear";
-    const device = await bootedTarget("ios_sim_wait_for", args.udid);
+    const device = await uiTarget("ios_sim_wait_for", args.udid);
     let last;
     const outcome = await pollForText(async () => {
       last = await readOcr(device, extra.signal);
       return last.items;
     }, args.text, mode, args.timeout_ms ?? 8e3, deps.pollIntervalMs, minConfidence, extra.signal);
     return jsonResult({
-      device: deviceSummary(device),
+      device: device.summary,
       matched: outcome.matched,
       waitedMs: outcome.waitedMs,
       text: args.text,
@@ -46882,11 +48897,8 @@ function registerUiTools(server, deps) {
   }, async (args, extra) => runTool("ios_sim_tap_text", async () => {
     const minConfidence = sanitizeMinConfidence(args.min_confidence);
     const expectation = tapExpectation(args);
-    assertMac(deps.platform);
-    assertStreamAvailable(deps.host);
-    const device = await resolveTargetDevice(deps, args.udid);
-    requireBooted("ios_sim_tap_text", device);
-    const info = await ensureStreamFor(deps.host, device);
+    const device = await uiTarget("ios_sim_tap_text", args.udid);
+    const info = device.simulator === void 0 ? void 0 : await ensureStreamFor(deps.host, device.simulator);
     const snapshot = await readOcr(device, extra.signal);
     const { item, matchedBy } = resolveOcrTextTarget(
       filterOcrItems(snapshot.items, args.query, minConfidence),
@@ -46900,30 +48912,35 @@ function registerUiTools(server, deps) {
       x: Math.round(normalized.x * 1e4) / 1e4,
       y: Math.round(normalized.y * 1e4) / 1e4
     };
-    let framebufferArgs = tapArgs;
-    let warning;
-    if (snapshot.pixelSize.width > snapshot.pixelSize.height) {
-      const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? "portrait";
-      if (isLandscape(orientation)) framebufferArgs = toFramebufferArgs(orientation, tapArgs);
-      else warning = IMAGE_LANDSCAPE_UNSYNCED_WARNING;
-    }
-    try {
-      await performSimInteract(deps.host, device.udid, framebufferArgs, interactControlArgs(framebufferArgs));
-    } catch (error62) {
-      throw new Error(`serve-sim tap failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
-    }
-    await sleep5(deps.settleMs);
-    const expected = await runExpectation(device, expectation, extra.signal);
     const pointRect = pixelRectToPoints(item.rect, snapshot.pixelSize, snapshot.pointSize);
+    let warning;
+    if (info === void 0) {
+      const center = frameCenter(pointRect);
+      await device.tap(center.x, center.y, extra.signal);
+    } else {
+      let framebufferArgs = tapArgs;
+      if (snapshot.pixelSize.width > snapshot.pixelSize.height) {
+        const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? "portrait";
+        if (isLandscape(orientation)) framebufferArgs = toFramebufferArgs(orientation, tapArgs);
+        else warning = IMAGE_LANDSCAPE_UNSYNCED_WARNING;
+      }
+      try {
+        await performSimInteract(deps.host, device.udid, framebufferArgs, interactControlArgs(framebufferArgs));
+      } catch (error62) {
+        throw new Error(`serve-sim tap failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
+      }
+    }
+    await sleep6(deps.settleMs);
+    const expected = await runExpectation(device, expectation, extra.signal);
     return withScreenshot(device, {
       action: "tap-text",
       text: item.text,
-      confidence: round22(item.confidence),
+      confidence: round2(item.confidence),
       matchedBy,
       rect: roundFrame(pointRect),
       center: frameCenter(pointRect),
       tap: { x: tapArgs.x, y: tapArgs.y },
-      device: deviceSummary(device),
+      device: device.summary,
       ...expected === void 0 ? {} : { expected },
       ...warning === void 0 ? {} : { warning },
       ...snapshot.note === void 0 ? {} : { note: snapshot.note }
@@ -46934,7 +48951,7 @@ function registerUiTools(server, deps) {
     type: row.type,
     frame: row.frame,
     ...row.label === void 0 ? {} : { label: row.label },
-    counts: row.counts.map((count) => ({ key: count.key, value: round22(count.value) })),
+    counts: row.counts.map((count) => ({ key: count.key, value: round2(count.value) })),
     ...row.group === void 0 ? {} : { group: row.group }
   });
   server.registerTool("ios_sim_ui_rows", {
@@ -46943,14 +48960,14 @@ function registerUiTools(server, deps) {
     inputSchema: { udid: UDID_PARAM },
     annotations: { readOnlyHint: true }
   }, async (args, extra) => runTool("ios_sim_ui_rows", async () => {
-    const device = await bootedTarget("ios_sim_ui_rows", args.udid);
-    const roots = await readTree(device, extra.signal);
+    const device = await uiTarget("ios_sim_ui_rows", args.udid);
+    const { roots } = await device.readTree(extra.signal, ROW_SNAPSHOT_DEPTH);
     const size = screenBounds(roots);
     const detected = detectListRows(roots, { bounds: size });
     const hint = detected.rows.length > 0 ? void 0 : hasLabeledNode(roots) ? "No repeated rows detected: this screen may not be a list, or its rows use a shape this pass does not recognize. Its labeled elements are in ios_sim_ui_tree \u2014 drive those with ios_sim_tap_element." : OCR_FALLBACK_HINT;
     return jsonResult({
-      device: deviceSummary(device),
-      size: { width: round22(size.width), height: round22(size.height) },
+      device: device.summary,
+      size: { width: round2(size.width), height: round2(size.height) },
       rowCount: detected.rows.length,
       repeatedGroups: detected.repeatedGroups,
       omittedOffscreen: detected.omittedOffscreen,
@@ -46975,293 +48992,30 @@ function registerUiTools(server, deps) {
     }
   }, async (args, extra) => runTool("ios_sim_tap_row", async () => {
     const expectation = args.expect_count === void 0 ? void 0 : { key: args.expect_count.key, delta: sanitizeCountDelta(args.expect_count.delta) };
-    const device = await bootedTarget("ios_sim_tap_row", args.udid);
-    const roots = await readTree(device, extra.signal);
+    const device = await uiTarget("ios_sim_tap_row", args.udid);
+    const { roots } = await device.readTree(extra.signal, ROW_SNAPSHOT_DEPTH);
     const bounds = screenBounds(roots);
     const plan = planRowTap(detectListRows(roots, { bounds }).rows, args.row, args.x ?? 0.5, args.y ?? 0.5, bounds);
     const before = expectation === void 0 ? void 0 : requireCountKey(plan.row, expectation.key);
-    try {
-      await deps.axe.tap(device.udid, plan.tap.x, plan.tap.y, extra.signal);
-    } catch (error62) {
-      throw new Error(`AXe tap at (${plan.tap.x}, ${plan.tap.y}) failed: ${error62 instanceof Error ? error62.message : String(error62)}`);
-    }
+    await device.tap(plan.tap.x, plan.tap.y, extra.signal);
     let countCheck;
     if (expectation !== void 0) {
-      await sleep5(deps.rowSettleMs);
-      const afterRoots = await readTree(device, extra.signal);
+      await sleep6(deps.rowSettleMs);
+      const { roots: afterRoots } = await device.readTree(extra.signal, ROW_SNAPSHOT_DEPTH);
       const afterRow = detectListRows(afterRoots, { bounds: screenBounds(afterRoots) }).rows.find((row) => row.index === plan.row.index);
       countCheck = afterRow === void 0 ? { key: expectation.key, delta: expectation.delta, before, verified: false, changed: false, reason: "the re-read tree no longer contains the row (the screen changed)" } : verifyCountChange(plan.row, afterRow, expectation.key, expectation.delta);
     } else {
-      await sleep5(deps.settleMs);
+      await sleep6(deps.settleMs);
     }
     return withScreenshot(device, {
       action: "tap-row",
       row: outputRow(plan.row),
       inRow: plan.inRow,
       tap: plan.tap,
-      device: deviceSummary(device),
+      device: device.summary,
       ...countCheck === void 0 ? { note: "No expect_count was given, so nothing was verified \u2014 re-run ios_sim_ui_rows and compare the counters if it matters." } : { countCheck }
     }, args.screenshot, extra.signal);
   }));
-}
-
-// src/uitree-backend.ts
-import { execFile as execFile9 } from "node:child_process";
-import { createHash as createHash2 } from "node:crypto";
-import { chmodSync, existsSync as existsSync7, mkdirSync as mkdirSync6, readFileSync as readFileSync8, rmSync as rmSync4, statSync as statSync9, writeFileSync as writeFileSync3 } from "node:fs";
-import { delimiter as delimiter4, join as join17 } from "node:path";
-var AXE_VERSION = "1.8.0";
-var AXE_RELEASE_URL = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz";
-var AXE_RELEASE_SHA256 = "7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834";
-var AXE_INSTALL_HINT = 'install the AXe accessibility CLI with "brew install cameroncooke/axe/axe", or let the plugin download the pinned release into its cache (needs network access to github.com); set IOS_SIM_AXE_BIN to an existing axe executable to override resolution';
-var AXE_DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1e3;
-var AXE_EXEC_TIMEOUT_MS = 6e4;
-var AXE_MAX_BUFFER_BYTES = 32 * 1024 * 1024;
-var DIGEST_FILE2 = ".ios-simulator-axe.sha256";
-var BREW_BIN_CANDIDATES = ["/opt/homebrew/bin/axe", "/usr/local/bin/axe"];
-function isExecutableFile3(path) {
-  try {
-    const info = statSync9(path);
-    return info.isFile() && (info.mode & 73) !== 0;
-  } catch {
-    return false;
-  }
-}
-function findOnPath4(command, env) {
-  for (const dir of (env.PATH ?? "").split(delimiter4)) {
-    if (dir === "") continue;
-    const candidate = join17(dir, command);
-    if (isExecutableFile3(candidate)) return candidate;
-  }
-  return void 0;
-}
-function sha256File2(path) {
-  return createHash2("sha256").update(readFileSync8(path)).digest("hex");
-}
-function run2(command, args, timeoutMs, signal) {
-  return new Promise((resolve6, reject) => {
-    execFile9(command, [...args], { timeout: timeoutMs, maxBuffer: AXE_MAX_BUFFER_BYTES, signal }, (error62, stdout, stderr) => {
-      if (error62 !== null) {
-        reject(Object.assign(error62, { stdout, stderr }));
-        return;
-      }
-      resolve6({ stdout, stderr });
-    });
-  });
-}
-var AxeHelper = class {
-  #cacheDir;
-  #platform;
-  #env;
-  #downloading;
-  constructor(options) {
-    this.#cacheDir = options.cacheDir;
-    this.#platform = options.platform ?? process.platform;
-    this.#env = options.env ?? process.env;
-  }
-  #installDir() {
-    return join17(this.#cacheDir, AXE_VERSION);
-  }
-  #validCached() {
-    const binary = join17(this.#installDir(), "axe");
-    if (!isExecutableFile3(binary)) return void 0;
-    try {
-      const expected = readFileSync8(join17(this.#installDir(), DIGEST_FILE2), "utf8").trim().toLowerCase();
-      if (!/^[0-9a-f]{64}$/u.test(expected)) return void 0;
-      return sha256File2(binary) === expected ? binary : void 0;
-    } catch {
-      return void 0;
-    }
-  }
-  /** Resolve without network access: env override → PATH → Homebrew → cache. */
-  resolve() {
-    if (this.#platform !== "darwin") {
-      return { available: false, source: "unavailable", reason: "AXe only runs on macOS with Xcode" };
-    }
-    const explicit = this.#env.IOS_SIM_AXE_BIN?.trim();
-    if (explicit !== void 0 && explicit !== "") {
-      if (isExecutableFile3(explicit)) return { available: true, source: "path", command: explicit };
-      return {
-        available: false,
-        source: "unavailable",
-        reason: `IOS_SIM_AXE_BIN points at a missing or non-executable file: ${explicit}`
-      };
-    }
-    const onPath = findOnPath4("axe", this.#env) ?? BREW_BIN_CANDIDATES.find(isExecutableFile3);
-    if (onPath !== void 0) return { available: true, source: "path", command: onPath };
-    const cached2 = this.#validCached();
-    if (cached2 !== void 0) return { available: true, source: "cache", command: cached2 };
-    if (existsSync7(this.#installDir())) {
-      return {
-        available: false,
-        source: "unavailable",
-        reason: `the cached axe install under ${this.#installDir()} failed integrity verification`
-      };
-    }
-    return { available: false, source: "unavailable", reason: "no axe binary found on PATH, in Homebrew, or in the plugin cache" };
-  }
-  /** Resolve, downloading the pinned release when absent. Never throws. */
-  async ensure() {
-    const resolved = this.resolve();
-    if (resolved.available || this.#platform !== "darwin") return resolved;
-    if (this.#env.IOS_SIM_AXE_OFFLINE === "1") return resolved;
-    if (this.#env.IOS_SIM_AXE_BIN?.trim()) return resolved;
-    if (this.#downloading === void 0) {
-      this.#downloading = this.#download().finally(() => {
-        this.#downloading = void 0;
-      });
-    }
-    try {
-      await this.#downloading;
-    } catch (error62) {
-      return {
-        available: false,
-        source: "unavailable",
-        reason: `axe download failed (${error62 instanceof Error ? error62.message : String(error62)})`
-      };
-    }
-    return this.resolve();
-  }
-  /**
-   * curl the pinned tarball (system curl, so proxy variables apply), verify
-   * its SHA-256, extract it, sanity-check `axe --version`, record the digest.
-   */
-  async #download() {
-    const installDir = this.#installDir();
-    mkdirSync6(this.#cacheDir, { recursive: true });
-    const archive = join17(this.#cacheDir, `.axe-${AXE_VERSION}-${process.pid}-${Date.now()}.tar.gz.tmp`);
-    try {
-      try {
-        await run2("curl", [
-          "-fsSL",
-          "--retry",
-          "3",
-          "--retry-delay",
-          "1",
-          "--connect-timeout",
-          "30",
-          "--max-time",
-          "240",
-          "-o",
-          archive,
-          AXE_RELEASE_URL
-        ], AXE_DOWNLOAD_TIMEOUT_MS);
-      } catch (error62) {
-        throw new Error(`curl download failed (${error62 instanceof Error && error62.message.includes("ETIMEDOUT") ? "timeout" : "HTTP or network error"})`);
-      }
-      const digest = sha256File2(archive);
-      if (digest !== AXE_RELEASE_SHA256) {
-        throw new Error(`download integrity check failed: expected sha256 ${AXE_RELEASE_SHA256} but got ${digest}`);
-      }
-      rmSync4(installDir, { recursive: true, force: true });
-      mkdirSync6(installDir, { recursive: true });
-      await run2("tar", ["-xzf", archive, "-C", installDir], AXE_DOWNLOAD_TIMEOUT_MS);
-      const binary = join17(installDir, "axe");
-      if (!isExecutableFile3(binary)) chmodSync(binary, 493);
-      const version2 = await run2(binary, ["--version"], AXE_EXEC_TIMEOUT_MS);
-      if (!version2.stdout.includes(AXE_VERSION)) {
-        throw new Error(`downloaded axe reports an unexpected version: ${version2.stdout.trim()}`);
-      }
-      writeFileSync3(join17(installDir, DIGEST_FILE2), `${sha256File2(binary)}
-`, "utf8");
-      return binary;
-    } finally {
-      rmSync4(archive, { force: true });
-    }
-  }
-  async #require() {
-    const binary = await this.ensure();
-    if (!binary.available || binary.command === void 0) {
-      throw new Error(`the AXe accessibility helper is unavailable${binary.reason === void 0 ? "" : ` (${binary.reason})`}; ${AXE_INSTALL_HINT}`);
-    }
-    return { ...binary, command: binary.command };
-  }
-  /**
-   * Run one axe subcommand. A non-zero exit raises with the tool output (axe
-   * prints its errors on stdout), as does an "Error:" prefix on stdout.
-   */
-  async exec(args, signal) {
-    const binary = await this.#require();
-    let stdout;
-    try {
-      stdout = (await run2(binary.command, args, AXE_EXEC_TIMEOUT_MS, signal)).stdout;
-    } catch (error62) {
-      const { stdout: out, stderr } = error62;
-      const detail = out?.trim() || stderr?.trim() || "";
-      throw new Error(`axe ${args.join(" ")} failed${detail === "" ? "" : `: ${detail}`}`);
-    }
-    if (stdout.trimStart().startsWith("Error:")) throw new Error(`axe ${args.join(" ")} failed: ${stdout.trim()}`);
-    return stdout;
-  }
-  /** The sanitized accessibility tree of a booted simulator. */
-  async describeUi(udid, signal) {
-    return parseDescribeUi(await this.exec(["describe-ui", "--udid", udid], signal));
-  }
-  /** HID tap at device-point coordinates. */
-  async tap(udid, x, y, signal) {
-    await this.exec(["tap", "-x", String(x), "-y", String(y), "--udid", udid], signal);
-  }
-};
-function finiteNumber(value) {
-  if (typeof value !== "number" || !Number.isFinite(value)) return void 0;
-  return value === 0 ? 0 : value;
-}
-function optionalString(value) {
-  if (typeof value !== "string") return void 0;
-  const trimmed = value.trim();
-  return trimmed === "" ? void 0 : trimmed;
-}
-function sanitizeAxeNode(raw) {
-  const rawFrame = raw.frame;
-  const children = [];
-  if (Array.isArray(raw.children)) {
-    for (const child of raw.children) {
-      if (typeof child === "object" && child !== null) children.push(sanitizeAxeNode(child));
-    }
-  }
-  const node2 = {
-    type: typeof raw.type === "string" && raw.type !== "" ? raw.type : "Element",
-    frame: {
-      x: finiteNumber(rawFrame?.x) ?? 0,
-      y: finiteNumber(rawFrame?.y) ?? 0,
-      w: finiteNumber(rawFrame?.width ?? rawFrame?.w) ?? 0,
-      h: finiteNumber(rawFrame?.height ?? rawFrame?.h) ?? 0
-    },
-    children
-  };
-  const label = optionalString(raw.AXLabel ?? raw.label);
-  const identifier = optionalString(raw.AXUniqueId ?? raw.identifier);
-  const value = optionalString(raw.AXValue ?? raw.value);
-  if (label !== void 0) node2.label = label;
-  if (identifier !== void 0) node2.identifier = identifier;
-  if (value !== void 0) node2.value = value;
-  if (typeof raw.enabled === "boolean") node2.enabled = raw.enabled;
-  if (typeof raw.visible === "boolean") node2.visible = raw.visible;
-  if (typeof raw.selected === "boolean") node2.selected = raw.selected;
-  if (raw.secure === true) node2.secure = true;
-  else if (raw.subrole === "AXSecureTextField" || raw.role === "AXSecureTextField") node2.secure = true;
-  else if (typeof raw.type === "string" && raw.type.includes("Secure")) node2.secure = true;
-  if (typeof raw.focused === "boolean") node2.focused = raw.focused;
-  const pid = finiteNumber(raw.pid);
-  if (pid !== void 0 && Number.isSafeInteger(pid) && pid >= 0) node2.pid = pid;
-  return node2;
-}
-function parseDescribeUi(stdout) {
-  let parsed;
-  try {
-    parsed = JSON.parse(stdout);
-  } catch (error62) {
-    throw new Error(`axe describe-ui returned non-JSON output: ${error62 instanceof Error ? error62.message : String(error62)}`);
-  }
-  if (!Array.isArray(parsed)) {
-    throw new Error("axe describe-ui returned an unexpected payload (expected a JSON array of application roots)");
-  }
-  const roots = [];
-  for (const entry of parsed) {
-    if (typeof entry === "object" && entry !== null) roots.push(sanitizeAxeNode(entry));
-  }
-  if (roots.length === 0) throw new Error("axe describe-ui returned an empty element tree");
-  return roots;
 }
 
 // src/server.ts
@@ -47270,19 +49024,20 @@ async function main() {
   const host = new SimHostController();
   host.startKeepAlive();
   const stream = new SimStreamSource(host);
-  const screenshots = new ScreenshotStore({ dir: join18(root, "screenshots"), takeScreenshot });
+  const screenshots = new ScreenshotStore({ dir: join20(root, "screenshots"), takeScreenshot });
   const devtools = new DevTools();
   const preview = new PreviewHostController({
-    cacheDir: join18(root, "preview"),
+    cacheDir: join20(root, "preview"),
     simctl: simctl_exports,
     toolchain: xcrunToolchain,
     log: (line) => process.stderr.write(`${line}
 `)
   });
-  const recorder = new Recorder({ dir: join18(root, "recordings") });
+  const wda = new WdaController(realWdaSeams({ cacheRoot: root }));
+  const recorder = new Recorder({ dir: join20(root, "recordings") });
   const panel = new PanelServer({
     // In the bundle this resolves to dist/panel (built by scripts/build.mjs).
-    staticDir: join18(dirname6(fileURLToPath4(import.meta.url)), "panel"),
+    staticDir: join20(dirname6(fileURLToPath4(import.meta.url)), "panel"),
     preferredPort: preferredPanelPort(),
     host,
     stream,
@@ -47298,11 +49053,12 @@ async function main() {
     recorder,
     builder: { detectProject, buildRun, readBundleIdentifier },
     listApps: listSimulatorApps,
-    axe: new AxeHelper({ cacheDir: join18(root, "bin", "axe") }),
-    ocr: new OcrHelper({ cacheDir: join18(root, "bin", "ocr") }),
+    axe: new AxeHelper({ cacheDir: join20(root, "bin", "axe") }),
+    ocr: new OcrHelper({ cacheDir: join20(root, "bin", "ocr") }),
     devtools,
     preview,
     realDevices: new Devicectl({ run: devicectlRunner((options) => devtools.run(options)) }),
+    wda,
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
@@ -47328,7 +49084,8 @@ async function main() {
     await Promise.all([
       recorder.stopAll().catch(logFailure("finishing the recordings")),
       host.dispose().catch(logFailure("stopping the serve-sim stream")),
-      preview.dispose().catch(logFailure("removing the preview host app"))
+      preview.dispose().catch(logFailure("removing the preview host app")),
+      wda.dispose().catch(logFailure("stopping WebDriverAgent"))
     ]);
     await panel.dispose().catch(logFailure("closing the panel server"));
     process.exit(0);
@@ -47345,6 +49102,7 @@ async function main() {
   process.on("exit", () => {
     host.terminateOnExit();
     recorder.interruptOnExit();
+    wda.terminateOnExit();
     devtools.dispose();
   });
   server.server.onclose = () => {
