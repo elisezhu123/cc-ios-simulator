@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="580" viewBox="0 0 960 580" role="img" aria-label="插件架构图">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6b7080"/>
+    </marker>
+  </defs>
+  <rect width="960" height="580" rx="16" fill="#ffffff"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif" font-size="13" fill="#1f2330">
+
+    <!-- Claude Code -->
+    <rect x="30" y="40" width="190" height="110" rx="12" fill="#fbeee8" stroke="#d9653b" stroke-width="1.5"/>
+    <text x="125" y="72" text-anchor="middle" font-size="16" font-weight="700" fill="#b4502c">Claude Code</text>
+    <text x="125" y="98" text-anchor="middle">Skill: ios-ui-automation</text>
+    <text x="125" y="120" text-anchor="middle" fill="#6b7080">observe → act → confirm</text>
+
+    <!-- Browser -->
+    <rect x="30" y="410" width="190" height="110" rx="12" fill="#eef3ff" stroke="#4f7cff" stroke-width="1.5"/>
+    <text x="125" y="442" text-anchor="middle" font-size="16" font-weight="700" fill="#2f5bd8">Browser panel</text>
+    <text x="125" y="468" text-anchor="middle">built-in / any browser</text>
+    <text x="125" y="490" text-anchor="middle" fill="#6b7080">you tap, drag, rotate</text>
+
+    <!-- MCP server container -->
+    <rect x="290" y="20" width="370" height="530" rx="14" fill="#f6f7f9" stroke="#c9cdd8" stroke-dasharray="6 5"/>
+    <text x="475" y="46" text-anchor="middle" font-size="15" font-weight="700">MCP server · dist/server.js</text>
+
+    <rect x="310" y="64" width="330" height="184" rx="10" fill="#ffffff" stroke="#c9cdd8"/>
+    <text x="475" y="88" text-anchor="middle" font-weight="700">Tools (MCP SDK + zod, 31 tools)</text>
+    <g font-size="12" fill="#3a3f4d">
+      <text x="326" y="112">Core: devices · boot · shutdown · panel · real_start_wda</text>
+      <text x="326" y="132">　　　screenshot · interact · annotation · preview</text>
+      <text x="326" y="152">Apps: list_apps · launch_app · build_run · install</text>
+      <text x="326" y="172">Env: open_url · push · location · appearance · record</text>
+      <text x="326" y="192" fill="#b4502c">UI: ui_tree · tap_element · ui_rows · tap_row</text>
+      <text x="326" y="212" fill="#b4502c">　　 find_text · tap_text · wait_for</text>
+      <text x="326" y="232" fill="#2f5bd8">Debug: logs · processes · backtrace · leaks · app_info</text>
+    </g>
+
+    <rect x="310" y="266" width="160" height="100" rx="10" fill="#ffffff" stroke="#c9cdd8"/>
+    <text x="390" y="292" text-anchor="middle" font-weight="700">CLI helpers</text>
+    <text x="390" y="314" text-anchor="middle" font-size="12" fill="#6b7080">simctl · xcodebuild</text>
+    <text x="390" y="332" text-anchor="middle" font-size="12" fill="#6b7080">AXe tree · Vision OCR</text>
+    <text x="390" y="350" text-anchor="middle" font-size="12" fill="#6b7080">devices: devicectl · WDA</text>
+
+    <rect x="480" y="266" width="160" height="100" rx="10" fill="#ffffff" stroke="#c9cdd8"/>
+    <text x="560" y="292" text-anchor="middle" font-weight="700">SimHostController</text>
+    <text x="560" y="314" text-anchor="middle" font-size="12" fill="#6b7080">serve-sim lifecycle</text>
+    <text x="560" y="332" text-anchor="middle" font-size="12" fill="#6b7080">keep-alive · idle stop · adopt</text>
+
+    <rect x="310" y="410" width="330" height="120" rx="10" fill="#ffffff" stroke="#c9cdd8"/>
+    <text x="475" y="434" text-anchor="middle" font-weight="700">PanelServer · 127.0.0.1:3456+</text>
+    <g font-size="12" fill="#3a3f4d">
+      <text x="326" y="458">GET /stream　 → proxied MJPEG</text>
+      <text x="326" y="478">WS  /ws　　　 → touch / buttons / rotate</text>
+      <text x="326" y="498">/api/*　　　　 devices · switch · capture · actions</text>
+      <text x="326" y="518" fill="#b4502c">fence: loopback · Host / Origin checks · JSON</text>
+    </g>
+
+    <!-- serve-sim + simulator -->
+    <rect x="730" y="170" width="200" height="90" rx="12" fill="#eefaf1" stroke="#28a745" stroke-width="1.5"/>
+    <text x="830" y="202" text-anchor="middle" font-size="16" font-weight="700" fill="#1f7a36">serve-sim</text>
+    <text x="830" y="226" text-anchor="middle">MJPEG video</text>
+    <text x="830" y="246" text-anchor="middle">WebSocket control</text>
+
+    <rect x="730" y="380" width="200" height="110" rx="12" fill="#1f2330"/>
+    <text x="830" y="416" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">iOS Simulator</text>
+    <text x="830" y="442" text-anchor="middle" fill="#c9cdd8">Xcode · Apple Silicon</text>
+    <text x="830" y="466" text-anchor="middle" fill="#c9cdd8">iPhone / iPad</text>
+
+    <!-- arrows -->
+    <g stroke="#6b7080" stroke-width="1.6" fill="none">
+      <path d="M220 95 L308 120" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+      <path d="M220 465 L308 470" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+      <path d="M400 248 L400 264" marker-end="url(#arrow)"/>
+      <path d="M560 248 L560 264" marker-end="url(#arrow)"/>
+      <path d="M640 310 L728 245" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+      <path d="M560 410 L560 370" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+      <path d="M830 262 L830 378" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+      <path d="M390 366 L390 386 L705 386 L705 432 L728 432" marker-end="url(#arrow)"/>
+    </g>
+    <g font-size="11" fill="#6b7080">
+      <text x="238" y="98">stdio</text>
+      <text x="236" y="458">HTTP / WS</text>
+      <text x="840" y="344">touch / video</text>
+      <text x="572" y="400">video</text>
+      <text x="600" y="380">CLI calls</text>
+    </g>
+  </g>
+</svg>

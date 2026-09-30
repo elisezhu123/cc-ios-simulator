@@ -10,6 +10,8 @@
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
 
+<p align="center"><b>中文</b> | <a href="README.en.md">English</a></p>
+
 # iOS Simulator 插件（Claude Code）
 
 在 Claude Code 里直接驱动 iOS 模拟器：**实时画面面板**、点击和手势、**按无障碍树 / 文字识别（OCR）定位并点击**、安装和启动 App、从源码**构建并运行**、推送通知、定位、深色模式、录屏、**日志、线程栈与内存泄漏排查**、**SwiftUI 预览热重载**……Claude 能看截图、能读懂屏幕上的控件和文字，你也能在同一个面板里亲手操作同一台模拟器。
