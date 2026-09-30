@@ -28,8 +28,10 @@ import {
 } from '../list-rows.js'
 import { filterOcrItems, pixelRectToNormalizedCenter, pixelRectToPoints, type OcrItem, type PixelSize } from '../ocr-backend.js'
 import { isLandscape, readSimScreenConfig, toFramebufferArgs } from '../orientation.js'
+import { captureWda, ROW_SNAPSHOT_DEPTH, wdaTree } from '../real-ui.js'
+import type { ScreenshotCapture } from '../screenshot.js'
 import type { SimulatorDevice } from '../simctl.js'
-import { assertMac, assertStreamAvailable, ensureStreamFor, requireBooted, resolveTargetDevice } from '../target.js'
+import { assertMac, ensureStreamFor, realDeviceSummary, requireBooted, resolveToolTarget } from '../target.js'
 import type { AxeElement } from '../uitree-backend.js'
 import {
   buildTreeResult,
@@ -46,7 +48,7 @@ import {
   screenBounds,
   tapExpectation,
 } from '../uitree.js'
-import { deviceSummary, jsonResult, runTool, sleep, UDID_PARAM } from './result.js'
+import { deviceSummary, jsonResult, runTool, sleep, UDID_PARAM, type DeviceSummary } from './result.js'
 
 const SCREENSHOT_PARAM = z.boolean().optional()
   .describe('Return a screenshot of the result as an image (default true); pass false when chaining actions')
@@ -68,13 +70,6 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
    * cached; a rotation changes the pixel size and so misses.
    */
   const pointSizes = new Map<string, PixelSize>()
-
-  const bootedTarget = async (tool: string, udid: string | undefined): Promise<SimulatorDevice> => {
-    assertMac(deps.platform)
-    const device = await resolveTargetDevice(deps, udid)
-    requireBooted(tool, device)
-    return device
-  }
 
   const readTree = async (device: SimulatorDevice, signal?: AbortSignal): Promise<AxeElement[]> => {
     try {
@@ -112,6 +107,69 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     }
   }
 
+  /**
+   * The device a UI tool acts on: a booted simulator (AXe, simctl
+   * screenshots) or a connected iPhone/iPad (WebDriverAgent, which must be
+   * running — ios_real_start_wda). Coordinates are device points either way.
+   */
+  interface UiTarget {
+    kind: 'simulator' | 'real'
+    udid: string
+    name: string
+    summary: DeviceSummary
+    /** Set for a simulator. */
+    simulator?: SimulatorDevice
+    /** `depth` caps WDA's snapshot on a real device; a simulator always reads the full tree. */
+    readTree(signal?: AbortSignal, depth?: number): Promise<{ roots: AxeElement[]; sampledDepth?: number; deepened?: boolean }>
+    tap(x: number, y: number, signal?: AbortSignal): Promise<void>
+    capture(signal?: AbortSignal): Promise<ScreenshotCapture>
+    pointSize(pixelSize: PixelSize, signal?: AbortSignal): Promise<{ size: PixelSize; note?: string }>
+  }
+
+  const uiTarget = async (tool: string, udid: string | undefined): Promise<UiTarget> => {
+    assertMac(deps.platform)
+    const target = await resolveToolTarget(deps, udid)
+    if (target.kind === 'real') {
+      const device = target.device
+      const client = await deps.wda.control(device)
+      return {
+        kind: 'real',
+        udid: device.udid,
+        name: device.name,
+        summary: realDeviceSummary(device),
+        readTree: async (_signal, depth) => wdaTree(client, device.name, depth),
+        tap: async (x, y) => {
+          try {
+            await client.tap(x, y)
+          } catch (error) {
+            throw new Error(`WebDriverAgent tap at (${x}, ${y}) failed: ${error instanceof Error ? error.message : String(error)}`)
+          }
+        },
+        capture: async () => captureWda(client, deps.screenshots, device.udid, device.name),
+        pointSize: async () => ({ size: await client.windowSize() }),
+      }
+    }
+    const device = target.device
+    requireBooted(tool, device)
+    return {
+      kind: 'simulator',
+      udid: device.udid,
+      name: device.name,
+      summary: deviceSummary(device),
+      simulator: device,
+      readTree: async signal => ({ roots: await readTree(device, signal) }),
+      tap: async (x, y, signal) => {
+        try {
+          await deps.axe.tap(device.udid, x, y, signal)
+        } catch (error) {
+          throw new Error(`AXe tap at (${x}, ${y}) failed: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      },
+      capture: signal => deps.screenshots.capture(device.udid, signal),
+      pointSize: (pixelSize, signal) => pointSizeOf(device.udid, pixelSize, signal),
+    }
+  }
+
   interface OcrSnapshot {
     items: OcrItem[]
     pixelSize: PixelSize
@@ -120,13 +178,13 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     path: string
   }
 
-  const readOcr = async (device: SimulatorDevice, signal?: AbortSignal): Promise<OcrSnapshot> => {
-    const capture = await deps.screenshots.capture(device.udid, signal)
+  const readOcr = async (device: UiTarget, signal?: AbortSignal): Promise<OcrSnapshot> => {
+    const capture = await device.capture(signal)
     if (capture.width === undefined || capture.height === undefined || capture.width <= 0 || capture.height <= 0) {
       throw new Error(`could not determine the screenshot pixel size of ${device.name} (unreadable PNG header)`)
     }
     const pixelSize = { width: capture.width, height: capture.height }
-    const point = await pointSizeOf(device.udid, pixelSize, signal)
+    const point = await device.pointSize(pixelSize, signal)
     let items: OcrItem[]
     try {
       items = await deps.ocr.recognize(capture.path, signal)
@@ -144,7 +202,7 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
 
   /** A tap tool's expect_text / expect_gone, polled after the settle delay. */
   const runExpectation = async (
-    device: SimulatorDevice,
+    device: UiTarget,
     expectation: { text: string; mode: 'appear' | 'disappear' } | undefined,
     signal?: AbortSignal,
   ): Promise<{ text: string; mode: 'appear' | 'disappear'; matched: boolean; waitedMs: number } | undefined> => {
@@ -163,13 +221,13 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
 
   /** The tap tools' result: JSON plus, unless screenshot:false, the effect image. */
   const withScreenshot = async (
-    device: SimulatorDevice,
+    device: UiTarget,
     body: Record<string, unknown>,
     screenshot: boolean | undefined,
     signal?: AbortSignal,
   ): Promise<CallToolResult> => {
     if (screenshot === false) return jsonResult(body)
-    const capture = await deps.screenshots.capture(device.udid, signal)
+    const capture = await device.capture(signal)
     const image = await deps.screenshots.toModelImage(capture)
     return jsonResult({
       ...body,
@@ -202,11 +260,16 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     },
     annotations: { readOnlyHint: true },
   }, async (args, extra) => runTool('ios_sim_ui_tree', async () => {
-    const device = await bootedTarget('ios_sim_ui_tree', args.udid)
-    const roots = await readTree(device, extra.signal)
+    const device = await uiTarget('ios_sim_ui_tree', args.udid)
+    const { roots, sampledDepth, deepened } = await device.readTree(extra.signal, args.max_depth)
     const result = buildTreeResult(roots, screenBounds(roots), args)
     const { tree, ...summary } = result
-    return jsonResult({ ...summary, device: deviceSummary(device), tree })
+    return jsonResult({
+      ...summary,
+      device: device.summary,
+      ...(sampledDepth === undefined ? {} : { snapshotDepth: sampledDepth, ...(deepened === true ? { deepened } : {}) }),
+      tree,
+    })
   }))
 
   server.registerTool('ios_sim_tap_element', {
@@ -229,15 +292,11 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     },
   }, async (args, extra) => runTool('ios_sim_tap_element', async () => {
     const expectation = tapExpectation(args)
-    const device = await bootedTarget('ios_sim_tap_element', args.udid)
-    const roots = await readTree(device, extra.signal)
+    const device = await uiTarget('ios_sim_tap_element', args.udid)
+    const { roots } = await device.readTree(extra.signal)
     const { element, matchedBy } = resolveTapTarget(roots, args, { allowOffscreen: args.allow_offscreen === true })
     const center = frameCenter(element.frame)
-    try {
-      await deps.axe.tap(device.udid, center.x, center.y, extra.signal)
-    } catch (error) {
-      throw new Error(`AXe tap at (${center.x}, ${center.y}) failed: ${error instanceof Error ? error.message : String(error)}`)
-    }
+    await device.tap(center.x, center.y, extra.signal)
     await sleep(deps.settleMs)
     const expected = await runExpectation(device, expectation, extra.signal)
     return withScreenshot(device, {
@@ -251,7 +310,7 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
       },
       matchedBy,
       center,
-      device: deviceSummary(device),
+      device: device.summary,
       ...(expected === undefined ? {} : { expected }),
     }, args.screenshot, extra.signal)
   }))
@@ -271,12 +330,12 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     annotations: { readOnlyHint: true },
   }, async (args, extra) => runTool('ios_sim_find_text', async () => {
     const minConfidence = sanitizeMinConfidence(args.min_confidence)
-    const device = await bootedTarget('ios_sim_find_text', args.udid)
+    const device = await uiTarget('ios_sim_find_text', args.udid)
     const snapshot = await readOcr(device, extra.signal)
     const items = filterOcrItems(snapshot.items, args.query, minConfidence).map(item => pointsItem(item, snapshot))
     const capped = capList(items)
     return jsonResult({
-      device: deviceSummary(device),
+      device: device.summary,
       size: { width: round2(snapshot.pointSize.width), height: round2(snapshot.pointSize.height) },
       count: capped.items.length,
       items: capped.items,
@@ -304,14 +363,14 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => runTool('ios_sim_wait_for', async () => {
     const minConfidence = sanitizeMinConfidence(args.min_confidence)
     const mode = args.mode ?? 'appear'
-    const device = await bootedTarget('ios_sim_wait_for', args.udid)
+    const device = await uiTarget('ios_sim_wait_for', args.udid)
     let last: OcrSnapshot | undefined
     const outcome = await pollForText(async () => {
       last = await readOcr(device, extra.signal)
       return last.items
     }, args.text, mode, args.timeout_ms ?? 8000, deps.pollIntervalMs, minConfidence, extra.signal)
     return jsonResult({
-      device: deviceSummary(device),
+      device: device.summary,
       matched: outcome.matched,
       waitedMs: outcome.waitedMs,
       text: args.text,
@@ -339,11 +398,8 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => runTool('ios_sim_tap_text', async () => {
     const minConfidence = sanitizeMinConfidence(args.min_confidence)
     const expectation = tapExpectation(args)
-    assertMac(deps.platform)
-    assertStreamAvailable(deps.host)
-    const device = await resolveTargetDevice(deps, args.udid)
-    requireBooted('ios_sim_tap_text', device)
-    const info = await ensureStreamFor(deps.host, device)
+    const device = await uiTarget('ios_sim_tap_text', args.udid)
+    const info = device.simulator === undefined ? undefined : await ensureStreamFor(deps.host, device.simulator)
     const snapshot = await readOcr(device, extra.signal)
     const { item, matchedBy } = resolveOcrTextTarget(
       filterOcrItems(snapshot.items, args.query, minConfidence), args.query, snapshot.items, minConfidence)
@@ -353,23 +409,29 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
       x: Math.round(normalized.x * 10_000) / 10_000,
       y: Math.round(normalized.y * 10_000) / 10_000,
     }
-    // Screenshots are upright in the interface orientation; serve-sim takes
-    // portrait framebuffer coordinates, so a landscape image is mapped.
-    let framebufferArgs = tapArgs
+    const pointRect = pixelRectToPoints(item.rect, snapshot.pixelSize, snapshot.pointSize)
     let warning: string | undefined
-    if (snapshot.pixelSize.width > snapshot.pixelSize.height) {
-      const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
-      if (isLandscape(orientation)) framebufferArgs = toFramebufferArgs(orientation, tapArgs)
-      else warning = IMAGE_LANDSCAPE_UNSYNCED_WARNING
-    }
-    try {
-      await performSimInteract(deps.host, device.udid, framebufferArgs, interactControlArgs(framebufferArgs))
-    } catch (error) {
-      throw new Error(`serve-sim tap failed: ${error instanceof Error ? error.message : String(error)}`)
+    if (info === undefined) {
+      // WebDriverAgent taps in points of the upright app window.
+      const center = frameCenter(pointRect)
+      await device.tap(center.x, center.y, extra.signal)
+    } else {
+      // Screenshots are upright in the interface orientation; serve-sim takes
+      // portrait framebuffer coordinates, so a landscape image is mapped.
+      let framebufferArgs = tapArgs
+      if (snapshot.pixelSize.width > snapshot.pixelSize.height) {
+        const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
+        if (isLandscape(orientation)) framebufferArgs = toFramebufferArgs(orientation, tapArgs)
+        else warning = IMAGE_LANDSCAPE_UNSYNCED_WARNING
+      }
+      try {
+        await performSimInteract(deps.host, device.udid, framebufferArgs, interactControlArgs(framebufferArgs))
+      } catch (error) {
+        throw new Error(`serve-sim tap failed: ${error instanceof Error ? error.message : String(error)}`)
+      }
     }
     await sleep(deps.settleMs)
     const expected = await runExpectation(device, expectation, extra.signal)
-    const pointRect = pixelRectToPoints(item.rect, snapshot.pixelSize, snapshot.pointSize)
     return withScreenshot(device, {
       action: 'tap-text',
       text: item.text,
@@ -378,7 +440,7 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
       rect: roundFrame(pointRect),
       center: frameCenter(pointRect),
       tap: { x: tapArgs.x, y: tapArgs.y },
-      device: deviceSummary(device),
+      device: device.summary,
       ...(expected === undefined ? {} : { expected }),
       ...(warning === undefined ? {} : { warning }),
       ...(snapshot.note === undefined ? {} : { note: snapshot.note }),
@@ -405,8 +467,8 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     inputSchema: { udid: UDID_PARAM },
     annotations: { readOnlyHint: true },
   }, async (args, extra) => runTool('ios_sim_ui_rows', async () => {
-    const device = await bootedTarget('ios_sim_ui_rows', args.udid)
-    const roots = await readTree(device, extra.signal)
+    const device = await uiTarget('ios_sim_ui_rows', args.udid)
+    const { roots } = await device.readTree(extra.signal, ROW_SNAPSHOT_DEPTH)
     const size = screenBounds(roots)
     const detected = detectListRows(roots, { bounds: size })
     const hint = detected.rows.length > 0
@@ -416,7 +478,7 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
           + 'recognize. Its labeled elements are in ios_sim_ui_tree — drive those with ios_sim_tap_element.'
         : OCR_FALLBACK_HINT
     return jsonResult({
-      device: deviceSummary(device),
+      device: device.summary,
       size: { width: round2(size.width), height: round2(size.height) },
       rowCount: detected.rows.length,
       repeatedGroups: detected.repeatedGroups,
@@ -451,20 +513,16 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     const expectation = args.expect_count === undefined
       ? undefined
       : { key: args.expect_count.key, delta: sanitizeCountDelta(args.expect_count.delta) }
-    const device = await bootedTarget('ios_sim_tap_row', args.udid)
-    const roots = await readTree(device, extra.signal)
+    const device = await uiTarget('ios_sim_tap_row', args.udid)
+    const { roots } = await device.readTree(extra.signal, ROW_SNAPSHOT_DEPTH)
     const bounds = screenBounds(roots)
     const plan = planRowTap(detectListRows(roots, { bounds }).rows, args.row, args.x ?? 0.5, args.y ?? 0.5, bounds)
     const before = expectation === undefined ? undefined : requireCountKey(plan.row, expectation.key)
-    try {
-      await deps.axe.tap(device.udid, plan.tap.x, plan.tap.y, extra.signal)
-    } catch (error) {
-      throw new Error(`AXe tap at (${plan.tap.x}, ${plan.tap.y}) failed: ${error instanceof Error ? error.message : String(error)}`)
-    }
+    await device.tap(plan.tap.x, plan.tap.y, extra.signal)
     let countCheck: CountCheckResult | undefined
     if (expectation !== undefined) {
       await sleep(deps.rowSettleMs)
-      const afterRoots = await readTree(device, extra.signal)
+      const { roots: afterRoots } = await device.readTree(extra.signal, ROW_SNAPSHOT_DEPTH)
       const afterRow = detectListRows(afterRoots, { bounds: screenBounds(afterRoots) }).rows.find(row => row.index === plan.row.index)
       countCheck = afterRow === undefined
         ? { key: expectation.key, delta: expectation.delta, before, verified: false, changed: false, reason: 'the re-read tree no longer contains the row (the screen changed)' }
@@ -477,7 +535,7 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
       row: outputRow(plan.row),
       inRow: plan.inRow,
       tap: plan.tap,
-      device: deviceSummary(device),
+      device: device.summary,
       ...(countCheck === undefined
         ? { note: 'No expect_count was given, so nothing was verified — re-run ios_sim_ui_rows and compare the counters if it matters.' }
         : { countCheck }),

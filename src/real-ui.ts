@@ -113,7 +113,7 @@ function unit(value: unknown, what: string): number {
   return value
 }
 
-export interface RealInteractArgs extends SimInteractArgs {
+export interface RealInteractArgs extends Omit<SimInteractArgs, 'action'> {
   orientation?: string
 }
 
@@ -152,7 +152,7 @@ export function planWdaInteract(action: string, args: RealInteractArgs): WdaInte
       }
     }
     case 'scroll': {
-      const points = simScrollPath(scrollRequestOf(args))
+      const points = simScrollPath(scrollRequestOf({ ...args, action: 'scroll' }))
       const from = points[0]!
       const to = points[points.length - 1]!
       return { kind: 'drag', fromX: from.x, fromY: from.y, toX: to.x, toY: to.y, duration: 0.3 }

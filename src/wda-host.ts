@@ -159,10 +159,6 @@ export class WdaController {
   }
 
   status(): WdaStatus {
-    if (this.#starting !== undefined) {
-      const { device } = this.#starting
-      return { phase: 'starting', device: { udid: device.udid, name: device.name } }
-    }
     const running = this.#running
     if (running !== undefined) {
       return {
@@ -173,6 +169,10 @@ export class WdaController {
         adopted: running.adopted,
         ...(running.signingTeam === undefined ? {} : { signingTeam: running.signingTeam }),
       }
+    }
+    if (this.#starting !== undefined) {
+      const { device } = this.#starting
+      return { phase: 'starting', device: { udid: device.udid, name: device.name } }
     }
     const failure = this.#failure
     if (failure !== undefined) {

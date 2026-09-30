@@ -313,7 +313,9 @@ export function collapseFrameDuplicates(roots: AxeElement[]): AxeElement[] {
  * document parses to no elements.
  */
 export function wdaSourceToElements(xml: string): AxeElement[] {
-  const roots = collapseFrameDuplicates(parseWdaXml(xml).map(wdaXmlNodeToAxe))
+  // Appium wraps the tree in an <AppiumAUT> element; plain WDA does not.
+  const parsed = parseWdaXml(xml).flatMap(node => node.tag === 'AppiumAUT' ? node.children : [node])
+  const roots = collapseFrameDuplicates(parsed.map(wdaXmlNodeToAxe))
   if (roots.length === 0) {
     throw new Error('the WebDriverAgent source() payload contained no accessibility elements')
   }

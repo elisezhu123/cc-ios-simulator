@@ -54,7 +54,9 @@ export function pickPreferred(devices: readonly SimulatorDevice[]): SimulatorDev
 }
 
 /** The tools that also work on a connected iPhone or iPad (through devicectl). */
-export const REAL_DEVICE_TOOLS = 'ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes and ios_sim_app_info'
+export const REAL_DEVICE_TOOLS = 'ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes, ios_sim_app_info, '
+  + 'and — once ios_real_start_wda has started WebDriverAgent — ios_sim_screenshot, ios_sim_interact, ios_sim_ui_tree, '
+  + 'ios_sim_tap_element, ios_sim_find_text, ios_sim_tap_text, ios_sim_wait_for, ios_sim_ui_rows and ios_sim_tap_row'
 
 export async function resolveTargetDevice(
   deps: { simctl: SimctlApi; host: StreamHost; realDevices?: RealDeviceApi },
@@ -67,7 +69,7 @@ export async function resolveTargetDevice(
     } catch (error) {
       if (deps.realDevices !== undefined && await deps.realDevices.matches(reference)) {
         throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only — on a `
-          + `real device use ${REAL_DEVICE_TOOLS} (screen, touch and UI tools need WebDriverAgent, which is not supported yet)`)
+          + `real device use ${REAL_DEVICE_TOOLS}`)
       }
       throw error
     }
