@@ -71,6 +71,11 @@ export async function toolHarness(
     axe: fakeAxe().api,
     ocr: fakeOcr().api,
     devtools: fakeDevtools().api,
+    preview: {
+      start: async () => { throw new Error('test: no preview controller') },
+      status: () => ({ running: false }),
+      stop: async () => ({ stopped: false }),
+    },
     cacheRoot,
     platform: 'darwin',
     settleMs: 0,

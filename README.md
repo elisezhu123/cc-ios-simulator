@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Claude Code Plugin" src="https://img.shields.io/badge/Claude%20Code-Plugin-d97757">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-28%20tools-4f7cff">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-29%20tools-4f7cff">
   <img alt="Platform" src="https://img.shields.io/badge/macOS-Apple%20Silicon-1f2330?logo=apple">
   <img alt="Node" src="https://img.shields.io/badge/Node.js-%E2%89%A5%2020-339933?logo=node.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
@@ -12,7 +12,7 @@
 
 # iOS Simulator 插件（Claude Code）
 
-在 Claude Code 里直接驱动 iOS 模拟器：**实时画面面板**、点击和手势、**按无障碍树 / 文字识别（OCR）定位并点击**、安装和启动 App、从源码**构建并运行**、推送通知、定位、深色模式、录屏、**日志、线程栈与内存泄漏排查**……Claude 能看截图、能读懂屏幕上的控件和文字，你也能在同一个面板里亲手操作同一台模拟器。
+在 Claude Code 里直接驱动 iOS 模拟器：**实时画面面板**、点击和手势、**按无障碍树 / 文字识别（OCR）定位并点击**、安装和启动 App、从源码**构建并运行**、推送通知、定位、深色模式、录屏、**日志、线程栈与内存泄漏排查**、**SwiftUI 预览热重载**……Claude 能看截图、能读懂屏幕上的控件和文字，你也能在同一个面板里亲手操作同一台模拟器。
 
 > [!NOTE]
 > 本项目基于 **[dsh-ios](https://github.com/ZSeven-W/dsh-ios)** 二次开发。dsh-ios 是 DeepSeek Harness（DSH）的 iOS 插件（MIT，© 2026 ZSeven—W）。
@@ -24,7 +24,7 @@
 
 - [效果预览](#效果预览)
 - [支持的功能](#支持的功能)
-- [工具一览（28 个）](#工具一览28-个)
+- [工具一览（29 个）](#工具一览29-个)
 - [运行要求](#运行要求)
 - [安装](#安装)
 - [快速上手](#快速上手)
@@ -56,6 +56,7 @@
 | 🎥 **实时画面** | 基于 serve-sim 的 MJPEG 视频流（不是轮询截图），浏览器里实时观看，断线按 1s → 2s → 5s 自动重连 |
 | 👆 **交互** | 点击、拖动 / 滑动手势、按内容方向滚动、输入文字、硬件按键（Home、锁屏、Siri、音量…）、四向旋转 |
 | 🧩 **UI 自动化** | 读取无障碍树，按 identifier / label 点控件；Vision OCR 识别屏幕文字（中英文），按文字点击；等待文字出现 / 消失；点击后在同一次调用里确认结果 |
+| ⚡ **SwiftUI 预览热重载** | 把 Swift 包里的 `#Preview` / `PreviewProvider` 直接跑在模拟器里；保存文件后几秒内热替换，不用重启 App；编译出错时保留上一个能用的画面 |
 | 🐞 **日志与调试** | 读取模拟器统一日志（最近一段或限时实时抓取，可按 App / 谓词 / 正则过滤）；列出运行中的 App 进程；抓线程栈（LLDB 批处理，失败时退回 `sample`）；`leaks` 查内存泄漏或导出 `.memgraph`；查看 App 的安装路径、数据目录和 Info.plist |
 | 📰 **列表 / 信息流** | 把信息流拆成一行行，解析每行的计数（如「57 回复」「18 喜欢」）；在行内相对位置点击，并用计数 ±1 确认操作生效 |
 | 📱 **设备操作** | 后台 App（多任务）、锁屏、解锁、摇一摇、Siri、Action 按钮、窗口重新居中 |
@@ -72,7 +73,7 @@
 
 ---
 
-## 工具一览（28 个）
+## 工具一览（29 个）
 
 所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。不传时依次使用：正在推流的设备 → 第一台已启动的设备。`ios_sim_interact` 的坐标是 **0..1 归一化值**；UI 自动化工具返回的位置是设备的**点（point）**坐标。
 
@@ -119,6 +120,14 @@
 | `ios_sim_ui_rows` | 把列表 / 信息流拆成行：序号、坐标、合并后的 label，以及从 label 里解析出的计数 |
 | `ios_sim_tap_row` | 在第 N 行内按相对位置点击；`expect_count` 可校验某个计数正好变化 ±1 |
 
+### SwiftUI 预览
+
+| 工具 | 作用 |
+|---|---|
+| `ios_sim_preview` | `start`（默认）：在插件缓存里生成一次性的预览宿主 App，把 Swift 包编译成动态库装进模拟器，并开始监听源码；每次保存都会重新编译并热替换，不重启 App。`status`：查看当前版本、预览列表、上次重载耗时和编译错误。`stop`：停止监听并卸载宿主 App。同一时间只能有一个预览会话 |
+
+支持 `#Preview { … }`（含 `#Preview("名字", traits: …)`）和 `struct X: PreviewProvider`，只扫描包里 `.target(...)` 的源码。预览里可以用 `internal` 类型（入口以 `@testable import` 引入你的模块）。宿主 App 和编译产物都放在插件缓存里，**不会往你的包里写任何文件**。
+
 ### 日志与调试
 
 | 工具 | 作用 |
@@ -160,6 +169,7 @@
 - UI 自动化：
   - 无障碍树工具需要 [AXe](https://github.com/cameroncooke/AXe)。会依次查找 PATH 和 Homebrew（`brew install cameroncooke/axe/axe`），都没有时首次使用自动下载固定版本 v1.8.0，并校验 SHA-256。
   - OCR 工具需要 `swiftc`（Xcode 或 Command Line Tools 自带），首次使用时把插件自带的 `assets/ocr.swift` 编译进缓存。
+- SwiftUI 预览：需要 Swift 包（有 `Package.swift`，至少一个 `.target`），iOS 最低版本按 17 起算（`#Preview` 宏需要）。第一次启动要完整编译整个包，可能需要一分钟左右。
 - 调试：`ios_sim_backtrace` 用 LLDB attach，`ios_sim_leaks` 要检查 App 进程，都需要开启 macOS 开发者模式（运行一次 `sudo DevToolsSecurity -enable`）。没开时 backtrace 会退回 `sample`，leaks 会报错并提示这条命令。
 - `device_action` 中除"锁屏"外的动作会操作 Simulator.app 菜单，需要在 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能** 中给运行 Claude 的应用授权
 
@@ -221,6 +231,7 @@ claude --plugin-dir /path/to/cc-ios-simulator
 在信息流第 2 条上点赞，并确认喜欢数加 1
 MyApp 点登录后卡住了，抓一下主线程的栈，再看看最近 1 分钟它打了什么日志
 检查一下 MyApp 有没有内存泄漏
+在模拟器里预览 ~/Projects/DesignKit 的 SwiftUI 预览，我改代码时自动刷新
 ```
 
 一次典型的交互流程：
@@ -281,9 +292,10 @@ sequenceDiagram
   marketplace.json     # 本仓库同时是一个 marketplace
 skills/ios-ui-automation/SKILL.md   # 教 Claude 操作模拟器的 Skill
 assets/ocr.swift                    # Vision OCR 助手源码（首次使用时编译）
+assets/preview-host/                # SwiftUI 预览宿主 App 的源码
 src/
   server.ts            # MCP 入口、组装、生命周期
-  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts：28 个工具
+  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts：29 个工具
   sim-host.ts          # serve-sim 生命周期
   stream-source.ts     # 视频流抽象（为真机预留）
   sim-gesture.ts       # WebSocket 手势通道
@@ -296,6 +308,8 @@ src/
   uitree.ts            # 无障碍树裁剪、控件匹配、OCR 文字匹配
   list-rows.ts         # 列表行识别与计数解析
   devtools.ts          # 日志 / 调试子进程运行器与输出解析
+  preview-source.ts    # Package.swift 解析、预览扫描、生成 Swift 代码
+  preview-host.ts      # 预览会话：构建宿主 App、热替换、文件监听
   recorder.ts          # 录屏进程管理
   panel/               # 面板服务、安全边界 fence.ts、前端 client/
 dist/                  # 打包产物（已提交）
@@ -318,7 +332,8 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | 新增工具 | — | `open_url`、`push`、`location`、`appearance`、`record` |
 | UI 自动化 | 模拟器 + 真机 | 已移植模拟器部分（7 个工具），点击工具额外返回结果截图 |
 | 日志与调试 | 模拟器 + 真机 | 已移植模拟器部分（5 个工具） |
-| SwiftUI 预览、USB 真机 | 已支持 | **尚未支持**，计划分期移植，见 [路线图](#路线图) |
+| SwiftUI 预览热重载 | 已支持 | 已移植（`ios_sim_preview`） |
+| USB 真机 | 已支持 | **尚未支持**，计划在第 ⑤ 期移植，见 [路线图](#路线图) |
 
 移植的文件在第一行注明了来源（`Ported from dsh-ios (MIT) @ d9a9731 — src/<file>`），完整清单见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
@@ -335,7 +350,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | `IOS_SIM_AXE_OFFLINE` | 设为 `1` 时不自动下载 AXe | 未设置 |
 | `IOS_SIM_SWIFTC` | 指定编译 OCR 助手用的 swiftc | PATH 中的 `swiftc` |
 
-缓存目录下：`screenshots/`（只保留最新 100 张）、`recordings/`、`samples/`（`sample` 报告）、`memgraphs/`、`builds/<slug>/DerivedData`、`bin/axe/`（下载的 AXe）、`bin/ocr/`（编译好的 OCR 助手）、`tmp/`。
+缓存目录下：`screenshots/`（只保留最新 100 张）、`recordings/`、`samples/`（`sample` 报告）、`memgraphs/`、`preview/`（预览宿主 App 和编译产物）、`builds/<slug>/DerivedData`、`bin/axe/`（下载的 AXe）、`bin/ocr/`（编译好的 OCR 助手）、`tmp/`。
 
 ---
 
@@ -390,6 +405,15 @@ printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
 </details>
 
 <details>
+<summary><b>SwiftUI 预览启动失败或改了代码没刷新？</b></summary>
+
+- 用 `ios_sim_preview {action: "status"}` 查看：`lastBuildError` 是最近一次编译错误的末尾，`loadedGeneration` 是宿主 App 实际加载到的版本。
+- 预览里用到的类型在另一个 target 里时，确保那个 target 在 `Package.swift` 的 `.target(...)` 里。
+- 预览依赖 App 里的资源或环境（如 `@EnvironmentObject`）时，要在 `#Preview` 里自己提供。
+
+</details>
+
+<details>
 <summary><b>横屏后点击位置不对？</b></summary>
 
 如果设备是在 Simulator.app 里手动旋转的，视频流可能不知道当前方向，结果里会带 `warning`。按提示调用一次 `ios_sim_interact {action: "rotate", orientation: "landscape_left" 或 "landscape_right"}` 即可同步。
@@ -404,7 +428,7 @@ printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
 npm install
 npm test              # 单元与集成测试，不需要模拟器
 npm run build         # 类型检查 + 打包 dist/（dist 需要提交）
-npm run check:bundle  # 启动 dist/server.js 并确认 28 个工具
+npm run check:bundle  # 启动 dist/server.js 并确认 29 个工具
 IOS_SIM_SMOKE=1 npm run test:live   # 在真实模拟器上冒烟
 npm run dev:panel     # 启动一台模拟器并保持面板运行，用于在浏览器里调试
 npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTICES.md（依赖变化后运行）
@@ -417,14 +441,14 @@ npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTI
 ## 路线图
 
 > [!IMPORTANT]
-> 目前完成了第 ① 期，以及第 ②、③ 期的模拟器部分。第 ④、⑤ 期**都还没有开始**，表中列出的这些工具现在都不能用，仅供了解后续规划。
+> 目前完成了第 ① 期、第 ④ 期，以及第 ②、③ 期的模拟器部分。第 ⑤ 期**还没有开始**，表中列出的这些工具现在都不能用，仅供了解后续规划。
 
 | 期 | 内容 | 状态 |
 |---|---|---|
 | ① 基础 | 插件骨架、MCP 服务、serve-sim 视频流与触控、实时面板、16 个工具、Skill | ✅ 已完成 |
 | ② UI 自动化 | AXe 无障碍树 + Vision OCR：`ui_tree`、`tap_element`、`find_text`、`tap_text`、`wait_for`、`ui_rows`、`tap_row` | ✅ 已完成（模拟器；真机随第 ⑤ 期） |
 | ③ 日志与调试 | `logs`、`processes`、`backtrace`、`leaks`、`app_info` | ✅ 已完成（模拟器；真机随第 ⑤ 期） |
-| ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | ⏳ 未开始 |
+| ④ SwiftUI 预览 | `ios_sim_preview` 热重载 | ✅ 已完成 |
 | ⑤ USB 真机 | WebDriverAgent + usbmux + devicectl，同一面板驱动真实 iPhone | ⏳ 未开始 |
 
 ---

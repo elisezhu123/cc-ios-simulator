@@ -228,6 +228,7 @@ export function fakeSimctl(
   devices: SimulatorDevice[]
 } {
   const calls: unknown[][] = []
+  const containerRoot = mkdtempSync(join(tmpdir(), 'ios-sim-containers-'))
   const screenshotSize = options.screenshotSize ?? { width: 1206, height: 2622 }
   const find = (reference: string): SimulatorDevice => {
     const wanted = reference.trim()
@@ -253,6 +254,7 @@ export function fakeSimctl(
     uninstallApp: async (udid, bundleId) => { calls.push(['uninstall', udid, bundleId]) },
     launchApp: async (udid, bundleId) => { calls.push(['launch', udid, bundleId]); return `${bundleId}: 4242\n` },
     terminateApp: async (udid, bundleId) => { calls.push(['terminate', udid, bundleId]); return '' },
+    getAppContainer: async (udid, bundleId) => { calls.push(['container', udid, bundleId]); return join(containerRoot, udid, bundleId) },
     openUrl: async (udid, url) => { calls.push(['openurl', udid, url]) },
     sendPush: async (udid, bundleId, payloadPath) => {
       calls.push(['push', udid, bundleId, JSON.parse(readFileSync(payloadPath, 'utf8')) as unknown])

@@ -8,6 +8,7 @@ import type { InstalledApp } from './app-list.js'
 import type { BuildRunOptions, BuildRunResult, ProjectTarget } from './build-run.js'
 import type { DevToolsApi } from './devtools.js'
 import type { OcrItem } from './ocr-backend.js'
+import type { PreviewStatus } from './preview-host.js'
 import type { RecordingInfo, RecordingResult } from './recorder.js'
 import type { ModelImage, ScreenshotCapture } from './screenshot.js'
 import type { SimHostController } from './sim-host.js'
@@ -28,6 +29,8 @@ export interface SimctlApi {
   installApp(udid: string, appPath: string, signal?: AbortSignal): Promise<void>
   uninstallApp(udid: string, bundleId: string, signal?: AbortSignal): Promise<void>
   launchApp(udid: string, bundleId: string, signal?: AbortSignal): Promise<string>
+  /** The app's data container (holds Documents/). */
+  getAppContainer(udid: string, bundleId: string, signal?: AbortSignal): Promise<string>
   terminateApp(udid: string, bundleId: string, signal?: AbortSignal): Promise<string>
   openUrl(udid: string, url: string, signal?: AbortSignal): Promise<void>
   sendPush(udid: string, bundleId: string, payloadPath: string, signal?: AbortSignal): Promise<void>
@@ -74,6 +77,13 @@ export interface OcrApi {
   recognize(imagePath: string, signal?: AbortSignal): Promise<OcrItem[]>
 }
 
+/** The SwiftUI preview session (src/preview-host.ts PreviewHostController satisfies it). */
+export interface PreviewApi {
+  start(options: { packagePath: string; device: SimulatorDevice; previewFilter?: string; signal?: AbortSignal }): Promise<PreviewStatus>
+  status(): PreviewStatus
+  stop(signal?: AbortSignal): Promise<{ stopped: boolean; device?: SimulatorDevice; reloads?: number }>
+}
+
 export interface ToolDeps {
   host: StreamHost
   stream: StreamSource
@@ -87,6 +97,7 @@ export interface ToolDeps {
   ocr: OcrApi
   /** simctl / lldb / leaks / sample / log runner for the log and debug tools. */
   devtools: DevToolsApi
+  preview: PreviewApi
   cacheRoot: string
   platform: NodeJS.Platform
   /** Delay before the effect screenshot of ios_sim_interact and the tap tools, ms. */
