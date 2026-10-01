@@ -394,7 +394,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | `IOS_SIM_AXE_BIN` | 指定 axe 可执行文件（路径无效时直接报错，不会退回其他查找方式） | 依次查找 PATH、Homebrew、插件缓存，都没有就下载 |
 | `IOS_SIM_AXE_OFFLINE` | 设为 `1` 时不自动下载 AXe | 未设置 |
 | `IOS_SIM_SWIFTC` | 指定编译 OCR 助手用的 swiftc | PATH 中的 `swiftc` |
-| `IOS_SIM_OPEN_PANEL` | 面板第一次启动时怎么打开：`browser`（默认浏览器）、`preview`（Claude Code 桌面版内置浏览器）、`none`（不自动打开） | 桌面版里是 `preview`，其他情况是 `browser` |
+| `IOS_SIM_OPEN_PANEL` | 面板第一次启动时怎么打开：`browser`（默认浏览器）、`preview`（Claude Code 桌面版内置浏览器）、`none`（不自动打开）。两种方式只会选一种 | 自动判断：在 Claude 桌面版里（按入口、所属 App `com.anthropic.*` 或父进程里的 `Claude.app` 识别）是 `preview`，不会再打开系统浏览器；其他情况是 `browser`。MCP 服务的启动日志会写明判断依据 |
 | `IOS_SIM_TEAM_ID` | 构建 WebDriverAgent 用的签名团队 ID（10 位） | 从 Xcode 登录的账号和钥匙串里的开发证书自动选择；找不到就报错并说明怎么设置，**没有内置默认值** |
 | `IOS_SIM_WDA_BUNDLE_ID` | WebDriverAgent 的 bundle id | `dev.ios-simulator.wda.t<团队ID>` |
 | `IOS_SIM_WDA_DIR` | 已有的 WebDriverAgent 源码目录 | `<缓存目录>/WebDriverAgent` |
@@ -411,6 +411,17 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 内置浏览器只能由 Claude 调用 `preview_start` 打开，它读的是项目里的 `.claude/launch.json`。`ios_sim_boot` / `ios_sim_panel` 的结果里有 `openInClaude.launchConfiguration`，让 Claude 把这一项加进 launch.json 的 `configurations`，再调用 `preview_start`（名称是 `ios-simulator-panel`）。这项配置运行的是插件自带的小代理（`dist/server.js --panel-proxy`），会监听内置浏览器分配的端口（`autoPort`），然后转发到面板。
 
 **不要结束占用 3456 端口的 node 进程**。那就是这个插件的 MCP 服务，结束它之后所有 ios_sim_* 工具都会失效。如果只是想看面板，也可以把 `panelUrl` 粘贴到任意浏览器。
+
+</details>
+
+<details>
+<summary><b>面板能看到画面，但点不动？</b></summary>
+
+先看标题栏的状态：
+
+- **"仅预览：控制通道未连接"**：画面在播放，但发送点击用的控制通道（WebSocket）没连上，点击时会弹出提示。可以在调试菜单里点"重新连接画面"，或者让 Claude 再运行一次 `ios_sim_panel`；同一台模拟器只开一个面板页面。
+- **"实时"但点击没反应**：点击已经发出去了，问题在模拟器这一侧。先让 Claude 用 `ios_sim_interact` 点一下试试；如果也没反应，Xcode 27 下需要 Device Hub 正在运行，可以试试 `serve-sim repair-input -d <udid>`（会重启 SpringBoard 并关闭 App）。
+- **在 Claude 桌面版的内置浏览器里**：看一下预览工具栏里的"选择元素"（箭头图标）是不是开着，开着的话点击会被它截走。
 
 </details>
 

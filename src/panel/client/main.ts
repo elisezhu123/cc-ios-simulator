@@ -215,15 +215,31 @@ function applyLayout(): void {
 let reconnectTimer: number | undefined
 let frameWatch: number | undefined
 
+/** Whether taps and buttons can reach the device (the control socket is open). */
+function controlReady(): boolean {
+  return state.ws !== undefined && state.ws.readyState === WebSocket.OPEN
+}
+
+/** A live picture without a control socket is only a preview: say so instead of showing "live". */
+function renderLiveStatus(): void {
+  if (!streamLive) return
+  if (controlReady()) setStatus('live')
+  else setStatus('connecting', copy.previewOnly)
+}
+
+let streamLive = false
+
 function onLive(): void {
   window.clearInterval(frameWatch)
   state.streamFailures = 0
+  streamLive = true
   ui.placeholder.hidden = true
-  setStatus('live')
+  renderLiveStatus()
   applyLayout()
 }
 
 function startStream(): void {
+  streamLive = false
   window.clearTimeout(reconnectTimer)
   window.clearInterval(frameWatch)
   setStatus('connecting')
@@ -237,6 +253,7 @@ function startStream(): void {
 ui.img.addEventListener('load', onLive)
 ui.img.addEventListener('error', () => {
   window.clearInterval(frameWatch)
+  streamLive = false
   const delay = RECONNECT_DELAYS_MS[Math.min(state.streamFailures, RECONNECT_DELAYS_MS.length - 1)] ?? 5000
   state.streamFailures += 1
   setStatus('offline')
@@ -265,15 +282,27 @@ function connectWs(): void {
     state.orientation = config.orientation
     applyLayout()
   })
+  ws.addEventListener('open', renderLiveStatus)
   ws.addEventListener('close', () => {
     if (state.ws === ws) state.ws = undefined
+    renderLiveStatus()
     window.setTimeout(connectWs, 2000)
   })
 }
 
+let lastControlWarning = 0
+
 function send(frame: Uint8Array): void {
   const ws = state.ws
-  if (ws !== undefined && ws.readyState === WebSocket.OPEN) ws.send(new Uint8Array(frame))
+  if (ws !== undefined && ws.readyState === WebSocket.OPEN) {
+    ws.send(new Uint8Array(frame))
+    return
+  }
+  // A dropped tap must not look like the app ignoring it.
+  if (Date.now() - lastControlWarning > 3000) {
+    lastControlWarning = Date.now()
+    notify(copy.controlDisconnected, 'error')
+  }
 }
 
 // ── touch ─────────────────────────────────────────────────────────────────────

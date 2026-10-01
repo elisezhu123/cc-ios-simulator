@@ -72,6 +72,9 @@ export interface PanelCopy {
   displaySize: string
   reconnect: string
   simulatorOnly: string
+  /** Status while the picture streams but the control socket is not connected. */
+  previewOnly: string
+  controlDisconnected: string
 }
 
 const EN: PanelCopy = {
@@ -143,6 +146,8 @@ const EN: PanelCopy = {
   displaySize: 'Display size',
   reconnect: 'Reconnect stream',
   simulatorOnly: 'Simulators only',
+  previewOnly: 'view only — controls not connected',
+  controlDisconnected: 'The control channel is not connected, so that action was not sent — reconnecting. If this persists, reconnect the stream (Debug menu) or ask Claude to run ios_sim_panel again.',
 }
 
 const ZH: PanelCopy = {
@@ -214,6 +219,8 @@ const ZH: PanelCopy = {
   displaySize: '显示大小',
   reconnect: '重新连接画面',
   simulatorOnly: '仅模拟器可用',
+  previewOnly: '仅预览：控制通道未连接',
+  controlDisconnected: '控制通道未连接，这次操作没有发出，正在重连。一直这样的话，在调试菜单里点"重新连接画面"，或让 Claude 再运行一次 ios_sim_panel。',
 }
 
 export function copyFor(language: string | undefined): PanelCopy {
