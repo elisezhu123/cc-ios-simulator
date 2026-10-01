@@ -29,7 +29,7 @@ import { OcrHelper } from './ocr-backend.js'
 import { PreviewHostController, xcrunToolchain } from './preview-host.js'
 import { PanelServer } from './panel/panel-server.js'
 import { startPanelProxy } from './panel/panel-proxy.js'
-import { PanelOpener, panelOpenMode } from './panel-open.js'
+import { decidePanelOpen, PanelOpener } from './panel-open.js'
 import { Recorder } from './recorder.js'
 import { ScreenshotStore } from './screenshot.js'
 import { SimHostController } from './sim-host.js'
@@ -75,7 +75,9 @@ async function main(): Promise<void> {
     recorder,
     stateFile,
   })
-  const opener = new PanelOpener({ mode: panelOpenMode(), platform: process.platform, serverScript: fileURLToPath(import.meta.url), stateFile })
+  const openDecision = decidePanelOpen()
+  process.stderr.write(`${PLUGIN_NAME}: the panel opens in ${openDecision.mode === 'preview' ? 'Claude Code\'s built-in browser' : openDecision.mode === 'browser' ? 'the default browser' : 'nothing'} (${openDecision.reason})\n`)
+  const opener = new PanelOpener({ mode: openDecision.mode, reason: openDecision.reason, platform: process.platform, serverScript: fileURLToPath(import.meta.url), stateFile })
   const panelHandle = {
     ensureStarted: async () => {
       const url = await panel.ensureStarted()

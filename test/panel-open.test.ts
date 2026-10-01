@@ -5,36 +5,49 @@ import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { WebSocket } from 'ws'
-import { browserOpenCommand, PanelOpener, panelOpenMode, PREVIEW_CONFIGURATION } from '../src/panel-open.js'
+import { ancestorCommands, browserOpenCommand, decidePanelOpen, PanelOpener, panelOpenMode, PREVIEW_CONFIGURATION } from '../src/panel-open.js'
 import { rewriteHeaders, startPanelProxy } from '../src/panel/panel-proxy.js'
 import { PanelServer } from '../src/panel/panel-server.js'
 import { ScreenshotStore } from '../src/screenshot.js'
 import { SimStreamSource } from '../src/stream-source.js'
 import { fakeHost, fakeRealDevices, fakeSimctl, fakeWda, IPHONE } from './helpers/fakes.js'
 
-test('the panel opens in the browser from the terminal and in the preview pane from Claude Code desktop', () => {
-  assert.equal(panelOpenMode({}), 'browser')
-  assert.equal(panelOpenMode({ CLAUDE_CODE_ENTRYPOINT: 'cli' }), 'browser')
-  assert.equal(panelOpenMode({ CLAUDE_CODE_ENTRYPOINT: 'claude-desktop' }), 'preview')
-  assert.equal(panelOpenMode({ CLAUDE_CODE_ENTRYPOINT: 'claude-desktop', IOS_SIM_OPEN_PANEL: 'none' }), 'none')
-  assert.equal(panelOpenMode({ IOS_SIM_OPEN_PANEL: 'Preview' }), 'preview')
+test('the panel opens in the browser from the terminal and only in the preview pane from Claude Code desktop', () => {
+  const none = (): string[] => []
+  assert.equal(panelOpenMode({}, none), 'browser')
+  assert.equal(panelOpenMode({ CLAUDE_CODE_ENTRYPOINT: 'cli', __CFBundleIdentifier: 'com.apple.Terminal' }, none), 'browser')
+  assert.equal(panelOpenMode({ CLAUDE_CODE_ENTRYPOINT: 'claude-desktop' }, none), 'preview')
+  // The entrypoint does not always reach MCP servers: the app they run under does.
+  assert.deepEqual(decidePanelOpen({ __CFBundleIdentifier: 'com.anthropic.claudefordesktop' }, none), { mode: 'preview', reason: 'running under com.anthropic.claudefordesktop' })
+  assert.deepEqual(decidePanelOpen({}, () => ['/bin/zsh', '/Applications/Claude.app/Contents/MacOS/Claude']), { mode: 'preview', reason: 'started by the Claude desktop app' })
+  assert.equal(panelOpenMode({}, () => ['/Users/u/Library/Application Support/Claude/claude-code/2.1.0/claude']), 'preview')
+  assert.equal(panelOpenMode({ __CFBundleIdentifier: 'com.googlecode.iterm2' }, () => ['-zsh', '/Applications/iTerm.app/Contents/MacOS/iTerm2']), 'browser')
+  assert.equal(panelOpenMode({ __CFBundleIdentifier: 'com.anthropic.claudefordesktop', IOS_SIM_OPEN_PANEL: 'none' }, none), 'none')
+  assert.equal(panelOpenMode({ IOS_SIM_OPEN_PANEL: 'Preview' }, none), 'preview')
   assert.deepEqual(browserOpenCommand('darwin', 'http://127.0.0.1:3456/'), ['open', ['http://127.0.0.1:3456/']])
   assert.deepEqual(browserOpenCommand('linux', 'http://x/'), ['xdg-open', ['http://x/']])
   assert.equal(browserOpenCommand('aix', 'http://x/'), undefined)
 })
 
+test('ancestorCommands walks up from a pid and stops at the top', () => {
+  const commands = ancestorCommands(process.pid, 3)
+  assert.ok(commands.length >= 1 && commands.length <= 3)
+  assert.match(commands[0]!, /node/)
+})
+
 test('PanelOpener opens the browser once; in the preview pane it hands Claude the launch configuration', () => {
   const runs: string[] = []
-  const browser = new PanelOpener({ mode: 'browser', platform: 'darwin', serverScript: '/p/dist/server.js', stateFile: '/c/panel.json', run: (command, args) => runs.push(`${command} ${args.join(' ')}`) })
+  const browser = new PanelOpener({ mode: 'browser', reason: 'not the Claude desktop app', platform: 'darwin', serverScript: '/p/dist/server.js', stateFile: '/c/panel.json', run: (command, args) => runs.push(`${command} ${args.join(' ')}`) })
   assert.deepEqual(browser.hint('http://127.0.0.1:3456/'), {}, 'nothing opened yet')
   browser.afterStart('http://127.0.0.1:3456/')
   browser.afterStart('http://127.0.0.1:3456/')
   assert.deepEqual(runs, ['open http://127.0.0.1:3456/'])
-  assert.match(String(browser.hint('http://127.0.0.1:3456/').opened), /default browser/)
-  const preview = new PanelOpener({ mode: 'preview', platform: 'darwin', serverScript: '/p/dist/server.js', stateFile: '/c/panel.json', run: () => runs.push('unexpected') })
+  assert.match(String(browser.hint('http://127.0.0.1:3456/').opened), /default browser.*not the Claude desktop app.*IOS_SIM_OPEN_PANEL=preview/)
+  const preview = new PanelOpener({ mode: 'preview', reason: 'running under com.anthropic.claudefordesktop', platform: 'darwin', serverScript: '/p/dist/server.js', stateFile: '/c/panel.json', run: () => runs.push('unexpected') })
   preview.afterStart('http://127.0.0.1:3456/')
   assert.equal(runs.length, 1, 'the preview pane is never opened by launching a browser')
-  const hint = preview.hint('http://127.0.0.1:3456/').openInClaude as { how: string; launchConfiguration: Record<string, unknown> }
+  const hint = preview.hint('http://127.0.0.1:3456/').openInClaude as { how: string; detectedBy: string; launchConfiguration: Record<string, unknown> }
+  assert.equal(hint.detectedBy, 'running under com.anthropic.claudefordesktop')
   assert.match(hint.how, new RegExp(`preview_start with "${PREVIEW_CONFIGURATION}".*never stop the process that owns 127\\.0\\.0\\.1:3456`))
   assert.deepEqual(hint.launchConfiguration, {
     name: PREVIEW_CONFIGURATION,

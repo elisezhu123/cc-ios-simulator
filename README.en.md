@@ -394,7 +394,7 @@ Every ported file names its source in its first line (`Ported from dsh-ios (MIT)
 | `IOS_SIM_AXE_BIN` | The axe executable to use (an invalid path is an error, with no fallback) | PATH, Homebrew, the plugin cache, else a download |
 | `IOS_SIM_AXE_OFFLINE` | `1` never downloads AXe | unset |
 | `IOS_SIM_SWIFTC` | The swiftc that compiles the OCR helper | `swiftc` on PATH |
-| `IOS_SIM_OPEN_PANEL` | How the panel opens the first time it starts: `browser` (default browser), `preview` (Claude Code desktop's built-in browser), `none` (not at all) | `preview` in the desktop app, `browser` otherwise |
+| `IOS_SIM_OPEN_PANEL` | How the panel opens the first time it starts: `browser` (default browser), `preview` (Claude Code desktop's built-in browser), `none` (not at all). Only one of the two is ever used | Detected: in the Claude desktop app (recognized by the entrypoint, the `com.anthropic.*` app it runs under, or `Claude.app` among its parent processes) it is `preview` and the system browser is not opened; `browser` otherwise. The MCP server's startup log says why |
 | `IOS_SIM_TEAM_ID` | The 10-character signing team for WebDriverAgent | Chosen from the Xcode accounts and the keychain's development certificates; with none found it fails and says how to set one — **there is no built-in default** |
 | `IOS_SIM_WDA_BUNDLE_ID` | WebDriverAgent's bundle id | `dev.ios-simulator.wda.t<team id>` |
 | `IOS_SIM_WDA_DIR` | An existing WebDriverAgent checkout | `<cache>/WebDriverAgent` |
@@ -411,6 +411,17 @@ In the cache folder: `screenshots/` (the newest 100 are kept), `recordings/`, `s
 Only Claude can open the built-in browser, by calling `preview_start`, which reads the project's `.claude/launch.json`. The results of `ios_sim_boot` / `ios_sim_panel` carry `openInClaude.launchConfiguration`: ask Claude to add it to launch.json's `configurations` and call `preview_start` (the name is `ios-simulator-panel`). The configuration runs the plugin's small proxy (`dist/server.js --panel-proxy`), which listens on the port the built-in browser assigns (`autoPort`) and forwards to the panel.
 
 **Do not kill the node process on port 3456.** That is this plugin's MCP server, and every ios_sim_* tool stops working without it. To just look at the panel you can also paste `panelUrl` into any browser.
+
+</details>
+
+<details>
+<summary><b>The panel shows the screen, but taps do nothing?</b></summary>
+
+Check the status in the title bar:
+
+- **"view only — controls not connected"**: the picture streams but the control channel (WebSocket) that carries taps is not connected, and a tap shows a notice. Reconnect the stream from the Debug menu, or ask Claude to run `ios_sim_panel` again; keep one panel page per simulator.
+- **"live" but taps do nothing**: the taps are sent, so the problem is on the simulator side. Ask Claude to tap with `ios_sim_interact`; if that does nothing either, Xcode 27 needs Device Hub running, and `serve-sim repair-input -d <udid>` may help (it restarts SpringBoard and closes apps).
+- **In Claude Code desktop's built-in browser**: check that the preview toolbar's element picker (the arrow icon) is off; while it is on, it takes the clicks.
 
 </details>
 

@@ -47662,12 +47662,35 @@ Content-Length: 0\r
 }
 
 // src/panel-open.ts
-import { execFile as execFile11 } from "node:child_process";
+import { execFile as execFile11, execFileSync as execFileSync2 } from "node:child_process";
 var PREVIEW_CONFIGURATION = "ios-simulator-panel";
-function panelOpenMode(env = process.env) {
+var DESKTOP_BUNDLE = /^com\.anthropic\./iu;
+var DESKTOP_APP_PATH = /\/Claude\.app\/|Application Support\/Claude\/claude-code/u;
+function ancestorCommands(start = process.ppid, depth = 8) {
+  const commands = [];
+  let pid = start;
+  for (let level = 0; level < depth && pid > 1; level += 1) {
+    let line;
+    try {
+      line = execFileSync2("ps", ["-o", "ppid=,command=", "-p", String(pid)], { encoding: "utf8", timeout: 2e3 }).trim();
+    } catch {
+      break;
+    }
+    const match = /^(\d+)\s+(.*)$/su.exec(line);
+    if (match === null) break;
+    commands.push(match[2]);
+    pid = Number(match[1]);
+  }
+  return commands;
+}
+function decidePanelOpen(env = process.env, ancestors = () => ancestorCommands()) {
   const explicit = env.IOS_SIM_OPEN_PANEL?.trim().toLowerCase();
-  if (explicit === "browser" || explicit === "preview" || explicit === "none") return explicit;
-  return /desktop/iu.test(env.CLAUDE_CODE_ENTRYPOINT ?? "") ? "preview" : "browser";
+  if (explicit === "browser" || explicit === "preview" || explicit === "none") return { mode: explicit, reason: "IOS_SIM_OPEN_PANEL" };
+  if (/desktop/iu.test(env.CLAUDE_CODE_ENTRYPOINT ?? "")) return { mode: "preview", reason: `CLAUDE_CODE_ENTRYPOINT=${env.CLAUDE_CODE_ENTRYPOINT}` };
+  const bundle = env.__CFBundleIdentifier ?? "";
+  if (DESKTOP_BUNDLE.test(bundle)) return { mode: "preview", reason: `running under ${bundle}` };
+  if (ancestors().some((command) => DESKTOP_APP_PATH.test(command))) return { mode: "preview", reason: "started by the Claude desktop app" };
+  return { mode: "browser", reason: bundle === "" ? "not the Claude desktop app" : `running under ${bundle}, not the Claude desktop app` };
 }
 function browserOpenCommand(platform, url2) {
   if (platform === "darwin") return ["open", [url2]];
@@ -47709,12 +47732,13 @@ var PanelOpener = class {
   hint(url2) {
     switch (this.#options.mode) {
       case "browser":
-        return this.#opened ? { opened: "the panel opened in the default browser when it first started" } : {};
+        return this.#opened ? { opened: `the panel opened in the default browser when it first started (${this.#options.reason ?? "default"}; in Claude Code desktop set IOS_SIM_OPEN_PANEL=preview)` } : {};
       case "none":
         return {};
       case "preview":
         return {
           openInClaude: {
+            detectedBy: this.#options.reason ?? "default",
             how: `Show panelUrl in Claude Code's built-in browser pane: make sure .claude/launch.json has the configuration below (add it to "configurations" if missing, keep the others), then call preview_start with "${PREVIEW_CONFIGURATION}". It runs a small proxy on the port the preview assigns (autoPort) and forwards to the panel, so never stop the process that owns ${new URL(url2).host} \u2014 that is this MCP server.`,
             launchConfiguration: previewLaunchConfiguration(this.#options.serverScript, this.#options.stateFile)
           }
@@ -49722,7 +49746,10 @@ async function main() {
     recorder,
     stateFile
   });
-  const opener = new PanelOpener({ mode: panelOpenMode(), platform: process.platform, serverScript: fileURLToPath4(import.meta.url), stateFile });
+  const openDecision = decidePanelOpen();
+  process.stderr.write(`${PLUGIN_NAME}: the panel opens in ${openDecision.mode === "preview" ? "Claude Code's built-in browser" : openDecision.mode === "browser" ? "the default browser" : "nothing"} (${openDecision.reason})
+`);
+  const opener = new PanelOpener({ mode: openDecision.mode, reason: openDecision.reason, platform: process.platform, serverScript: fileURLToPath4(import.meta.url), stateFile });
   const panelHandle = {
     ensureStarted: async () => {
       const url2 = await panel.ensureStarted();

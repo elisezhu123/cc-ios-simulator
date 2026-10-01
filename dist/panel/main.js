@@ -509,7 +509,9 @@ var EN = {
   shutdownSection: "Shut down",
   displaySize: "Display size",
   reconnect: "Reconnect stream",
-  simulatorOnly: "Simulators only"
+  simulatorOnly: "Simulators only",
+  previewOnly: "view only \u2014 controls not connected",
+  controlDisconnected: "The control channel is not connected, so that action was not sent \u2014 reconnecting. If this persists, reconnect the stream (Debug menu) or ask Claude to run ios_sim_panel again."
 };
 var ZH = {
   language: "zh",
@@ -579,7 +581,9 @@ var ZH = {
   shutdownSection: "\u672A\u542F\u52A8",
   displaySize: "\u663E\u793A\u5927\u5C0F",
   reconnect: "\u91CD\u65B0\u8FDE\u63A5\u753B\u9762",
-  simulatorOnly: "\u4EC5\u6A21\u62DF\u5668\u53EF\u7528"
+  simulatorOnly: "\u4EC5\u6A21\u62DF\u5668\u53EF\u7528",
+  previewOnly: "\u4EC5\u9884\u89C8\uFF1A\u63A7\u5236\u901A\u9053\u672A\u8FDE\u63A5",
+  controlDisconnected: '\u63A7\u5236\u901A\u9053\u672A\u8FDE\u63A5\uFF0C\u8FD9\u6B21\u64CD\u4F5C\u6CA1\u6709\u53D1\u51FA\uFF0C\u6B63\u5728\u91CD\u8FDE\u3002\u4E00\u76F4\u8FD9\u6837\u7684\u8BDD\uFF0C\u5728\u8C03\u8BD5\u83DC\u5355\u91CC\u70B9"\u91CD\u65B0\u8FDE\u63A5\u753B\u9762"\uFF0C\u6216\u8BA9 Claude \u518D\u8FD0\u884C\u4E00\u6B21 ios_sim_panel\u3002'
 };
 function copyFor(language) {
   return (language ?? "").toLowerCase().startsWith("zh") ? ZH : EN;
@@ -976,14 +980,25 @@ function applyLayout() {
 }
 var reconnectTimer;
 var frameWatch;
+function controlReady() {
+  return state.ws !== void 0 && state.ws.readyState === WebSocket.OPEN;
+}
+function renderLiveStatus() {
+  if (!streamLive) return;
+  if (controlReady()) setStatus("live");
+  else setStatus("connecting", copy.previewOnly);
+}
+var streamLive = false;
 function onLive() {
   window.clearInterval(frameWatch);
   state.streamFailures = 0;
+  streamLive = true;
   ui.placeholder.hidden = true;
-  setStatus("live");
+  renderLiveStatus();
   applyLayout();
 }
 function startStream() {
+  streamLive = false;
   window.clearTimeout(reconnectTimer);
   window.clearInterval(frameWatch);
   setStatus("connecting");
@@ -995,6 +1010,7 @@ function startStream() {
 ui.img.addEventListener("load", onLive);
 ui.img.addEventListener("error", () => {
   window.clearInterval(frameWatch);
+  streamLive = false;
   const delay = RECONNECT_DELAYS_MS[Math.min(state.streamFailures, RECONNECT_DELAYS_MS.length - 1)] ?? 5e3;
   state.streamFailures += 1;
   setStatus("offline");
@@ -1020,14 +1036,24 @@ function connectWs() {
     state.orientation = config.orientation;
     applyLayout();
   });
+  ws.addEventListener("open", renderLiveStatus);
   ws.addEventListener("close", () => {
     if (state.ws === ws) state.ws = void 0;
+    renderLiveStatus();
     window.setTimeout(connectWs, 2e3);
   });
 }
+var lastControlWarning = 0;
 function send(frame) {
   const ws = state.ws;
-  if (ws !== void 0 && ws.readyState === WebSocket.OPEN) ws.send(new Uint8Array(frame));
+  if (ws !== void 0 && ws.readyState === WebSocket.OPEN) {
+    ws.send(new Uint8Array(frame));
+    return;
+  }
+  if (Date.now() - lastControlWarning > 3e3) {
+    lastControlWarning = Date.now();
+    notify(copy.controlDisconnected, "error");
+  }
 }
 function pointerPoint(event) {
   return framebufferPoint(state.orientation, normalizePointerPoint(event, ui.screen.getBoundingClientRect()));
