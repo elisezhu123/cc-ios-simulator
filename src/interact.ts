@@ -9,6 +9,7 @@
 import { serveSimControlArgs, type SimStreamInfo } from './sim-host.js'
 import {
   sendSimGesture,
+  sendSimTap,
   simDragPath,
   simDragRequestOf,
   simScrollPath,
@@ -189,7 +190,7 @@ export type SimGestureChannel = 'ws' | 'cli'
 /** How one simulator interaction was delivered (diagnostics). */
 export interface SimInteractDelivery {
   channel: SimGestureChannel
-  /** Frames written when the WS channel carried it (1 begin + moves + 1 end). */
+  /** Frames written when the WS channel carried it (1 begin + moves + 1 end; a tap is begin + end). */
   frames?: number
   /** Measured wall time of the traced gesture, ms. */
   elapsedMs?: number
@@ -208,19 +209,24 @@ export function simInteractGesturePath(args: SimInteractArgs): SimGesturePoint[]
 }
 
 /**
- * Deliver one simulator interaction. Multi-event gestures go over serve-sim's
- * WebSocket control channel (~16 ms per frame, which iOS reads as a real
- * flick); the CLI is the fallback when no live stream reports a control
- * socket for this device or the socket refuses. Single events use the CLI.
+ * Deliver one simulator interaction. Taps and multi-event gestures go over
+ * serve-sim's WebSocket control channel (a tap is the same begin → 40 ms → end
+ * the `serve-sim tap` CLI sends, without spawning a Node process per tap;
+ * gestures run at ~16 ms per frame, which iOS reads as a real flick); the CLI
+ * is the fallback when no live stream reports a control socket for this
+ * device or the socket refuses. Typing, buttons and raw frames use the CLI.
  */
 export async function performSimInteract(
   host: SimGestureHostLike,
   deviceUdid: string,
   args: SimInteractArgs,
   payloads: string[][],
-  options: { stepMs?: number } = {},
+  options: { stepMs?: number; tapHoldMs?: number } = {},
 ): Promise<SimInteractDelivery> {
   const points = simInteractGesturePath(args)
+  const tap = args.action === 'tap' && typeof args.x === 'number' && typeof args.y === 'number'
+    ? { x: args.x, y: args.y }
+    : undefined
   const info = host.streamInfo
   // The control socket belongs to the ONE streamed device; never send this
   // device's gesture to a socket that streams another one.
@@ -228,13 +234,15 @@ export async function performSimInteract(
     ? info.wsUrl
     : undefined
   let wsError: string | undefined
-  if (points !== undefined) {
+  if (points !== undefined || tap !== undefined) {
     if (wsUrl === undefined) {
       wsError = `no live serve-sim stream reports a control-socket url for ${deviceUdid} `
         + '— the gesture went through the serve-sim CLI instead (one process per touch event)'
     } else {
       try {
-        const report = await sendSimGesture(wsUrl, points, { stepMs: options.stepMs ?? SIM_GESTURE_STEP_MS })
+        const report = tap !== undefined
+          ? await sendSimTap(wsUrl, tap, options.tapHoldMs === undefined ? {} : { holdMs: options.tapHoldMs })
+          : await sendSimGesture(wsUrl, points!, { stepMs: options.stepMs ?? SIM_GESTURE_STEP_MS })
         return { channel: 'ws', frames: report.frames, elapsedMs: report.elapsedMs }
       } catch (error) {
         wsError = errorMessage(error)

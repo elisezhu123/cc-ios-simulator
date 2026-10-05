@@ -17,6 +17,8 @@ export const DEFAULT_PANEL_PORT = 3456
 export const PANEL_PORT_ATTEMPTS = 21
 /** Settle delay after an interaction, before the effect screenshot. */
 export const INTERACT_SETTLE_MS = 300
+/** How old a `simctl list devices` may be when a tool resolves its target (boot / shutdown drop it). */
+export const TARGET_DEVICE_CACHE_MS = 10_000
 /** How long `ios_sim_record stop` waits for simctl to finish the movie. */
 export const RECORD_STOP_TIMEOUT_MS = 10_000
 /** How long `ios_sim_record start` waits for simctl's "Recording started". */
@@ -49,6 +51,15 @@ export function preferredPanelPort(env: Env = process.env): number {
   if (raw === undefined || raw === '') return DEFAULT_PANEL_PORT
   const port = Number(raw)
   return Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : DEFAULT_PANEL_PORT
+}
+
+/**
+ * Whether ios_sim_interact returns a screenshot unless told otherwise:
+ * `IOS_SIM_INTERACT_SCREENSHOT=1` (or true / yes / on) brings it back; by default it
+ * answers in text only, so chained actions do not each wait for a capture and an image.
+ */
+export function interactScreenshotDefault(env: Env = process.env): boolean {
+  return /^(?:1|true|yes|on)$/iu.test(env.IOS_SIM_INTERACT_SCREENSHOT?.trim() ?? '')
 }
 
 /** Explicit serve-sim binary (`IOS_SIM_SERVE_SIM_BIN`), when set. */

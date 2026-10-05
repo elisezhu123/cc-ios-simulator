@@ -24,8 +24,9 @@ export type StreamHost = Pick<SimHostController, 'binary' | 'streamInfo' | 'stat
 
 /** The simctl operations the tools use (the src/simctl.ts module satisfies it). */
 export interface SimctlApi {
-  listDevices(): Promise<SimulatorDevice[]>
-  getDevice(reference: string): Promise<SimulatorDevice>
+  /** `maxAgeMs` accepts a recent cached listing (default: always fresh). */
+  listDevices(options?: { maxAgeMs?: number }): Promise<SimulatorDevice[]>
+  getDevice(reference: string, options?: { maxAgeMs?: number }): Promise<SimulatorDevice>
   bootDevice(udid: string): Promise<void>
   shutdownDevice(udid: string): Promise<void>
   takeScreenshot(udid: string, filePath: string, signal?: AbortSignal): Promise<void>
@@ -131,6 +132,8 @@ export interface ToolDeps {
   platform: NodeJS.Platform
   /** Delay before the effect screenshot of ios_sim_interact and the tap tools, ms. */
   settleMs: number
+  /** Whether ios_sim_interact returns a screenshot when the call does not say (`IOS_SIM_INTERACT_SCREENSHOT`). */
+  interactScreenshot: boolean
   /** Poll interval of ios_sim_wait_for and the tap tools' expect_text / expect_gone, ms. */
   pollIntervalMs: number
   /** Delay before ios_sim_tap_row re-reads the row to verify expect_count, ms. */

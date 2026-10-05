@@ -7,7 +7,7 @@
  * @module ios-simulator/target
  */
 
-import { SIMULATOR_UNAVAILABLE } from './config.js'
+import { SIMULATOR_UNAVAILABLE, TARGET_DEVICE_CACHE_MS } from './config.js'
 import type { SimctlApi, StreamHost } from './deps.js'
 import type { RealDevice, RealDeviceApi } from './devicectl.js'
 import type { SimStreamInfo } from './sim-host.js'
@@ -63,9 +63,11 @@ export async function resolveTargetDevice(
   reference?: string,
   options: { bootFallback?: boolean } = {},
 ): Promise<SimulatorDevice> {
+  // A path that may boot the device must see its current state, not a cached one.
+  const listing = options.bootFallback === true ? {} : { maxAgeMs: TARGET_DEVICE_CACHE_MS }
   if (reference !== undefined && reference.trim() !== '') {
     try {
-      return await deps.simctl.getDevice(reference)
+      return await deps.simctl.getDevice(reference, listing)
     } catch (error) {
       if (deps.realDevices !== undefined && await deps.realDevices.matches(reference)) {
         throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only — on a `
@@ -77,12 +79,12 @@ export async function resolveTargetDevice(
   const status = deps.host.status()
   if (status.running && status.device !== undefined) {
     try {
-      return await deps.simctl.getDevice(status.device)
+      return await deps.simctl.getDevice(status.device, listing)
     } catch {
       // The streamed device vanished from simctl; fall through to booted devices.
     }
   }
-  const devices = await deps.simctl.listDevices()
+  const devices = await deps.simctl.listDevices(listing)
   const booted = devices.filter(device => device.state === 'Booted')
   if (booted.length > 0) return pickPreferred(booted)
   if (options.bootFallback === true) {
@@ -122,7 +124,7 @@ export async function resolveToolTarget(
   if (reference === undefined || reference.trim() === '') return { kind: 'simulator', device: await resolveTargetDevice(deps, reference) }
   let simulatorError: unknown
   try {
-    return { kind: 'simulator', device: await deps.simctl.getDevice(reference) }
+    return { kind: 'simulator', device: await deps.simctl.getDevice(reference, { maxAgeMs: TARGET_DEVICE_CACHE_MS }) }
   } catch (error) {
     simulatorError = error
   }

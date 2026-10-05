@@ -5,7 +5,7 @@ description: Use when operating an iOS Simulator through this plugin's ios_sim_*
 
 # Driving the iOS Simulator with the ios_sim_* tools
 
-The loop is **observe once → act with an assertion → observe again only if the assertion could not settle it**. Every tap tool already returns a screenshot of its effect (unless you pass `screenshot: false`), and `ios_sim_tap_element` / `ios_sim_tap_text` can confirm their outcome in the same call (`expect_text` / `expect_gone`), so a separate `ios_sim_screenshot` after each action is wasted work.
+The loop is **observe once → act with an assertion → observe again only if the assertion could not settle it**. `ios_sim_tap_element`, `ios_sim_tap_text` and `ios_sim_tap_row` already return a screenshot of their effect (unless you pass `screenshot: false`) and the first two can confirm their outcome in the same call (`expect_text` / `expect_gone`), so a separate `ios_sim_screenshot` after them is wasted work. `ios_sim_interact` answers in text right away (no screenshot by default) so chained actions stay fast: pass `screenshot: true` on the step whose result you need to see, or call `ios_sim_screenshot` once the chain is done.
 
 ## Getting a device and the live panel
 
@@ -55,7 +55,7 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 | wait for a load or animation | `ios_sim_wait_for {text, mode:"appear" or "disappear"}` |
 
 - `ios_sim_tap_element` refuses off-screen and disabled matches and tells you what to do; scroll the element into view rather than passing `allow_offscreen` by reflex. An ambiguous selector fails with every candidate listed — pick a more specific one.
-- Chaining actions (tap a field, type, tap Done)? Pass `screenshot:false` on all but the last one.
+- Chaining actions (tap a field, type, tap Done)? Send them back to back with `ios_sim_interact` and look once at the end (`screenshot: true` on the last step, or `ios_sim_screenshot`). With the tap tools, pass `screenshot:false` on all but the last one.
 - `type` only supports US-keyboard ASCII. For Chinese, emoji or other text run `printf '%s' '中文' | xcrun simctl pbcopy <udid>` in Bash, then long-press the field and tap Paste.
 - `lock` is a hardware-button press through serve-sim. The other six device actions drive Simulator.app through AppleScript — menu clicks, and `unlock` is a keystroke (⇧⌘H twice) — so they bring Simulator.app to the front for a moment and need the Accessibility permission for the app running Claude. If one fails with that hint, tell the user instead of retrying.
 - With Xcode 27, keyboard input also needs Device Hub running with the simulator visible and frontmost. `serve-sim repair-input -d <udid>` revives dead input but restarts SpringBoard — ask the user before running it.

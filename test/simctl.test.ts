@@ -105,3 +105,38 @@ test('the new wrappers hand argument arrays straight to simctl', async () => {
     ['ui', 'BBB', 'appearance', 'dark'],
   ])
 })
+
+test('listDevices reuses a recent listing only when asked, and boot / shutdown drop it', async () => {
+  const calls = fakeRunner({ list: LIST_JSON })
+  const listings = (): number => calls.filter(call => call[0] === 'list').length
+  await listDevices()
+  await listDevices()
+  assert.equal(listings(), 2, 'the default is always fresh')
+  await Promise.all([listDevices({ maxAgeMs: 10_000 }), getDevice('BBB', { maxAgeMs: 10_000 })])
+  assert.equal(listings(), 2, 'a recent listing is reused, concurrent callers included')
+  await bootDevice('AAA')
+  await getDevice('AAA', { maxAgeMs: 10_000 })
+  assert.equal(listings(), 3, 'a boot changes states, so the next lookup lists again')
+  await shutdownDevice('AAA')
+  await listDevices({ maxAgeMs: 10_000 })
+  assert.equal(listings(), 4)
+})
+
+test('a failed listing is never reused', async () => {
+  let fail = true
+  setSimctlRunnerForTests(async args => {
+    if (args[0] !== 'list') return ''
+    if (fail) throw new SimctlError('simctl list devices --json failed: busy', 'busy')
+    return LIST_JSON
+  })
+  await assert.rejects(listDevices({ maxAgeMs: 10_000 }), /busy/)
+  fail = false
+  assert.equal((await listDevices({ maxAgeMs: 10_000 })).length, 3)
+})
+
+test('a reference missing from a cached listing is looked up again before it is called unknown', async () => {
+  const calls = fakeRunner({ list: LIST_JSON })
+  await listDevices()
+  await assert.rejects(getDevice('NEW', { maxAgeMs: 10_000 }), /unknown simulator "NEW"/)
+  assert.equal(calls.filter(call => call[0] === 'list').length, 2)
+})

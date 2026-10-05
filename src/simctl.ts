@@ -77,6 +77,7 @@ let runner: SimctlRunner = runXcrunSimctl
 /** Test seam: replace the simctl runner; call with no argument to restore it. */
 export function setSimctlRunnerForTests(next?: SimctlRunner): void {
   runner = next ?? runXcrunSimctl
+  forgetDeviceList()
 }
 
 /** What xcrun / xcode-select print when no full Xcode is selected (only the Command Line Tools, or none). */
@@ -160,9 +161,37 @@ export function parseDeviceList(stdout: string): SimulatorDevice[] {
   return devices
 }
 
+export interface DeviceListOptions {
+  /**
+   * Accept a listing at most this old (ms) instead of running simctl again;
+   * concurrent callers share one in-flight listing. Default 0: always fresh.
+   */
+  maxAgeMs?: number
+}
+
+/** The last listing (or the one in flight) and when it started. */
+let deviceList: { at: number; devices: Promise<SimulatorDevice[]> } | undefined
+
+/** Drop the cached listing: boot and shutdown change device states. */
+export function forgetDeviceList(): void {
+  deviceList = undefined
+}
+
 /** List every *available* simulator device (see `parseDeviceList`). */
-export async function listDevices(): Promise<SimulatorDevice[]> {
-  return parseDeviceList(await execSimctl(['list', 'devices', '--json'], SIMCTL_LIST_TIMEOUT_MS))
+export async function listDevices(options: DeviceListOptions = {}): Promise<SimulatorDevice[]> {
+  const maxAgeMs = options.maxAgeMs ?? 0
+  const cached = deviceList
+  if (maxAgeMs > 0 && cached !== undefined && Date.now() - cached.at <= maxAgeMs) return cached.devices
+  const entry = {
+    at: Date.now(),
+    devices: execSimctl(['list', 'devices', '--json'], SIMCTL_LIST_TIMEOUT_MS).then(parseDeviceList),
+  }
+  deviceList = entry
+  // A failed listing is never reused.
+  entry.devices.catch(() => {
+    if (deviceList === entry) deviceList = undefined
+  })
+  return entry.devices
 }
 
 /**
@@ -170,19 +199,29 @@ export async function listDevices(): Promise<SimulatorDevice[]> {
  * Tolerates a device that is already booted (boot → bootstatus returns fast).
  */
 export async function bootDevice(udid: string): Promise<void> {
-  await execSimctl(['boot', udid], SIMCTL_BOOT_TIMEOUT_MS).catch(error => {
-    if (error instanceof SimctlError && alreadyInState(error.stderr, 'Booted')) return
-    throw error
-  })
-  await execSimctl(['bootstatus', udid, '-b'], SIMCTL_BOOTSTATUS_TIMEOUT_MS)
+  forgetDeviceList()
+  try {
+    await execSimctl(['boot', udid], SIMCTL_BOOT_TIMEOUT_MS).catch(error => {
+      if (error instanceof SimctlError && alreadyInState(error.stderr, 'Booted')) return
+      throw error
+    })
+    await execSimctl(['bootstatus', udid, '-b'], SIMCTL_BOOTSTATUS_TIMEOUT_MS)
+  } finally {
+    forgetDeviceList()
+  }
 }
 
 /** Shut `udid` down; tolerates a device that is already shut down. */
 export async function shutdownDevice(udid: string): Promise<void> {
-  await execSimctl(['shutdown', udid], SIMCTL_SHUTDOWN_TIMEOUT_MS).catch(error => {
-    if (error instanceof SimctlError && alreadyInState(error.stderr, 'Shutdown')) return
-    throw error
-  })
+  forgetDeviceList()
+  try {
+    await execSimctl(['shutdown', udid], SIMCTL_SHUTDOWN_TIMEOUT_MS).catch(error => {
+      if (error instanceof SimctlError && alreadyInState(error.stderr, 'Shutdown')) return
+      throw error
+    })
+  } finally {
+    forgetDeviceList()
+  }
 }
 
 /** All available devices currently in the `Booted` state. */
@@ -201,10 +240,10 @@ export function compareRuntimesDesc(a: string, b: string): number {
  * booted device, then the newest runtime. Unknown references fail with a
  * short list of the available devices for the model to correct itself.
  */
-export async function getDevice(reference: string): Promise<SimulatorDevice> {
+export async function getDevice(reference: string, options: DeviceListOptions = {}): Promise<SimulatorDevice> {
   const trimmed = reference.trim()
   if (trimmed === '') throw new SimctlError('simulator reference must be a non-empty udid or device name', '')
-  const devices = await listDevices()
+  const devices = await listDevices(options)
   const byUdid = devices.find(device => device.udid === trimmed)
   if (byUdid !== undefined) return byUdid
   const byName = devices.filter(device => device.name.toLowerCase() === trimmed.toLowerCase())
@@ -214,6 +253,8 @@ export async function getDevice(reference: string): Promise<SimulatorDevice> {
     if (booted !== undefined) return booted
     return byName.sort((a, b) => compareRuntimesDesc(a.runtime, b.runtime))[0]
   }
+  // A device created since the cached listing: look again before calling it unknown.
+  if ((options.maxAgeMs ?? 0) > 0) return getDevice(trimmed)
   const names = devices
     .sort((a, b) => compareRuntimesDesc(a.runtime, b.runtime))
     .slice(0, 8)

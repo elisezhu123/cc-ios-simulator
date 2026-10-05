@@ -5,6 +5,7 @@ import {
   encodeSimButtonFrame,
   encodeSimTouchFrame,
   sendSimGesture,
+  sendSimTap,
   simDragPath,
   simDragRequestOf,
   simScrollPath,
@@ -55,4 +56,27 @@ test('sendSimGesture writes begin, moves and end over one socket', async () => {
 
 test('sendSimGesture rejects without a control-socket url', async () => {
   await assert.rejects(sendSimGesture('', [{ x: 0, y: 0 }, { x: 1, y: 1 }]), /gesture channel/)
+})
+
+test('sendSimTap writes begin then end at the same point over one socket, holding in between', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const frames: Array<{ tag: number; at: number; body: { type: string; x: number; y: number } }> = []
+  wss.on('connection', socket => socket.on('message', data => {
+    const bytes = data as Buffer
+    frames.push({ tag: bytes[0] ?? -1, at: Date.now(), body: JSON.parse(bytes.subarray(1).toString('utf8')) as { type: string; x: number; y: number } })
+  }))
+  const report = await sendSimTap(`ws://127.0.0.1:${port}`, { x: 0.25, y: 0.75 }, { holdMs: 30 })
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  assert.equal(report.frames, 2)
+  assert.deepEqual(frames.map(frame => frame.tag), [3, 3])
+  assert.deepEqual(frames.map(frame => frame.body), [{ type: 'begin', x: 0.25, y: 0.75 }, { type: 'end', x: 0.25, y: 0.75 }])
+  assert.ok((frames[1]?.at ?? 0) - (frames[0]?.at ?? 0) >= 25, 'the finger stays down for the hold')
+})
+
+test('sendSimTap rejects without a control-socket url or when the socket refuses', async () => {
+  await assert.rejects(sendSimTap('', { x: 0.5, y: 0.5 }), /gesture channel/)
+  await assert.rejects(sendSimTap('ws://127.0.0.1:1', { x: 0.5, y: 0.5 }, { connectTimeoutMs: 500 }), /gesture channel/)
 })
