@@ -73,7 +73,7 @@
 | 📰 **列表 / 信息流** | 把信息流拆成一行行，解析每行的计数（如「57 回复」「18 喜欢」）；在行内相对位置点击，并用计数 ±1 确认操作生效 |
 | 📱 **设备操作** | 后台 App（多任务）、锁屏、解锁、摇一摇、Siri、Action 按钮、窗口重新居中 |
 | ✏️ **截图标注** | 面板里点铅笔按钮冻结当前画面，用画笔 / 直线 / 箭头 / 矩形 / 椭圆 / 文字（5 种颜色，可撤销重做）标出问题，点"添加到对话"：图片存给 Claude（`ios_sim_annotation`）并复制到剪贴板 |
-| 👀 **Claude 看屏** | 截图以**图片**直接返回给 Claude（JPEG，长边 ≤ 1024 px）；每次交互后自动附带结果截图 |
+| 👀 **Claude 看屏** | 截图以**图片**直接返回给 Claude（JPEG，长边 ≤ 1024 px）；`ios_sim_tap_element` / `ios_sim_tap_text` 点击后附带结果截图；`ios_sim_interact` 默认只回文字、立刻返回，方便连续操作 |
 | 🧭 **横竖屏** | 截图始终是正向的；Claude 给出的坐标会按当前方向自动换算到设备上 |
 | 📦 **App 管理** | 列出已安装 App（名称按模拟器语言本地化，中文可搜）、按名称或 bundle id 启动 / 重启、安装 `.app`、卸载 |
 | 🔨 **构建运行** | 支持 `.xcodeproj`、`.xcworkspace`、Swift Package：构建 → 安装 → 启动，失败时返回过滤后的编译错误 |
@@ -105,7 +105,7 @@
 | `ios_sim_shutdown` | 关闭模拟器（先停止它的录屏和推流） |
 | `ios_sim_panel` | 为已启动的设备确保推流并返回 `panelUrl`，不会启动设备；传运行着 WebDriverAgent 的 iPhone 时，面板改为显示这台真机 |
 | `ios_sim_screenshot` | 截图，以图片返回给 Claude，同时给出原尺寸 PNG 路径 |
-| `ios_sim_interact` | 交互：`tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`，默认附带结果截图 |
+| `ios_sim_interact` | 交互：`tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`，默认只回文字；传 `screenshot: true` 附带结果截图 |
 | `ios_sim_annotation` | 返回你在面板里标注的截图（最新的在前，`index` 取更早的，`list: true` 只列清单）；截图结果里有新标注时会带 `userAnnotations` 提示 |
 | `ios_real_start_wda` | 在 USB 连接的 iPhone / iPad 上启动 WebDriverAgent（已在运行就直接接管，否则签名、构建并启动，冷构建需要几分钟）；`status` 查看状态，`stop` 停止 |
 
@@ -161,7 +161,7 @@
 
 `ios_sim_backtrace` / `ios_sim_leaks` 只会作用于**这台模拟器里的 App 进程**，不会碰宿主机上的其他进程；结束后（包括超时被杀）都会确认 App 恢复运行，不会让它卡在调试器里。
 
-`ios_sim_tap_element`、`ios_sim_tap_text` 支持 `expect_text` / `expect_gone`：点击后轮询 OCR，在同一次调用里告诉你预期文字有没有出现 / 消失。三个点击工具都会附带结果截图。
+`ios_sim_tap_element`、`ios_sim_tap_text` 支持 `expect_text` / `expect_gone`：点击后轮询 OCR，在同一次调用里告诉你预期文字有没有出现 / 消失。`ios_sim_tap_element`、`ios_sim_tap_text`、`ios_sim_tap_row` 都会附带结果截图。
 
 <details>
 <summary><b>ios_sim_interact 的动作细节</b></summary>
@@ -176,7 +176,7 @@
 | `rotate` | `orientation` | `portrait` / `landscape_left` / `portrait_upside_down` / `landscape_right` |
 | `device_action` | `name` | `app-switcher` / `lock` / `unlock` / `shake` / `siri` / `action-button` / `re-center` / `toggle-keyboard`（屏幕键盘）/ `slow-animations`（慢动画） |
 
-连续操作时，除最后一步外传 `screenshot: false` 可以省下截图的 token。
+`ios_sim_interact` 默认不截图：点击走 serve-sim 的 WebSocket 控制通道，发完立刻返回，连续操作不用每步等截图。需要看结果时传 `screenshot: true`（约 300 ms 后截图），或单独调用 `ios_sim_screenshot`。想恢复以前「每步都带截图」的行为，设置 `IOS_SIM_INTERACT_SCREENSHOT=1`。
 
 </details>
 
@@ -278,7 +278,9 @@ sequenceDiagram
     C->>M: ios_sim_screenshot
     M-->>C: 截图（图片）
     C->>M: ios_sim_interact {action: "tap", x: 0.5, y: 0.42}
-    M->>S: serve-sim 触控
+    M->>S: serve-sim 触控（WebSocket）
+    M-->>C: 已点击（文字）
+    C->>M: ios_sim_screenshot
     M-->>C: 操作后的截图
     C-->>U: "已进入 通用 页面"
 ```
@@ -371,7 +373,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 |---|---|---|
 | 宿主 | DeepSeek Harness（DSH） | **Claude Code** 插件（MCP 服务 + Skill） |
 | 工具注册 | DSH `ToolRegistry` | MCP SDK `registerTool` + zod |
-| 截图返回 | 纯文本描述（DeepSeek 是纯文本模型） | **图片块**直接给 Claude 看；交互后自动附带结果截图 |
+| 截图返回 | 纯文本描述（DeepSeek 是纯文本模型） | **图片块**直接给 Claude 看；点击工具附带结果截图，`ios_sim_interact` 默认只回文字 |
 | 面板 | DSH 内嵌（侧栏停靠、对话卡片等） | 独立的本地网页，可在 Code 标签页或任意浏览器打开 |
 | 面板安全 | HMAC 签名 + 回环检查 | 独占 origin，沿用回环 / Host / Origin 检查 |
 | 新增工具 | — | `open_url`、`push`、`location`、`appearance`、`record` |
@@ -393,6 +395,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 | `IOS_SIM_SERVE_SIM_BIN` | 指定 serve-sim 可执行文件 | 插件自带，找不到时用 `npx -y serve-sim@0.1.47` |
 | `IOS_SIM_AXE_BIN` | 指定 axe 可执行文件（路径无效时直接报错，不会退回其他查找方式） | 依次查找 PATH、Homebrew、插件缓存，都没有就下载 |
 | `IOS_SIM_AXE_OFFLINE` | 设为 `1` 时不自动下载 AXe | 未设置 |
+| `IOS_SIM_INTERACT_SCREENSHOT` | 设为 `1` 时 `ios_sim_interact` 默认附带结果截图（以前的行为） | 未设置：默认只回文字 |
 | `IOS_SIM_SWIFTC` | 指定编译 OCR 助手用的 swiftc | PATH 中的 `swiftc` |
 | `IOS_SIM_OPEN_PANEL` | 面板第一次启动时怎么打开：`browser`（默认浏览器）、`preview`（Claude Code 桌面版内置浏览器）、`none`（不自动打开）。两种方式只会选一种 | 自动判断：在 Claude 桌面版里（按入口、所属 App `com.anthropic.*` 或父进程里的 `Claude.app` 识别）是 `preview`，不会再打开系统浏览器；其他情况是 `browser`。MCP 服务的启动日志会写明判断依据 |
 | `IOS_SIM_TEAM_ID` | 构建 WebDriverAgent 用的签名团队 ID（10 位） | 从 Xcode 登录的账号和钥匙串里的开发证书自动选择；找不到就报错并说明怎么设置，**没有内置默认值** |

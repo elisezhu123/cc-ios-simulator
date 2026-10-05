@@ -89,6 +89,7 @@ export async function toolHarness(
     cacheRoot,
     platform: 'darwin',
     settleMs: 0,
+    interactScreenshot: false,
     pollIntervalMs: 0,
     rowSettleMs: 0,
     ...options.deps,

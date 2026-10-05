@@ -70,7 +70,7 @@ test('ios_sim_interact on an iPhone taps in window points, types any text and ma
   await h.call('ios_sim_interact', { udid: 'Test iPhone', action: 'rotate', orientation: 'landscape_left', screenshot: false })
   assert.deepEqual(h.wdaCalls, ['tap 201,437', 'type 你好', 'button volumeDown', 'unlock', 'orientation LANDSCAPE'])
   assert.match(textOf(await h.call('ios_sim_interact', { udid: 'Test iPhone', action: 'device_action', name: 'shake' })), /^ios_sim_interact: on a real device device_action supports lock, unlock, siri/)
-  const withShot = await h.call('ios_sim_interact', { udid: 'Test iPhone', action: 'scroll', direction: 'down' })
+  const withShot = await h.call('ios_sim_interact', { udid: 'Test iPhone', action: 'scroll', direction: 'down', screenshot: true })
   assert.equal(withShot.content[1]?.type, 'image')
   assert.match(h.wdaCalls.at(-2)!, /^drag 201,[\d.]+ -> 201,[\d.]+ 0\.3s$/)
   assert.equal(h.wdaCalls.at(-1), 'screenshot')

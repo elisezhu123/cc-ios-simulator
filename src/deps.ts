@@ -132,6 +132,8 @@ export interface ToolDeps {
   platform: NodeJS.Platform
   /** Delay before the effect screenshot of ios_sim_interact and the tap tools, ms. */
   settleMs: number
+  /** Whether ios_sim_interact returns a screenshot when the call does not say (`IOS_SIM_INTERACT_SCREENSHOT`). */
+  interactScreenshot: boolean
   /** Poll interval of ios_sim_wait_for and the tap tools' expect_text / expect_gone, ms. */
   pollIntervalMs: number
   /** Delay before ios_sim_tap_row re-reads the row to verify expect_count, ms. */

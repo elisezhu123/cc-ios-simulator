@@ -306,8 +306,11 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       + 'screenshot image width, y = pixel y / image height), type US-keyboard text, press a hardware button (home, '
       + 'lock, …), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, '
       + 'lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; all but lock drive Simulator.app and need the '
-      + 'Accessibility permission). Starts the live stream when needed but never boots a device. About 300 ms after '
-      + 'the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. '
+      + 'Accessibility permission). Starts the live stream when needed but never boots a device. '
+      + (deps.interactScreenshot
+        ? 'About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. '
+        : 'Answers in text right after the action so actions chain quickly; pass screenshot:true (or call '
+          + 'ios_sim_screenshot) to see the result as an image about 300 ms later. ')
       + 'On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), '
       + 'button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.',
     inputSchema: {
@@ -324,7 +327,8 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
         .describe('Scroll direction named by the CONTENT: "down" reveals content further down (the finger moves up)'),
       amount: z.number().min(0).max(1).optional().describe('Fraction of the screen a scroll travels (default 0.6)'),
       orientation: z.enum(ROTATE_ORIENTATIONS).optional().describe('Target orientation for "rotate"'),
-      screenshot: z.boolean().optional().describe('Return a screenshot of the result (default true)'),
+      screenshot: z.boolean().optional()
+        .describe(`Return a screenshot of the result (default ${deps.interactScreenshot ? 'true' : 'false'}: pass true to see the effect)`),
     },
   }, async (args, extra) => runTool('ios_sim_interact', async () => {
     assertMac(deps.platform)
@@ -338,7 +342,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
         device: realDeviceSummary(target.device),
         ...(points === undefined ? {} : { points }),
       }
-      if (args.screenshot === false) return jsonResult(result)
+      if (!(args.screenshot ?? deps.interactScreenshot)) return jsonResult(result)
       await sleep(deps.settleMs)
       const capture = await captureWda(client, deps.screenshots, target.device.udid, target.device.name)
       const image = await deps.screenshots.toModelImage(capture)
@@ -409,7 +413,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       ...(delivery === undefined ? {} : { delivery }),
       ...(warning === undefined ? {} : { warning }),
     }
-    if (args.screenshot === false) return jsonResult(result)
+    if (!(args.screenshot ?? deps.interactScreenshot)) return jsonResult(result)
     await sleep(deps.settleMs)
     const capture = await deps.screenshots.capture(device.udid, extra.signal)
     const image = await deps.screenshots.toModelImage(capture)

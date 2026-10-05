@@ -73,7 +73,7 @@ Drive the iOS Simulator right from Claude Code: a **live panel**, taps and gestu
 | 📰 **Lists and feeds** | Split a feed into rows and parse each row's counters ("57 replies", "18 likes"); tap at a relative position inside a row and confirm the counter moved by ±1 |
 | 📱 **Device actions** | App Switcher, lock, unlock, shake, Siri, Action button, re-center the window, on-screen keyboard, slow animations |
 | ✏️ **Screenshot annotation** | The pencil in the panel freezes the screen; mark it up with pen / line / arrow / box / ellipse / text (5 colors, undo / redo) and press "Add to chat": the image is stored for Claude (`ios_sim_annotation`) and copied to the clipboard |
-| 👀 **Claude sees the screen** | Screenshots come back to Claude as **images** (JPEG, long edge ≤ 1024 px); every interaction returns a screenshot of its effect |
+| 👀 **Claude sees the screen** | Screenshots come back to Claude as **images** (JPEG, long edge ≤ 1024 px); `ios_sim_tap_element` / `ios_sim_tap_text` return a screenshot of their effect; `ios_sim_interact` answers in text right away by default, so actions chain quickly |
 | 🧭 **Orientation** | Screenshots are always upright; Claude's coordinates are mapped onto the device for the current orientation |
 | 📦 **Apps** | List installed apps (names localized to the simulator's language and searchable), launch / relaunch by name or bundle id, install a `.app`, uninstall |
 | 🔨 **Build and run** | `.xcodeproj`, `.xcworkspace` and Swift packages: build → install → launch, returning the filtered compiler errors on failure |
@@ -105,7 +105,7 @@ Without a `udid` the tools use the streamed device, else the first booted one. `
 | `ios_sim_shutdown` | Shuts a simulator down (stopping its recording and stream first) |
 | `ios_sim_panel` | Makes sure a booted device streams and returns `panelUrl`, never booting anything; given an iPhone running WebDriverAgent, the panel shows that phone instead |
 | `ios_sim_screenshot` | Takes a screenshot, returned to Claude as an image, plus the full-size PNG path |
-| `ios_sim_interact` | `tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`, returning a screenshot of the effect by default |
+| `ios_sim_interact` | `tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`, answering in text by default; `screenshot: true` adds a screenshot of the effect |
 | `ios_sim_annotation` | Returns the screenshots you annotated in the panel (newest first; `index` for older ones, `list: true` for the list only); screenshot results carry `userAnnotations` when there are new ones |
 | `ios_real_start_wda` | Starts WebDriverAgent on a USB-connected iPhone / iPad (adopting one that already runs, else signing, building and launching it; a cold build takes minutes); `status` reports, `stop` stops it |
 
@@ -161,7 +161,7 @@ Supports `#Preview { … }` (including `#Preview("Name", traits: …)`) and `str
 
 `ios_sim_backtrace` / `ios_sim_leaks` only ever touch **app processes inside this simulator**, never other processes on the Mac; afterwards (including after a timeout kill) they make sure the app is running again rather than stuck in a debugger.
 
-`ios_sim_tap_element` and `ios_sim_tap_text` take `expect_text` / `expect_gone`: after the tap they poll OCR and report in the same call whether the text appeared / disappeared. All three tap tools return a screenshot of the effect.
+`ios_sim_tap_element` and `ios_sim_tap_text` take `expect_text` / `expect_gone`: after the tap they poll OCR and report in the same call whether the text appeared / disappeared. `ios_sim_tap_element`, `ios_sim_tap_text` and `ios_sim_tap_row` all return a screenshot of the effect.
 
 <details>
 <summary><b>ios_sim_interact actions</b></summary>
@@ -176,7 +176,7 @@ Supports `#Preview { … }` (including `#Preview("Name", traits: …)`) and `str
 | `rotate` | `orientation` | `portrait` / `landscape_left` / `portrait_upside_down` / `landscape_right` |
 | `device_action` | `name` | `app-switcher` / `lock` / `unlock` / `shake` / `siri` / `action-button` / `re-center` / `toggle-keyboard` (on-screen keyboard) / `slow-animations` |
 
-When chaining actions, pass `screenshot: false` on all but the last step to save the screenshot tokens.
+`ios_sim_interact` takes no screenshot by default: taps go over serve-sim's WebSocket control channel and the call returns as soon as they are sent, so chained actions never wait for a capture. To see the result pass `screenshot: true` (captured about 300 ms later) or call `ios_sim_screenshot`. Set `IOS_SIM_INTERACT_SCREENSHOT=1` to get the old screenshot-after-every-action behavior back.
 
 </details>
 
@@ -278,7 +278,9 @@ sequenceDiagram
     C->>M: ios_sim_screenshot
     M-->>C: screenshot (image)
     C->>M: ios_sim_interact {action: "tap", x: 0.5, y: 0.42}
-    M->>S: serve-sim touch
+    M->>S: serve-sim touch (WebSocket)
+    M-->>C: tapped (text)
+    C->>M: ios_sim_screenshot
     M-->>C: screenshot of the result
     C-->>U: "You're on the General page"
 ```
@@ -371,7 +373,7 @@ test/                  # node:test unit / integration tests; test/live/ holds li
 |---|---|---|
 | Host | DeepSeek Harness (DSH) | **Claude Code** plugin (MCP server + skill) |
 | Tool registration | DSH `ToolRegistry` | MCP SDK `registerTool` + zod |
-| Screenshots | Text descriptions (DeepSeek is text-only) | **Image blocks** Claude looks at; every interaction returns a screenshot of its effect |
+| Screenshots | Text descriptions (DeepSeek is text-only) | **Image blocks** Claude looks at; the tap tools return a screenshot of their effect, `ios_sim_interact` answers in text by default |
 | Panel | Embedded in DSH (side dock, chat cards…) | A standalone local page, in Claude's built-in browser or any browser |
 | Panel security | HMAC signatures + loopback checks | Its own origin, keeping the loopback / Host / Origin checks |
 | New tools | — | `open_url`, `push`, `location`, `appearance`, `record`, `annotation` |
@@ -393,6 +395,7 @@ Every ported file names its source in its first line (`Ported from dsh-ios (MIT)
 | `IOS_SIM_SERVE_SIM_BIN` | The serve-sim executable to use | The plugin's own, else `npx -y serve-sim@0.1.47` |
 | `IOS_SIM_AXE_BIN` | The axe executable to use (an invalid path is an error, with no fallback) | PATH, Homebrew, the plugin cache, else a download |
 | `IOS_SIM_AXE_OFFLINE` | `1` never downloads AXe | unset |
+| `IOS_SIM_INTERACT_SCREENSHOT` | `1` makes `ios_sim_interact` return a screenshot of its effect by default (the old behavior) | unset: text only |
 | `IOS_SIM_SWIFTC` | The swiftc that compiles the OCR helper | `swiftc` on PATH |
 | `IOS_SIM_OPEN_PANEL` | How the panel opens the first time it starts: `browser` (default browser), `preview` (Claude Code desktop's built-in browser), `none` (not at all). Only one of the two is ever used | Detected: in the Claude desktop app (recognized by the entrypoint, the `com.anthropic.*` app it runs under, or `Claude.app` among its parent processes) it is `preview` and the system browser is not opened; `browser` otherwise. The MCP server's startup log says why |
 | `IOS_SIM_TEAM_ID` | The 10-character signing team for WebDriverAgent | Chosen from the Xcode accounts and the keychain's development certificates; with none found it fails and says how to set one — **there is no built-in default** |

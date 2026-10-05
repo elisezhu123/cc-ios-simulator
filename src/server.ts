@@ -14,6 +14,7 @@ import { buildRun, detectProject, readBundleIdentifier } from './build-run.js'
 import {
   cacheRoot,
   INTERACT_SETTLE_MS,
+  interactScreenshotDefault,
   OCR_POLL_INTERVAL_MS,
   PLUGIN_NAME,
   preferredPanelPort,
@@ -111,6 +112,7 @@ async function main(): Promise<void> {
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
+    interactScreenshot: interactScreenshotDefault(),
     pollIntervalMs: OCR_POLL_INTERVAL_MS,
     rowSettleMs: ROW_VERIFY_SETTLE_MS,
   }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { WebSocketServer } from 'ws'
 import * as simctl from '../src/simctl.js'
 import { SimctlError, setSimctlRunnerForTests } from '../src/simctl.js'
+import { interactScreenshotDefault } from '../src/config.js'
 import { registerCoreTools } from '../src/tools/core.js'
 import { textOf, toolHarness } from './helpers/harness.js'
 
@@ -103,13 +104,35 @@ test('ios_sim_screenshot returns a JPEG image block plus the summary', async () 
   await h.close()
 })
 
-test('ios_sim_interact taps through serve-sim and returns the effect screenshot', async () => {
+test('ios_sim_interact taps through serve-sim and returns the effect screenshot when asked', async () => {
   const h = await toolHarness(registerCoreTools, { host: { device: 'BBB' } })
-  const result = await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.25 })
+  const result = await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.25, screenshot: true })
   assert.equal(result.isError, undefined)
   assert.ok(h.hostCalls.some(call => call.join(' ') === 'control tap -d BBB -- 0.5 0.25'))
   assert.ok(result.content.some(block => block.type === 'image'))
   assert.equal((h.json(result) as { delivery: { channel: string } }).delivery.channel, 'cli')
+  await h.close()
+})
+
+test('ios_sim_interact answers in text by default, without the settle wait or a capture', async () => {
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB' }, deps: { settleMs: 60_000 } })
+  const started = Date.now()
+  const result = await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.25 })
+  assert.ok(Date.now() - started < 5_000, 'no settle wait')
+  assert.equal(result.isError, undefined)
+  assert.deepEqual(result.content.map(block => block.type), ['text'])
+  assert.equal((h.json(result) as { screenshot?: unknown }).screenshot, undefined)
+  await h.close()
+})
+
+test('IOS_SIM_INTERACT_SCREENSHOT brings the effect screenshot back as the default', async () => {
+  assert.equal(interactScreenshotDefault({}), false)
+  assert.equal(interactScreenshotDefault({ IOS_SIM_INTERACT_SCREENSHOT: '1' }), true)
+  assert.equal(interactScreenshotDefault({ IOS_SIM_INTERACT_SCREENSHOT: ' TRUE ' }), true)
+  assert.equal(interactScreenshotDefault({ IOS_SIM_INTERACT_SCREENSHOT: '0' }), false)
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB' }, deps: { interactScreenshot: true } })
+  assert.ok((await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.25 })).content.some(block => block.type === 'image'))
+  assert.deepEqual((await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.25, screenshot: false })).content.map(block => block.type), ['text'])
   await h.close()
 })
 
@@ -305,7 +328,7 @@ test('the effect screenshot of an interact records the image shape for the next 
     screenshotSize: { width: 1206, height: 2622 },
   })
   // No image yet: the landscape reading decides, and the effect screenshot comes back portrait-shaped …
-  await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75 })
+  await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: true })
   // … so the next tap goes out as given.
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
   assert.deepEqual(serveSim.taps(), ['0.75 0.75', '0.25 0.75'])

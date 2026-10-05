@@ -53,6 +53,15 @@ export function preferredPanelPort(env: Env = process.env): number {
   return Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : DEFAULT_PANEL_PORT
 }
 
+/**
+ * Whether ios_sim_interact returns a screenshot unless told otherwise:
+ * `IOS_SIM_INTERACT_SCREENSHOT=1` (or true / yes / on) brings it back; by default it
+ * answers in text only, so chained actions do not each wait for a capture and an image.
+ */
+export function interactScreenshotDefault(env: Env = process.env): boolean {
+  return /^(?:1|true|yes|on)$/iu.test(env.IOS_SIM_INTERACT_SCREENSHOT?.trim() ?? '')
+}
+
 /** Explicit serve-sim binary (`IOS_SIM_SERVE_SIM_BIN`), when set. */
 export function serveSimBinOverride(env: Env = process.env): string | undefined {
   const raw = env.IOS_SIM_SERVE_SIM_BIN?.trim()
