@@ -17,6 +17,8 @@ export const DEFAULT_PANEL_PORT = 3456
 export const PANEL_PORT_ATTEMPTS = 21
 /** Settle delay after an interaction, before the effect screenshot. */
 export const INTERACT_SETTLE_MS = 300
+/** How old a `simctl list devices` may be when a tool resolves its target (boot / shutdown drop it). */
+export const TARGET_DEVICE_CACHE_MS = 10_000
 /** How long `ios_sim_record stop` waits for simctl to finish the movie. */
 export const RECORD_STOP_TIMEOUT_MS = 10_000
 /** How long `ios_sim_record start` waits for simctl's "Recording started". */

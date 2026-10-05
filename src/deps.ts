@@ -24,8 +24,9 @@ export type StreamHost = Pick<SimHostController, 'binary' | 'streamInfo' | 'stat
 
 /** The simctl operations the tools use (the src/simctl.ts module satisfies it). */
 export interface SimctlApi {
-  listDevices(): Promise<SimulatorDevice[]>
-  getDevice(reference: string): Promise<SimulatorDevice>
+  /** `maxAgeMs` accepts a recent cached listing (default: always fresh). */
+  listDevices(options?: { maxAgeMs?: number }): Promise<SimulatorDevice[]>
+  getDevice(reference: string, options?: { maxAgeMs?: number }): Promise<SimulatorDevice>
   bootDevice(udid: string): Promise<void>
   shutdownDevice(udid: string): Promise<void>
   takeScreenshot(udid: string, filePath: string, signal?: AbortSignal): Promise<void>
