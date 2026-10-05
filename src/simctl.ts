@@ -253,6 +253,8 @@ export async function getDevice(reference: string, options: DeviceListOptions = 
     if (booted !== undefined) return booted
     return byName.sort((a, b) => compareRuntimesDesc(a.runtime, b.runtime))[0]
   }
+  // A device created since the cached listing: look again before calling it unknown.
+  if ((options.maxAgeMs ?? 0) > 0) return getDevice(trimmed)
   const names = devices
     .sort((a, b) => compareRuntimesDesc(a.runtime, b.runtime))
     .slice(0, 8)

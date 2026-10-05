@@ -133,3 +133,10 @@ test('a failed listing is never reused', async () => {
   fail = false
   assert.equal((await listDevices({ maxAgeMs: 10_000 })).length, 3)
 })
+
+test('a reference missing from a cached listing is looked up again before it is called unknown', async () => {
+  const calls = fakeRunner({ list: LIST_JSON })
+  await listDevices()
+  await assert.rejects(getDevice('NEW', { maxAgeMs: 10_000 }), /unknown simulator "NEW"/)
+  assert.equal(calls.filter(call => call[0] === 'list').length, 2)
+})
