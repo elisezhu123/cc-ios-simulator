@@ -40495,6 +40495,7 @@ __export(simctl_exports, {
   bootedDevices: () => bootedDevices,
   clearLocation: () => clearLocation,
   compareRuntimesDesc: () => compareRuntimesDesc,
+  forgetDeviceList: () => forgetDeviceList,
   getAppContainer: () => getAppContainer,
   getDevice: () => getDevice,
   installApp: () => installApp,
@@ -40525,6 +40526,7 @@ var SERVE_SIM_VERSION = "0.1.47";
 var DEFAULT_PANEL_PORT = 3456;
 var PANEL_PORT_ATTEMPTS = 21;
 var INTERACT_SETTLE_MS = 300;
+var TARGET_DEVICE_CACHE_MS = 1e4;
 var RECORD_STOP_TIMEOUT_MS = 1e4;
 var RECORD_START_TIMEOUT_MS = 15e3;
 var OCR_POLL_INTERVAL_MS = 600;
@@ -40542,6 +40544,9 @@ function preferredPanelPort(env = process.env) {
   if (raw === void 0 || raw === "") return DEFAULT_PANEL_PORT;
   const port = Number(raw);
   return Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : DEFAULT_PANEL_PORT;
+}
+function interactScreenshotDefault(env = process.env) {
+  return /^(?:1|true|yes|on)$/iu.test(env.IOS_SIM_INTERACT_SCREENSHOT?.trim() ?? "");
 }
 function serveSimBinOverride(env = process.env) {
   const raw = env.IOS_SIM_SERVE_SIM_BIN?.trim();
@@ -40594,6 +40599,7 @@ function runXcrunSimctl(args, timeoutMs, signal) {
 var runner = runXcrunSimctl;
 function setSimctlRunnerForTests(next) {
   runner = next ?? runXcrunSimctl;
+  forgetDeviceList();
 }
 var NO_XCODE_OUTPUT = /xcrun: error: (?:unable to find utility "simctl"|invalid active developer path)|xcode-select: (?:error|note):/iu;
 function noXcodeError(error62) {
@@ -40650,21 +40656,46 @@ function parseDeviceList(stdout) {
   }
   return devices;
 }
-async function listDevices() {
-  return parseDeviceList(await execSimctl(["list", "devices", "--json"], SIMCTL_LIST_TIMEOUT_MS));
+var deviceList;
+function forgetDeviceList() {
+  deviceList = void 0;
+}
+async function listDevices(options = {}) {
+  const maxAgeMs = options.maxAgeMs ?? 0;
+  const cached2 = deviceList;
+  if (maxAgeMs > 0 && cached2 !== void 0 && Date.now() - cached2.at <= maxAgeMs) return cached2.devices;
+  const entry = {
+    at: Date.now(),
+    devices: execSimctl(["list", "devices", "--json"], SIMCTL_LIST_TIMEOUT_MS).then(parseDeviceList)
+  };
+  deviceList = entry;
+  entry.devices.catch(() => {
+    if (deviceList === entry) deviceList = void 0;
+  });
+  return entry.devices;
 }
 async function bootDevice(udid) {
-  await execSimctl(["boot", udid], SIMCTL_BOOT_TIMEOUT_MS).catch((error62) => {
-    if (error62 instanceof SimctlError && alreadyInState(error62.stderr, "Booted")) return;
-    throw error62;
-  });
-  await execSimctl(["bootstatus", udid, "-b"], SIMCTL_BOOTSTATUS_TIMEOUT_MS);
+  forgetDeviceList();
+  try {
+    await execSimctl(["boot", udid], SIMCTL_BOOT_TIMEOUT_MS).catch((error62) => {
+      if (error62 instanceof SimctlError && alreadyInState(error62.stderr, "Booted")) return;
+      throw error62;
+    });
+    await execSimctl(["bootstatus", udid, "-b"], SIMCTL_BOOTSTATUS_TIMEOUT_MS);
+  } finally {
+    forgetDeviceList();
+  }
 }
 async function shutdownDevice(udid) {
-  await execSimctl(["shutdown", udid], SIMCTL_SHUTDOWN_TIMEOUT_MS).catch((error62) => {
-    if (error62 instanceof SimctlError && alreadyInState(error62.stderr, "Shutdown")) return;
-    throw error62;
-  });
+  forgetDeviceList();
+  try {
+    await execSimctl(["shutdown", udid], SIMCTL_SHUTDOWN_TIMEOUT_MS).catch((error62) => {
+      if (error62 instanceof SimctlError && alreadyInState(error62.stderr, "Shutdown")) return;
+      throw error62;
+    });
+  } finally {
+    forgetDeviceList();
+  }
 }
 async function bootedDevices() {
   return (await listDevices()).filter((device) => device.state === "Booted");
@@ -40672,10 +40703,10 @@ async function bootedDevices() {
 function compareRuntimesDesc(a, b) {
   return b.localeCompare(a, void 0, { numeric: true });
 }
-async function getDevice(reference) {
+async function getDevice(reference, options = {}) {
   const trimmed = reference.trim();
   if (trimmed === "") throw new SimctlError("simulator reference must be a non-empty udid or device name", "");
-  const devices = await listDevices();
+  const devices = await listDevices(options);
   const byUdid = devices.find((device) => device.udid === trimmed);
   if (byUdid !== void 0) return byUdid;
   const byName = devices.filter((device) => device.name.toLowerCase() === trimmed.toLowerCase());
@@ -40685,6 +40716,7 @@ async function getDevice(reference) {
     if (booted !== void 0) return booted;
     return byName.sort((a, b) => compareRuntimesDesc(a.runtime, b.runtime))[0];
   }
+  if ((options.maxAgeMs ?? 0) > 0) return getDevice(trimmed);
   const names = devices.sort((a, b) => compareRuntimesDesc(a.runtime, b.runtime)).slice(0, 8).map((device) => `${device.name} (${device.runtime})`);
   throw new SimctlError(
     `unknown simulator "${trimmed}" \u2014 run ios_sim_devices to list available devices` + (names.length === 0 ? "" : `; available include: ${names.join(", ")}`),
@@ -42115,9 +42147,9 @@ async function listUsbmuxDevices() {
     ProgName: "ios-simulator",
     kLibUSBMuxVersion: 3
   }), "ListDevices reply");
-  const deviceList = reply.DeviceList;
-  if (!Array.isArray(deviceList)) throw new Error("ios-simulator: usbmuxd ListDevices reply has no DeviceList array");
-  return deviceList.map(parseUsbmuxDevice);
+  const deviceList2 = reply.DeviceList;
+  if (!Array.isArray(deviceList2)) throw new Error("ios-simulator: usbmuxd ListDevices reply has no DeviceList array");
+  return deviceList2.map(parseUsbmuxDevice);
 }
 function pickUsbDeviceId(devices, udid) {
   for (const device of devices) {
@@ -45350,7 +45382,35 @@ async function sendSimGesture(wsUrl, points, options = {}) {
   if (!Number.isFinite(stepMs) || stepMs < 0) {
     throw new RangeError(`ios-simulator: gesture stepMs must be a non-negative number of milliseconds, got ${String(stepMs)}`);
   }
-  const connectTimeoutMs = options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS;
+  const frames = path.map((point, index) => ({
+    frame: encodeSimTouchFrame(index === 0 ? "begin" : "move", point.x, point.y),
+    waitMs: index > 0 ? stepMs : 0
+  }));
+  const last = path[path.length - 1];
+  frames.push({ frame: encodeSimTouchFrame("end", last.x, last.y), waitMs: 0 });
+  const elapsedMs = await writeSimFrames(url2, frames, options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
+  return { frames: path.length + 1, moves: path.length - 1, elapsedMs, stepMs, wsUrl: url2 };
+}
+var SIM_TAP_HOLD_MS = 40;
+async function sendSimTap(wsUrl, point, options = {}) {
+  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
+  if (!/^wss?:\/\//.test(url2)) {
+    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
+  }
+  if (typeof point?.x !== "number" || typeof point.y !== "number" || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+    throw new RangeError(`ios-simulator: a tap needs finite normalized x/y, got ${JSON.stringify(point)}`);
+  }
+  const holdMs = options.holdMs ?? SIM_TAP_HOLD_MS;
+  if (!Number.isFinite(holdMs) || holdMs < 0) {
+    throw new RangeError(`ios-simulator: tap holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`);
+  }
+  const elapsedMs = await writeSimFrames(url2, [
+    { frame: encodeSimTouchFrame("begin", point.x, point.y), waitMs: 0 },
+    { frame: encodeSimTouchFrame("end", point.x, point.y), waitMs: holdMs }
+  ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
+  return { frames: 2, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url2 };
+}
+async function writeSimFrames(url2, frames, connectTimeoutMs) {
   const { WebSocket: WebSocket2 } = loadWs();
   const socket = new WebSocket2(url2, { perMessageDeflate: false });
   let broken;
@@ -45366,22 +45426,23 @@ async function sendSimGesture(wsUrl, points, options = {}) {
   const started = Date.now();
   try {
     await openSocket(socket, connectTimeoutMs, url2, () => broken);
-    for (const [index, point] of path.entries()) {
+    for (const [index, { frame, waitMs }] of frames.entries()) {
       if (broken !== void 0) throw gestureUnavailable(url2, broken);
-      if (index > 0 && stepMs > 0) await sleep6(stepMs);
-      socket.send(encodeSimTouchFrame(index === 0 ? "begin" : "move", point.x, point.y));
-    }
-    if (broken !== void 0) throw gestureUnavailable(url2, broken);
-    await new Promise((resolve7, reject) => {
-      const last = path[path.length - 1];
-      socket.send(encodeSimTouchFrame("end", last.x, last.y), (error62) => {
-        if (error62 === void 0 || error62 === null) resolve7();
-        else reject(gestureUnavailable(url2, `the end frame could not be written (${errorMessage8(error62)})`));
+      if (waitMs > 0) await sleep6(waitMs);
+      if (broken !== void 0) throw gestureUnavailable(url2, broken);
+      if (index < frames.length - 1) {
+        socket.send(frame);
+        continue;
+      }
+      await new Promise((resolve7, reject) => {
+        socket.send(frame, (error62) => {
+          if (error62 === void 0 || error62 === null) resolve7();
+          else reject(gestureUnavailable(url2, `the last frame could not be written (${errorMessage8(error62)})`));
+        });
       });
-    });
-    const elapsedMs = Date.now() - started;
+    }
     finished = true;
-    return { frames: path.length + 1, moves: path.length - 1, elapsedMs, stepMs, wsUrl: url2 };
+    return Date.now() - started;
   } finally {
     finished = true;
     await closeSocket(socket, WebSocket2.CLOSED);
@@ -45556,15 +45617,16 @@ function simInteractGesturePath(args) {
 }
 async function performSimInteract(host, deviceUdid, args, payloads, options = {}) {
   const points = simInteractGesturePath(args);
+  const tap = args.action === "tap" && typeof args.x === "number" && typeof args.y === "number" ? { x: args.x, y: args.y } : void 0;
   const info = host.streamInfo;
   const wsUrl = info !== void 0 && info.device === deviceUdid && typeof info.wsUrl === "string" ? info.wsUrl : void 0;
   let wsError;
-  if (points !== void 0) {
+  if (points !== void 0 || tap !== void 0) {
     if (wsUrl === void 0) {
       wsError = `no live serve-sim stream reports a control-socket url for ${deviceUdid} \u2014 the gesture went through the serve-sim CLI instead (one process per touch event)`;
     } else {
       try {
-        const report = await sendSimGesture(wsUrl, points, { stepMs: options.stepMs ?? SIM_GESTURE_STEP_MS });
+        const report = tap !== void 0 ? await sendSimTap(wsUrl, tap, options.tapHoldMs === void 0 ? {} : { holdMs: options.tapHoldMs }) : await sendSimGesture(wsUrl, points, { stepMs: options.stepMs ?? SIM_GESTURE_STEP_MS });
         return { channel: "ws", frames: report.frames, elapsedMs: report.elapsedMs };
       } catch (error62) {
         wsError = errorMessage9(error62);
@@ -46715,9 +46777,10 @@ function pickPreferred(devices) {
 }
 var REAL_DEVICE_TOOLS = "ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes, ios_sim_app_info, and \u2014 once ios_real_start_wda has started WebDriverAgent \u2014 ios_sim_screenshot, ios_sim_interact, ios_sim_ui_tree, ios_sim_tap_element, ios_sim_find_text, ios_sim_tap_text, ios_sim_wait_for, ios_sim_ui_rows and ios_sim_tap_row";
 async function resolveTargetDevice(deps, reference, options = {}) {
+  const listing = options.bootFallback === true ? {} : { maxAgeMs: TARGET_DEVICE_CACHE_MS };
   if (reference !== void 0 && reference.trim() !== "") {
     try {
-      return await deps.simctl.getDevice(reference);
+      return await deps.simctl.getDevice(reference, listing);
     } catch (error62) {
       if (deps.realDevices !== void 0 && await deps.realDevices.matches(reference)) {
         throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only \u2014 on a real device use ${REAL_DEVICE_TOOLS}`);
@@ -46728,11 +46791,11 @@ async function resolveTargetDevice(deps, reference, options = {}) {
   const status = deps.host.status();
   if (status.running && status.device !== void 0) {
     try {
-      return await deps.simctl.getDevice(status.device);
+      return await deps.simctl.getDevice(status.device, listing);
     } catch {
     }
   }
-  const devices = await deps.simctl.listDevices();
+  const devices = await deps.simctl.listDevices(listing);
   const booted = devices.filter((device) => device.state === "Booted");
   if (booted.length > 0) return pickPreferred(booted);
   if (options.bootFallback === true) {
@@ -46757,7 +46820,7 @@ async function resolveToolTarget(deps, reference) {
   if (reference === void 0 || reference.trim() === "") return { kind: "simulator", device: await resolveTargetDevice(deps, reference) };
   let simulatorError;
   try {
-    return { kind: "simulator", device: await deps.simctl.getDevice(reference) };
+    return { kind: "simulator", device: await deps.simctl.getDevice(reference, { maxAgeMs: TARGET_DEVICE_CACHE_MS }) };
   } catch (error62) {
     simulatorError = error62;
   }
@@ -48436,7 +48499,7 @@ function registerCoreTools(server, deps) {
   }));
   server.registerTool("ios_sim_interact", {
     title: "Interact with the simulator",
-    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type US-keyboard text, press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; all but lock drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
+    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type US-keyboard text, press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; all but lock drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. " + (deps.interactScreenshot ? "About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. " : "Answers in text right after the action so actions chain quickly; pass screenshot:true (or call ios_sim_screenshot) to see the result as an image about 300 ms later. ") + "On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
     inputSchema: {
       action: external_exports.enum(["tap", "type", "button", "gesture", "scroll", "rotate", "device_action"]),
       udid: UDID_PARAM,
@@ -48448,7 +48511,7 @@ function registerCoreTools(server, deps) {
       direction: external_exports.enum(["up", "down", "left", "right"]).optional().describe('Scroll direction named by the CONTENT: "down" reveals content further down (the finger moves up)'),
       amount: external_exports.number().min(0).max(1).optional().describe("Fraction of the screen a scroll travels (default 0.6)"),
       orientation: external_exports.enum(ROTATE_ORIENTATIONS).optional().describe('Target orientation for "rotate"'),
-      screenshot: external_exports.boolean().optional().describe("Return a screenshot of the result (default true)")
+      screenshot: external_exports.boolean().optional().describe(`Return a screenshot of the result (default ${deps.interactScreenshot ? "true" : "false"}: pass true to see the effect)`)
     }
   }, async (args, extra) => runTool("ios_sim_interact", async () => {
     assertMac(deps.platform);
@@ -48462,7 +48525,7 @@ function registerCoreTools(server, deps) {
         device: realDeviceSummary(target.device),
         ...points === void 0 ? {} : { points }
       };
-      if (args.screenshot === false) return jsonResult(result2);
+      if (!(args.screenshot ?? deps.interactScreenshot)) return jsonResult(result2);
       await sleep8(deps.settleMs);
       const capture2 = await captureWda(client, deps.screenshots, target.device.udid, target.device.name);
       const image2 = await deps.screenshots.toModelImage(capture2);
@@ -48531,7 +48594,7 @@ function registerCoreTools(server, deps) {
       ...delivery === void 0 ? {} : { delivery },
       ...warning === void 0 ? {} : { warning }
     };
-    if (args.screenshot === false) return jsonResult(result);
+    if (!(args.screenshot ?? deps.interactScreenshot)) return jsonResult(result);
     await sleep8(deps.settleMs);
     const capture = await deps.screenshots.capture(device.udid, extra.signal);
     const image = await deps.screenshots.toModelImage(capture);
@@ -49783,6 +49846,7 @@ async function main() {
     cacheRoot: root,
     platform: process.platform,
     settleMs: INTERACT_SETTLE_MS,
+    interactScreenshot: interactScreenshotDefault(),
     pollIntervalMs: OCR_POLL_INTERVAL_MS,
     rowSettleMs: ROW_VERIFY_SETTLE_MS
   };
