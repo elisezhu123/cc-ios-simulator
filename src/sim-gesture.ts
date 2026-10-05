@@ -343,7 +343,66 @@ export async function sendSimGesture(
   if (!Number.isFinite(stepMs) || stepMs < 0) {
     throw new RangeError(`ios-simulator: gesture stepMs must be a non-negative number of milliseconds, got ${String(stepMs)}`)
   }
-  const connectTimeoutMs = options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS
+  const frames = path.map((point, index) => ({
+    frame: encodeSimTouchFrame(index === 0 ? 'begin' : 'move', point.x, point.y),
+    waitMs: index > 0 ? stepMs : 0,
+  }))
+  const last = path[path.length - 1]
+  // Lifting at the last point (no extra wait) leaves iOS the flick velocity.
+  frames.push({ frame: encodeSimTouchFrame('end', last.x, last.y), waitMs: 0 })
+  const elapsedMs = await writeSimFrames(url, frames, options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS)
+  return { frames: path.length + 1, moves: path.length - 1, elapsedMs, stepMs, wsUrl: url }
+}
+
+/**
+ * How long a tap holds the finger down: the `serve-sim tap` CLI sends `begin`,
+ * waits 40 ms and sends `end` over this same socket, so the in-process tap
+ * puts identical bytes on the wire with identical timing.
+ */
+export const SIM_TAP_HOLD_MS = 40
+
+export interface SimTapOptions {
+  /** Finger-down time between `begin` and `end` (default `SIM_TAP_HOLD_MS`). */
+  holdMs?: number
+  /** Budget for the socket to open (default `SIM_GESTURE_CONNECT_TIMEOUT_MS`). */
+  connectTimeoutMs?: number
+}
+
+/**
+ * Tap one normalized point over the stream's control socket — what the
+ * `serve-sim tap` CLI does, minus spawning a Node process that loads serve-sim's
+ * ~900 KB bundle for every tap. Rejects like `sendSimGesture` so the caller can
+ * fall back to the CLI.
+ */
+export async function sendSimTap(wsUrl: string, point: SimGesturePoint, options: SimTapOptions = {}): Promise<SimGestureReport> {
+  const url = typeof wsUrl === 'string' ? wsUrl.trim() : ''
+  if (!/^wss?:\/\//.test(url)) {
+    throw gestureUnavailable(url, 'the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running')
+  }
+  if (typeof point?.x !== 'number' || typeof point.y !== 'number' || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+    throw new RangeError(`ios-simulator: a tap needs finite normalized x/y, got ${JSON.stringify(point)}`)
+  }
+  const holdMs = options.holdMs ?? SIM_TAP_HOLD_MS
+  if (!Number.isFinite(holdMs) || holdMs < 0) {
+    throw new RangeError(`ios-simulator: tap holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`)
+  }
+  const elapsedMs = await writeSimFrames(url, [
+    { frame: encodeSimTouchFrame('begin', point.x, point.y), waitMs: 0 },
+    { frame: encodeSimTouchFrame('end', point.x, point.y), waitMs: holdMs },
+  ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS)
+  return { frames: 2, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url }
+}
+
+/**
+ * Open ONE control socket, write each frame after its `waitMs`, wait for the
+ * last write to flush, and close. Returns the wall time from connect to the
+ * flushed last frame.
+ */
+async function writeSimFrames(
+  url: string,
+  frames: ReadonlyArray<{ frame: Buffer; waitMs: number }>,
+  connectTimeoutMs: number,
+): Promise<number> {
   const { WebSocket } = loadWs()
   const socket = new WebSocket(url, { perMessageDeflate: false })
   // The socket's own failures arrive asynchronously; latch the first one and
@@ -361,25 +420,26 @@ export async function sendSimGesture(
   const started = Date.now()
   try {
     await openSocket(socket, connectTimeoutMs, url, () => broken)
-    for (const [index, point] of path.entries()) {
+    for (const [index, { frame, waitMs }] of frames.entries()) {
       if (broken !== undefined) throw gestureUnavailable(url, broken)
-      if (index > 0 && stepMs > 0) await sleep(stepMs)
-      socket.send(encodeSimTouchFrame(index === 0 ? 'begin' : 'move', point.x, point.y))
-    }
-    if (broken !== undefined) throw gestureUnavailable(url, broken)
-    // Await only the LAST frame's write: ws writes in submission order, so
-    // flushing the 'end' frame proves the whole path reached the socket before
-    // the close handshake can drop it.
-    await new Promise<void>((resolve, reject) => {
-      const last = path[path.length - 1]
-      socket.send(encodeSimTouchFrame('end', last.x, last.y), error => {
-        if (error === undefined || error === null) resolve()
-        else reject(gestureUnavailable(url, `the end frame could not be written (${errorMessage(error)})`))
+      if (waitMs > 0) await sleep(waitMs)
+      if (broken !== undefined) throw gestureUnavailable(url, broken)
+      if (index < frames.length - 1) {
+        socket.send(frame)
+        continue
+      }
+      // Await only the LAST frame's write: ws writes in submission order, so
+      // flushing it proves the whole path reached the socket before the close
+      // handshake can drop it.
+      await new Promise<void>((resolve, reject) => {
+        socket.send(frame, error => {
+          if (error === undefined || error === null) resolve()
+          else reject(gestureUnavailable(url, `the last frame could not be written (${errorMessage(error)})`))
+        })
       })
-    })
-    const elapsedMs = Date.now() - started
+    }
     finished = true
-    return { frames: path.length + 1, moves: path.length - 1, elapsedMs, stepMs, wsUrl: url }
+    return Date.now() - started
   } finally {
     finished = true
     await closeSocket(socket, WebSocket.CLOSED)

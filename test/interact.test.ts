@@ -78,3 +78,35 @@ test('performSimInteract traces a scroll over the stream socket when it is live'
   assert.equal(received, 20)
   assert.deepEqual(calls, [])
 })
+
+test('performSimInteract taps over the stream socket when it is live, without a serve-sim process', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const types: string[] = []
+  wss.on('connection', socket => socket.on('message', data => {
+    types.push((JSON.parse((data as Buffer).subarray(1).toString('utf8')) as { type: string }).type)
+  }))
+  const { host, calls } = fakeHost({ device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true })
+  const args: SimInteractArgs = { action: 'tap', x: 0.4, y: 0.6 }
+  const delivery = await performSimInteract(host, 'BBB', args, interactControlArgs(args), { tapHoldMs: 0 })
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  assert.equal(delivery.channel, 'ws')
+  assert.equal(delivery.frames, 2)
+  assert.deepEqual(types, ['begin', 'end'])
+  assert.deepEqual(calls, [])
+})
+
+test('a tap falls back to the serve-sim CLI when the socket refuses, and never goes to another device\'s socket', async () => {
+  const refused = fakeHost({ device: 'BBB', wsUrl: 'ws://127.0.0.1:1', exposeStreamInfo: true })
+  const args: SimInteractArgs = { action: 'tap', x: 0.4, y: 0.6 }
+  const delivery = await performSimInteract(refused.host, 'BBB', args, interactControlArgs(args))
+  assert.equal(delivery.channel, 'cli')
+  assert.match(delivery.wsError ?? '', /gesture channel/)
+  assert.deepEqual(refused.calls, [['control', 'tap', '-d', 'BBB', '--', '0.4', '0.6']])
+  const other = fakeHost({ device: 'AAA', wsUrl: 'ws://127.0.0.1:1', exposeStreamInfo: true })
+  const elsewhere = await performSimInteract(other.host, 'BBB', args, interactControlArgs(args))
+  assert.equal(elsewhere.channel, 'cli')
+  assert.deepEqual(other.calls, [['control', 'tap', '-d', 'BBB', '--', '0.4', '0.6']])
+})
