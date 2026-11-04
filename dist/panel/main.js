@@ -478,6 +478,9 @@ var EN = {
   realDevice: "real device",
   noWda: "WebDriverAgent is not running on this iPhone \u2014 start it with ios_real_start_wda, or pick a simulator above.",
   annotate: "Annotate a screenshot",
+  typeAsciiOnly: "Typing goes to the simulator as a hardware keyboard, which types US-keyboard characters only \u2014 letters, digits and ASCII punctuation (no Chinese or emoji).",
+  hideDock: "Hide toolbar",
+  showDock: "Show toolbar",
   annotateTools: { pen: "Pen", line: "Line", arrow: "Arrow", rect: "Box", ellipse: "Ellipse", text: "Text" },
   annotateColors: ["Red", "Blue", "Green", "Black", "White"],
   undo: "Undo",
@@ -550,6 +553,9 @@ var ZH = {
   realDevice: "\u771F\u673A",
   noWda: "\u8FD9\u53F0 iPhone \u4E0A\u7684 WebDriverAgent \u6CA1\u6709\u8FD0\u884C\u2014\u2014\u7528 ios_real_start_wda \u542F\u52A8\uFF0C\u6216\u5728\u4E0A\u65B9\u9009\u62E9\u6A21\u62DF\u5668\u3002",
   annotate: "\u6807\u6CE8\u622A\u56FE",
+  typeAsciiOnly: "\u952E\u76D8\u8F93\u5165\u4F1A\u4EE5\u786C\u4EF6\u952E\u76D8\u7684\u65B9\u5F0F\u53D1\u9001\u5230\u6A21\u62DF\u5668\uFF0C\u53EA\u652F\u6301\u82F1\u6587\u952E\u76D8\u5B57\u7B26\uFF08\u5B57\u6BCD\u3001\u6570\u5B57\u548C ASCII \u7B26\u53F7\uFF09\uFF0C\u4E0D\u652F\u6301\u4E2D\u6587\u6216\u8868\u60C5\u3002",
+  hideDock: "\u9690\u85CF\u5DE5\u5177\u680F",
+  showDock: "\u663E\u793A\u5DE5\u5177\u680F",
   annotateTools: { pen: "\u753B\u7B14", line: "\u76F4\u7EBF", arrow: "\u7BAD\u5934", rect: "\u77E9\u5F62", ellipse: "\u692D\u5706", text: "\u6587\u5B57" },
   annotateColors: ["\u7EA2", "\u84DD", "\u7EFF", "\u9ED1", "\u767D"],
   undo: "\u64A4\u9500",
@@ -798,6 +804,7 @@ var Menu = class {
 // src/panel/client/protocol.ts
 var SIM_TOUCH_TAG = 3;
 var SIM_BUTTON_TAG = 4;
+var SIM_KEY_TAG = 6;
 var SIM_ROTATE_TAG = 7;
 var SIM_CONFIG_TAG = 130;
 var SIM_ROTATE_ORIENTATIONS = ["portrait", "landscape_left", "portrait_upside_down", "landscape_right"];
@@ -822,6 +829,66 @@ function simButtonFrame(name) {
 }
 function simRotateFrame(orientation) {
   return encodeSimControlFrame(SIM_ROTATE_TAG, { orientation });
+}
+var SHIFT_USAGE = 225;
+var NAMED_KEYS = {
+  Enter: 40,
+  Escape: 41,
+  Backspace: 42,
+  Tab: 43,
+  Home: 74,
+  PageUp: 75,
+  Delete: 76,
+  End: 77,
+  PageDown: 78,
+  ArrowRight: 79,
+  ArrowLeft: 80,
+  ArrowDown: 81,
+  ArrowUp: 82
+};
+var KEY_TABLE = buildKeyTable();
+function buildKeyTable() {
+  const table = {};
+  const add = (characters, base, shift) => {
+    [...characters].forEach((character, index) => {
+      table[character] = { usage: base + index, shift };
+    });
+  };
+  add("abcdefghijklmnopqrstuvwxyz", 4, false);
+  add("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4, true);
+  add("1234567890", 30, false);
+  add("!@#$%^&*()", 30, true);
+  add(" -=", 44, false);
+  add("_+", 45, true);
+  add("[]\\", 47, false);
+  add("{}|", 47, true);
+  add(";", 51, false);
+  add(":", 51, true);
+  add("'", 52, false);
+  add('"', 52, true);
+  add("`", 53, false);
+  add("~", 53, true);
+  add(",", 54, false);
+  add("<", 54, true);
+  add(".", 55, false);
+  add(">", 55, true);
+  add("/", 56, false);
+  add("?", 56, true);
+  return table;
+}
+function simKeyFrame(type, usage) {
+  return encodeSimControlFrame(SIM_KEY_TAG, { type, usage });
+}
+function simKeyFrames(key) {
+  const named = NAMED_KEYS[key];
+  if (named !== void 0) return [simKeyFrame("down", named), simKeyFrame("up", named)];
+  const stroke = KEY_TABLE[key];
+  if (stroke === void 0) return void 0;
+  const frames = [];
+  if (stroke.shift) frames.push(simKeyFrame("down", SHIFT_USAGE));
+  frames.push(simKeyFrame("down", stroke.usage), simKeyFrame("up", stroke.usage));
+  if (stroke.shift) frames.push(simKeyFrame("up", SHIFT_USAGE));
+  return frames;
 }
 function nextSimRotateOrientation(current) {
   const index = SIM_ROTATE_ORIENTATIONS.indexOf(current ?? "");
@@ -903,7 +970,9 @@ var ui = {
   record: element("btn-record"),
   rotate: element("btn-rotate"),
   shutdown: element("btn-shutdown"),
-  detach: element("btn-detach")
+  detach: element("btn-detach"),
+  hideDock: element("btn-hide-dock"),
+  dockHandle: element("dock-handle")
 };
 function stored(key) {
   try {
@@ -933,7 +1002,8 @@ var state = {
   streamFailures: 0,
   dragging: false,
   pendingMove: void 0,
-  moveScheduled: false
+  moveScheduled: false,
+  dockHidden: stored("ios-sim.dock") === "hidden"
 };
 function setStatus(kind, message) {
   ui.status.dataset.kind = kind;
@@ -1174,10 +1244,39 @@ function renderDock() {
   dockButton(ui.rotate, ICONS.rotate, copy.rotateRight, SHORTCUTS.rotateRight);
   dockButton(ui.shutdown, ICONS.power, simulator ? copy.shutdown : copy.simulatorOnly);
   dockButton(ui.detach, ICONS.detach, copy.detach);
+  dockButton(ui.hideDock, icon("chevronDown", 18), copy.hideDock);
   ui.record.classList.toggle("recording", state.recording);
   ui.record.disabled = !simulator;
   ui.shutdown.disabled = !simulator;
 }
+function applyDockVisibility() {
+  document.body.classList.toggle("dock-hidden", state.dockHidden);
+  ui.dockHandle.hidden = !state.dockHidden;
+}
+function setDockHidden(hidden) {
+  state.dockHidden = hidden;
+  store("ios-sim.dock", hidden ? "hidden" : "shown");
+  applyDockVisibility();
+}
+var lastKeyWarning = 0;
+function warnUnsupportedKey() {
+  if (Date.now() - lastKeyWarning < 5e3) return;
+  lastKeyWarning = Date.now();
+  notify(copy.typeAsciiOnly, "error");
+}
+document.addEventListener("keydown", (event) => {
+  if (annotator.isOpen || state.kind !== "simulator") return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  const target = event.target;
+  if (target !== null && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))) return;
+  const frames = simKeyFrames(event.key);
+  if (frames === void 0) {
+    if ([...event.key].length === 1) warnUnsupportedKey();
+    return;
+  }
+  event.preventDefault();
+  for (const frame of frames) send(frame);
+});
 ui.home.addEventListener("click", pressHome);
 ui.home.addEventListener("dblclick", () => deviceAction("app-switcher"));
 ui.annotate.addEventListener("click", toggleAnnotate);
@@ -1194,6 +1293,8 @@ ui.shutdown.addEventListener("click", () => {
 ui.detach.addEventListener("click", () => {
   void detach().catch((error) => report(copy.actionFailed, error));
 });
+ui.hideDock.addEventListener("click", () => setDockHidden(true));
+ui.dockHandle.addEventListener("click", () => setDockHidden(false));
 ui.fullscreen.addEventListener("click", () => {
   if (document.fullscreenElement === null) void document.documentElement.requestFullscreen().catch(() => void 0);
   else void document.exitFullscreen();
@@ -1352,8 +1453,12 @@ function initControls() {
   ui.fullscreen.innerHTML = ICONS.fullscreen;
   ui.fullscreen.title = copy.fullscreen;
   ui.fullscreen.setAttribute("aria-label", copy.fullscreen);
+  ui.dockHandle.innerHTML = icon("chevronDown", 18, 180);
+  ui.dockHandle.title = copy.showDock;
+  ui.dockHandle.setAttribute("aria-label", copy.showDock);
   renderDock();
   renderDeviceButton();
+  applyDockVisibility();
 }
 initControls();
 new ResizeObserver(() => applyLayout()).observe(ui.stage);

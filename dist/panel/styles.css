@@ -280,6 +280,30 @@ body.annotating .dock { display: none; }
 .dock button:hover .tip { display: inline-flex; }
 .dock button:disabled:hover .tip { display: inline-flex; }
 
+/* Hiding the dock leaves a small handle that brings it back. */
+body.dock-hidden .dock { display: none; }
+body.annotating .dock-handle { display: none; }
+.dock-handle {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 24px;
+  transform: translateX(-50%);
+  color: var(--muted);
+  background: var(--popover);
+  border: 1px solid var(--popover-line);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  transition: color 120ms ease, background-color 120ms ease;
+}
+.dock-handle[hidden] { display: none; }
+.dock-handle:hover { color: var(--text); background: var(--hover); }
+
 /* ── annotation ─────────────────────────────────────────────────────────── */
 .annotate-overlay { position: absolute; inset: 0; z-index: 2; cursor: crosshair; touch-action: none; }
 .annotate-overlay[data-tool="text"] { cursor: text; }
