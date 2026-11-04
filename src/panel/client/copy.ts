@@ -38,6 +38,10 @@ export interface PanelCopy {
   /** Placeholder when the shown iPhone has no running WebDriverAgent. */
   noWda: string
   annotate: string
+  /** Shown when a typed key is outside the US keyboard the simulator injects. */
+  typeAsciiOnly: string
+  hideDock: string
+  showDock: string
   annotateTools: Record<'pen' | 'line' | 'arrow' | 'rect' | 'ellipse' | 'text', string>
   /** Names of ANNOTATE_COLORS, in order. */
   annotateColors: string[]
@@ -114,6 +118,9 @@ const EN: PanelCopy = {
   realDevice: 'real device',
   noWda: 'WebDriverAgent is not running on this iPhone — start it with ios_real_start_wda, or pick a simulator above.',
   annotate: 'Annotate a screenshot',
+  typeAsciiOnly: 'Typing goes to the simulator as a hardware keyboard, which types US-keyboard characters only — letters, digits and ASCII punctuation (no Chinese or emoji).',
+  hideDock: 'Hide toolbar',
+  showDock: 'Show toolbar',
   annotateTools: { pen: 'Pen', line: 'Line', arrow: 'Arrow', rect: 'Box', ellipse: 'Ellipse', text: 'Text' },
   annotateColors: ['Red', 'Blue', 'Green', 'Black', 'White'],
   undo: 'Undo',
@@ -187,6 +194,9 @@ const ZH: PanelCopy = {
   realDevice: '真机',
   noWda: '这台 iPhone 上的 WebDriverAgent 没有运行——用 ios_real_start_wda 启动，或在上方选择模拟器。',
   annotate: '标注截图',
+  typeAsciiOnly: '键盘输入会以硬件键盘的方式发送到模拟器，只支持英文键盘字符（字母、数字和 ASCII 符号），不支持中文或表情。',
+  hideDock: '隐藏工具栏',
+  showDock: '显示工具栏',
   annotateTools: { pen: '画笔', line: '直线', arrow: '箭头', rect: '矩形', ellipse: '椭圆', text: '文字' },
   annotateColors: ['红', '蓝', '绿', '黑', '白'],
   undo: '撤销',

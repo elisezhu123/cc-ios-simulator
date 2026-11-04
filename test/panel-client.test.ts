@@ -16,6 +16,7 @@ import {
   normalizePointerPoint,
   parseSimConfigFrame,
   simButtonFrame,
+  simKeyFrames,
   simRotateFrame,
   simTouchFrame,
 } from '../src/panel/client/protocol.js'
@@ -30,6 +31,33 @@ test('control frames are [tag][json]; config frames parse defensively', () => {
   assert.deepEqual(parseSimConfigFrame(config.buffer), { width: 1206, height: 2622, orientation: 'landscape_left' })
   assert.equal(parseSimConfigFrame(simButtonFrame('home')), undefined)
   assert.equal(parseSimConfigFrame(new Uint8Array([130, 123])), undefined)
+})
+
+test('typed keys become HID key frames, with Shift held around shifted characters', () => {
+  const frames = (key: string): Array<Record<string, unknown>> | undefined =>
+    simKeyFrames(key)?.map(frame => ({
+      tag: frame[0],
+      ...JSON.parse(new TextDecoder().decode(frame.subarray(1))) as Record<string, unknown>,
+    }))
+  assert.deepEqual(frames('a'), [
+    { tag: 6, type: 'down', usage: 4 },
+    { tag: 6, type: 'up', usage: 4 },
+  ])
+  assert.deepEqual(frames('A'), [
+    { tag: 6, type: 'down', usage: 225 },
+    { tag: 6, type: 'down', usage: 4 },
+    { tag: 6, type: 'up', usage: 4 },
+    { tag: 6, type: 'up', usage: 225 },
+  ])
+  assert.deepEqual(frames(' ')?.[0], { tag: 6, type: 'down', usage: 44 })
+  assert.deepEqual(frames('1')?.[0], { tag: 6, type: 'down', usage: 30 })
+  assert.deepEqual(frames('?')?.[1], { tag: 6, type: 'down', usage: 56 })
+  assert.deepEqual(frames('Backspace'), [
+    { tag: 6, type: 'down', usage: 42 },
+    { tag: 6, type: 'up', usage: 42 },
+  ])
+  assert.equal(frames('中'), undefined)
+  assert.equal(frames('F1'), undefined)
 })
 
 test('rotation cycles clockwise from portrait and pointer points normalize to the box', () => {

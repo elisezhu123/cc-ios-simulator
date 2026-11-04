@@ -3,7 +3,9 @@
  * Simulator: a title bar, a menu bar (device picker, Device, Debug), the
  * device in its frame, and a floating dock (Home, annotate, save screenshot,
  * record, rotate, shut down, detach) with shortcut tooltips. Touches go to
- * serve-sim as frames over /ws; behaviour follows dsh-ios's React sim-panel.
+ * serve-sim as frames over /ws, and so do keystrokes typed while the panel has
+ * focus (the simulator types them as a hardware keyboard); behaviour follows
+ * dsh-ios's React sim-panel.
  * @module ios-simulator/panel/client/main
  */
 
@@ -33,6 +35,7 @@ import {
   normalizePointerPoint,
   parseSimConfigFrame,
   simButtonFrame,
+  simKeyFrames,
   simRotateFrame,
   simTouchFrame,
   type SimPoint,
@@ -95,6 +98,8 @@ const ui = {
   rotate: element<HTMLButtonElement>('btn-rotate'),
   shutdown: element<HTMLButtonElement>('btn-shutdown'),
   detach: element<HTMLButtonElement>('btn-detach'),
+  hideDock: element<HTMLButtonElement>('btn-hide-dock'),
+  dockHandle: element<HTMLButtonElement>('dock-handle'),
 }
 
 interface DeviceRow {
@@ -126,6 +131,8 @@ interface PanelState {
   dragging: boolean
   pendingMove: SimPoint | undefined
   moveScheduled: boolean
+  /** The dock is collapsed to its handle (persisted in localStorage). */
+  dockHidden: boolean
 }
 
 function stored(key: string): string | null {
@@ -160,6 +167,7 @@ const state: PanelState = {
   dragging: false,
   pendingMove: undefined,
   moveScheduled: false,
+  dockHidden: stored('ios-sim.dock') === 'hidden',
 }
 
 function setStatus(kind: 'connecting' | 'live' | 'offline', message?: string): void {
@@ -446,10 +454,55 @@ function renderDock(): void {
   dockButton(ui.rotate, ICONS.rotate, copy.rotateRight, SHORTCUTS.rotateRight)
   dockButton(ui.shutdown, ICONS.power, simulator ? copy.shutdown : copy.simulatorOnly)
   dockButton(ui.detach, ICONS.detach, copy.detach)
+  dockButton(ui.hideDock, icon('chevronDown', 18), copy.hideDock)
   ui.record.classList.toggle('recording', state.recording)
   ui.record.disabled = !simulator
   ui.shutdown.disabled = !simulator
 }
+
+// ── dock visibility ───────────────────────────────────────────────────────────
+
+function applyDockVisibility(): void {
+  document.body.classList.toggle('dock-hidden', state.dockHidden)
+  ui.dockHandle.hidden = !state.dockHidden
+}
+
+function setDockHidden(hidden: boolean): void {
+  state.dockHidden = hidden
+  store('ios-sim.dock', hidden ? 'hidden' : 'shown')
+  applyDockVisibility()
+}
+
+// ── hardware keyboard ─────────────────────────────────────────────────────────
+
+let lastKeyWarning = 0
+
+/** Say once every few seconds that the simulator keyboard cannot type this key. */
+function warnUnsupportedKey(): void {
+  if (Date.now() - lastKeyWarning < 5000) return
+  lastKeyWarning = Date.now()
+  notify(copy.typeAsciiOnly, 'error')
+}
+
+/**
+ * Keystrokes go to the simulator as hardware HID events while the panel has
+ * focus — the same path serve-sim's own preview uses. Text fields are left
+ * alone (the annotation text tool), and shell shortcuts stay with the browser.
+ */
+document.addEventListener('keydown', event => {
+  if (annotator.isOpen || state.kind !== 'simulator') return
+  if (event.metaKey || event.ctrlKey || event.altKey) return
+  const target = event.target as HTMLElement | null
+  if (target !== null && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))) return
+  const frames = simKeyFrames(event.key)
+  if (frames === undefined) {
+    // A printable character outside the US keyboard (Chinese, emoji) is ignored.
+    if ([...event.key].length === 1) warnUnsupportedKey()
+    return
+  }
+  event.preventDefault()
+  for (const frame of frames) send(frame)
+})
 
 ui.home.addEventListener('click', pressHome)
 ui.home.addEventListener('dblclick', () => deviceAction('app-switcher'))
@@ -459,6 +512,8 @@ ui.record.addEventListener('click', () => { void toggleRecording().catch(error =
 ui.rotate.addEventListener('click', () => rotate(1))
 ui.shutdown.addEventListener('click', () => { void shutdown().catch(error => report(copy.actionFailed, error)) })
 ui.detach.addEventListener('click', () => { void detach().catch(error => report(copy.actionFailed, error)) })
+ui.hideDock.addEventListener('click', () => setDockHidden(true))
+ui.dockHandle.addEventListener('click', () => setDockHidden(false))
 ui.fullscreen.addEventListener('click', () => {
   if (document.fullscreenElement === null) void document.documentElement.requestFullscreen().catch(() => undefined)
   else void document.exitFullscreen()
@@ -634,8 +689,12 @@ function initControls(): void {
   ui.fullscreen.innerHTML = ICONS.fullscreen
   ui.fullscreen.title = copy.fullscreen
   ui.fullscreen.setAttribute('aria-label', copy.fullscreen)
+  ui.dockHandle.innerHTML = icon('chevronDown', 18, 180)
+  ui.dockHandle.title = copy.showDock
+  ui.dockHandle.setAttribute('aria-label', copy.showDock)
   renderDock()
   renderDeviceButton()
+  applyDockVisibility()
 }
 
 initControls()

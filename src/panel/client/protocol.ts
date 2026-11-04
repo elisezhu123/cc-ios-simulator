@@ -2,13 +2,15 @@
 /**
  * serve-sim control frames for the browser panel — the byte-identical twin of
  * src/sim-gesture.ts on the host. Every frame is `[tag byte][utf-8 JSON]`:
- * tag 3 touch `{type,x,y}` (0..1), tag 4 button `{button}`, tag 7 rotate
- * `{orientation}`; serve-sim broadcasts tag 130 `{width,height,orientation}`.
+ * tag 3 touch `{type,x,y}` (0..1), tag 4 button `{button}`, tag 6 HID key
+ * `{type,usage}`, tag 7 rotate `{orientation}`; serve-sim broadcasts tag 130
+ * `{width,height,orientation}`.
  * @module ios-simulator/panel/client/protocol
  */
 
 export const SIM_TOUCH_TAG = 3
 export const SIM_BUTTON_TAG = 4
+export const SIM_KEY_TAG = 6
 export const SIM_ROTATE_TAG = 7
 export const SIM_CONFIG_TAG = 130
 
@@ -53,6 +55,89 @@ export function simButtonFrame(name: string): Uint8Array {
 
 export function simRotateFrame(orientation: string): Uint8Array {
   return encodeSimControlFrame(SIM_ROTATE_TAG, { orientation })
+}
+
+/**
+ * USB HID keyboard usages (page 0x07) for the keys the panel forwards. serve-sim
+ * injects these frames as hardware-keyboard events, so the simulator types as
+ * if a Mac keyboard were attached — no server round trip per key.
+ */
+export interface SimKeyStroke {
+  usage: number
+  shift: boolean
+}
+
+/** Shift (0xE1) — held down around a shifted character. */
+const SHIFT_USAGE = 225
+
+/** Keys that are not one printable character, by `KeyboardEvent.key`. */
+const NAMED_KEYS: Readonly<Record<string, number>> = {
+  Enter: 40,
+  Escape: 41,
+  Backspace: 42,
+  Tab: 43,
+  Home: 74,
+  PageUp: 75,
+  Delete: 76,
+  End: 77,
+  PageDown: 78,
+  ArrowRight: 79,
+  ArrowLeft: 80,
+  ArrowDown: 81,
+  ArrowUp: 82,
+}
+
+const KEY_TABLE: Readonly<Record<string, SimKeyStroke>> = buildKeyTable()
+
+/** US-keyboard ASCII: each character's usage and whether it needs Shift. */
+function buildKeyTable(): Record<string, SimKeyStroke> {
+  const table: Record<string, SimKeyStroke> = {}
+  const add = (characters: string, base: number, shift: boolean): void => {
+    [...characters].forEach((character, index) => {
+      table[character] = { usage: base + index, shift }
+    })
+  }
+  add('abcdefghijklmnopqrstuvwxyz', 4, false)
+  add('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 4, true)
+  add('1234567890', 30, false)
+  add('!@#$%^&*()', 30, true)
+  add(' -=', 44, false)
+  add('_+', 45, true)
+  add('[]\\', 47, false)
+  add('{}|', 47, true)
+  add(';', 51, false)
+  add(':', 51, true)
+  add("'", 52, false)
+  add('"', 52, true)
+  add('`', 53, false)
+  add('~', 53, true)
+  add(',', 54, false)
+  add('<', 54, true)
+  add('.', 55, false)
+  add('>', 55, true)
+  add('/', 56, false)
+  add('?', 56, true)
+  return table
+}
+
+export function simKeyFrame(type: 'down' | 'up', usage: number): Uint8Array {
+  return encodeSimControlFrame(SIM_KEY_TAG, { type, usage })
+}
+
+/**
+ * The frames for one key press — down then up, with Shift held around a shifted
+ * character; undefined when the panel does not forward this key.
+ */
+export function simKeyFrames(key: string): Uint8Array[] | undefined {
+  const named = NAMED_KEYS[key]
+  if (named !== undefined) return [simKeyFrame('down', named), simKeyFrame('up', named)]
+  const stroke = KEY_TABLE[key]
+  if (stroke === undefined) return undefined
+  const frames: Uint8Array[] = []
+  if (stroke.shift) frames.push(simKeyFrame('down', SHIFT_USAGE))
+  frames.push(simKeyFrame('down', stroke.usage), simKeyFrame('up', stroke.usage))
+  if (stroke.shift) frames.push(simKeyFrame('up', SHIFT_USAGE))
+  return frames
 }
 
 /** The next orientation clockwise (unknown starts from portrait). */

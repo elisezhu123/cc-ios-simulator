@@ -48189,6 +48189,36 @@ var SIM_CONFIG_TAG = 130;
 function isRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+var KEY_TABLE = buildKeyTable();
+function buildKeyTable() {
+  const table = {};
+  const add = (characters, base, shift) => {
+    [...characters].forEach((character, index) => {
+      table[character] = { usage: base + index, shift };
+    });
+  };
+  add("abcdefghijklmnopqrstuvwxyz", 4, false);
+  add("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4, true);
+  add("1234567890", 30, false);
+  add("!@#$%^&*()", 30, true);
+  add(" -=", 44, false);
+  add("_+", 45, true);
+  add("[]\\", 47, false);
+  add("{}|", 47, true);
+  add(";", 51, false);
+  add(":", 51, true);
+  add("'", 52, false);
+  add('"', 52, true);
+  add("`", 53, false);
+  add("~", 53, true);
+  add(",", 54, false);
+  add("<", 54, true);
+  add(".", 55, false);
+  add(">", 55, true);
+  add("/", 56, false);
+  add("?", 56, true);
+  return table;
+}
 function messageBytes(data) {
   if (data instanceof ArrayBuffer) return new Uint8Array(data);
   if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
