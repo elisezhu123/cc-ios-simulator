@@ -167,7 +167,7 @@ const state: PanelState = {
   dragging: false,
   pendingMove: undefined,
   moveScheduled: false,
-  dockHidden: stored('ios-sim.dock') === 'hidden',
+  dockHidden: stored('ios-sim.dock') !== 'shown',
 }
 
 function setStatus(kind: 'connecting' | 'live' | 'offline', message?: string): void {

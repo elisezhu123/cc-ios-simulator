@@ -1003,7 +1003,7 @@ var state = {
   dragging: false,
   pendingMove: void 0,
   moveScheduled: false,
-  dockHidden: stored("ios-sim.dock") === "hidden"
+  dockHidden: stored("ios-sim.dock") !== "shown"
 };
 function setStatus(kind, message) {
   ui.status.dataset.kind = kind;
