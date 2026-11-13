@@ -11,7 +11,7 @@ import { z } from 'zod'
 import type { ToolDeps } from '../deps.js'
 import { DEVICE_ACTIONS, isDeviceAction } from '../device-actions.js'
 import { interactControlArgs, performSimInteract, type SimInteractArgs, type SimInteractDelivery } from '../interact.js'
-import { isLandscape, readSimScreenConfig, toFramebufferArgs, type Landscape } from '../orientation.js'
+import { forgetSimScreenConfig, isLandscape, simScreenConfig, toFramebufferArgs, type Landscape } from '../orientation.js'
 import { captureWda, planWdaInteract, runWdaInteract } from '../real-ui.js'
 import { assertMac, assertStreamAvailable, ensureStreamFor, realDeviceSummary, requireBooted, resolveToolTarget, sortDevices } from '../target.js'
 import { deviceSummary, jsonResult, runTool, sleep, UDID_PARAM } from './result.js'
@@ -58,10 +58,18 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
    */
   const rememberedLandscape = new Map<string, Landscape>()
   /** serve-sim's orientation for a streamed device; portrait when unknown. Landscape readings are remembered. */
+  /** The stream launch the cached screen config was read from. */
+  let configStream: object | undefined
   const orientationOf = async (udid: string): Promise<string> => {
     const info = deps.host.streamInfo
     if (info === undefined || info.device !== udid) return 'portrait'
-    const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
+    // A relaunched stream is a new serve-sim session that starts at portrait, often on the same
+    // control-socket url: what the previous session reported says nothing about it.
+    if (info !== configStream) {
+      forgetSimScreenConfig(info.wsUrl)
+      configStream = info
+    }
+    const orientation = (await simScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
     if (isLandscape(orientation)) rememberedLandscape.set(udid, orientation)
     return orientation
   }
@@ -368,7 +376,10 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       }
       const rotate = deps.stream.control.rotate
       if (rotate === undefined) throw new Error('this stream backend cannot rotate the device')
+      // serve-sim's orientation is about to change: the next coordinate mapping must read it again.
+      forgetSimScreenConfig()
       await rotate(args.orientation)
+      forgetSimScreenConfig()
       if (isLandscape(args.orientation)) rememberedLandscape.set(device.udid, args.orientation)
       else rememberedLandscape.delete(device.udid)
     } else if (args.action === 'device_action') {

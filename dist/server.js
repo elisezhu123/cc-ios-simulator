@@ -40528,6 +40528,7 @@ var DEFAULT_PANEL_PORT = 3456;
 var PANEL_PORT_ATTEMPTS = 21;
 var INTERACT_SETTLE_MS = 300;
 var TARGET_DEVICE_CACHE_MS = 1e4;
+var STREAMED_DEVICE_MAX_AGE_MS = 6e4;
 var RECORD_STOP_TIMEOUT_MS = 1e4;
 var RECORD_START_TIMEOUT_MS = 15e3;
 var OCR_POLL_INTERVAL_MS = 600;
@@ -45273,6 +45274,81 @@ var import_subprotocol = __toESM(require_subprotocol(), 1);
 var import_websocket = __toESM(require_websocket(), 1);
 var import_websocket_server = __toESM(require_websocket_server(), 1);
 
+// src/panel/client/layout.ts
+var SIZE_OPTIONS = [
+  { id: "fit", mode: { kind: "fit" }, en: "Fit", zh: "\u9002\u5E94" },
+  ...[50, 75, 100, 125].map((value) => ({ id: `percent-${value}`, mode: { kind: "percent", value }, en: `${value}%`, zh: `${value}%` })),
+  { id: "preset-S", mode: { kind: "preset", width: 240 }, en: "S \xB7 240px", zh: "S\uFF08240px\uFF09" },
+  { id: "preset-M", mode: { kind: "preset", width: 320 }, en: "M \xB7 320px", zh: "M\uFF08320px\uFF09" },
+  { id: "preset-L", mode: { kind: "preset", width: 420 }, en: "L \xB7 420px", zh: "L\uFF08420px\uFF09" }
+];
+function framebufferPoint(orientation, displayed) {
+  switch (orientation) {
+    case "landscape_left":
+      return { x: displayed.y, y: 1 - displayed.x };
+    case "landscape_right":
+      return { x: 1 - displayed.y, y: displayed.x };
+    case "portrait_upside_down":
+      return { x: 1 - displayed.x, y: 1 - displayed.y };
+    default:
+      return { x: displayed.x, y: displayed.y };
+  }
+}
+
+// src/panel/client/protocol.ts
+var SIM_ROTATE_TAG = 7;
+var SIM_CONFIG_TAG = 130;
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+var KEY_TABLE = buildKeyTable();
+function buildKeyTable() {
+  const table = {};
+  const add = (characters, base, shift) => {
+    [...characters].forEach((character, index) => {
+      table[character] = { usage: base + index, shift };
+    });
+  };
+  add("abcdefghijklmnopqrstuvwxyz", 4, false);
+  add("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4, true);
+  add("1234567890", 30, false);
+  add("!@#$%^&*()", 30, true);
+  add(" -=", 44, false);
+  add("_+", 45, true);
+  add("[]\\", 47, false);
+  add("{}|", 47, true);
+  add(";", 51, false);
+  add(":", 51, true);
+  add("'", 52, false);
+  add('"', 52, true);
+  add("`", 53, false);
+  add("~", 53, true);
+  add(",", 54, false);
+  add("<", 54, true);
+  add(".", 55, false);
+  add(">", 55, true);
+  add("/", 56, false);
+  add("?", 56, true);
+  return table;
+}
+function messageBytes(data) {
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  return void 0;
+}
+function parseSimConfigFrame(data) {
+  const bytes = messageBytes(data);
+  if (bytes === void 0 || bytes.length < 2 || bytes[0] !== SIM_CONFIG_TAG) return void 0;
+  try {
+    const value = JSON.parse(new TextDecoder().decode(bytes.subarray(1)));
+    if (isRecord(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
+      return { width: value.width, height: value.height, orientation: value.orientation };
+    }
+  } catch {
+  }
+  return void 0;
+}
+
 // src/sim-gesture.ts
 var SIM_TOUCH_TAG = 3;
 var SIM_KEY_TAG = 6;
@@ -45528,9 +45604,102 @@ function closeSocket(socket, closedState) {
   });
 }
 
+// src/orientation.ts
+function isLandscape(orientation) {
+  return orientation === "landscape_left" || orientation === "landscape_right";
+}
+var timeoutsInARow = /* @__PURE__ */ new Map();
+var givenUpAt = /* @__PURE__ */ new Map();
+var SILENT_AFTER_READS = 2;
+var SILENT_RETRY_MS = 6e4;
+function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
+  const since = givenUpAt.get(wsUrl);
+  if (since !== void 0 && now() - since < SILENT_RETRY_MS) return Promise.resolve(void 0);
+  return new Promise((resolve7) => {
+    let settled = false;
+    const socket = new import_websocket.default(wsUrl, { perMessageDeflate: false });
+    const finish = (config2) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.terminate();
+      resolve7(config2);
+    };
+    const timer = setTimeout(() => {
+      const timeouts = (timeoutsInARow.get(wsUrl) ?? 0) + 1;
+      timeoutsInARow.set(wsUrl, timeouts);
+      if (timeouts >= SILENT_AFTER_READS) givenUpAt.set(wsUrl, now());
+      finish(void 0);
+    }, timeoutMs);
+    socket.on("message", (data) => {
+      const config2 = parseSimConfigFrame(data);
+      if (config2 === void 0) return;
+      timeoutsInARow.delete(wsUrl);
+      givenUpAt.delete(wsUrl);
+      finish(config2);
+    });
+    socket.on("error", () => finish(void 0));
+    socket.on("close", () => finish(void 0));
+  });
+}
+var SIM_CONFIG_MAX_AGE_MS = 3e4;
+var knownConfigs = /* @__PURE__ */ new Map();
+async function simScreenConfig(wsUrl, maxAgeMs = SIM_CONFIG_MAX_AGE_MS, timeoutMs) {
+  const known = knownConfigs.get(wsUrl);
+  if (known !== void 0 && maxAgeMs > 0 && Date.now() - known.at <= maxAgeMs) return known.config;
+  const config2 = await readSimScreenConfig(wsUrl, timeoutMs);
+  if (config2 !== void 0) noteSimScreenConfig(wsUrl, config2);
+  return config2;
+}
+function noteSimScreenConfig(wsUrl, config2) {
+  knownConfigs.set(wsUrl, { at: Date.now(), config: config2 });
+}
+function forgetSimScreenConfig(wsUrl) {
+  if (wsUrl === void 0) knownConfigs.clear();
+  else knownConfigs.delete(wsUrl);
+}
+var SCROLL_DIRECTIONS = {
+  landscape_left: { down: "right", up: "left", right: "up", left: "down" },
+  landscape_right: { down: "left", up: "right", right: "down", left: "up" }
+};
+function toFramebufferArgs(orientation, args) {
+  if (!isLandscape(orientation)) return args;
+  const map2 = (x, y) => framebufferPoint(orientation, { x, y });
+  switch (args.action) {
+    case "tap": {
+      if (typeof args.x !== "number" || typeof args.y !== "number") return args;
+      const point = map2(args.x, args.y);
+      return { ...args, x: point.x, y: point.y };
+    }
+    case "scroll": {
+      const anchor2 = map2(args.x ?? 0.5, args.y ?? 0.5);
+      const direction = args.direction === void 0 ? void 0 : SCROLL_DIRECTIONS[orientation][args.direction];
+      return { ...args, x: anchor2.x, y: anchor2.y, ...direction === void 0 ? {} : { direction } };
+    }
+    case "gesture": {
+      const json2 = args.json;
+      if (typeof json2 !== "object" || json2 === null || Array.isArray(json2)) return args;
+      const record3 = json2;
+      const drag = simDragRequestOf(record3);
+      if (drag !== void 0) {
+        const from = map2(drag.fromX, drag.fromY);
+        const to = map2(drag.toX, drag.toY);
+        return { ...args, json: { ...record3, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y } };
+      }
+      if (typeof record3.x === "number" && typeof record3.y === "number") {
+        const point = map2(record3.x, record3.y);
+        return { ...args, json: { ...record3, x: point.x, y: point.y } };
+      }
+      return args;
+    }
+    default:
+      return args;
+  }
+}
+
 // src/interact.ts
 var SCROLL_HOLD_MS = 175;
-var SCROLL_DIRECTIONS = ["up", "down", "left", "right"];
+var SCROLL_DIRECTIONS2 = ["up", "down", "left", "right"];
 var US_KEYBOARD_TEXT = /^[\x20-\x7E\t\n]+$/u;
 var TEXT_RUNS = /[\x20-\x7E\t\n]+|[^\x20-\x7E\t\n]+/gu;
 var PASTE_SETTLE_MS = 250;
@@ -45560,7 +45729,7 @@ function errorMessage9(error62) {
 }
 function scrollRequestOf(args) {
   const direction = args.direction;
-  if (direction === void 0 || !SCROLL_DIRECTIONS.includes(direction)) {
+  if (direction === void 0 || !SCROLL_DIRECTIONS2.includes(direction)) {
     throw new Error(
       `ios_sim_interact: action "scroll" requires direction "up", "down", "left" or "right" (got ${direction === void 0 ? "nothing" : JSON.stringify(direction)})`
     );
@@ -46836,11 +47005,31 @@ function pickPreferred(devices) {
   return picked;
 }
 var REAL_DEVICE_TOOLS = "ios_sim_list_apps, ios_sim_launch_app, ios_sim_install_app, ios_sim_processes, ios_sim_app_info, and \u2014 once ios_real_start_wda has started WebDriverAgent \u2014 ios_sim_screenshot, ios_sim_interact, ios_sim_ui_tree, ios_sim_tap_element, ios_sim_find_text, ios_sim_tap_text, ios_sim_wait_for, ios_sim_ui_rows and ios_sim_tap_row";
+var streamedDevices = /* @__PURE__ */ new WeakMap();
+function streamedDevice(host, reference) {
+  const status = host.status();
+  const known = streamedDevices.get(host);
+  if (!status.running || known === void 0 || known.device.udid !== status.device) return void 0;
+  if (Date.now() - known.at > STREAMED_DEVICE_MAX_AGE_MS) return void 0;
+  const device = known.device;
+  const wanted = reference?.trim() ?? "";
+  if (wanted !== "" && wanted !== device.udid && wanted.toLowerCase() !== device.name.toLowerCase()) return void 0;
+  return device;
+}
+function rememberStreamed(host, device) {
+  const status = host.status();
+  if (status.running && status.device === device.udid && device.state === "Booted") streamedDevices.set(host, { device, at: Date.now() });
+  return device;
+}
 async function resolveTargetDevice(deps, reference, options = {}) {
   const listing = options.bootFallback === true ? {} : { maxAgeMs: TARGET_DEVICE_CACHE_MS };
+  if (options.bootFallback !== true) {
+    const streamed = streamedDevice(deps.host, reference);
+    if (streamed !== void 0) return streamed;
+  }
   if (reference !== void 0 && reference.trim() !== "") {
     try {
-      return await deps.simctl.getDevice(reference, listing);
+      return rememberStreamed(deps.host, await deps.simctl.getDevice(reference, listing));
     } catch (error62) {
       if (deps.realDevices !== void 0 && await deps.realDevices.matches(reference)) {
         throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only \u2014 on a real device use ${REAL_DEVICE_TOOLS}`);
@@ -46851,7 +47040,7 @@ async function resolveTargetDevice(deps, reference, options = {}) {
   const status = deps.host.status();
   if (status.running && status.device !== void 0) {
     try {
-      return await deps.simctl.getDevice(status.device, listing);
+      return rememberStreamed(deps.host, await deps.simctl.getDevice(status.device, listing));
     } catch {
     }
   }
@@ -46878,9 +47067,11 @@ async function ensureStreamFor(host, device) {
 }
 async function resolveToolTarget(deps, reference) {
   if (reference === void 0 || reference.trim() === "") return { kind: "simulator", device: await resolveTargetDevice(deps, reference) };
+  const streamed = streamedDevice(deps.host, reference);
+  if (streamed !== void 0) return { kind: "simulator", device: streamed };
   let simulatorError;
   try {
-    return { kind: "simulator", device: await deps.simctl.getDevice(reference, { maxAgeMs: TARGET_DEVICE_CACHE_MS }) };
+    return { kind: "simulator", device: rememberStreamed(deps.host, await deps.simctl.getDevice(reference, { maxAgeMs: TARGET_DEVICE_CACHE_MS })) };
   } catch (error62) {
     simulatorError = error62;
   }
@@ -47684,10 +47875,13 @@ var PanelServer = class {
       });
       client.on("message", (data, isBinary) => {
         const frame = { data: toBuffer(data), binary: isBinary };
+        if (frame.data[0] === SIM_ROTATE_TAG) forgetSimScreenConfig(wsUrl);
         if (target.readyState === import_websocket.default.OPEN) target.send(frame.data, { binary: frame.binary });
         else if (pending.length < MAX_PENDING_WS_FRAMES) pending.push(frame);
       });
       target.on("message", (data, isBinary) => {
+        const config2 = parseSimConfigFrame(data);
+        if (config2 !== void 0) noteSimScreenConfig(wsUrl, config2);
         if (client.readyState === import_websocket.default.OPEN) client.send(toBuffer(data), { binary: isBinary });
       });
     });
@@ -48249,157 +48443,6 @@ function registerAppTools(server, deps) {
   }));
 }
 
-// src/panel/client/layout.ts
-var SIZE_OPTIONS = [
-  { id: "fit", mode: { kind: "fit" }, en: "Fit", zh: "\u9002\u5E94" },
-  ...[50, 75, 100, 125].map((value) => ({ id: `percent-${value}`, mode: { kind: "percent", value }, en: `${value}%`, zh: `${value}%` })),
-  { id: "preset-S", mode: { kind: "preset", width: 240 }, en: "S \xB7 240px", zh: "S\uFF08240px\uFF09" },
-  { id: "preset-M", mode: { kind: "preset", width: 320 }, en: "M \xB7 320px", zh: "M\uFF08320px\uFF09" },
-  { id: "preset-L", mode: { kind: "preset", width: 420 }, en: "L \xB7 420px", zh: "L\uFF08420px\uFF09" }
-];
-function framebufferPoint(orientation, displayed) {
-  switch (orientation) {
-    case "landscape_left":
-      return { x: displayed.y, y: 1 - displayed.x };
-    case "landscape_right":
-      return { x: 1 - displayed.y, y: displayed.x };
-    case "portrait_upside_down":
-      return { x: 1 - displayed.x, y: 1 - displayed.y };
-    default:
-      return { x: displayed.x, y: displayed.y };
-  }
-}
-
-// src/panel/client/protocol.ts
-var SIM_CONFIG_TAG = 130;
-function isRecord(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-var KEY_TABLE = buildKeyTable();
-function buildKeyTable() {
-  const table = {};
-  const add = (characters, base, shift) => {
-    [...characters].forEach((character, index) => {
-      table[character] = { usage: base + index, shift };
-    });
-  };
-  add("abcdefghijklmnopqrstuvwxyz", 4, false);
-  add("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4, true);
-  add("1234567890", 30, false);
-  add("!@#$%^&*()", 30, true);
-  add(" -=", 44, false);
-  add("_+", 45, true);
-  add("[]\\", 47, false);
-  add("{}|", 47, true);
-  add(";", 51, false);
-  add(":", 51, true);
-  add("'", 52, false);
-  add('"', 52, true);
-  add("`", 53, false);
-  add("~", 53, true);
-  add(",", 54, false);
-  add("<", 54, true);
-  add(".", 55, false);
-  add(">", 55, true);
-  add("/", 56, false);
-  add("?", 56, true);
-  return table;
-}
-function messageBytes(data) {
-  if (data instanceof ArrayBuffer) return new Uint8Array(data);
-  if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  return void 0;
-}
-function parseSimConfigFrame(data) {
-  const bytes = messageBytes(data);
-  if (bytes === void 0 || bytes.length < 2 || bytes[0] !== SIM_CONFIG_TAG) return void 0;
-  try {
-    const value = JSON.parse(new TextDecoder().decode(bytes.subarray(1)));
-    if (isRecord(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
-      return { width: value.width, height: value.height, orientation: value.orientation };
-    }
-  } catch {
-  }
-  return void 0;
-}
-
-// src/orientation.ts
-function isLandscape(orientation) {
-  return orientation === "landscape_left" || orientation === "landscape_right";
-}
-var timeoutsInARow = /* @__PURE__ */ new Map();
-var givenUpAt = /* @__PURE__ */ new Map();
-var SILENT_AFTER_READS = 2;
-var SILENT_RETRY_MS = 6e4;
-function readSimScreenConfig(wsUrl, timeoutMs = 800, now = Date.now) {
-  const since = givenUpAt.get(wsUrl);
-  if (since !== void 0 && now() - since < SILENT_RETRY_MS) return Promise.resolve(void 0);
-  return new Promise((resolve7) => {
-    let settled = false;
-    const socket = new import_websocket.default(wsUrl, { perMessageDeflate: false });
-    const finish = (config2) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      socket.terminate();
-      resolve7(config2);
-    };
-    const timer = setTimeout(() => {
-      const timeouts = (timeoutsInARow.get(wsUrl) ?? 0) + 1;
-      timeoutsInARow.set(wsUrl, timeouts);
-      if (timeouts >= SILENT_AFTER_READS) givenUpAt.set(wsUrl, now());
-      finish(void 0);
-    }, timeoutMs);
-    socket.on("message", (data) => {
-      const config2 = parseSimConfigFrame(data);
-      if (config2 === void 0) return;
-      timeoutsInARow.delete(wsUrl);
-      givenUpAt.delete(wsUrl);
-      finish(config2);
-    });
-    socket.on("error", () => finish(void 0));
-    socket.on("close", () => finish(void 0));
-  });
-}
-var SCROLL_DIRECTIONS2 = {
-  landscape_left: { down: "right", up: "left", right: "up", left: "down" },
-  landscape_right: { down: "left", up: "right", right: "down", left: "up" }
-};
-function toFramebufferArgs(orientation, args) {
-  if (!isLandscape(orientation)) return args;
-  const map2 = (x, y) => framebufferPoint(orientation, { x, y });
-  switch (args.action) {
-    case "tap": {
-      if (typeof args.x !== "number" || typeof args.y !== "number") return args;
-      const point = map2(args.x, args.y);
-      return { ...args, x: point.x, y: point.y };
-    }
-    case "scroll": {
-      const anchor2 = map2(args.x ?? 0.5, args.y ?? 0.5);
-      const direction = args.direction === void 0 ? void 0 : SCROLL_DIRECTIONS2[orientation][args.direction];
-      return { ...args, x: anchor2.x, y: anchor2.y, ...direction === void 0 ? {} : { direction } };
-    }
-    case "gesture": {
-      const json2 = args.json;
-      if (typeof json2 !== "object" || json2 === null || Array.isArray(json2)) return args;
-      const record3 = json2;
-      const drag = simDragRequestOf(record3);
-      if (drag !== void 0) {
-        const from = map2(drag.fromX, drag.fromY);
-        const to = map2(drag.toX, drag.toY);
-        return { ...args, json: { ...record3, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y } };
-      }
-      if (typeof record3.x === "number" && typeof record3.y === "number") {
-        const point = map2(record3.x, record3.y);
-        return { ...args, json: { ...record3, x: point.x, y: point.y } };
-      }
-      return args;
-    }
-    default:
-      return args;
-  }
-}
-
 // src/tools/core.ts
 var ROTATE_ORIENTATIONS = ["portrait", "landscape_left", "portrait_upside_down", "landscape_right"];
 var XCODE27_TYPE_HINT = " \u2014 with Xcode 27, keyboard input needs Device Hub running with this simulator visible and frontmost, and the app that launched Claude enabled under System Settings \u25B8 Privacy & Security \u25B8 Accessibility; if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)";
@@ -48416,10 +48459,15 @@ function annotationHint(deps) {
 function registerCoreTools(server, deps) {
   const lastImageLandscape = /* @__PURE__ */ new Map();
   const rememberedLandscape = /* @__PURE__ */ new Map();
+  let configStream;
   const orientationOf = async (udid) => {
     const info = deps.host.streamInfo;
     if (info === void 0 || info.device !== udid) return "portrait";
-    const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? "portrait";
+    if (info !== configStream) {
+      forgetSimScreenConfig(info.wsUrl);
+      configStream = info;
+    }
+    const orientation = (await simScreenConfig(info.wsUrl))?.orientation ?? "portrait";
     if (isLandscape(orientation)) rememberedLandscape.set(udid, orientation);
     return orientation;
   };
@@ -48666,7 +48714,9 @@ function registerCoreTools(server, deps) {
       }
       const rotate = deps.stream.control.rotate;
       if (rotate === void 0) throw new Error("this stream backend cannot rotate the device");
+      forgetSimScreenConfig();
       await rotate(args.orientation);
+      forgetSimScreenConfig();
       if (isLandscape(args.orientation)) rememberedLandscape.set(device.udid, args.orientation);
       else rememberedLandscape.delete(device.udid);
     } else if (args.action === "device_action") {
@@ -49795,7 +49845,7 @@ function registerUiTools(server, deps) {
     } else {
       let framebufferArgs = tapArgs;
       if (snapshot.pixelSize.width > snapshot.pixelSize.height) {
-        const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? "portrait";
+        const orientation = (await simScreenConfig(info.wsUrl))?.orientation ?? "portrait";
         if (isLandscape(orientation)) framebufferArgs = toFramebufferArgs(orientation, tapArgs);
         else warning = IMAGE_LANDSCAPE_UNSYNCED_WARNING;
       }

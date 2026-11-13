@@ -259,7 +259,9 @@ test('a landscape orientation read from serve-sim is remembered, so a restarted 
     screenshotSize: { width: 2622, height: 1206 },
   })
   assert.equal((h.json(await h.call('ios_sim_screenshot')) as { orientation: string }).orientation, 'landscape_right')
-  serveSim.orientation = 'portrait' // the stream restarted: a new serve-sim session reads portrait
+  // The stream restarted: a new serve-sim session reads portrait.
+  serveSim.orientation = 'portrait'
+  await h.deps.host.ensureRunning({ udid: 'BBB' })
   const before = h.hostCalls.length
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
   assert.deepEqual(h.hostCalls.slice(before).map(call => call.join(' ')), ['control rotate -d BBB -- landscape_right'])
@@ -276,7 +278,9 @@ test('a failed orientation resync still returns the screenshot with a warning, w
   // Right after a stream restart, the serve-sim CLI call that resyncs the orientation is the likeliest to fail.
   h.deps.stream.control.rotate = async () => { throw new Error('serve-sim rotate -d BBB -- landscape_right failed (exit 1)') }
   assert.equal((h.json(await h.call('ios_sim_screenshot')) as { orientation: string }).orientation, 'landscape_right')
-  serveSim.orientation = 'portrait' // the stream restarted: a new serve-sim session reads portrait
+  // The stream restarted: a new serve-sim session reads portrait.
+  serveSim.orientation = 'portrait'
+  await h.deps.host.ensureRunning({ udid: 'BBB' })
   const shot = await h.call('ios_sim_screenshot')
   assert.equal(shot.isError, undefined)
   assert.ok(shot.content.some(block => block.type === 'image'))
@@ -350,5 +354,17 @@ test('ios_sim_interact types Chinese and emoji by pasting them: simulator pasteb
   assert.deepEqual(h.simctlCalls.filter(call => call[0] === 'pbcopy'), [['pbcopy', 'BBB', '中文🎉']])
   assert.deepEqual(usages, [227, 25, 25, 227])
   assert.deepEqual((JSON.parse(textOf(result)) as { delivery: unknown }).delivery, { channel: 'ws', pasted: 1 })
+  await h.close()
+})
+
+test('taps on a running stream read serve-sim\'s orientation once, not once per tap; a rotate reads it again', async t => {
+  const serveSim = await serveSimSocket(t, 'portrait')
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB', wsUrl: serveSim.wsUrl, exposeStreamInfo: true } })
+  for (let tap = 0; tap < 3; tap += 1) await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.5, screenshot: false })
+  // One socket per tap for the touch frames, plus ONE config read for all three.
+  assert.equal(serveSim.connections(), 4)
+  await h.call('ios_sim_interact', { action: 'rotate', orientation: 'portrait', screenshot: false })
+  await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.5, screenshot: false })
+  assert.equal(serveSim.connections(), 6, 'the tap after a rotate asks serve-sim again')
   await h.close()
 })

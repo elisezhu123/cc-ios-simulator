@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import { WebSocket, WebSocketServer } from 'ws'
 import type { StreamHost } from '../src/deps.js'
 import { PanelServer } from '../src/panel/panel-server.js'
+import { noteSimScreenConfig, simScreenConfig } from '../src/orientation.js'
 import { ScreenshotStore } from '../src/screenshot.js'
 import { SimStreamSource } from '../src/stream-source.js'
 import { fakeHost, fakeSimctl } from './helpers/fakes.js'
@@ -400,5 +401,24 @@ test('a /stream disconnect before ensureRunning resolves still releases its cons
   } finally {
     await panel.dispose()
     upstream.close()
+  }
+})
+
+test('the relay keeps the tools\' screen config current: serve-sim\'s config frames are recorded, a rotate frame drops it', async () => {
+  const f = await panelFixture()
+  try {
+    const upstreamUrl = `ws://127.0.0.1:${f.upstream.port}`
+    noteSimScreenConfig(upstreamUrl, { width: 1206, height: 2622, orientation: 'landscape_left' })
+    const client = new WebSocket(`ws://127.0.0.1:${f.port}/ws`, { origin: `http://127.0.0.1:${f.port}` })
+    await new Promise<void>(resolve => client.once('message', () => resolve()))
+    // The fake serve-sim greeted the relay with a portrait config.
+    assert.equal((await simScreenConfig(upstreamUrl))?.orientation, 'portrait')
+    noteSimScreenConfig(upstreamUrl, { width: 1206, height: 2622, orientation: 'landscape_left' })
+    client.send(Buffer.concat([Buffer.from([7]), Buffer.from('{"orientation":"portrait"}')]))
+    await new Promise(resolve => setTimeout(resolve, 100))
+    assert.equal((await simScreenConfig(upstreamUrl))?.orientation, 'portrait', 'the rotate frame dropped the cached landscape')
+    client.close()
+  } finally {
+    await f.close()
   }
 })

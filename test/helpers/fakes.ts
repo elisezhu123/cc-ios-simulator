@@ -47,6 +47,8 @@ export function fakeHost(options: FakeHostOptions = {}): FakeHostHandle {
   const port = Number(new URL(baseUrl).port)
   let device = options.device
   let consumers = 0
+  // Like the real host: one handshake object per stream launch, the same on every read until the next launch.
+  let info: SimStreamInfo | undefined
   const infoFor = (udid: string): SimStreamInfo => ({
     url: baseUrl,
     streamUrl: `${baseUrl}/stream.mjpeg`,
@@ -59,7 +61,9 @@ export function fakeHost(options: FakeHostOptions = {}): FakeHostHandle {
       ? { available: true, source: 'package-bin', command: '/fake/serve-sim', args: [] }
       : { available: false, source: 'unavailable', args: [], reason: 'test: serve-sim unavailable' },
     get streamInfo() {
-      return options.exposeStreamInfo === true && device !== undefined ? infoFor(device) : undefined
+      if (options.exposeStreamInfo !== true || device === undefined) return undefined
+      info ??= infoFor(device)
+      return info
     },
     status(): SimHostStatus {
       return {
@@ -75,11 +79,13 @@ export function fakeHost(options: FakeHostOptions = {}): FakeHostHandle {
     async ensureRunning({ udid }) {
       calls.push(['ensureRunning', udid])
       device = udid
-      return infoFor(udid)
+      info = infoFor(udid)
+      return info
     },
     async stop() {
       calls.push(['stop'])
       device = undefined
+      info = undefined
     },
     acquire() {
       consumers += 1

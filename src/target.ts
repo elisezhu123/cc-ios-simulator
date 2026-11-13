@@ -7,7 +7,7 @@
  * @module ios-simulator/target
  */
 
-import { SIMULATOR_UNAVAILABLE, TARGET_DEVICE_CACHE_MS } from './config.js'
+import { SIMULATOR_UNAVAILABLE, STREAMED_DEVICE_MAX_AGE_MS, TARGET_DEVICE_CACHE_MS } from './config.js'
 import type { SimctlApi, StreamHost } from './deps.js'
 import type { RealDevice, RealDeviceApi } from './devicectl.js'
 import type { SimStreamInfo } from './sim-host.js'
@@ -58,6 +58,34 @@ export const REAL_DEVICE_TOOLS = 'ios_sim_list_apps, ios_sim_launch_app, ios_sim
   + 'and — once ios_real_start_wda has started WebDriverAgent — ios_sim_screenshot, ios_sim_interact, ios_sim_ui_tree, '
   + 'ios_sim_tap_element, ios_sim_find_text, ios_sim_tap_text, ios_sim_wait_for, ios_sim_ui_rows and ios_sim_tap_row'
 
+/**
+ * The device each stream host was last seen streaming, and when simctl last
+ * confirmed it. A live stream is the evidence that its device exists and is
+ * booted, so calls aimed at it need no `simctl list` (~180 ms measured — four
+ * fifths of a tap once the 10 s listing cache has expired, which it has
+ * between most of a model's calls). simctl is asked again once a minute.
+ */
+const streamedDevices = new WeakMap<StreamHost, { device: SimulatorDevice; at: number }>()
+
+/** The remembered streamed device when the stream still runs on it and `reference` (if any) names it. */
+function streamedDevice(host: StreamHost, reference?: string): SimulatorDevice | undefined {
+  const status = host.status()
+  const known = streamedDevices.get(host)
+  if (!status.running || known === undefined || known.device.udid !== status.device) return undefined
+  if (Date.now() - known.at > STREAMED_DEVICE_MAX_AGE_MS) return undefined
+  const device = known.device
+  const wanted = reference?.trim() ?? ''
+  if (wanted !== '' && wanted !== device.udid && wanted.toLowerCase() !== device.name.toLowerCase()) return undefined
+  return device
+}
+
+/** Remember `device` while it is the booted device the stream serves. */
+function rememberStreamed(host: StreamHost, device: SimulatorDevice): SimulatorDevice {
+  const status = host.status()
+  if (status.running && status.device === device.udid && device.state === 'Booted') streamedDevices.set(host, { device, at: Date.now() })
+  return device
+}
+
 export async function resolveTargetDevice(
   deps: { simctl: SimctlApi; host: StreamHost; realDevices?: RealDeviceApi },
   reference?: string,
@@ -65,9 +93,13 @@ export async function resolveTargetDevice(
 ): Promise<SimulatorDevice> {
   // A path that may boot the device must see its current state, not a cached one.
   const listing = options.bootFallback === true ? {} : { maxAgeMs: TARGET_DEVICE_CACHE_MS }
+  if (options.bootFallback !== true) {
+    const streamed = streamedDevice(deps.host, reference)
+    if (streamed !== undefined) return streamed
+  }
   if (reference !== undefined && reference.trim() !== '') {
     try {
-      return await deps.simctl.getDevice(reference, listing)
+      return rememberStreamed(deps.host, await deps.simctl.getDevice(reference, listing))
     } catch (error) {
       if (deps.realDevices !== undefined && await deps.realDevices.matches(reference)) {
         throw new Error(`"${reference.trim()}" is a connected iPhone/iPad, and this tool works on simulators only — on a `
@@ -79,7 +111,7 @@ export async function resolveTargetDevice(
   const status = deps.host.status()
   if (status.running && status.device !== undefined) {
     try {
-      return await deps.simctl.getDevice(status.device, listing)
+      return rememberStreamed(deps.host, await deps.simctl.getDevice(status.device, listing))
     } catch {
       // The streamed device vanished from simctl; fall through to booted devices.
     }
@@ -122,9 +154,11 @@ export async function resolveToolTarget(
   reference?: string,
 ): Promise<ToolTarget> {
   if (reference === undefined || reference.trim() === '') return { kind: 'simulator', device: await resolveTargetDevice(deps, reference) }
+  const streamed = streamedDevice(deps.host, reference)
+  if (streamed !== undefined) return { kind: 'simulator', device: streamed }
   let simulatorError: unknown
   try {
-    return { kind: 'simulator', device: await deps.simctl.getDevice(reference, { maxAgeMs: TARGET_DEVICE_CACHE_MS }) }
+    return { kind: 'simulator', device: rememberStreamed(deps.host, await deps.simctl.getDevice(reference, { maxAgeMs: TARGET_DEVICE_CACHE_MS })) }
   } catch (error) {
     simulatorError = error
   }
