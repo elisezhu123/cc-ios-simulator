@@ -169,7 +169,7 @@ Supports `#Preview { … }` (including `#Preview("Name", traits: …)`) and `str
 | action | Key parameters | Notes |
 |---|---|---|
 | `tap` | `x`, `y` | Normalized: `x = pixel x / screenshot width`, `y = pixel y / screenshot height` |
-| `type` | `text` | US-keyboard ASCII only (for Chinese see the [FAQ](#faq)) |
+| `type` | `text` | Any text. Characters a US keyboard lacks (Chinese, emoji) are pasted through the simulator pasteboard, see the [FAQ](#faq) |
 | `button` | `name` | `home`, `lock`, `siri`, `volume-up`…; an unknown name returns the full list |
 | `gesture` | `json` | A drag `{"fromX":0.1,"fromY":0.5,"toX":0.9,"toY":0.5,"duration":0.3}` or one frame `{"type":"begin","x":0.5,"y":0.5}` |
 | `scroll` | `direction`, `amount?`, `x?`, `y?` | Named by the **content**: `down` shows what is below (the finger moves up); `amount` defaults to 0.6 |
@@ -305,7 +305,8 @@ The panel is a local web page (`127.0.0.1:3456`, or the next free port up to +20
   - Shut down simulator: stops the recording and the stream first, then shuts down;
   - Detach simulator: stops the panel's view only; the simulator keeps running (on a real device, back to simulators);
   - Collapse (the ⌄ at the dock's right end): folds the dock into a small handle at the bottom edge; click the handle to bring it back. The choice is kept in the browser.
-- **Keyboard input**: with the panel focused, keys typed go to the simulator as a hardware keyboard (the same HID path Simulator.app uses). Letters, digits and ASCII punctuation work, with Shift handled automatically, as do Enter / Tab / Backspace / Delete / arrows / Home / End / PageUp / PageDown. Characters a US keyboard cannot produce (Chinese, emoji) are not supported and say so once. ⌘ / Ctrl / Alt shortcuts stay with the browser.
+- **Keyboard input**: with the panel focused, keys typed go to the simulator as a hardware keyboard (the same HID path Simulator.app uses). Letters, digits and ASCII punctuation work, with Shift handled automatically, as do Enter / Tab / Backspace / Delete / arrows / Home / End / PageUp / PageDown. ⌘ / Ctrl / Alt shortcuts stay with the browser.
+- **Chinese, emoji and paste**: click the simulator screen first, then type with your input method or pick an emoji from the system picker; the committed text goes into the simulator's focused field. ⌘V pastes the text on your Mac clipboard. This text goes in through the simulator pasteboard, so whatever the simulator pasteboard held is replaced.
 - Slow animations, the on-screen keyboard and every device action except lock click Simulator.app's menus and need the Accessibility permission (see [Requirements](#requirements)).
 - Your clicks in the panel and Claude's tool calls drive **the same simulator**, so either of you can take over at any time.
 - **Real devices**: once `ios_real_start_wda` has started WebDriverAgent, the phone appears in the picker's "iPhone / iPad" group (or call `ios_sim_panel {udid: the phone}`). The view is WDA's MJPEG stream (through the USB tunnel); a click taps, a drag swipes (sent as one swipe with the drag's duration on release). Home, annotate, save screenshot and rotate work, and the Device menu offers rotation, lock, unlock and Siri; recording and shutting down are simulator-only, and "detach" goes back to simulators.
@@ -433,11 +434,16 @@ Check the status in the title bar:
 <details>
 <summary><b>How do I type Chinese or emoji?</b></summary>
 
-`type` only handles US-keyboard ASCII. Put the text on the simulator's pasteboard first, then long-press the field and choose Paste:
+Just type it, once the field has focus (tap it first):
 
-```bash
-printf '%s' '你好，世界' | xcrun simctl pbcopy <udid>
-```
+- **Claude types it**: `ios_sim_interact {action: "type", text: "你好，世界🎉"}`.
+- **You type it in the panel**: click the simulator screen, then use your input method, or press ⌘V to paste.
+
+The part a US keyboard can type is typed as keys; the rest is put on the simulator pasteboard and pasted by sending ⌘V to the simulator. So:
+
+- The simulator pasteboard ends up holding the last pasted stretch instead of what it held before.
+- The live stream must be running (`ios_sim_boot` starts it): ⌘V travels over the stream's control channel.
+- A field that does not accept paste (a few custom-drawn inputs) cannot be typed into this way.
 
 </details>
 
