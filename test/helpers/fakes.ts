@@ -264,6 +264,7 @@ export function fakeSimctl(
     setLocation: async (udid, latitude, longitude) => { calls.push(['location', udid, latitude, longitude]) },
     clearLocation: async udid => { calls.push(['location-clear', udid]) },
     setAppearance: async (udid, appearance) => { calls.push(['appearance', udid, appearance]) },
+    setPasteboard: async (udid, text) => { calls.push(['pbcopy', udid, text]) },
   }
   return { api, calls, devices }
 }

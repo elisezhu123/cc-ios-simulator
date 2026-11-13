@@ -12,6 +12,7 @@ import {
   sendPush,
   setAppearance,
   setLocation,
+  setPasteboard,
   setSimctlRunnerForTests,
   shutdownDevice,
 } from '../src/simctl.js'
@@ -139,4 +140,15 @@ test('a reference missing from a cached listing is looked up again before it is 
   await listDevices()
   await assert.rejects(getDevice('NEW', { maxAgeMs: 10_000 }), /unknown simulator "NEW"/)
   assert.equal(calls.filter(call => call[0] === 'list').length, 2)
+})
+
+test('setPasteboard pipes the text to simctl pbcopy under a UTF-8 locale', async () => {
+  const seen: Array<{ args: string[]; input?: string; env?: Record<string, string> }> = []
+  setSimctlRunnerForTests(async (args, _timeoutMs, _signal, options) => {
+    seen.push({ args: [...args], ...options })
+    return ''
+  })
+  await setPasteboard('BBB', '你好，世界🎉')
+  // Without a UTF-8 locale pbcopy reads stdin as MacRoman and the pasteboard holds mojibake.
+  assert.deepEqual(seen, [{ args: ['pbcopy', 'BBB'], input: '你好，世界🎉', env: { LC_ALL: 'en_US.UTF-8' } }])
 })

@@ -41,6 +41,8 @@ export interface SimctlApi {
   setLocation(udid: string, latitude: number, longitude: number, signal?: AbortSignal): Promise<void>
   clearLocation(udid: string, signal?: AbortSignal): Promise<void>
   setAppearance(udid: string, appearance: 'light' | 'dark', signal?: AbortSignal): Promise<void>
+  /** Replace the simulator's pasteboard with `text`. */
+  setPasteboard(udid: string, text: string, signal?: AbortSignal): Promise<void>
 }
 
 export interface ScreenshotService {

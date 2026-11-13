@@ -303,7 +303,8 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
   server.registerTool('ios_sim_interact', {
     title: 'Interact with the simulator',
     description: 'Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / '
-      + 'screenshot image width, y = pixel y / image height), type US-keyboard text, press a hardware button (home, '
+      + 'screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and '
+      + 'other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, '
       + 'lock, …), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, '
       + 'lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; all but lock drive Simulator.app and need the '
       + 'Accessibility permission). Starts the live stream when needed but never boots a device. '
@@ -318,7 +319,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       udid: UDID_PARAM,
       x: z.number().min(0).max(1).optional().describe('Normalized x (tap: required; scroll: start anchor, default 0.5)'),
       y: z.number().min(0).max(1).optional().describe('Normalized y (tap: required; scroll: start anchor, default 0.5)'),
-      text: z.string().optional().describe('Text for "type" (US-keyboard ASCII only)'),
+      text: z.string().optional().describe('Text for "type" — any text; tap the field first so it has focus'),
       name: z.string().optional()
         .describe('Button for "button" (home, lock, siri, volume-up, …; an unknown name fails with the full list) or the action for "device_action"'),
       json: z.record(z.string(), z.unknown()).optional()
@@ -401,7 +402,9 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       }
       const payloads = interactControlArgs(framebufferArgs)
       try {
-        delivery = await performSimInteract(deps.host, device.udid, framebufferArgs, payloads)
+        delivery = await performSimInteract(deps.host, device.udid, framebufferArgs, payloads, {
+          setPasteboard: (udid, text) => deps.simctl.setPasteboard(udid, text, extra.signal),
+        })
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         throw new Error(`serve-sim ${args.action} failed: ${message}${args.action === 'type' ? XCODE27_TYPE_HINT : ''}`)

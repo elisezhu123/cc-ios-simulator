@@ -157,7 +157,7 @@ test('ios_sim_interact explains bad arguments, a missing serve-sim and a non-Mac
   const h = await toolHarness(registerCoreTools, { host: { device: 'BBB' } })
   assert.match(textOf(await h.call('ios_sim_interact', { action: 'rotate' })), /requires orientation/)
   assert.match(textOf(await h.call('ios_sim_interact', { action: 'device_action', name: 'reboot' })), /requires name — one of app-switcher/)
-  assert.match(textOf(await h.call('ios_sim_interact', { action: 'type', text: '中文' })), /US-keyboard ASCII/)
+  assert.match(textOf(await h.call('ios_sim_interact', { action: 'type', text: '' })), /non-empty text/)
   await h.close()
   const noServeSim = await toolHarness(registerCoreTools, { host: { available: false } })
   assert.match(textOf(await noServeSim.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.5 })), /serve-sim is unavailable/)
@@ -332,5 +332,23 @@ test('the effect screenshot of an interact records the image shape for the next 
   // … so the next tap goes out as given.
   await h.call('ios_sim_interact', { action: 'tap', x: 0.25, y: 0.75, screenshot: false })
   assert.deepEqual(serveSim.taps(), ['0.75 0.75', '0.25 0.75'])
+  await h.close()
+})
+
+test('ios_sim_interact types Chinese and emoji by pasting them: simulator pasteboard, then ⌘V over the control socket', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const usages: number[] = []
+  wss.on('connection', socket => socket.on('message', data => {
+    usages.push((JSON.parse((data as Buffer).subarray(1).toString('utf8')) as { usage: number }).usage)
+  }))
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true } })
+  const result = await h.call('ios_sim_interact', { action: 'type', text: '中文🎉', screenshot: false })
+  wss.close()
+  assert.equal(result.isError, undefined, textOf(result))
+  assert.deepEqual(h.simctlCalls.filter(call => call[0] === 'pbcopy'), [['pbcopy', 'BBB', '中文🎉']])
+  assert.deepEqual(usages, [227, 25, 25, 227])
+  assert.deepEqual((JSON.parse(textOf(result)) as { delivery: unknown }).delivery, { channel: 'ws', pasted: 1 })
   await h.close()
 })
