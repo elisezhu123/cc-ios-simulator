@@ -478,7 +478,7 @@ var EN = {
   realDevice: "real device",
   noWda: "WebDriverAgent is not running on this iPhone \u2014 start it with ios_real_start_wda, or pick a simulator above.",
   annotate: "Annotate a screenshot",
-  typeAsciiOnly: "Typing goes to the simulator as a hardware keyboard, which types US-keyboard characters only \u2014 letters, digits and ASCII punctuation (no Chinese or emoji).",
+  typeAsciiOnly: "Click the simulator screen first, then type: Chinese, emoji and other non-US-keyboard characters go in through the simulator pasteboard. \u2318V pastes your clipboard.",
   hideDock: "Hide toolbar",
   showDock: "Show toolbar",
   annotateTools: { pen: "Pen", line: "Line", arrow: "Arrow", rect: "Box", ellipse: "Ellipse", text: "Text" },
@@ -553,7 +553,7 @@ var ZH = {
   realDevice: "\u771F\u673A",
   noWda: "\u8FD9\u53F0 iPhone \u4E0A\u7684 WebDriverAgent \u6CA1\u6709\u8FD0\u884C\u2014\u2014\u7528 ios_real_start_wda \u542F\u52A8\uFF0C\u6216\u5728\u4E0A\u65B9\u9009\u62E9\u6A21\u62DF\u5668\u3002",
   annotate: "\u6807\u6CE8\u622A\u56FE",
-  typeAsciiOnly: "\u952E\u76D8\u8F93\u5165\u4F1A\u4EE5\u786C\u4EF6\u952E\u76D8\u7684\u65B9\u5F0F\u53D1\u9001\u5230\u6A21\u62DF\u5668\uFF0C\u53EA\u652F\u6301\u82F1\u6587\u952E\u76D8\u5B57\u7B26\uFF08\u5B57\u6BCD\u3001\u6570\u5B57\u548C ASCII \u7B26\u53F7\uFF09\uFF0C\u4E0D\u652F\u6301\u4E2D\u6587\u6216\u8868\u60C5\u3002",
+  typeAsciiOnly: "\u8BF7\u5148\u70B9\u4E00\u4E0B\u6A21\u62DF\u5668\u753B\u9762\u518D\u8F93\u5165\uFF1A\u4E2D\u6587\u3001\u8868\u60C5\u7B49\u82F1\u6587\u952E\u76D8\u6253\u4E0D\u51FA\u7684\u5B57\u7B26\u4F1A\u7ECF\u6A21\u62DF\u5668\u526A\u8D34\u677F\u7C98\u8D34\u8FDB\u53BB\u3002\u4E5F\u53EF\u4EE5\u7528 \u2318V \u7C98\u8D34\u7535\u8111\u526A\u8D34\u677F\u91CC\u7684\u6587\u5B57\u3002",
   hideDock: "\u9690\u85CF\u5DE5\u5177\u680F",
   showDock: "\u663E\u793A\u5DE5\u5177\u680F",
   annotateTools: { pen: "\u753B\u7B14", line: "\u76F4\u7EBF", arrow: "\u7BAD\u5934", rect: "\u77E9\u5F62", ellipse: "\u692D\u5706", text: "\u6587\u5B57" },
@@ -961,6 +961,7 @@ var ui = {
   stage: element("stage"),
   frame: element("frame"),
   screen: element("screen"),
+  ime: element("ime"),
   img: element("stream"),
   placeholder: element("placeholder"),
   toast: element("toast"),
@@ -1132,6 +1133,7 @@ ui.screen.addEventListener("pointerdown", (event) => {
   if (event.button !== 0) return;
   event.preventDefault();
   ui.screen.setPointerCapture(event.pointerId);
+  focusTextSink();
   state.dragging = true;
   const point = pointerPoint(event);
   send(simTouchFrame("begin", point.x, point.y));
@@ -1267,15 +1269,45 @@ function warnUnsupportedKey() {
 document.addEventListener("keydown", (event) => {
   if (annotator.isOpen || state.kind !== "simulator") return;
   if (event.metaKey || event.ctrlKey || event.altKey) return;
-  const target = event.target;
-  if (target !== null && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))) return;
+  if (isOtherField(event.target)) return;
+  if (event.isComposing || event.key === "Process") return;
   const frames = simKeyFrames(event.key);
   if (frames === void 0) {
-    if ([...event.key].length === 1) warnUnsupportedKey();
+    if ([...event.key].length === 1 && event.target !== ui.ime) warnUnsupportedKey();
     return;
   }
   event.preventDefault();
   for (const frame of frames) send(frame);
+});
+function isOtherField(target) {
+  const node = target;
+  if (node === null || node === ui.ime) return false;
+  return node.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(node.tagName ?? "");
+}
+function focusTextSink() {
+  if (annotator.isOpen || state.kind !== "simulator") return;
+  ui.ime.focus({ preventScroll: true });
+}
+var textQueue = Promise.resolve();
+function typeText(text) {
+  if (text === "" || state.kind !== "simulator") return;
+  textQueue = textQueue.then(() => postJson("/api/type", { text })).then(() => void 0, (error) => report(copy.actionFailed, error));
+}
+function flushTextSink() {
+  const text = ui.ime.value;
+  ui.ime.value = "";
+  typeText(text);
+}
+ui.ime.addEventListener("compositionend", () => window.setTimeout(flushTextSink, 0));
+ui.ime.addEventListener("input", (event) => {
+  if (!event.isComposing) flushTextSink();
+});
+document.addEventListener("paste", (event) => {
+  if (annotator.isOpen || state.kind !== "simulator" || isOtherField(event.target)) return;
+  const text = event.clipboardData?.getData("text/plain") ?? "";
+  if (text === "") return;
+  event.preventDefault();
+  typeText(text);
 });
 ui.home.addEventListener("click", pressHome);
 ui.home.addEventListener("dblclick", () => deviceAction("app-switcher"));
