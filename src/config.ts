@@ -19,6 +19,14 @@ export const PANEL_PORT_ATTEMPTS = 21
 export const INTERACT_SETTLE_MS = 300
 /** How old a `simctl list devices` may be when a tool resolves its target (boot / shutdown drop it). */
 export const TARGET_DEVICE_CACHE_MS = 10_000
+
+/**
+ * How long the device a live stream serves is taken as booted without asking
+ * simctl. The stream does not notice at once when its simulator is shut down
+ * from outside (a tap 6 s later was still accepted), so this bounds how long
+ * a tool can keep answering for a device that is gone.
+ */
+export const STREAMED_DEVICE_MAX_AGE_MS = 60_000
 /** How long `ios_sim_record stop` waits for simctl to finish the movie. */
 export const RECORD_STOP_TIMEOUT_MS = 10_000
 /** How long `ios_sim_record start` waits for simctl's "Recording started". */
