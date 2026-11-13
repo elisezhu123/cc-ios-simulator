@@ -17,6 +17,8 @@ import {
   parseSimConfigFrame,
   simButtonFrame,
   simKeyFrames,
+  simShortcutFor,
+  simShortcutFrames,
   simRotateFrame,
   simTouchFrame,
 } from '../src/panel/client/protocol.js'
@@ -95,4 +97,18 @@ test('size and frame ids round-trip and fall back safely; copy follows the langu
   assert.equal(screenRadius(402, 874), 57)
   assert.equal(copyFor('zh-CN').home, '回到桌面')
   assert.equal(copyFor('en-US').home, 'Home')
+})
+
+test('panel shortcuts become ⌘-chords of key frames; redo adds Shift', () => {
+  const usages = (name: Parameters<typeof simShortcutFrames>[0]): string[] =>
+    simShortcutFrames(name).map(frame => {
+      const body = JSON.parse(new TextDecoder().decode(frame.subarray(1))) as { type: string; usage: number }
+      return `${body.type} ${body.usage}`
+    })
+  assert.deepEqual(usages('copy'), ['down 227', 'down 6', 'up 6', 'up 227'])
+  assert.deepEqual(usages('redo'), ['down 227', 'down 225', 'down 29', 'up 29', 'up 225', 'up 227'])
+  assert.deepEqual([simShortcutFor('c', false), simShortcutFor('x', false), simShortcutFor('a', false), simShortcutFor('z', false), simShortcutFor('z', true)],
+    ['copy', 'cut', 'select-all', 'undo', 'redo'])
+  // ⌘V is the browser's paste event (the Mac clipboard is what gets pasted), and other chords stay with the browser.
+  assert.deepEqual([simShortcutFor('v', false), simShortcutFor('r', false), simShortcutFor('c', true)], [undefined, undefined, undefined])
 })

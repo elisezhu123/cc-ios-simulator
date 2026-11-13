@@ -36,6 +36,9 @@ import {
   parseSimConfigFrame,
   simButtonFrame,
   simKeyFrames,
+  simShortcutFor,
+  simShortcutFrames,
+  type SimPanelShortcut,
   simRotateFrame,
   simTouchFrame,
   type SimPoint,
@@ -569,10 +572,55 @@ ui.fullscreen.addEventListener('click', () => {
   else void document.exitFullscreen()
 })
 
+/**
+ * ⌘C / ⌘X / ⌘A / ⌘Z / ⇧⌘Z go to the simulator's focused field. After a copy
+ * or cut the simulator's pasteboard is brought over to the Mac clipboard, so
+ * what was copied in the simulator can be pasted anywhere.
+ */
+/**
+ * Put text on the Mac clipboard: the async Clipboard API first, then the old
+ * copy command through the text sink for a browser pane that refuses the API.
+ */
+async function writeMacClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    // Not permitted here (no clipboard-write permission): try the selection-based copy.
+  }
+  const before = ui.ime.value
+  ui.ime.value = text
+  ui.ime.select()
+  let copied = false
+  try {
+    copied = document.execCommand('copy')
+  } catch {
+    copied = false
+  }
+  ui.ime.value = before
+  return copied
+}
+
+function runSimShortcut(name: SimPanelShortcut): void {
+  for (const frame of simShortcutFrames(name)) send(frame)
+  if (name !== 'copy' && name !== 'cut') return
+  void (async () => {
+    // The app puts the selection on the pasteboard a moment after the key press.
+    await new Promise(resolve => window.setTimeout(resolve, 300))
+    const { text } = await postJson<{ text: string }>('/api/pasteboard', {})
+    if (text === '') {
+      notify(copy.copyNothing, 'error')
+      return
+    }
+    if (await writeMacClipboard(text)) notify(copy.copiedFromSimulator, 'ok')
+    else notify(copy.clipboardRefused, 'error')
+  })().catch(error => report(copy.actionFailed, error))
+}
+
 document.addEventListener('keydown', event => {
   if (annotator.isOpen || !(event.metaKey || event.ctrlKey) || event.altKey) return
-  const target = event.target as HTMLElement | null
-  if (target !== null && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))) return
+  // The simulator's own text sink is not a field to leave alone: shortcuts work while it has focus.
+  if (isOtherField(event.target)) return
   const key = event.key.toLowerCase()
   const run = (action: () => void): void => {
     event.preventDefault()
@@ -585,6 +633,10 @@ document.addEventListener('keydown', event => {
   else if (!event.shiftKey && key === 'arrowright') run(() => rotate(1))
   else if (!event.shiftKey && key === 'arrowleft') run(() => rotate(-1))
   else if (!event.shiftKey && key === 'k' && state.kind === 'simulator') run(() => deviceAction('toggle-keyboard'))
+  else if (state.kind === 'simulator') {
+    const shortcut = simShortcutFor(key, event.shiftKey)
+    if (shortcut !== undefined) run(() => runSimShortcut(shortcut))
+  }
 })
 
 // ── menus ─────────────────────────────────────────────────────────────────────
