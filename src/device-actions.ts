@@ -61,6 +61,8 @@ export type DeviceActionTransport =
   /** `path` is the menu bar item and any submenus above `item` (default `Device`). */
   | { kind: 'menu'; item: string; path?: readonly string[] }
   | { kind: 'keystroke'; repeat: number }
+  /** One bare serve-sim control frame (its tag) over the stream's control socket. */
+  | { kind: 'frame'; tag: number }
 
 export interface DeviceActionSpec {
   action: DeviceAction
@@ -84,8 +86,9 @@ export const DEVICE_ACTION_SPECS: readonly DeviceActionSpec[] = [
   { action: 'siri', transport: { kind: 'menu', item: 'Siri' }, realDevice: true },
   { action: 'action-button', transport: { kind: 'menu', item: 'Action Button' }, realDevice: false },
   { action: 're-center', transport: { kind: 'menu', item: 'Re-Center Open Apps' }, realDevice: false },
-  // Simulator's own toggles (⌘K, ⌘T): the on-screen keyboard and slow-motion animations.
-  { action: 'toggle-keyboard', transport: { kind: 'menu', item: 'Toggle Software Keyboard', path: ['I/O', 'Keyboard'] }, realDevice: false },
+  // serve-sim's native toggle (what Simulator.app's ⌘K sends): no Simulator.app window, no Accessibility permission.
+  { action: 'toggle-keyboard', transport: { kind: 'frame', tag: 12 }, realDevice: false },
+  // Simulator's own toggle (⌘T): slow-motion animations.
   { action: 'slow-animations', transport: { kind: 'menu', item: 'Slow Animations', path: ['Debug'] }, realDevice: false },
 ]
 
@@ -202,11 +205,17 @@ export async function runSimulatorDeviceAction(
   action: DeviceAction,
   pressButton: (name: string) => Promise<void>,
   timeoutMs: number = OSASCRIPT_TIMEOUT_MS,
+  sendFrame?: (tag: number) => Promise<void>,
 ): Promise<void> {
   const spec = deviceActionSpec(action)
   try {
     if (spec.transport.kind === 'serve-sim') {
       await pressButton(spec.transport.button)
+      return
+    }
+    if (spec.transport.kind === 'frame') {
+      if (sendFrame === undefined) throw new Error('this stream backend cannot send serve-sim control frames')
+      await sendFrame(spec.transport.tag)
       return
     }
     const script = spec.transport.kind === 'menu'

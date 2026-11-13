@@ -15,6 +15,9 @@ import type { SimulatorDevice } from '../simctl.js'
 import { assertMac, requireBooted, resolveTargetDevice } from '../target.js'
 import { deviceSummary, jsonResult, runTool, UDID_PARAM } from './result.js'
 
+/** Pasteboard text returned in a tool result is capped here. */
+const MAX_PASTEBOARD_CHARS = 20_000
+
 export function registerEnvTools(server: McpServer, deps: ToolDeps): void {
   const bootedDevice = async (tool: string, udid: string | undefined): Promise<SimulatorDevice> => {
     assertMac(deps.platform)
@@ -83,6 +86,32 @@ export function registerEnvTools(server: McpServer, deps: ToolDeps): void {
     const longitude = args.longitude ?? 0
     await deps.simctl.setLocation(device.udid, latitude, longitude, extra.signal)
     return jsonResult({ device: deviceSummary(device), latitude, longitude })
+  }))
+
+  server.registerTool('ios_sim_pasteboard', {
+    title: 'Read or set the simulator pasteboard',
+    description: 'Read the text on a booted simulator\'s pasteboard (action "get": what the app or the user last copied) '
+      + 'or replace it (action "set", with text). To put text into a field use ios_sim_interact type, which pastes for you; '
+      + 'to copy the selection in the focused field use ios_sim_interact shortcut copy.',
+    inputSchema: {
+      action: z.enum(['get', 'set']),
+      text: z.string().optional().describe('Text for "set" (any Unicode)'),
+      udid: UDID_PARAM,
+    },
+  }, async (args, extra) => runTool('ios_sim_pasteboard', async () => {
+    const device = await bootedDevice('ios_sim_pasteboard', args.udid)
+    if (args.action === 'set') {
+      if (args.text === undefined) throw new Error('action "set" requires text (an empty string clears the pasteboard)')
+      await deps.simctl.setPasteboard(device.udid, args.text, extra.signal)
+      return jsonResult({ device: deviceSummary(device), set: true, characters: [...args.text].length })
+    }
+    const text = await deps.simctl.getPasteboard(device.udid, extra.signal)
+    const capped = text.length > MAX_PASTEBOARD_CHARS
+    return jsonResult({
+      device: deviceSummary(device),
+      text: capped ? text.slice(0, MAX_PASTEBOARD_CHARS) : text,
+      ...(capped ? { truncated: true, characters: [...text].length } : {}),
+    })
   }))
 
   server.registerTool('ios_sim_appearance', {

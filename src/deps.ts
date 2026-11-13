@@ -43,6 +43,8 @@ export interface SimctlApi {
   setAppearance(udid: string, appearance: 'light' | 'dark', signal?: AbortSignal): Promise<void>
   /** Replace the simulator's pasteboard with `text`. */
   setPasteboard(udid: string, text: string, signal?: AbortSignal): Promise<void>
+  /** The text on the simulator's pasteboard. */
+  getPasteboard(udid: string, signal?: AbortSignal): Promise<string>
 }
 
 export interface ScreenshotService {
