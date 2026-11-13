@@ -169,6 +169,12 @@ test('watchPackageTree reports source edits and ignores build products', async (
   let changes = 0
   const watcher = watchPackageTree(root, () => { changes += 1 })
   try {
+    // FSEvents replays the mkdirs above to a watcher opened right after them; wait until that settles.
+    for (let seen = -1; seen !== changes;) {
+      seen = changes
+      await new Promise(resolve => setTimeout(resolve, 250))
+    }
+    changes = 0
     writeFileSync(join(root, '.build', 'debug', 'x.o'), 'object')
     await new Promise(resolve => setTimeout(resolve, 200))
     assert.equal(changes, 0)
