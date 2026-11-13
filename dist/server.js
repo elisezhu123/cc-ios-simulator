@@ -40498,6 +40498,7 @@ __export(simctl_exports, {
   forgetDeviceList: () => forgetDeviceList,
   getAppContainer: () => getAppContainer,
   getDevice: () => getDevice,
+  getPasteboard: () => getPasteboard,
   installApp: () => installApp,
   launchApp: () => launchApp,
   listAppsPlist: () => listAppsPlist,
@@ -40736,6 +40737,9 @@ async function takeScreenshot(udid, filePath, signal) {
 }
 async function setPasteboard(udid, text, signal) {
   await execSimctl(["pbcopy", udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { input: text, env: { LC_ALL: "en_US.UTF-8" } });
+}
+async function getPasteboard(udid, signal) {
+  return execSimctl(["pbpaste", udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { env: { LC_ALL: "en_US.UTF-8" } });
 }
 async function installApp(udid, appPath, signal) {
   await execSimctl(["install", udid, appPath], SIMCTL_INSTALL_TIMEOUT_MS, signal);
@@ -42330,8 +42334,9 @@ var DEVICE_ACTION_SPECS = [
   { action: "siri", transport: { kind: "menu", item: "Siri" }, realDevice: true },
   { action: "action-button", transport: { kind: "menu", item: "Action Button" }, realDevice: false },
   { action: "re-center", transport: { kind: "menu", item: "Re-Center Open Apps" }, realDevice: false },
-  // Simulator's own toggles (⌘K, ⌘T): the on-screen keyboard and slow-motion animations.
-  { action: "toggle-keyboard", transport: { kind: "menu", item: "Toggle Software Keyboard", path: ["I/O", "Keyboard"] }, realDevice: false },
+  // serve-sim's native toggle (what Simulator.app's ⌘K sends): no Simulator.app window, no Accessibility permission.
+  { action: "toggle-keyboard", transport: { kind: "frame", tag: 12 }, realDevice: false },
+  // Simulator's own toggle (⌘T): slow-motion animations.
   { action: "slow-animations", transport: { kind: "menu", item: "Slow Animations", path: ["Debug"] }, realDevice: false }
 ];
 function deviceActionSpec(action) {
@@ -42411,11 +42416,16 @@ function runOsascript(script, timeoutMs) {
     });
   });
 }
-async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRIPT_TIMEOUT_MS) {
+async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRIPT_TIMEOUT_MS, sendFrame) {
   const spec = deviceActionSpec(action);
   try {
     if (spec.transport.kind === "serve-sim") {
       await pressButton(spec.transport.button);
+      return;
+    }
+    if (spec.transport.kind === "frame") {
+      if (sendFrame === void 0) throw new Error("this stream backend cannot send serve-sim control frames");
+      await sendFrame(spec.transport.tag);
       return;
     }
     const script = spec.transport.kind === "menu" ? simulatorMenuItemScript(spec.transport.item, spec.transport.path) : simulatorHomeKeystrokeScript(spec.transport.repeat);
@@ -42424,6 +42434,300 @@ async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRI
     const message = error62 instanceof Error ? error62.message : String(error62);
     throw new Error(`ios-simulator: the ${action} action failed \u2014 ${deviceActionFailureHint(message)}`);
   }
+}
+
+// node_modules/ws/wrapper.mjs
+var import_stream = __toESM(require_stream(), 1);
+var import_extension = __toESM(require_extension(), 1);
+var import_permessage_deflate = __toESM(require_permessage_deflate(), 1);
+var import_receiver = __toESM(require_receiver(), 1);
+var import_sender = __toESM(require_sender(), 1);
+var import_subprotocol = __toESM(require_subprotocol(), 1);
+var import_websocket = __toESM(require_websocket(), 1);
+var import_websocket_server = __toESM(require_websocket_server(), 1);
+
+// src/sim-gesture.ts
+var SIM_TOUCH_TAG = 3;
+var SIM_KEY_TAG = 6;
+var SIM_SOFTWARE_KEYBOARD_TAG = 12;
+var HID_LEFT_COMMAND = 227;
+var HID_LEFT_SHIFT = 225;
+var SIM_SHORTCUTS = {
+  copy: { usage: 6, shift: false },
+  paste: { usage: 25, shift: false },
+  cut: { usage: 27, shift: false },
+  "select-all": { usage: 4, shift: false },
+  undo: { usage: 29, shift: false },
+  redo: { usage: 29, shift: true }
+};
+function isSimShortcut(value) {
+  return typeof value === "string" && Object.hasOwn(SIM_SHORTCUTS, value);
+}
+var SIM_GESTURE_STEP_MS = 16;
+var SIM_SCROLL_STEPS = 18;
+var SIM_GESTURE_CONNECT_TIMEOUT_MS = 3e3;
+var SIM_GESTURE_CLOSE_TIMEOUT_MS = 250;
+var SIM_GESTURE_BAND_MIN = 0.08;
+var SIM_GESTURE_BAND_MAX = 0.92;
+var SIM_DRAG_MAX_MS = 2e3;
+var SIM_DRAG_MIN_MS = 100;
+function clamp01(value) {
+  return Math.min(1, Math.max(0, value));
+}
+function encodeSimControlFrame(tag, payload) {
+  const json2 = Buffer.from(JSON.stringify(payload), "utf8");
+  const frame = Buffer.allocUnsafe(1 + json2.length);
+  frame[0] = tag;
+  json2.copy(frame, 1);
+  return frame;
+}
+function encodeSimTouchFrame(type, x, y) {
+  return encodeSimControlFrame(SIM_TOUCH_TAG, { type, x: clamp01(x), y: clamp01(y) });
+}
+function encodeSimKeyFrame(type, usage) {
+  return encodeSimControlFrame(SIM_KEY_TAG, { type, usage });
+}
+function clampBand(value) {
+  return Math.min(SIM_GESTURE_BAND_MAX, Math.max(SIM_GESTURE_BAND_MIN, value));
+}
+function quantize(value) {
+  return Math.round(value * 1e4) / 1e4;
+}
+function tracePoints(from, to, steps) {
+  const points = [{ x: quantize(from.x), y: quantize(from.y) }];
+  for (let step = 1; step <= steps; step += 1) {
+    const ratio = step / steps;
+    points.push({
+      x: quantize(from.x + (to.x - from.x) * ratio),
+      y: quantize(from.y + (to.y - from.y) * ratio)
+    });
+  }
+  return points;
+}
+function normalizeSteps(steps, fallback) {
+  if (steps === void 0) return fallback;
+  if (!Number.isFinite(steps) || steps < 1) {
+    throw new RangeError(`ios-simulator: a gesture path needs at least 1 move frame, got ${String(steps)}`);
+  }
+  return Math.floor(steps);
+}
+function simScrollPath(request2) {
+  const { direction, amount, anchorX, anchorY } = request2;
+  const vertical = direction === "up" || direction === "down";
+  const anchor2 = vertical ? anchorY : anchorX;
+  const delta = (direction === "down" || direction === "right" ? -1 : 1) * amount;
+  const from = clampBand(anchor2);
+  const to = clampBand(from + delta);
+  const steps = normalizeSteps(request2.steps, SIM_SCROLL_STEPS);
+  return vertical ? tracePoints({ x: anchorX, y: from }, { x: anchorX, y: to }, steps) : tracePoints({ x: from, y: anchorY }, { x: to, y: anchorY }, steps);
+}
+function simDragPath(request2, stepMs = SIM_GESTURE_STEP_MS) {
+  const durationMs = Math.min(
+    SIM_DRAG_MAX_MS,
+    Math.max(SIM_DRAG_MIN_MS, Math.round((request2.duration ?? 0.3) * 1e3))
+  );
+  const steps = Math.max(2, Math.round(durationMs / Math.max(1, stepMs)));
+  return tracePoints(
+    { x: clamp01(request2.fromX), y: clamp01(request2.fromY) },
+    { x: clamp01(request2.toX), y: clamp01(request2.toY) },
+    steps
+  );
+}
+function simDragRequestOf(payload) {
+  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return void 0;
+  const record3 = payload;
+  const normalized = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1 ? value : void 0;
+  const fromX = normalized(record3.fromX);
+  const fromY = normalized(record3.fromY);
+  const toX = normalized(record3.toX);
+  const toY = normalized(record3.toY);
+  if (fromX === void 0 || fromY === void 0 || toX === void 0 || toY === void 0) return void 0;
+  const duration3 = typeof record3.duration === "number" && Number.isFinite(record3.duration) ? record3.duration : void 0;
+  return { fromX, fromY, toX, toY, ...duration3 === void 0 ? {} : { duration: duration3 } };
+}
+function loadWs() {
+  return { WebSocket: import_websocket.default };
+}
+function errorMessage3(error62) {
+  return error62 instanceof Error ? error62.message : String(error62);
+}
+function sleep2(milliseconds) {
+  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
+}
+function gestureUnavailable(wsUrl, detail) {
+  return new Error(
+    `ios-simulator: the serve-sim stream gesture channel (${wsUrl === "" ? "no wsUrl \u2014 no live serve-sim stream" : wsUrl}) is unavailable \u2014 ${detail}; send the gesture through the serve-sim CLI instead (one process per touch event, ~2 s per scroll) or boot the stream first with ios_sim_boot`
+  );
+}
+function requireGesturePath(points) {
+  const list = Array.isArray(points) ? points : [];
+  if (list.length < 2) {
+    throw new RangeError(
+      `ios-simulator: a gesture path needs at least 2 points (begin + one move), got ${list.length} \u2014 a single point is a tap, which the serve-sim CLI already delivers in one event`
+    );
+  }
+  return list.map((point, index) => {
+    if (typeof point?.x !== "number" || typeof point.y !== "number" || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+      throw new RangeError(`ios-simulator: gesture point ${index} must carry finite normalized x/y, got ${JSON.stringify(point)}`);
+    }
+    return { x: clamp01(point.x), y: clamp01(point.y) };
+  });
+}
+async function sendSimGesture(wsUrl, points, options = {}) {
+  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
+  if (!/^wss?:\/\//.test(url2)) {
+    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
+  }
+  const path = requireGesturePath(points);
+  const stepMs = options.stepMs ?? SIM_GESTURE_STEP_MS;
+  if (!Number.isFinite(stepMs) || stepMs < 0) {
+    throw new RangeError(`ios-simulator: gesture stepMs must be a non-negative number of milliseconds, got ${String(stepMs)}`);
+  }
+  const frames = path.map((point, index) => ({
+    frame: encodeSimTouchFrame(index === 0 ? "begin" : "move", point.x, point.y),
+    waitMs: index > 0 ? stepMs : 0
+  }));
+  const last = path[path.length - 1];
+  frames.push({ frame: encodeSimTouchFrame("end", last.x, last.y), waitMs: 0 });
+  const elapsedMs = await writeSimFrames(url2, frames, options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
+  return { frames: path.length + 1, moves: path.length - 1, elapsedMs, stepMs, wsUrl: url2 };
+}
+var SIM_TAP_HOLD_MS = 40;
+async function sendSimTap(wsUrl, point, options = {}) {
+  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
+  if (!/^wss?:\/\//.test(url2)) {
+    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
+  }
+  if (typeof point?.x !== "number" || typeof point.y !== "number" || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+    throw new RangeError(`ios-simulator: a tap needs finite normalized x/y, got ${JSON.stringify(point)}`);
+  }
+  const holdMs = options.holdMs ?? SIM_TAP_HOLD_MS;
+  if (!Number.isFinite(holdMs) || holdMs < 0) {
+    throw new RangeError(`ios-simulator: tap holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`);
+  }
+  const elapsedMs = await writeSimFrames(url2, [
+    { frame: encodeSimTouchFrame("begin", point.x, point.y), waitMs: 0 },
+    { frame: encodeSimTouchFrame("end", point.x, point.y), waitMs: holdMs }
+  ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
+  return { frames: 2, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url2 };
+}
+var SIM_PASTE_HOLD_MS = 40;
+function sendSimPaste(wsUrl, options = {}) {
+  return sendSimShortcut(wsUrl, "paste", options);
+}
+async function sendSimShortcut(wsUrl, name, options = {}) {
+  if (!isSimShortcut(name)) {
+    throw new RangeError(`ios-simulator: unknown shortcut ${JSON.stringify(name)} \u2014 one of ${Object.keys(SIM_SHORTCUTS).join(", ")}`);
+  }
+  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
+  if (!/^wss?:\/\//.test(url2)) {
+    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
+  }
+  const holdMs = options.holdMs ?? SIM_PASTE_HOLD_MS;
+  if (!Number.isFinite(holdMs) || holdMs < 0) {
+    throw new RangeError(`ios-simulator: shortcut holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`);
+  }
+  const { usage, shift } = SIM_SHORTCUTS[name];
+  const modifiers = shift ? [HID_LEFT_COMMAND, HID_LEFT_SHIFT] : [HID_LEFT_COMMAND];
+  const keys = [
+    ...modifiers.map((modifier) => ["down", modifier]),
+    ["down", usage],
+    ["up", usage],
+    ...[...modifiers].reverse().map((modifier) => ["up", modifier])
+  ];
+  const frames = keys.map(([type, key], index) => ({ frame: encodeSimKeyFrame(type, key), waitMs: index === 0 ? 0 : holdMs }));
+  const elapsedMs = await writeSimFrames(url2, frames, options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
+  return { frames: frames.length, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url2 };
+}
+async function sendSimKeyboardToggle(wsUrl, options = {}) {
+  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
+  if (!/^wss?:\/\//.test(url2)) {
+    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
+  }
+  await writeSimFrames(url2, [{ frame: Buffer.from([SIM_SOFTWARE_KEYBOARD_TAG]), waitMs: 0 }], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
+}
+async function writeSimFrames(url2, frames, connectTimeoutMs) {
+  const { WebSocket: WebSocket2 } = loadWs();
+  const socket = new WebSocket2(url2, { perMessageDeflate: false });
+  let broken;
+  let finished = false;
+  socket.on("error", (error62) => {
+    broken ??= `the control socket errored (${errorMessage3(error62)})`;
+  });
+  socket.on("close", (code, reason) => {
+    if (finished) return;
+    const detail = reason.length > 0 ? ` ${reason.toString("utf8")}` : "";
+    broken ??= `the control socket closed before the gesture finished (code ${code}${detail})`;
+  });
+  const started = Date.now();
+  try {
+    await openSocket(socket, connectTimeoutMs, url2, () => broken);
+    for (const [index, { frame, waitMs }] of frames.entries()) {
+      if (broken !== void 0) throw gestureUnavailable(url2, broken);
+      if (waitMs > 0) await sleep2(waitMs);
+      if (broken !== void 0) throw gestureUnavailable(url2, broken);
+      if (index < frames.length - 1) {
+        socket.send(frame);
+        continue;
+      }
+      await new Promise((resolve7, reject) => {
+        socket.send(frame, (error62) => {
+          if (error62 === void 0 || error62 === null) resolve7();
+          else reject(gestureUnavailable(url2, `the last frame could not be written (${errorMessage3(error62)})`));
+        });
+      });
+    }
+    finished = true;
+    return Date.now() - started;
+  } finally {
+    finished = true;
+    await closeSocket(socket, WebSocket2.CLOSED);
+  }
+}
+function openSocket(socket, timeoutMs, url2, broken) {
+  return new Promise((resolve7, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(gestureUnavailable(url2, broken() ?? `the control socket did not open within ${timeoutMs} ms`));
+    }, timeoutMs);
+    socket.once("open", () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve7();
+    });
+    socket.once("close", () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(gestureUnavailable(url2, broken() ?? "the control socket closed before it opened"));
+    });
+  });
+}
+function closeSocket(socket, closedState) {
+  if (socket.readyState === closedState) return Promise.resolve();
+  return new Promise((resolve7) => {
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve7();
+    };
+    const timer = setTimeout(() => {
+      socket.terminate();
+      done();
+    }, SIM_GESTURE_CLOSE_TIMEOUT_MS);
+    socket.once("close", done);
+    try {
+      socket.close();
+    } catch {
+      socket.terminate();
+      done();
+    }
+  });
 }
 
 // src/sim-host.ts
@@ -42451,10 +42755,10 @@ var STDERR_RING_LINES = 40;
 var STDERR_LINE_MAX_CHARS = 240;
 var ADOPT_GRACE_MS = 1500;
 var ADOPTED_PROBE_TIMEOUT_MS = 2e3;
-function errorMessage3(error62) {
+function errorMessage4(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep2(milliseconds) {
+function sleep3(milliseconds) {
   return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 function isExecutableFile(path) {
@@ -42842,7 +43146,7 @@ var SimHostController = class {
       this.#armIdle();
       return info;
     } catch (error62) {
-      this.#lastError = errorMessage3(error62);
+      this.#lastError = errorMessage4(error62);
       throw error62;
     } finally {
       if (this.#starting === starting) this.#starting = void 0;
@@ -42991,7 +43295,7 @@ var SimHostController = class {
       kill(-child.pid, "SIGTERM");
     } catch (error62) {
       if (error62.code !== "ESRCH") {
-        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage3(error62)}
+        process.stderr.write(`ios-simulator: could not stop the serve-sim process group ${child.pid} on exit: ${errorMessage4(error62)}
 `);
       }
     }
@@ -43018,7 +43322,7 @@ var SimHostController = class {
       this.#restarts += 1;
       await this.ensureRunning({ udid: device });
     } catch (error62) {
-      this.#lastError = errorMessage3(error62);
+      this.#lastError = errorMessage4(error62);
       if (this.#exitAt === void 0) this.#exitAt = Date.now();
     }
   }
@@ -43056,7 +43360,7 @@ var SimHostController = class {
     }
     const sinceStop = Date.now() - this.#lastStopAt;
     if (sinceStop < this.#options.restartDelayMs) {
-      await sleep2(this.#options.restartDelayMs - sinceStop);
+      await sleep3(this.#options.restartDelayMs - sinceStop);
     }
     await bootDevice(udid);
     if (this.#disposed) throw new Error("ios-simulator: sim host is disposed");
@@ -43142,7 +43446,7 @@ var SimHostController = class {
       if (info.port !== port) {
         const childExited = await Promise.race([
           waitForChildClose(child, ADOPT_GRACE_MS),
-          sleep2(ADOPT_GRACE_MS).then(() => false)
+          sleep3(ADOPT_GRACE_MS).then(() => false)
         ]);
         if (this.#launchEpoch !== epoch) {
           throw new Error("ios-simulator: serve-sim launch was superseded by stop()");
@@ -43196,10 +43500,10 @@ var SimHostController = class {
 };
 
 // src/stream-source.ts
-function errorMessage4(error62) {
+function errorMessage5(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep3(milliseconds) {
+function sleep4(milliseconds) {
   return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 function requireNormalized(x, y) {
@@ -43276,9 +43580,9 @@ var SimStreamSource = class {
       requireNormalized(drag.toX, drag.toY);
       const holdMs = Math.min(2e3, Math.max(20, Math.round((drag.duration ?? 0.3) * 500)));
       await this.#run("gesture", JSON.stringify({ type: "begin", x: drag.fromX, y: drag.fromY }));
-      await sleep3(holdMs);
+      await sleep4(holdMs);
       await this.#run("gesture", JSON.stringify({ type: "move", x: drag.toX, y: drag.toY }));
-      await sleep3(holdMs);
+      await sleep4(holdMs);
       await this.#run("gesture", JSON.stringify({ type: "end", x: drag.toX, y: drag.toY }));
     },
     button: async (name = "home") => {
@@ -43295,6 +43599,13 @@ var SimStreamSource = class {
       action,
       async (name) => {
         await this.#run("button", name);
+      },
+      void 0,
+      async (tag) => {
+        if (tag !== SIM_SOFTWARE_KEYBOARD_TAG) throw new Error(`ios-simulator: no sender for serve-sim control frame ${String(tag)}`);
+        const udid = this.#requireDevice();
+        const info = await this.host.ensureRunning({ udid });
+        await sendSimKeyboardToggle(info.wsUrl);
       }
     ),
     screenshot: async () => {
@@ -43306,7 +43617,7 @@ var SimStreamSource = class {
         const size = pngDimensionsFromBase64(pngBase64);
         return { pngBase64, ...size === void 0 ? {} : size };
       } catch (error62) {
-        throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage4(error62)}`);
+        throw new Error(`ios-simulator: the simulator screenshot failed: ${errorMessage5(error62)}`);
       } finally {
         try {
           unlinkSync2(path);
@@ -43359,10 +43670,10 @@ var WDA_BUSY_COOLDOWN_MS = 1e4;
 var WDA_WINDOW_SIZE_CACHE_TTL_MS = 3e3;
 var TRANSIENT_RETRY_DELAY_MS = 250;
 var MAX_BODY_BYTES = 64 * 1024 * 1024;
-function errorMessage5(error62) {
+function errorMessage6(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep4(milliseconds) {
+function sleep5(milliseconds) {
   return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 var WDA_LOCKED_PATTERN = /deviceprep\s+code\s*=\s*-3|unlock[^\n]*to continue|waiting for the destination to become ready/i;
@@ -43420,7 +43731,7 @@ function isInvalidSessionError(error62) {
   return false;
 }
 function isTransientWdaTransportError(error62) {
-  const text = errorMessage5(error62);
+  const text = errorMessage6(error62);
   if (/\bECONNREFUSED\b/i.test(text)) return false;
   return /\bECONNRESET\b/i.test(text) || /\bsocket hang up\b/i.test(text) || /\bEPIPE\b/i.test(text);
 }
@@ -43683,7 +43994,7 @@ var WdaClient = class {
       return await this.#rawOnce(method, path, body, timeoutMs);
     } catch (error62) {
       if (!isIdempotentWdaGet(method, path) || !isTransientWdaTransportError(error62)) throw error62;
-      await sleep4(TRANSIENT_RETRY_DELAY_MS);
+      await sleep5(TRANSIENT_RETRY_DELAY_MS);
       return this.#rawOnce(method, path, body, timeoutMs);
     }
   }
@@ -43727,7 +44038,7 @@ var WdaClient = class {
         });
         res.on("error", (error62) => {
           finish(() => failWith(new WdaHttpError(
-            `WDA ${method} ${path} connection error: ${errorMessage5(error62)}`,
+            `WDA ${method} ${path} connection error: ${errorMessage6(error62)}`,
             res.statusCode,
             void 0,
             void 0
@@ -43760,7 +44071,7 @@ var WdaClient = class {
         });
       });
       req.on("error", (error62) => {
-        finish(() => failWith(new WdaHttpError(`WDA ${method} ${path} request failed: ${errorMessage5(error62)}`, void 0, void 0, void 0)));
+        finish(() => failWith(new WdaHttpError(`WDA ${method} ${path} request failed: ${errorMessage6(error62)}`, void 0, void 0, void 0)));
       });
       req.on("timeout", () => {
         req.destroy();
@@ -43966,7 +44277,7 @@ async function closeTunnels(running) {
   await running.tunnel.close().catch(() => void 0);
   if (running.mjpeg !== void 0) await (await running.mjpeg.catch(() => void 0))?.close().catch(() => void 0);
 }
-function errorMessage6(error62) {
+function errorMessage7(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
 function xcodebuildTestArgs(hardwareUdid, teamId, bundleId) {
@@ -44041,7 +44352,7 @@ var WdaController = class {
         return this.status();
       } catch (error62) {
         const reason = error62 instanceof WdaError ? error62.reason : "build-failed";
-        this.#failure = { device, reason, detail: errorMessage6(error62) };
+        this.#failure = { device, reason, detail: errorMessage7(error62) };
         throw error62;
       }
     })();
@@ -44127,7 +44438,7 @@ var WdaController = class {
   async #launch(device, signal) {
     const adopted = await this.#adopt(device).catch((error62) => {
       if (error62 instanceof WdaError) throw error62;
-      throw new WdaError("tunnel-failed", `no USB tunnel to "${device.name}": ${errorMessage6(error62)}`, error62);
+      throw new WdaError("tunnel-failed", `no USB tunnel to "${device.name}": ${errorMessage7(error62)}`, error62);
     });
     if (adopted !== void 0) return adopted;
     const team = await this.#seams.resolveTeam(signal);
@@ -44136,7 +44447,7 @@ var WdaController = class {
     try {
       stagedDir = await this.#seams.stageSource();
     } catch (error62) {
-      throw new WdaError("unavailable", errorMessage6(error62), error62);
+      throw new WdaError("unavailable", errorMessage7(error62), error62);
     }
     const hardwareUdid = hardwareUdidOf(device);
     const runner2 = this.#seams.spawnRunner(xcodebuildTestArgs(hardwareUdid, team.teamId, this.#seams.bundleId(team.teamId)), stagedDir);
@@ -44203,7 +44514,7 @@ ${tail}`}`);
         if (health.ready) return;
         last = health.message ?? health.state ?? "not ready";
       } catch (error62) {
-        last = errorMessage6(error62);
+        last = errorMessage7(error62);
       }
       await this.#seams.sleep(READY_POLL_MS);
     }
@@ -44886,10 +45197,10 @@ var SWIFT_OUTPUT_RING_LINES = 1e3;
 var KEPT_DYLIB_GENERATIONS = 3;
 var HOST_SOURCES = ["PreviewHostApp.swift", "PreviewSession.swift", "PreviewRootView.swift"];
 var DEFAULT_PREVIEW_TIMINGS = { debounceMs: 300, hostConfirmMs: 3e4, reloadConfirmMs: 15e3, pollMs: 500 };
-function errorMessage7(error62) {
+function errorMessage8(error62) {
   return error62 instanceof Error ? error62.message : String(error62);
 }
-function sleep5(milliseconds) {
+function sleep6(milliseconds) {
   return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 }
 function readJsonObject(path) {
@@ -45107,7 +45418,7 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
       const live = this.#hostResult(session).generation;
       if (typeof live === "number" && live >= generation) return true;
       if (Date.now() >= deadline) return false;
-      await sleep5(this.#timings.pollMs);
+      await sleep6(this.#timings.pollMs);
     }
   }
   #hostResult(session) {
@@ -45158,7 +45469,7 @@ ${filterSwiftBuildErrors(build.lines).join("\n")}`);
         session.lastRuntimeError = `the host did not confirm generation ${session.generation} within ${this.#timings.reloadConfirmMs / 1e3}s \u2014 keeping the last good preview`;
       }
     } catch (error62) {
-      session.lastRuntimeError = errorMessage7(error62);
+      session.lastRuntimeError = errorMessage8(error62);
     } finally {
       session.rebuildRunning = false;
       if (session.rebuildQueued && !session.disposed) {
@@ -45264,16 +45575,6 @@ import { createServer as createServer4, get as httpGet } from "node:http";
 import { basename as basename2, dirname as dirname5, join as join16, sep as sep2 } from "node:path";
 import { pipeline } from "node:stream";
 
-// node_modules/ws/wrapper.mjs
-var import_stream = __toESM(require_stream(), 1);
-var import_extension = __toESM(require_extension(), 1);
-var import_permessage_deflate = __toESM(require_permessage_deflate(), 1);
-var import_receiver = __toESM(require_receiver(), 1);
-var import_sender = __toESM(require_sender(), 1);
-var import_subprotocol = __toESM(require_subprotocol(), 1);
-var import_websocket = __toESM(require_websocket(), 1);
-var import_websocket_server = __toESM(require_websocket_server(), 1);
-
 // src/panel/client/layout.ts
 var SIZE_OPTIONS = [
   { id: "fit", mode: { kind: "fit" }, en: "Fit", zh: "\u9002\u5E94" },
@@ -45347,261 +45648,6 @@ function parseSimConfigFrame(data) {
   } catch {
   }
   return void 0;
-}
-
-// src/sim-gesture.ts
-var SIM_TOUCH_TAG = 3;
-var SIM_KEY_TAG = 6;
-var HID_LEFT_COMMAND = 227;
-var HID_V = 25;
-var SIM_GESTURE_STEP_MS = 16;
-var SIM_SCROLL_STEPS = 18;
-var SIM_GESTURE_CONNECT_TIMEOUT_MS = 3e3;
-var SIM_GESTURE_CLOSE_TIMEOUT_MS = 250;
-var SIM_GESTURE_BAND_MIN = 0.08;
-var SIM_GESTURE_BAND_MAX = 0.92;
-var SIM_DRAG_MAX_MS = 2e3;
-var SIM_DRAG_MIN_MS = 100;
-function clamp01(value) {
-  return Math.min(1, Math.max(0, value));
-}
-function encodeSimControlFrame(tag, payload) {
-  const json2 = Buffer.from(JSON.stringify(payload), "utf8");
-  const frame = Buffer.allocUnsafe(1 + json2.length);
-  frame[0] = tag;
-  json2.copy(frame, 1);
-  return frame;
-}
-function encodeSimTouchFrame(type, x, y) {
-  return encodeSimControlFrame(SIM_TOUCH_TAG, { type, x: clamp01(x), y: clamp01(y) });
-}
-function encodeSimKeyFrame(type, usage) {
-  return encodeSimControlFrame(SIM_KEY_TAG, { type, usage });
-}
-function clampBand(value) {
-  return Math.min(SIM_GESTURE_BAND_MAX, Math.max(SIM_GESTURE_BAND_MIN, value));
-}
-function quantize(value) {
-  return Math.round(value * 1e4) / 1e4;
-}
-function tracePoints(from, to, steps) {
-  const points = [{ x: quantize(from.x), y: quantize(from.y) }];
-  for (let step = 1; step <= steps; step += 1) {
-    const ratio = step / steps;
-    points.push({
-      x: quantize(from.x + (to.x - from.x) * ratio),
-      y: quantize(from.y + (to.y - from.y) * ratio)
-    });
-  }
-  return points;
-}
-function normalizeSteps(steps, fallback) {
-  if (steps === void 0) return fallback;
-  if (!Number.isFinite(steps) || steps < 1) {
-    throw new RangeError(`ios-simulator: a gesture path needs at least 1 move frame, got ${String(steps)}`);
-  }
-  return Math.floor(steps);
-}
-function simScrollPath(request2) {
-  const { direction, amount, anchorX, anchorY } = request2;
-  const vertical = direction === "up" || direction === "down";
-  const anchor2 = vertical ? anchorY : anchorX;
-  const delta = (direction === "down" || direction === "right" ? -1 : 1) * amount;
-  const from = clampBand(anchor2);
-  const to = clampBand(from + delta);
-  const steps = normalizeSteps(request2.steps, SIM_SCROLL_STEPS);
-  return vertical ? tracePoints({ x: anchorX, y: from }, { x: anchorX, y: to }, steps) : tracePoints({ x: from, y: anchorY }, { x: to, y: anchorY }, steps);
-}
-function simDragPath(request2, stepMs = SIM_GESTURE_STEP_MS) {
-  const durationMs = Math.min(
-    SIM_DRAG_MAX_MS,
-    Math.max(SIM_DRAG_MIN_MS, Math.round((request2.duration ?? 0.3) * 1e3))
-  );
-  const steps = Math.max(2, Math.round(durationMs / Math.max(1, stepMs)));
-  return tracePoints(
-    { x: clamp01(request2.fromX), y: clamp01(request2.fromY) },
-    { x: clamp01(request2.toX), y: clamp01(request2.toY) },
-    steps
-  );
-}
-function simDragRequestOf(payload) {
-  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return void 0;
-  const record3 = payload;
-  const normalized = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1 ? value : void 0;
-  const fromX = normalized(record3.fromX);
-  const fromY = normalized(record3.fromY);
-  const toX = normalized(record3.toX);
-  const toY = normalized(record3.toY);
-  if (fromX === void 0 || fromY === void 0 || toX === void 0 || toY === void 0) return void 0;
-  const duration3 = typeof record3.duration === "number" && Number.isFinite(record3.duration) ? record3.duration : void 0;
-  return { fromX, fromY, toX, toY, ...duration3 === void 0 ? {} : { duration: duration3 } };
-}
-function loadWs() {
-  return { WebSocket: import_websocket.default };
-}
-function errorMessage8(error62) {
-  return error62 instanceof Error ? error62.message : String(error62);
-}
-function sleep6(milliseconds) {
-  return new Promise((resolve7) => setTimeout(resolve7, milliseconds));
-}
-function gestureUnavailable(wsUrl, detail) {
-  return new Error(
-    `ios-simulator: the serve-sim stream gesture channel (${wsUrl === "" ? "no wsUrl \u2014 no live serve-sim stream" : wsUrl}) is unavailable \u2014 ${detail}; send the gesture through the serve-sim CLI instead (one process per touch event, ~2 s per scroll) or boot the stream first with ios_sim_boot`
-  );
-}
-function requireGesturePath(points) {
-  const list = Array.isArray(points) ? points : [];
-  if (list.length < 2) {
-    throw new RangeError(
-      `ios-simulator: a gesture path needs at least 2 points (begin + one move), got ${list.length} \u2014 a single point is a tap, which the serve-sim CLI already delivers in one event`
-    );
-  }
-  return list.map((point, index) => {
-    if (typeof point?.x !== "number" || typeof point.y !== "number" || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
-      throw new RangeError(`ios-simulator: gesture point ${index} must carry finite normalized x/y, got ${JSON.stringify(point)}`);
-    }
-    return { x: clamp01(point.x), y: clamp01(point.y) };
-  });
-}
-async function sendSimGesture(wsUrl, points, options = {}) {
-  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
-  if (!/^wss?:\/\//.test(url2)) {
-    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
-  }
-  const path = requireGesturePath(points);
-  const stepMs = options.stepMs ?? SIM_GESTURE_STEP_MS;
-  if (!Number.isFinite(stepMs) || stepMs < 0) {
-    throw new RangeError(`ios-simulator: gesture stepMs must be a non-negative number of milliseconds, got ${String(stepMs)}`);
-  }
-  const frames = path.map((point, index) => ({
-    frame: encodeSimTouchFrame(index === 0 ? "begin" : "move", point.x, point.y),
-    waitMs: index > 0 ? stepMs : 0
-  }));
-  const last = path[path.length - 1];
-  frames.push({ frame: encodeSimTouchFrame("end", last.x, last.y), waitMs: 0 });
-  const elapsedMs = await writeSimFrames(url2, frames, options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
-  return { frames: path.length + 1, moves: path.length - 1, elapsedMs, stepMs, wsUrl: url2 };
-}
-var SIM_TAP_HOLD_MS = 40;
-async function sendSimTap(wsUrl, point, options = {}) {
-  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
-  if (!/^wss?:\/\//.test(url2)) {
-    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
-  }
-  if (typeof point?.x !== "number" || typeof point.y !== "number" || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
-    throw new RangeError(`ios-simulator: a tap needs finite normalized x/y, got ${JSON.stringify(point)}`);
-  }
-  const holdMs = options.holdMs ?? SIM_TAP_HOLD_MS;
-  if (!Number.isFinite(holdMs) || holdMs < 0) {
-    throw new RangeError(`ios-simulator: tap holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`);
-  }
-  const elapsedMs = await writeSimFrames(url2, [
-    { frame: encodeSimTouchFrame("begin", point.x, point.y), waitMs: 0 },
-    { frame: encodeSimTouchFrame("end", point.x, point.y), waitMs: holdMs }
-  ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
-  return { frames: 2, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url2 };
-}
-var SIM_PASTE_HOLD_MS = 40;
-async function sendSimPaste(wsUrl, options = {}) {
-  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
-  if (!/^wss?:\/\//.test(url2)) {
-    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
-  }
-  const holdMs = options.holdMs ?? SIM_PASTE_HOLD_MS;
-  if (!Number.isFinite(holdMs) || holdMs < 0) {
-    throw new RangeError(`ios-simulator: paste holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`);
-  }
-  const elapsedMs = await writeSimFrames(url2, [
-    { frame: encodeSimKeyFrame("down", HID_LEFT_COMMAND), waitMs: 0 },
-    { frame: encodeSimKeyFrame("down", HID_V), waitMs: holdMs },
-    { frame: encodeSimKeyFrame("up", HID_V), waitMs: holdMs },
-    { frame: encodeSimKeyFrame("up", HID_LEFT_COMMAND), waitMs: holdMs }
-  ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
-  return { frames: 4, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url2 };
-}
-async function writeSimFrames(url2, frames, connectTimeoutMs) {
-  const { WebSocket: WebSocket2 } = loadWs();
-  const socket = new WebSocket2(url2, { perMessageDeflate: false });
-  let broken;
-  let finished = false;
-  socket.on("error", (error62) => {
-    broken ??= `the control socket errored (${errorMessage8(error62)})`;
-  });
-  socket.on("close", (code, reason) => {
-    if (finished) return;
-    const detail = reason.length > 0 ? ` ${reason.toString("utf8")}` : "";
-    broken ??= `the control socket closed before the gesture finished (code ${code}${detail})`;
-  });
-  const started = Date.now();
-  try {
-    await openSocket(socket, connectTimeoutMs, url2, () => broken);
-    for (const [index, { frame, waitMs }] of frames.entries()) {
-      if (broken !== void 0) throw gestureUnavailable(url2, broken);
-      if (waitMs > 0) await sleep6(waitMs);
-      if (broken !== void 0) throw gestureUnavailable(url2, broken);
-      if (index < frames.length - 1) {
-        socket.send(frame);
-        continue;
-      }
-      await new Promise((resolve7, reject) => {
-        socket.send(frame, (error62) => {
-          if (error62 === void 0 || error62 === null) resolve7();
-          else reject(gestureUnavailable(url2, `the last frame could not be written (${errorMessage8(error62)})`));
-        });
-      });
-    }
-    finished = true;
-    return Date.now() - started;
-  } finally {
-    finished = true;
-    await closeSocket(socket, WebSocket2.CLOSED);
-  }
-}
-function openSocket(socket, timeoutMs, url2, broken) {
-  return new Promise((resolve7, reject) => {
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      reject(gestureUnavailable(url2, broken() ?? `the control socket did not open within ${timeoutMs} ms`));
-    }, timeoutMs);
-    socket.once("open", () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve7();
-    });
-    socket.once("close", () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      reject(gestureUnavailable(url2, broken() ?? "the control socket closed before it opened"));
-    });
-  });
-}
-function closeSocket(socket, closedState) {
-  if (socket.readyState === closedState) return Promise.resolve();
-  return new Promise((resolve7) => {
-    let settled = false;
-    const done = () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve7();
-    };
-    const timer = setTimeout(() => {
-      socket.terminate();
-      done();
-    }, SIM_GESTURE_CLOSE_TIMEOUT_MS);
-    socket.once("close", done);
-    try {
-      socket.close();
-    } catch {
-      socket.terminate();
-      done();
-    }
-  });
 }
 
 // src/orientation.ts
@@ -45798,6 +45844,11 @@ function interactControlArgs(args) {
     }
     case "scroll":
       return dragFramePayloads(scrollArgs(args));
+    case "shortcut":
+      if (!isSimShortcut(args.name)) {
+        throw new Error(`ios_sim_interact: action "shortcut" requires name \u2014 one of ${Object.keys(SIM_SHORTCUTS).join(", ")}`);
+      }
+      return [];
   }
 }
 async function performSimInteractControl(host, deviceUdid, payloads) {
@@ -45848,6 +45899,13 @@ async function performSimInteract(host, deviceUdid, args, payloads, options = {}
   if (args.action === "type" && typeof args.text === "string") {
     const segments = simTextSegments(args.text);
     if (segments.some((segment) => segment.kind === "paste")) return typeWithPaste(host, deviceUdid, segments, wsUrl, options);
+  }
+  if (args.action === "shortcut" && isSimShortcut(args.name)) {
+    if (wsUrl === void 0) {
+      throw new Error(`ios_sim_interact: action "shortcut" presses a key combination over the stream's control socket, and no live serve-sim stream reports one for ${deviceUdid}; start it with ios_sim_boot and retry`);
+    }
+    const report = await sendSimShortcut(wsUrl, args.name, options.shortcutHoldMs === void 0 ? {} : { holdMs: options.shortcutHoldMs });
+    return { channel: "ws", frames: report.frames, elapsedMs: report.elapsedMs };
   }
   let wsError;
   if (points !== void 0 || tap !== void 0) {
@@ -47407,6 +47465,7 @@ var PanelServer = class {
       }
       if (method === "POST" && path === "/api/record") return sendJson(res, 200, await this.#record(await readJsonBody(req)));
       if (method === "POST" && path === "/api/type") return sendJson(res, 200, await this.#type(await readJsonBody(req)));
+      if (method === "POST" && path === "/api/pasteboard") return sendJson(res, 200, await this.#pasteboard());
       if (method === "POST" && path === "/api/appearance") return sendJson(res, 200, await this.#appearance(await readJsonBody(req)));
       if (method === "POST" && path === "/api/shutdown") {
         await readJsonBody(req);
@@ -47721,6 +47780,17 @@ var PanelServer = class {
     } catch (error62) {
       throw new HttpError(502, errorMessage11(error62));
     }
+  }
+  /**
+   * The text on the shown simulator's pasteboard, for the panel to hand to the
+   * Mac clipboard after ⌘C / ⌘X. A POST, so it sits behind the same Origin
+   * fence as the mutations: another page must not read what the user copied.
+   */
+  async #pasteboard() {
+    const read = this.#options.simctl.getPasteboard;
+    if (read === void 0) throw new HttpError(501, "reading the pasteboard is not supported");
+    const device = await this.#simulatorFor("the pasteboard");
+    return { ok: true, text: await read(device.udid) };
   }
   /** Shut the shown simulator down (its recording and stream first, like ios_sim_shutdown). */
   async #shutdown() {
@@ -48447,6 +48517,8 @@ function registerAppTools(server, deps) {
 var ROTATE_ORIENTATIONS = ["portrait", "landscape_left", "portrait_upside_down", "landscape_right"];
 var XCODE27_TYPE_HINT = " \u2014 with Xcode 27, keyboard input needs Device Hub running with this simulator visible and frontmost, and the app that launched Claude enabled under System Settings \u25B8 Privacy & Security \u25B8 Accessibility; if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)";
 var COORDINATE_ACTIONS = /* @__PURE__ */ new Set(["tap", "scroll", "gesture"]);
+var COPY_SETTLE_MS = 300;
+var MAX_PASTEBOARD_CHARS = 2e4;
 var LOST_ORIENTATION_WARNING = 'the screen looks landscape, but the live stream does not know its orientation (the device was rotated outside these tools, or the stream restarted), so taps, scrolls and gestures go out without the landscape mapping and can miss \u2014 send ios_sim_interact {action: "rotate", orientation: "landscape_left" or "landscape_right"} matching the screen, then retry';
 function resyncFailedWarning(orientation, error62) {
   const message = error62 instanceof Error ? error62.message : String(error62);
@@ -48663,14 +48735,14 @@ function registerCoreTools(server, deps) {
   }));
   server.registerTool("ios_sim_interact", {
     title: "Interact with the simulator",
-    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; all but lock drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. " + (deps.interactScreenshot ? "About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. " : "Answers in text right after the action so actions chain quickly; pass screenshot:true (or call ios_sim_screenshot) to see the result as an image about 300 ms later. ") + "On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
+    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, press an editing shortcut in the focused field (shortcut: copy, paste, cut, select-all, undo, redo \u2014 copy and cut answer with the text now on the simulator pasteboard), or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; the others except lock drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. " + (deps.interactScreenshot ? "About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. " : "Answers in text right after the action so actions chain quickly; pass screenshot:true (or call ios_sim_screenshot) to see the result as an image about 300 ms later. ") + "On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
     inputSchema: {
-      action: external_exports.enum(["tap", "type", "button", "gesture", "scroll", "rotate", "device_action"]),
+      action: external_exports.enum(["tap", "type", "button", "gesture", "scroll", "rotate", "device_action", "shortcut"]),
       udid: UDID_PARAM,
       x: external_exports.number().min(0).max(1).optional().describe("Normalized x (tap: required; scroll: start anchor, default 0.5)"),
       y: external_exports.number().min(0).max(1).optional().describe("Normalized y (tap: required; scroll: start anchor, default 0.5)"),
       text: external_exports.string().optional().describe('Text for "type" \u2014 any text; tap the field first so it has focus'),
-      name: external_exports.string().optional().describe('Button for "button" (home, lock, siri, volume-up, \u2026; an unknown name fails with the full list) or the action for "device_action"'),
+      name: external_exports.string().optional().describe('Button for "button" (home, lock, siri, volume-up, \u2026; an unknown name fails with the full list), the action for "device_action", or the shortcut for "shortcut" (copy, paste, cut, select-all, undo, redo)'),
       json: external_exports.record(external_exports.string(), external_exports.unknown()).optional().describe('Gesture for "gesture": a drag {"fromX":0.1,"fromY":0.5,"toX":0.9,"toY":0.5,"duration":0.3} or one raw frame {"type":"begin","x":0.5,"y":0.5}'),
       direction: external_exports.enum(["up", "down", "left", "right"]).optional().describe('Scroll direction named by the CONTENT: "down" reveals content further down (the finger moves up)'),
       amount: external_exports.number().min(0).max(1).optional().describe("Fraction of the screen a scroll travels (default 0.6)"),
@@ -48756,10 +48828,17 @@ function registerCoreTools(server, deps) {
         throw new Error(`serve-sim ${args.action} failed: ${message}${args.action === "type" ? XCODE27_TYPE_HINT : ""}`);
       }
     }
+    let pasteboard;
+    if (args.action === "shortcut" && (args.name === "copy" || args.name === "cut")) {
+      await sleep8(COPY_SETTLE_MS);
+      const text = await deps.simctl.getPasteboard(device.udid, extra.signal);
+      pasteboard = text.length > MAX_PASTEBOARD_CHARS ? `${text.slice(0, MAX_PASTEBOARD_CHARS)}\u2026` : text;
+    }
     const result = {
       action: args.action,
       device: deviceSummary(device),
       ...delivery === void 0 ? {} : { delivery },
+      ...pasteboard === void 0 ? {} : { pasteboard },
       ...warning === void 0 ? {} : { warning }
     };
     if (!(args.screenshot ?? deps.interactScreenshot)) return jsonResult(result);
@@ -49161,6 +49240,7 @@ function registerDebugTools(server, deps) {
 import { randomUUID } from "node:crypto";
 import { mkdir as mkdir2, rm as rm3, writeFile as writeFile2 } from "node:fs/promises";
 import { join as join20, resolve as resolve6 } from "node:path";
+var MAX_PASTEBOARD_CHARS2 = 2e4;
 function registerEnvTools(server, deps) {
   const bootedDevice = async (tool, udid) => {
     assertMac(deps.platform);
@@ -49225,6 +49305,29 @@ function registerEnvTools(server, deps) {
     const longitude = args.longitude ?? 0;
     await deps.simctl.setLocation(device.udid, latitude, longitude, extra.signal);
     return jsonResult({ device: deviceSummary(device), latitude, longitude });
+  }));
+  server.registerTool("ios_sim_pasteboard", {
+    title: "Read or set the simulator pasteboard",
+    description: `Read the text on a booted simulator's pasteboard (action "get": what the app or the user last copied) or replace it (action "set", with text). To put text into a field use ios_sim_interact type, which pastes for you; to copy the selection in the focused field use ios_sim_interact shortcut copy.`,
+    inputSchema: {
+      action: external_exports.enum(["get", "set"]),
+      text: external_exports.string().optional().describe('Text for "set" (any Unicode)'),
+      udid: UDID_PARAM
+    }
+  }, async (args, extra) => runTool("ios_sim_pasteboard", async () => {
+    const device = await bootedDevice("ios_sim_pasteboard", args.udid);
+    if (args.action === "set") {
+      if (args.text === void 0) throw new Error('action "set" requires text (an empty string clears the pasteboard)');
+      await deps.simctl.setPasteboard(device.udid, args.text, extra.signal);
+      return jsonResult({ device: deviceSummary(device), set: true, characters: [...args.text].length });
+    }
+    const text = await deps.simctl.getPasteboard(device.udid, extra.signal);
+    const capped = text.length > MAX_PASTEBOARD_CHARS2;
+    return jsonResult({
+      device: deviceSummary(device),
+      text: capped ? text.slice(0, MAX_PASTEBOARD_CHARS2) : text,
+      ...capped ? { truncated: true, characters: [...text].length } : {}
+    });
   }));
   server.registerTool("ios_sim_appearance", {
     title: "Switch light or dark mode",
