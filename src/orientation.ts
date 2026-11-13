@@ -70,6 +70,44 @@ export function readSimScreenConfig(
   })
 }
 
+/**
+ * How long a config stays good without being asked for again. Reading it
+ * opens a control socket and waits for serve-sim's greeting: usually a few
+ * ms, but 165–450 ms was measured on one tap in three after the simulator
+ * sat idle — more than the tap itself (45 ms). The age limit is only a
+ * backstop: every rotation this plugin can see drops the cached config (the
+ * rotate tool, the panel's rotate button), and the panel's relay feeds in the
+ * config frames serve-sim pushes.
+ */
+export const SIM_CONFIG_MAX_AGE_MS = 30_000
+
+const knownConfigs = new Map<string, { at: number; config: SimScreenConfig }>()
+
+/** serve-sim's screen config for a control socket, from a recent read when there is one. */
+export async function simScreenConfig(
+  wsUrl: string,
+  maxAgeMs = SIM_CONFIG_MAX_AGE_MS,
+  timeoutMs?: number,
+): Promise<SimScreenConfig | undefined> {
+  const known = knownConfigs.get(wsUrl)
+  if (known !== undefined && maxAgeMs > 0 && Date.now() - known.at <= maxAgeMs) return known.config
+  const config = await readSimScreenConfig(wsUrl, timeoutMs)
+  // Silence is not a config: the next call asks again (readSimScreenConfig rations that itself).
+  if (config !== undefined) noteSimScreenConfig(wsUrl, config)
+  return config
+}
+
+/** Record a config frame serve-sim sent on `wsUrl` (the panel's relay sees every one it pushes). */
+export function noteSimScreenConfig(wsUrl: string, config: SimScreenConfig): void {
+  knownConfigs.set(wsUrl, { at: Date.now(), config })
+}
+
+/** Drop the cached config — of one control socket, or of all — because the device is being rotated. */
+export function forgetSimScreenConfig(wsUrl?: string): void {
+  if (wsUrl === undefined) knownConfigs.clear()
+  else knownConfigs.delete(wsUrl)
+}
+
 /** Content direction in upright space → content direction in framebuffer space. */
 const SCROLL_DIRECTIONS: Readonly<Record<Landscape, Readonly<Record<Direction, Direction>>>> = {
   landscape_left: { down: 'right', up: 'left', right: 'up', left: 'down' },

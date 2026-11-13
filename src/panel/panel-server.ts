@@ -19,6 +19,7 @@ import { isAnnotationFileName, MAX_ANNOTATION_BYTES, type AnnotationStore } from
 import type { RealDevice, RealDeviceApi } from '../devicectl.js'
 import type { RecorderApi, ScreenshotService, SimctlApi, StreamHost, WdaApi } from '../deps.js'
 import { isDeviceAction } from '../device-actions.js'
+import { forgetSimScreenConfig, noteSimScreenConfig } from '../orientation.js'
 import { interactControlArgs, performSimInteract, type SimInteractArgs } from '../interact.js'
 import { captureWda, planWdaInteract, runWdaInteract } from '../real-ui.js'
 import { isScreenshotFileName } from '../screenshot.js'
@@ -26,6 +27,7 @@ import type { SimulatorDevice } from '../simctl.js'
 import type { StreamSource } from '../stream-source.js'
 import { pickPreferred, sortDevices } from '../target.js'
 import { checkRequest, type FenceKind } from './fence.js'
+import { parseSimConfigFrame, SIM_ROTATE_TAG } from './client/protocol.js'
 import { RealTouchTranslator } from './real-control.js'
 
 export interface PanelServerOptions {
@@ -764,10 +766,15 @@ export class PanelServer {
       })
       client.on('message', (data: RawData, isBinary: boolean) => {
         const frame = { data: toBuffer(data), binary: isBinary }
+        // The panel is rotating the device: the tools must not map coordinates with the old orientation.
+        if (frame.data[0] === SIM_ROTATE_TAG) forgetSimScreenConfig(wsUrl)
         if (target.readyState === WebSocket.OPEN) target.send(frame.data, { binary: frame.binary })
         else if (pending.length < MAX_PENDING_WS_FRAMES) pending.push(frame)
       })
       target.on('message', (data: RawData, isBinary: boolean) => {
+        // serve-sim pushes its config on connect and on every change: keep the tools' copy current.
+        const config = parseSimConfigFrame(data)
+        if (config !== undefined) noteSimScreenConfig(wsUrl, config)
         if (client.readyState === WebSocket.OPEN) client.send(toBuffer(data), { binary: isBinary })
       })
     })

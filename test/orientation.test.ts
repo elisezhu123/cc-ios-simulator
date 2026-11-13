@@ -1,7 +1,7 @@
 import { test, type TestContext } from 'node:test'
 import assert from 'node:assert/strict'
 import { WebSocketServer } from 'ws'
-import { readSimScreenConfig, toFramebufferArgs } from '../src/orientation.js'
+import { forgetSimScreenConfig, noteSimScreenConfig, readSimScreenConfig, simScreenConfig, toFramebufferArgs } from '../src/orientation.js'
 
 test('toFramebufferArgs maps taps, drags and scrolls from upright-image space', () => {
   assert.deepEqual(toFramebufferArgs('portrait', { action: 'tap', x: 0.25, y: 0.75 }), { action: 'tap', x: 0.25, y: 0.75 })
@@ -81,4 +81,32 @@ test('readSimScreenConfig asks a socket it gave up on again after a minute', asy
   clock = 60_000
   assert.deepEqual(await readSimScreenConfig(wakes.url, 50, now), { width: 1206, height: 2622, orientation: 'landscape_left' })
   assert.equal(wakes.connections(), 3)
+})
+
+test('simScreenConfig reuses a recent config instead of opening a socket per call, until it is forgotten or too old', async t => {
+  const socket = await configSocket(t, () => true)
+  assert.equal((await simScreenConfig(socket.url))?.orientation, 'landscape_left')
+  await simScreenConfig(socket.url)
+  await simScreenConfig(socket.url)
+  assert.equal(socket.connections(), 1, 'three reads, one socket')
+  forgetSimScreenConfig(socket.url)
+  await simScreenConfig(socket.url)
+  assert.equal(socket.connections(), 2, 'a forgotten config is read again')
+  await simScreenConfig(socket.url, 0)
+  assert.equal(socket.connections(), 3, 'maxAgeMs 0 always asks')
+  // A config frame seen elsewhere (the panel's relay) replaces the cached one without a read.
+  noteSimScreenConfig(socket.url, { width: 1206, height: 2622, orientation: 'portrait' })
+  assert.equal((await simScreenConfig(socket.url))?.orientation, 'portrait')
+  assert.equal(socket.connections(), 3)
+  forgetSimScreenConfig()
+  await simScreenConfig(socket.url)
+  assert.equal(socket.connections(), 4, 'forgetting everything asks again')
+})
+
+test('simScreenConfig does not cache silence', async t => {
+  const socket = await configSocket(t, connection => connection > 1)
+  forgetSimScreenConfig()
+  assert.equal(await simScreenConfig(socket.url, 30_000, 100), undefined)
+  assert.equal((await simScreenConfig(socket.url, 30_000, 100))?.orientation, 'landscape_left')
+  assert.equal(socket.connections(), 2)
 })

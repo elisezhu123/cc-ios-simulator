@@ -27,7 +27,7 @@ import {
   type ListRow,
 } from '../list-rows.js'
 import { filterOcrItems, pixelRectToNormalizedCenter, pixelRectToPoints, type OcrItem, type PixelSize } from '../ocr-backend.js'
-import { isLandscape, readSimScreenConfig, toFramebufferArgs } from '../orientation.js'
+import { isLandscape, simScreenConfig, toFramebufferArgs } from '../orientation.js'
 import { captureWda, ROW_SNAPSHOT_DEPTH, wdaTree } from '../real-ui.js'
 import type { ScreenshotCapture } from '../screenshot.js'
 import type { SimulatorDevice } from '../simctl.js'
@@ -420,7 +420,7 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
       // portrait framebuffer coordinates, so a landscape image is mapped.
       let framebufferArgs = tapArgs
       if (snapshot.pixelSize.width > snapshot.pixelSize.height) {
-        const orientation = (await readSimScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
+        const orientation = (await simScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
         if (isLandscape(orientation)) framebufferArgs = toFramebufferArgs(orientation, tapArgs)
         else warning = IMAGE_LANDSCAPE_UNSYNCED_WARNING
       }
