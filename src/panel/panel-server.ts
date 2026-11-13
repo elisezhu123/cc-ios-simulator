@@ -38,7 +38,7 @@ export interface PanelServerOptions {
   attempts?: number
   host: StreamHost
   stream: StreamSource
-  simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'> & Partial<Pick<SimctlApi, 'shutdownDevice' | 'setAppearance' | 'setPasteboard'>>
+  simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'> & Partial<Pick<SimctlApi, 'shutdownDevice' | 'setAppearance' | 'setPasteboard' | 'getPasteboard'>>
   screenshots: Pick<ScreenshotService, 'capture' | 'dir' | 'save'>
   /** WebDriverAgent: the live view and touch of a connected iPhone/iPad. */
   wda?: WdaApi
@@ -275,6 +275,7 @@ export class PanelServer {
       }
       if (method === 'POST' && path === '/api/record') return sendJson(res, 200, await this.#record(await readJsonBody(req)))
       if (method === 'POST' && path === '/api/type') return sendJson(res, 200, await this.#type(await readJsonBody(req)))
+      if (method === 'POST' && path === '/api/pasteboard') return sendJson(res, 200, await this.#pasteboard())
       if (method === 'POST' && path === '/api/appearance') return sendJson(res, 200, await this.#appearance(await readJsonBody(req)))
       if (method === 'POST' && path === '/api/shutdown') {
         await readJsonBody(req)
@@ -603,6 +604,18 @@ export class PanelServer {
     } catch (error) {
       throw new HttpError(502, errorMessage(error))
     }
+  }
+
+  /**
+   * The text on the shown simulator's pasteboard, for the panel to hand to the
+   * Mac clipboard after ⌘C / ⌘X. A POST, so it sits behind the same Origin
+   * fence as the mutations: another page must not read what the user copied.
+   */
+  async #pasteboard(): Promise<Record<string, unknown>> {
+    const read = this.#options.simctl.getPasteboard
+    if (read === undefined) throw new HttpError(501, 'reading the pasteboard is not supported')
+    const device = await this.#simulatorFor('the pasteboard')
+    return { ok: true, text: await read(device.udid) }
   }
 
   /** Shut the shown simulator down (its recording and stream first, like ios_sim_shutdown). */

@@ -474,6 +474,9 @@ var EN = {
   switching: "switching\u2026",
   captureFailed: "Screenshot failed",
   actionFailed: "Action failed",
+  copiedFromSimulator: "Copied from the simulator to your clipboard",
+  copyNothing: "Nothing was copied \u2014 select some text in the simulator first",
+  clipboardRefused: "Copied inside the simulator, but this browser would not let the panel write to your clipboard",
   realDevices: "iPhone / iPad (WebDriverAgent)",
   realDevice: "real device",
   noWda: "WebDriverAgent is not running on this iPhone \u2014 start it with ios_real_start_wda, or pick a simulator above.",
@@ -549,6 +552,9 @@ var ZH = {
   switching: "\u5207\u6362\u4E2D\u2026",
   captureFailed: "\u622A\u56FE\u5931\u8D25",
   actionFailed: "\u64CD\u4F5C\u5931\u8D25",
+  copiedFromSimulator: "\u5DF2\u4ECE\u6A21\u62DF\u5668\u590D\u5236\u5230\u7535\u8111\u526A\u8D34\u677F",
+  copyNothing: "\u6CA1\u6709\u590D\u5236\u5230\u5185\u5BB9\u2014\u2014\u8BF7\u5148\u5728\u6A21\u62DF\u5668\u91CC\u9009\u4E2D\u6587\u5B57",
+  clipboardRefused: "\u5DF2\u5728\u6A21\u62DF\u5668\u5185\u590D\u5236\uFF0C\u4F46\u6D4F\u89C8\u5668\u4E0D\u5141\u8BB8\u9762\u677F\u5199\u5165\u7535\u8111\u526A\u8D34\u677F",
   realDevices: "iPhone / iPad\uFF08WebDriverAgent\uFF09",
   realDevice: "\u771F\u673A",
   noWda: "\u8FD9\u53F0 iPhone \u4E0A\u7684 WebDriverAgent \u6CA1\u6709\u8FD0\u884C\u2014\u2014\u7528 ios_real_start_wda \u542F\u52A8\uFF0C\u6216\u5728\u4E0A\u65B9\u9009\u62E9\u6A21\u62DF\u5668\u3002",
@@ -889,6 +895,33 @@ function simKeyFrames(key) {
   frames.push(simKeyFrame("down", stroke.usage), simKeyFrame("up", stroke.usage));
   if (stroke.shift) frames.push(simKeyFrame("up", SHIFT_USAGE));
   return frames;
+}
+var COMMAND_USAGE = 227;
+var SHORTCUT_KEYS = {
+  copy: { usage: 6, shift: false },
+  cut: { usage: 27, shift: false },
+  "select-all": { usage: 4, shift: false },
+  undo: { usage: 29, shift: false },
+  redo: { usage: 29, shift: true }
+};
+function simShortcutFor(key, shift) {
+  const lower = key.toLowerCase();
+  if (lower === "z") return shift ? "redo" : "undo";
+  if (shift) return void 0;
+  if (lower === "c") return "copy";
+  if (lower === "x") return "cut";
+  if (lower === "a") return "select-all";
+  return void 0;
+}
+function simShortcutFrames(name) {
+  const { usage, shift } = SHORTCUT_KEYS[name];
+  const modifiers = shift ? [COMMAND_USAGE, SHIFT_USAGE] : [COMMAND_USAGE];
+  return [
+    ...modifiers.map((modifier) => simKeyFrame("down", modifier)),
+    simKeyFrame("down", usage),
+    simKeyFrame("up", usage),
+    ...[...modifiers].reverse().map((modifier) => simKeyFrame("up", modifier))
+  ];
 }
 function nextSimRotateOrientation(current) {
   const index = SIM_ROTATE_ORIENTATIONS.indexOf(current ?? "");
@@ -1331,10 +1364,41 @@ ui.fullscreen.addEventListener("click", () => {
   if (document.fullscreenElement === null) void document.documentElement.requestFullscreen().catch(() => void 0);
   else void document.exitFullscreen();
 });
+async function writeMacClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+  }
+  const before = ui.ime.value;
+  ui.ime.value = text;
+  ui.ime.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+  ui.ime.value = before;
+  return copied;
+}
+function runSimShortcut(name) {
+  for (const frame of simShortcutFrames(name)) send(frame);
+  if (name !== "copy" && name !== "cut") return;
+  void (async () => {
+    await new Promise((resolve) => window.setTimeout(resolve, 300));
+    const { text } = await postJson("/api/pasteboard", {});
+    if (text === "") {
+      notify(copy.copyNothing, "error");
+      return;
+    }
+    if (await writeMacClipboard(text)) notify(copy.copiedFromSimulator, "ok");
+    else notify(copy.clipboardRefused, "error");
+  })().catch((error) => report(copy.actionFailed, error));
+}
 document.addEventListener("keydown", (event) => {
   if (annotator.isOpen || !(event.metaKey || event.ctrlKey) || event.altKey) return;
-  const target = event.target;
-  if (target !== null && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))) return;
+  if (isOtherField(event.target)) return;
   const key = event.key.toLowerCase();
   const run = (action) => {
     event.preventDefault();
@@ -1351,6 +1415,10 @@ document.addEventListener("keydown", (event) => {
   else if (!event.shiftKey && key === "arrowright") run(() => rotate(1));
   else if (!event.shiftKey && key === "arrowleft") run(() => rotate(-1));
   else if (!event.shiftKey && key === "k" && state.kind === "simulator") run(() => deviceAction("toggle-keyboard"));
+  else if (state.kind === "simulator") {
+    const shortcut = simShortcutFor(key, event.shiftKey);
+    if (shortcut !== void 0) run(() => runSimShortcut(shortcut));
+  }
 });
 function runtimeLabel(runtime) {
   const match = /SimRuntime\.([A-Za-z]+)-(\d+)-(\d+)/u.exec(runtime);

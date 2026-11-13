@@ -8,9 +8,12 @@
 
 import { serveSimControlArgs, type SimStreamInfo } from './sim-host.js'
 import {
+  isSimShortcut,
   sendSimGesture,
   sendSimPaste,
+  sendSimShortcut,
   sendSimTap,
+  SIM_SHORTCUTS,
   simDragPath,
   simDragRequestOf,
   simScrollPath,
@@ -20,7 +23,7 @@ import {
 } from './sim-gesture.js'
 
 /** The serve-sim input actions (rotate / device_action are handled by the tool). */
-export type SimInteractAction = 'tap' | 'type' | 'button' | 'gesture' | 'scroll'
+export type SimInteractAction = 'tap' | 'type' | 'button' | 'gesture' | 'scroll' | 'shortcut'
 
 export interface SimInteractArgs {
   action: SimInteractAction
@@ -180,6 +183,12 @@ export function interactControlArgs(args: SimInteractArgs): string[][] {
     }
     case 'scroll':
       return dragFramePayloads(scrollArgs(args))
+    case 'shortcut':
+      if (!isSimShortcut(args.name)) {
+        throw new Error(`ios_sim_interact: action "shortcut" requires name — one of ${Object.keys(SIM_SHORTCUTS).join(', ')}`)
+      }
+      // A key combination has no serve-sim CLI form: performSimInteract sends it over the control socket.
+      return []
   }
 }
 
@@ -228,6 +237,8 @@ export interface SimInteractOptions {
   pasteHoldMs?: number
   /** Wait after a paste before typing on (default 250 ms). */
   pasteSettleMs?: number
+  /** Delay between the key frames of a shortcut (default `SIM_PASTE_HOLD_MS`). */
+  shortcutHoldMs?: number
 }
 
 /**
@@ -306,6 +317,14 @@ export async function performSimInteract(
   if (args.action === 'type' && typeof args.text === 'string') {
     const segments = simTextSegments(args.text)
     if (segments.some(segment => segment.kind === 'paste')) return typeWithPaste(host, deviceUdid, segments, wsUrl, options)
+  }
+  if (args.action === 'shortcut' && isSimShortcut(args.name)) {
+    if (wsUrl === undefined) {
+      throw new Error(`ios_sim_interact: action "shortcut" presses a key combination over the stream's control socket, and no live `
+        + `serve-sim stream reports one for ${deviceUdid}; start it with ios_sim_boot and retry`)
+    }
+    const report = await sendSimShortcut(wsUrl, args.name, options.shortcutHoldMs === undefined ? {} : { holdMs: options.shortcutHoldMs })
+    return { channel: 'ws', frames: report.frames, elapsedMs: report.elapsedMs }
   }
   let wsError: string | undefined
   if (points !== undefined || tap !== undefined) {

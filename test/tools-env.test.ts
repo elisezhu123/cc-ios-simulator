@@ -61,3 +61,13 @@ test('ios_sim_record stop works after the device shut down; start still needs a 
   assert.match(textOf(await h.call('ios_sim_record', { action: 'start', udid: 'BBB' })), /is Shutdown — boot it first/)
   await h.close()
 })
+
+test('ios_sim_pasteboard sets and gets the simulator pasteboard', async () => {
+  const h = await toolHarness(registerEnvTools)
+  assert.match(textOf(await h.call('ios_sim_pasteboard', { action: 'set' })), /requires text/)
+  const set = h.json(await h.call('ios_sim_pasteboard', { action: 'set', text: '你好🎉' })) as { set: boolean; characters: number }
+  assert.deepEqual([set.set, set.characters], [true, 3])
+  assert.equal((h.json(await h.call('ios_sim_pasteboard', { action: 'get' })) as { text: string }).text, '你好🎉')
+  assert.deepEqual(h.simctlCalls, [['pbcopy', 'BBB', '你好🎉'], ['pbpaste', 'BBB']])
+  await h.close()
+})

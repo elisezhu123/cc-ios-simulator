@@ -38,7 +38,7 @@ async function dockPanel() {
     return { status: response.status, body: await response.json() as Record<string, unknown> }
   }
   const status = async (): Promise<Record<string, unknown>> => await (await fetch(`http://127.0.0.1:${port}/api/status`)).json() as Record<string, unknown>
-  return { panel, post, status, hostCalls, simctlCalls }
+  return { panel, post, status, hostCalls, simctlCalls, simctl }
 }
 
 test('the dock records the shown simulator, sets its appearance, and refuses both on an iPhone', async () => {
@@ -87,8 +87,9 @@ test('shut down stops the recording and the stream first; detach leaves the simu
   }
 })
 
-test('the on-screen keyboard and slow animations click Simulator menu items below Device', () => {
-  assert.deepEqual(deviceActionSpec('toggle-keyboard').transport, { kind: 'menu', item: 'Toggle Software Keyboard', path: ['I/O', 'Keyboard'] })
+test('the on-screen keyboard is a serve-sim frame; slow animations click a Simulator menu item', () => {
+  // Tag 12 is serve-sim's native keyboard toggle: it works with no Simulator.app window (Xcode 27 has none).
+  assert.deepEqual(deviceActionSpec('toggle-keyboard').transport, { kind: 'frame', tag: 12 })
   const keyboard = simulatorMenuItemScript('Toggle Software Keyboard', ['I/O', 'Keyboard'])
   assert.match(keyboard, /click menu item "Toggle Software Keyboard" of menu 1 of menu item "Keyboard" of menu 1 of menu bar item "I\/O" of menu bar 1/)
   assert.match(simulatorMenuItemScript('Slow Animations', ['Debug']), /click menu item "Slow Animations" of menu 1 of menu bar item "Debug" of menu bar 1/)
@@ -110,6 +111,19 @@ test('POST /api/type types text into the shown simulator, and refuses an empty t
     await f.panel.showRealDevice(IPHONE)
     const refused = await f.post('/api/type', { text: 'hello' })
     assert.deepEqual([refused.status, refused.body.error], [400, 'typing from the panel works on simulators only'])
+  } finally {
+    await f.panel.dispose()
+  }
+})
+
+test('POST /api/pasteboard returns the simulator pasteboard, and refuses an iPhone', async () => {
+  const f = await dockPanel()
+  try {
+    await f.simctl.setPasteboard('BBB', '复制的文字')
+    const read = await f.post('/api/pasteboard')
+    assert.deepEqual([read.status, read.body.text], [200, '复制的文字'])
+    await f.panel.showRealDevice(IPHONE)
+    assert.equal((await f.post('/api/pasteboard')).status, 400)
   } finally {
     await f.panel.dispose()
   }

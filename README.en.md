@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Claude Code Plugin" src="https://img.shields.io/badge/Claude%20Code-Plugin-d97757">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-31%20tools-4f7cff">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-32%20tools-4f7cff">
   <img alt="Platform" src="https://img.shields.io/badge/macOS-Apple%20Silicon-1f2330?logo=apple">
   <img alt="Node" src="https://img.shields.io/badge/Node.js-%E2%89%A5%2020-339933?logo=node.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
@@ -26,7 +26,7 @@ Drive the iOS Simulator right from Claude Code: a **live panel**, taps and gestu
 
 - [Preview](#preview)
 - [Features](#features)
-- [Tools (31)](#tools-31)
+- [Tools (32)](#tools-32)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Quick start](#quick-start)
@@ -87,7 +87,7 @@ Drive the iOS Simulator right from Claude Code: a **live panel**, taps and gestu
 
 ---
 
-## Tools (31)
+## Tools (32)
 
 Every tool takes an optional `udid` (a udid or a device name such as `"iPhone 17 Pro"`). These tools also take the udid or name of a **connected iPhone or iPad** (listed under `realDevices` by `ios_sim_devices`):
 
@@ -105,7 +105,7 @@ Without a `udid` the tools use the streamed device, else the first booted one. `
 | `ios_sim_shutdown` | Shuts a simulator down (stopping its recording and stream first) |
 | `ios_sim_panel` | Makes sure a booted device streams and returns `panelUrl`, never booting anything; given an iPhone running WebDriverAgent, the panel shows that phone instead |
 | `ios_sim_screenshot` | Takes a screenshot, returned to Claude as an image, plus the full-size PNG path |
-| `ios_sim_interact` | `tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`, answering in text by default; `screenshot: true` adds a screenshot of the effect |
+| `ios_sim_interact` | `tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action` / `shortcut`, answering in text by default; `screenshot: true` adds a screenshot of the effect |
 | `ios_sim_annotation` | Returns the screenshots you annotated in the panel (newest first; `index` for older ones, `list: true` for the list only); screenshot results carry `userAnnotations` when there are new ones |
 | `ios_real_start_wda` | Starts WebDriverAgent on a USB-connected iPhone / iPad (adopting one that already runs, else signing, building and launching it; a cold build takes minutes); `status` reports, `stop` stops it |
 
@@ -127,6 +127,7 @@ Without a `udid` the tools use the streamed device, else the first booted one. `
 | `ios_sim_push` | Sends a simulated push; the payload needs an `aps` object |
 | `ios_sim_location` | Sets latitude / longitude, or `clear: true` |
 | `ios_sim_appearance` | Switches `light` / `dark` |
+| `ios_sim_pasteboard` | Reads (`get`) or replaces (`set`) the text on the simulator pasteboard |
 | `ios_sim_record` | `start` / `stop` screen recording, returning the file path, size and duration |
 
 ### UI automation
@@ -175,6 +176,7 @@ Supports `#Preview { … }` (including `#Preview("Name", traits: …)`) and `str
 | `scroll` | `direction`, `amount?`, `x?`, `y?` | Named by the **content**: `down` shows what is below (the finger moves up); `amount` defaults to 0.6 |
 | `rotate` | `orientation` | `portrait` / `landscape_left` / `portrait_upside_down` / `landscape_right` |
 | `device_action` | `name` | `app-switcher` / `lock` / `unlock` / `shake` / `siri` / `action-button` / `re-center` / `toggle-keyboard` (on-screen keyboard) / `slow-animations` |
+| `shortcut` | `name` | Press an editing shortcut in the focused field: `copy` / `paste` / `cut` / `select-all` / `undo` / `redo`. `copy` and `cut` return the copied text as `pasteboard` in the result |
 
 `ios_sim_interact` takes no screenshot by default: taps go over serve-sim's WebSocket control channel and the call returns as soon as they are sent, so chained actions never wait for a capture. To see the result pass `screenshot: true` (captured about 300 ms later) or call `ios_sim_screenshot`. Set `IOS_SIM_INTERACT_SCREENSHOT=1` to get the old screenshot-after-every-action behavior back.
 
@@ -196,7 +198,7 @@ Supports `#Preview { … }` (including `#Preview("Name", traits: …)`) and `str
   - an Apple ID signed in under Xcode ▸ Settings ▸ Accounts (a free personal team works), or `IOS_SIM_TEAM_ID`;
   - a [WebDriverAgent](https://github.com/appium/WebDriverAgent) checkout: `git clone https://github.com/appium/WebDriverAgent.git ~/Library/Caches/ios-simulator/WebDriverAgent` (or point `IOS_SIM_WDA_DIR` at an existing one). The plugin never modifies it: it builds a private copy in its cache with safety patches that bind WDA to the phone's loopback only, so WDA is reachable through the USB tunnel and not by other devices on the same Wi-Fi;
   - the tunnel goes straight through usbmuxd, falling back to `iproxy` (`brew install libimobiledevice`).
-- All `device_action`s except lock drive Simulator.app's menus and need the app running Claude enabled under **System Settings ▸ Privacy & Security ▸ Accessibility**
+- All `device_action`s except lock and the on-screen keyboard drive Simulator.app's menus and need the app running Claude enabled under **System Settings ▸ Privacy & Security ▸ Accessibility**
 
 ---
 
@@ -307,7 +309,9 @@ The panel is a local web page (`127.0.0.1:3456`, or the next free port up to +20
   - Collapse (the ⌄ at the dock's right end): folds the dock into a small handle at the bottom edge; click the handle to bring it back. The choice is kept in the browser.
 - **Keyboard input**: with the panel focused, keys typed go to the simulator as a hardware keyboard (the same HID path Simulator.app uses). Letters, digits and ASCII punctuation work, with Shift handled automatically, as do Enter / Tab / Backspace / Delete / arrows / Home / End / PageUp / PageDown. ⌘ / Ctrl / Alt shortcuts stay with the browser.
 - **Chinese, emoji and paste**: click the simulator screen first, then type with your input method or pick an emoji from the system picker; the committed text goes into the simulator's focused field. ⌘V pastes the text on your Mac clipboard. This text goes in through the simulator pasteboard, so whatever the simulator pasteboard held is replaced.
-- Slow animations, the on-screen keyboard and every device action except lock click Simulator.app's menus and need the Accessibility permission (see [Requirements](#requirements)).
+- **Copy, cut, select all, undo**: ⌘C / ⌘X / ⌘A / ⌘Z / ⇧⌘Z go to the simulator's focused field. After ⌘C or ⌘X the text copied in the simulator is brought over to your Mac clipboard, ready to paste anywhere.
+- **On-screen keyboard**: ⌘K (or "Show on-screen keyboard" in the Device menu) shows or hides iOS's own keyboard, whose keys you can then click. It only appears while a text field has focus; the toggle needs neither Simulator.app nor the Accessibility permission.
+- Slow animations and every device action except lock click Simulator.app's menus and need the Accessibility permission (see [Requirements](#requirements)).
 - Your clicks in the panel and Claude's tool calls drive **the same simulator**, so either of you can take over at any time.
 - **Real devices**: once `ios_real_start_wda` has started WebDriverAgent, the phone appears in the picker's "iPhone / iPad" group (or call `ios_sim_panel {udid: the phone}`). The view is WDA's MJPEG stream (through the USB tunnel); a click taps, a drag swipes (sent as one swipe with the drag's duration on release). Home, annotate, save screenshot and rotate work, and the Device menu offers rotation, lock, unlock and Siri; recording and shutting down are simulator-only, and "detach" goes back to simulators.
 
@@ -336,7 +340,7 @@ assets/ocr.swift                    # Vision OCR helper source (compiled on firs
 assets/preview-host/                # SwiftUI preview host app sources
 src/
   server.ts            # MCP entry point, wiring, lifecycle
-  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts: the 31 tools
+  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts: the 32 tools
   sim-host.ts          # serve-sim lifecycle
   stream-source.ts     # video stream abstraction (simulator and real device)
   sim-gesture.ts       # WebSocket gesture channel
@@ -531,7 +535,7 @@ When the device was rotated by hand in Simulator.app, the stream may not know th
 npm install
 npm test              # unit and integration tests, no simulator needed
 npm run build         # typecheck + bundle dist/ (commit dist)
-npm run check:bundle  # starts dist/server.js and checks for the 31 tools
+npm run check:bundle  # starts dist/server.js and checks for the 32 tools
 IOS_SIM_SMOKE=1 npm run test:live   # smoke test on a real simulator
 npm run dev:panel     # boots a simulator and keeps the panel up for browser debugging
 npm run notices       # regenerates THIRD_PARTY_NOTICES.md from esbuild's metafiles (after dependency changes)

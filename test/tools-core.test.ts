@@ -368,3 +368,27 @@ test('taps on a running stream read serve-sim\'s orientation once, not once per 
   assert.equal(serveSim.connections(), 6, 'the tap after a rotate asks serve-sim again')
   await h.close()
 })
+
+test('shortcut copy presses ⌘C and returns what landed on the simulator pasteboard; the keyboard toggle needs no Simulator.app', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const frames: string[] = []
+  wss.on('connection', socket => socket.on('message', data => {
+    const bytes = data as Buffer
+    frames.push(bytes.length === 1 ? `tag ${bytes[0]}` : String((JSON.parse(bytes.subarray(1).toString('utf8')) as { usage: number }).usage))
+  }))
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true } })
+  await h.deps.simctl.setPasteboard('BBB', 'copied text')
+  const copied = h.json(await h.call('ios_sim_interact', { action: 'shortcut', name: 'copy', screenshot: false })) as { pasteboard?: string }
+  assert.equal(copied.pasteboard, 'copied text')
+  const pasted = h.json(await h.call('ios_sim_interact', { action: 'shortcut', name: 'paste', screenshot: false })) as { pasteboard?: string }
+  assert.equal(pasted.pasteboard, undefined, 'only copy and cut report the pasteboard')
+  const toggled = await h.call('ios_sim_interact', { action: 'device_action', name: 'toggle-keyboard', screenshot: false })
+  assert.equal(toggled.isError, undefined, textOf(toggled))
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  assert.deepEqual(frames, ['227', '6', '6', '227', '227', '25', '25', '227', 'tag 12'])
+  assert.match(textOf(await h.call('ios_sim_interact', { action: 'shortcut', name: 'quit' })), /one of copy, paste, cut/)
+  await h.close()
+})

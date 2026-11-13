@@ -168,3 +168,25 @@ test('pasting needs the stream control socket and a pasteboard: without them the
   await assert.rejects(performSimInteract(live.host, 'BBB', args, interactControlArgs(args)), /pasteboard/)
   assert.deepEqual([...offline.calls, ...live.calls], [])
 })
+
+test('a shortcut goes over the control socket only: no CLI call, and a clear error without a stream', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const usages: number[] = []
+  wss.on('connection', socket => socket.on('message', data => {
+    usages.push((JSON.parse((data as Buffer).subarray(1).toString('utf8')) as { usage: number }).usage)
+  }))
+  const { host, calls } = fakeHost({ device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true })
+  const args: SimInteractArgs = { action: 'shortcut', name: 'select-all' }
+  assert.deepEqual(interactControlArgs(args), [])
+  const delivery = await performSimInteract(host, 'BBB', args, [], { shortcutHoldMs: 0 })
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  assert.deepEqual([delivery.channel, delivery.frames], ['ws', 4])
+  assert.deepEqual(usages, [227, 4, 4, 227])
+  assert.deepEqual(calls, [])
+  assert.throws(() => interactControlArgs({ action: 'shortcut', name: 'quit' }), /requires name — one of copy, paste, cut, select-all, undo, redo/)
+  const offline = fakeHost({ device: 'BBB' })
+  await assert.rejects(performSimInteract(offline.host, 'BBB', args, []), /shortcut.*control socket/s)
+})

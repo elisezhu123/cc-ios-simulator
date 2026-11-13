@@ -236,6 +236,7 @@ export function fakeSimctl(
   devices: SimulatorDevice[]
 } {
   const calls: unknown[][] = []
+  const pasteboards = new Map<string, string>()
   const containerRoot = mkdtempSync(join(tmpdir(), 'ios-sim-containers-'))
   const screenshotSize = options.screenshotSize ?? { width: 1206, height: 2622 }
   const find = (reference: string): SimulatorDevice => {
@@ -270,7 +271,8 @@ export function fakeSimctl(
     setLocation: async (udid, latitude, longitude) => { calls.push(['location', udid, latitude, longitude]) },
     clearLocation: async udid => { calls.push(['location-clear', udid]) },
     setAppearance: async (udid, appearance) => { calls.push(['appearance', udid, appearance]) },
-    setPasteboard: async (udid, text) => { calls.push(['pbcopy', udid, text]) },
+    setPasteboard: async (udid, text) => { calls.push(['pbcopy', udid, text]); pasteboards.set(udid, text) },
+    getPasteboard: async udid => { calls.push(['pbpaste', udid]); return pasteboards.get(udid) ?? '' },
   }
   return { api, calls, devices }
 }

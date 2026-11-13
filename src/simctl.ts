@@ -294,6 +294,11 @@ export async function setPasteboard(udid: string, text: string, signal?: AbortSi
   await execSimctl(['pbcopy', udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { input: text, env: { LC_ALL: 'en_US.UTF-8' } })
 }
 
+/** The text on the simulator's pasteboard (`simctl pbpaste`), decoded as UTF-8 like `setPasteboard` writes it. */
+export async function getPasteboard(udid: string, signal?: AbortSignal): Promise<string> {
+  return execSimctl(['pbpaste', udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { env: { LC_ALL: 'en_US.UTF-8' } })
+}
+
 /** Install a built `.app` bundle on the simulator. */
 export async function installApp(udid: string, appPath: string, signal?: AbortSignal): Promise<void> {
   await execSimctl(['install', udid, appPath], SIMCTL_INSTALL_TIMEOUT_MS, signal)

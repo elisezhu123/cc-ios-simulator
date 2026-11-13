@@ -5,7 +5,10 @@ import {
   encodeSimButtonFrame,
   encodeSimTouchFrame,
   sendSimGesture,
+  sendSimKeyboardToggle,
   sendSimPaste,
+  sendSimShortcut,
+  SIM_SHORTCUTS,
   sendSimTap,
   simDragPath,
   simDragRequestOf,
@@ -102,4 +105,29 @@ test('sendSimPaste presses ⌘V as hardware-keyboard frames: ⌘ down, V down, V
     { tag: 6, type: 'up', usage: 227 },
   ])
   await assert.rejects(sendSimPaste(''), /gesture channel/)
+})
+
+test('sendSimShortcut presses ⌘ with the key — and Shift for redo; the keyboard toggle is one bare tag-12 frame', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const frames: string[] = []
+  wss.on('connection', socket => socket.on('message', data => {
+    const bytes = data as Buffer
+    frames.push(bytes.length === 1 ? `tag ${bytes[0]}` : `${(JSON.parse(bytes.subarray(1).toString('utf8')) as { type: string }).type} ${(JSON.parse(bytes.subarray(1).toString('utf8')) as { usage: number }).usage}`)
+  }))
+  const url = `ws://127.0.0.1:${port}`
+  await sendSimShortcut(url, 'copy', { holdMs: 0 })
+  await sendSimShortcut(url, 'redo', { holdMs: 0 })
+  await sendSimKeyboardToggle(url)
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  assert.deepEqual(frames, [
+    'down 227', 'down 6', 'up 6', 'up 227',
+    'down 227', 'down 225', 'down 29', 'up 29', 'up 225', 'up 227',
+    'tag 12',
+  ])
+  assert.deepEqual(Object.keys(SIM_SHORTCUTS), ['copy', 'paste', 'cut', 'select-all', 'undo', 'redo'])
+  await assert.rejects(sendSimShortcut(url, 'quit' as 'copy'), /unknown shortcut "quit"/)
+  await assert.rejects(sendSimKeyboardToggle(''), /gesture channel/)
 })

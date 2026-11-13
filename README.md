@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Claude Code Plugin" src="https://img.shields.io/badge/Claude%20Code-Plugin-d97757">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-31%20tools-4f7cff">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-32%20tools-4f7cff">
   <img alt="Platform" src="https://img.shields.io/badge/macOS-Apple%20Silicon-1f2330?logo=apple">
   <img alt="Node" src="https://img.shields.io/badge/Node.js-%E2%89%A5%2020-339933?logo=node.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
@@ -26,7 +26,7 @@
 
 - [效果预览](#效果预览)
 - [支持的功能](#支持的功能)
-- [工具一览（31 个）](#工具一览31-个)
+- [工具一览（32 个）](#工具一览32-个)
 - [运行要求](#运行要求)
 - [安装](#安装)
 - [快速上手](#快速上手)
@@ -87,7 +87,7 @@
 
 ---
 
-## 工具一览（31 个）
+## 工具一览（32 个）
 
 所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。以下工具还可以传**连接的真机**的 udid 或名字（见 `ios_sim_devices` 返回的 `realDevices`）：
 
@@ -105,7 +105,7 @@
 | `ios_sim_shutdown` | 关闭模拟器（先停止它的录屏和推流） |
 | `ios_sim_panel` | 为已启动的设备确保推流并返回 `panelUrl`，不会启动设备；传运行着 WebDriverAgent 的 iPhone 时，面板改为显示这台真机 |
 | `ios_sim_screenshot` | 截图，以图片返回给 Claude，同时给出原尺寸 PNG 路径 |
-| `ios_sim_interact` | 交互：`tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action`，默认只回文字；传 `screenshot: true` 附带结果截图 |
+| `ios_sim_interact` | 交互：`tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action` / `shortcut`，默认只回文字；传 `screenshot: true` 附带结果截图 |
 | `ios_sim_annotation` | 返回你在面板里标注的截图（最新的在前，`index` 取更早的，`list: true` 只列清单）；截图结果里有新标注时会带 `userAnnotations` 提示 |
 | `ios_real_start_wda` | 在 USB 连接的 iPhone / iPad 上启动 WebDriverAgent（已在运行就直接接管，否则签名、构建并启动，冷构建需要几分钟）；`status` 查看状态，`stop` 停止 |
 
@@ -127,6 +127,7 @@
 | `ios_sim_push` | 发送模拟推送，payload 需包含 `aps` 对象 |
 | `ios_sim_location` | 设置经纬度，或 `clear: true` 清除 |
 | `ios_sim_appearance` | 切换 `light` / `dark` |
+| `ios_sim_pasteboard` | 读取（`get`）或写入（`set`）模拟器剪贴板的文字 |
 | `ios_sim_record` | `start` / `stop` 录屏，返回文件路径、大小和时长 |
 
 ### UI 自动化
@@ -174,7 +175,8 @@
 | `gesture` | `json` | 拖动 `{"fromX":0.1,"fromY":0.5,"toX":0.9,"toY":0.5,"duration":0.3}` 或单帧 `{"type":"begin","x":0.5,"y":0.5}` |
 | `scroll` | `direction`, `amount?`, `x?`, `y?` | 方向按**内容**命名：`down` 表示看下面的内容（手指上滑）；`amount` 默认 0.6 |
 | `rotate` | `orientation` | `portrait` / `landscape_left` / `portrait_upside_down` / `landscape_right` |
-| `device_action` | `name` | `app-switcher` / `lock` / `unlock` / `shake` / `siri` / `action-button` / `re-center` / `toggle-keyboard`（屏幕键盘）/ `slow-animations`（慢动画） |
+| `device_action` | `name` | `app-switcher` / `lock` / `unlock` / `shake` / `siri` / `action-button` / `re-center` / `toggle-keyboard`（显示 / 隐藏屏幕键盘）/ `slow-animations`（慢动画） |
+| `shortcut` | `name` | 在当前输入框里按编辑快捷键：`copy` / `paste` / `cut` / `select-all` / `undo` / `redo`。`copy` 和 `cut` 会把复制到的文字放在结果的 `pasteboard` 里返回 |
 
 `ios_sim_interact` 默认不截图：点击走 serve-sim 的 WebSocket 控制通道，发完立刻返回，连续操作不用每步等截图。需要看结果时传 `screenshot: true`（约 300 ms 后截图），或单独调用 `ios_sim_screenshot`。想恢复以前「每步都带截图」的行为，设置 `IOS_SIM_INTERACT_SCREENSHOT=1`。
 
@@ -196,7 +198,7 @@
   - 在 Xcode ▸ Settings ▸ Accounts 登录 Apple ID（免费的个人团队也可以），或设置 `IOS_SIM_TEAM_ID`；
   - 一份 [WebDriverAgent](https://github.com/appium/WebDriverAgent) 源码：`git clone https://github.com/appium/WebDriverAgent.git ~/Library/Caches/ios-simulator/WebDriverAgent`（或用 `IOS_SIM_WDA_DIR` 指向已有的目录）。插件不会修改这份源码，而是复制一份到缓存里，打上"只监听手机本机回环地址"的安全补丁再构建，所以 WDA 只能通过 USB 隧道访问，同一 Wi-Fi 下的其他设备连不上；
   - 隧道优先直接走 usbmuxd，不行时用 `iproxy`（`brew install libimobiledevice`）。
-- `device_action` 中除"锁屏"外的动作会操作 Simulator.app 菜单，需要在 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能** 中给运行 Claude 的应用授权
+- `device_action` 中除"锁屏"和"屏幕键盘"外的动作会操作 Simulator.app 菜单，需要在 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能** 中给运行 Claude 的应用授权
 
 ---
 
@@ -307,7 +309,9 @@ sequenceDiagram
   - 收起（工具条最右边的 ⌄）：把工具条收成底边的小把手，点把手恢复，选择记在浏览器本地。
 - **键盘输入**：面板有焦点时直接敲键盘，按键就进模拟器（硬件键盘 HID，和 Simulator.app 接上硬件键盘一样）。支持英文、数字、ASCII 标点（Shift 自动处理）以及 Enter / Tab / 退格 / Delete / 方向键 / Home / End / PageUp / PageDown；⌘ / Ctrl / Alt 组合键留给浏览器。
 - **中文、emoji 和粘贴**：先点一下模拟器画面，再用输入法打字或用系统表情面板选 emoji，提交的文字会进到模拟器当前的输入框；⌘V 把电脑剪贴板里的文字粘贴进去。这些文字是经模拟器剪贴板粘贴的，所以模拟器剪贴板原有的内容会被替换。
-- 慢动画、屏幕键盘和"设备操作"里除锁屏外的项目会点 Simulator.app 的菜单，需要辅助功能权限（见[运行要求](#运行要求)）。
+- **复制、剪切、全选、撤销**：⌘C / ⌘X / ⌘A / ⌘Z / ⇧⌘Z 会发给模拟器当前的输入框。⌘C 和 ⌘X 之后，模拟器里复制到的文字会同步到电脑剪贴板，可以直接粘贴到别处。
+- **屏幕键盘**：⌘K（或"设备"菜单里的"显示屏幕键盘"）显示 / 隐藏 iOS 自带的屏幕键盘，之后可以直接点键盘上的按键。键盘只在输入框有焦点时出现；这个开关不需要 Simulator.app，也不需要辅助功能权限。
+- 慢动画和"设备操作"里除锁屏外的项目会点 Simulator.app 的菜单，需要辅助功能权限（见[运行要求](#运行要求)）。
 - 你在面板里的操作和 Claude 的工具调用驱动的是**同一台模拟器**，可以随时接手或交还。
 - **真机**：`ios_real_start_wda` 启动 WebDriverAgent 后，设备选择器的"iPhone / iPad"分组里会出现这台手机（或调用 `ios_sim_panel {udid: 这台手机}`）。画面来自 WDA 的 MJPEG 流（经 USB 隧道），单击 = 点击，拖动 = 滑动（松手时按拖动时长一次发出），回到桌面、标注、保存截图、旋转可用，设备菜单只有旋转、锁屏、解锁、Siri；录屏和关闭模拟器只对模拟器可用，"断开"回到模拟器。
 
@@ -336,7 +340,7 @@ assets/ocr.swift                    # Vision OCR 助手源码（首次使用时�
 assets/preview-host/                # SwiftUI 预览宿主 App 的源码
 src/
   server.ts            # MCP 入口、组装、生命周期
-  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts：31 个工具
+  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts：32 个工具
   sim-host.ts          # serve-sim 生命周期
   stream-source.ts     # 视频流抽象（为真机预留）
   sim-gesture.ts       # WebSocket 手势通道
@@ -531,7 +535,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 npm install
 npm test              # 单元与集成测试，不需要模拟器
 npm run build         # 类型检查 + 打包 dist/（dist 需要提交）
-npm run check:bundle  # 启动 dist/server.js 并确认 31 个工具
+npm run check:bundle  # 启动 dist/server.js 并确认 32 个工具
 IOS_SIM_SMOKE=1 npm run test:live   # 在真实模拟器上冒烟
 npm run dev:panel     # 启动一台模拟器并保持面板运行，用于在浏览器里调试
 npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTICES.md（依赖变化后运行）

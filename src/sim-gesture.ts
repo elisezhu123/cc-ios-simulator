@@ -37,9 +37,32 @@ export const SIM_BUTTON_TAG = 4
 /** serve-sim hardware-keyboard frame tag (`{type:'down'|'up',usage}`, USB HID page 0x07). */
 export const SIM_KEY_TAG = 6
 
-/** Left ⌘ (0xE3) and V (0x19) on the HID keyboard page. */
+/** serve-sim's software-keyboard toggle: a bare tag, no payload (Simulator.app's ⌘K, sent as an Indigo HID button). */
+export const SIM_SOFTWARE_KEYBOARD_TAG = 12
+
+/** Left ⌘ (0xE3) and left Shift (0xE1) on the HID keyboard page. */
 const HID_LEFT_COMMAND = 227
-const HID_V = 25
+const HID_LEFT_SHIFT = 225
+
+/**
+ * The editing shortcuts iOS honours from a hardware keyboard, as the key
+ * pressed with ⌘ (HID usage) and whether Shift is held too. Each was pressed
+ * on an iOS 27.2 simulator and seen to act on a focused text field.
+ */
+export const SIM_SHORTCUTS = {
+  copy: { usage: 6, shift: false },
+  paste: { usage: 25, shift: false },
+  cut: { usage: 27, shift: false },
+  'select-all': { usage: 4, shift: false },
+  undo: { usage: 29, shift: false },
+  redo: { usage: 29, shift: true },
+} as const
+
+export type SimShortcut = keyof typeof SIM_SHORTCUTS
+
+export function isSimShortcut(value: unknown): value is SimShortcut {
+  return typeof value === 'string' && Object.hasOwn(SIM_SHORTCUTS, value)
+}
 
 /**
  * One frame per display refresh: 16 ms is the cadence the hand-verified scroll
@@ -423,22 +446,52 @@ export interface SimPasteOptions {
  * because iOS treats a keyboard paste as the user's own. Rejects like
  * `sendSimGesture`; there is no CLI fallback for a key combination.
  */
-export async function sendSimPaste(wsUrl: string, options: SimPasteOptions = {}): Promise<SimGestureReport> {
+export function sendSimPaste(wsUrl: string, options: SimPasteOptions = {}): Promise<SimGestureReport> {
+  return sendSimShortcut(wsUrl, 'paste', options)
+}
+
+/**
+ * Press one editing shortcut on the simulator's hardware keyboard over the
+ * stream's control socket: modifiers down, key down, key up, modifiers up.
+ * Rejects like `sendSimGesture`; there is no CLI fallback for a key combination.
+ */
+export async function sendSimShortcut(wsUrl: string, name: SimShortcut, options: SimPasteOptions = {}): Promise<SimGestureReport> {
+  if (!isSimShortcut(name)) {
+    throw new RangeError(`ios-simulator: unknown shortcut ${JSON.stringify(name)} — one of ${Object.keys(SIM_SHORTCUTS).join(', ')}`)
+  }
   const url = typeof wsUrl === 'string' ? wsUrl.trim() : ''
   if (!/^wss?:\/\//.test(url)) {
     throw gestureUnavailable(url, 'the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running')
   }
   const holdMs = options.holdMs ?? SIM_PASTE_HOLD_MS
   if (!Number.isFinite(holdMs) || holdMs < 0) {
-    throw new RangeError(`ios-simulator: paste holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`)
+    throw new RangeError(`ios-simulator: shortcut holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`)
   }
-  const elapsedMs = await writeSimFrames(url, [
-    { frame: encodeSimKeyFrame('down', HID_LEFT_COMMAND), waitMs: 0 },
-    { frame: encodeSimKeyFrame('down', HID_V), waitMs: holdMs },
-    { frame: encodeSimKeyFrame('up', HID_V), waitMs: holdMs },
-    { frame: encodeSimKeyFrame('up', HID_LEFT_COMMAND), waitMs: holdMs },
-  ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS)
-  return { frames: 4, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url }
+  const { usage, shift } = SIM_SHORTCUTS[name]
+  const modifiers = shift ? [HID_LEFT_COMMAND, HID_LEFT_SHIFT] : [HID_LEFT_COMMAND]
+  const keys: Array<['down' | 'up', number]> = [
+    ...modifiers.map((modifier): ['down', number] => ['down', modifier]),
+    ['down', usage],
+    ['up', usage],
+    ...[...modifiers].reverse().map((modifier): ['up', number] => ['up', modifier]),
+  ]
+  const frames = keys.map(([type, key], index) => ({ frame: encodeSimKeyFrame(type, key), waitMs: index === 0 ? 0 : holdMs }))
+  const elapsedMs = await writeSimFrames(url, frames, options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS)
+  return { frames: frames.length, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url }
+}
+
+/**
+ * Show or hide the on-screen keyboard: serve-sim's own toggle, the HID button
+ * Simulator.app's ⌘K sends. It needs no Simulator.app window and no
+ * Accessibility permission — Xcode 27 ships no Simulator.app to click a menu
+ * in. A toggle: the keyboard only appears while a text field has focus.
+ */
+export async function sendSimKeyboardToggle(wsUrl: string, options: { connectTimeoutMs?: number } = {}): Promise<void> {
+  const url = typeof wsUrl === 'string' ? wsUrl.trim() : ''
+  if (!/^wss?:\/\//.test(url)) {
+    throw gestureUnavailable(url, 'the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running')
+  }
+  await writeSimFrames(url, [{ frame: Buffer.from([SIM_SOFTWARE_KEYBOARD_TAG]), waitMs: 0 }], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS)
 }
 
 /**

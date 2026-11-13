@@ -5,6 +5,7 @@ import {
   bootDevice,
   clearLocation,
   getDevice,
+  getPasteboard,
   listDevices,
   locationSetArgs,
   openUrl,
@@ -151,4 +152,14 @@ test('setPasteboard pipes the text to simctl pbcopy under a UTF-8 locale', async
   await setPasteboard('BBB', '你好，世界🎉')
   // Without a UTF-8 locale pbcopy reads stdin as MacRoman and the pasteboard holds mojibake.
   assert.deepEqual(seen, [{ args: ['pbcopy', 'BBB'], input: '你好，世界🎉', env: { LC_ALL: 'en_US.UTF-8' } }])
+})
+
+test('getPasteboard reads simctl pbpaste under a UTF-8 locale', async () => {
+  const seen: unknown[] = []
+  setSimctlRunnerForTests(async (args, _timeoutMs, _signal, options) => {
+    seen.push({ args: [...args], ...options })
+    return '你好🎉'
+  })
+  assert.equal(await getPasteboard('BBB'), '你好🎉')
+  assert.deepEqual(seen, [{ args: ['pbpaste', 'BBB'], env: { LC_ALL: 'en_US.UTF-8' } }])
 })

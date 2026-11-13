@@ -140,6 +140,47 @@ export function simKeyFrames(key: string): Uint8Array[] | undefined {
   return frames
 }
 
+/** Left ⌘ (0xE3) — held down around an editing shortcut. */
+const COMMAND_USAGE = 227
+
+/** The editing shortcuts the panel forwards, as the key pressed with ⌘ (twin of SIM_SHORTCUTS in src/sim-gesture.ts). */
+const SHORTCUT_KEYS = {
+  copy: { usage: 6, shift: false },
+  cut: { usage: 27, shift: false },
+  'select-all': { usage: 4, shift: false },
+  undo: { usage: 29, shift: false },
+  redo: { usage: 29, shift: true },
+} as const
+
+export type SimPanelShortcut = keyof typeof SHORTCUT_KEYS
+
+/**
+ * The simulator shortcut a ⌘-chord typed in the panel stands for. ⌘V is not
+ * here: the browser's paste event carries the Mac clipboard, which is what
+ * the user means to paste. Every other chord stays with the browser.
+ */
+export function simShortcutFor(key: string, shift: boolean): SimPanelShortcut | undefined {
+  const lower = key.toLowerCase()
+  if (lower === 'z') return shift ? 'redo' : 'undo'
+  if (shift) return undefined
+  if (lower === 'c') return 'copy'
+  if (lower === 'x') return 'cut'
+  if (lower === 'a') return 'select-all'
+  return undefined
+}
+
+/** The key frames of one shortcut: modifiers down, key down, key up, modifiers up. */
+export function simShortcutFrames(name: SimPanelShortcut): Uint8Array[] {
+  const { usage, shift } = SHORTCUT_KEYS[name]
+  const modifiers = shift ? [COMMAND_USAGE, SHIFT_USAGE] : [COMMAND_USAGE]
+  return [
+    ...modifiers.map(modifier => simKeyFrame('down', modifier)),
+    simKeyFrame('down', usage),
+    simKeyFrame('up', usage),
+    ...[...modifiers].reverse().map(modifier => simKeyFrame('up', modifier)),
+  ]
+}
+
 /** The next orientation clockwise (unknown starts from portrait). */
 export function nextSimRotateOrientation(current: string | undefined): SimRotateOrientation {
   const index = (SIM_ROTATE_ORIENTATIONS as readonly string[]).indexOf(current ?? '')

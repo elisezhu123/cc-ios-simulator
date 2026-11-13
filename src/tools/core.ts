@@ -24,6 +24,10 @@ const XCODE27_TYPE_HINT = ' — with Xcode 27, keyboard input needs Device Hub r
 
 /** The interact actions whose arguments carry screen coordinates. */
 const COORDINATE_ACTIONS: ReadonlySet<string> = new Set(['tap', 'scroll', 'gesture'])
+/** How long an app gets to put a copied selection on the pasteboard before it is read back. */
+const COPY_SETTLE_MS = 300
+/** Pasteboard text returned in a tool result is capped here. */
+const MAX_PASTEBOARD_CHARS = 20_000
 
 const LOST_ORIENTATION_WARNING = 'the screen looks landscape, but the live stream does not know its orientation (the '
   + 'device was rotated outside these tools, or the stream restarted), so taps, scrolls and gestures go out without '
@@ -313,9 +317,11 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     description: 'Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / '
       + 'screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and '
       + 'other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, '
-      + 'lock, …), send a gesture, scroll (direction names the CONTENT), rotate, or run a device action (app-switcher, '
-      + 'lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; all but lock drive Simulator.app and need the '
-      + 'Accessibility permission). Starts the live stream when needed but never boots a device. '
+      + 'lock, …), send a gesture, scroll (direction names the CONTENT), rotate, press an editing shortcut in the focused field '
+      + '(shortcut: copy, paste, cut, select-all, undo, redo — copy and cut answer with the text now on the simulator pasteboard), '
+      + 'or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; '
+      + 'toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; the others except lock '
+      + 'drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. '
       + (deps.interactScreenshot
         ? 'About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. '
         : 'Answers in text right after the action so actions chain quickly; pass screenshot:true (or call '
@@ -323,13 +329,13 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       + 'On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), '
       + 'button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.',
     inputSchema: {
-      action: z.enum(['tap', 'type', 'button', 'gesture', 'scroll', 'rotate', 'device_action']),
+      action: z.enum(['tap', 'type', 'button', 'gesture', 'scroll', 'rotate', 'device_action', 'shortcut']),
       udid: UDID_PARAM,
       x: z.number().min(0).max(1).optional().describe('Normalized x (tap: required; scroll: start anchor, default 0.5)'),
       y: z.number().min(0).max(1).optional().describe('Normalized y (tap: required; scroll: start anchor, default 0.5)'),
       text: z.string().optional().describe('Text for "type" — any text; tap the field first so it has focus'),
       name: z.string().optional()
-        .describe('Button for "button" (home, lock, siri, volume-up, …; an unknown name fails with the full list) or the action for "device_action"'),
+        .describe('Button for "button" (home, lock, siri, volume-up, …; an unknown name fails with the full list), the action for "device_action", or the shortcut for "shortcut" (copy, paste, cut, select-all, undo, redo)'),
       json: z.record(z.string(), z.unknown()).optional()
         .describe('Gesture for "gesture": a drag {"fromX":0.1,"fromY":0.5,"toX":0.9,"toY":0.5,"duration":0.3} or one raw frame {"type":"begin","x":0.5,"y":0.5}'),
       direction: z.enum(['up', 'down', 'left', 'right']).optional()
@@ -421,10 +427,18 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
         throw new Error(`serve-sim ${args.action} failed: ${message}${args.action === 'type' ? XCODE27_TYPE_HINT : ''}`)
       }
     }
+    let pasteboard: string | undefined
+    if (args.action === 'shortcut' && (args.name === 'copy' || args.name === 'cut')) {
+      // The app puts the selection on the pasteboard a moment after the key press.
+      await sleep(COPY_SETTLE_MS)
+      const text = await deps.simctl.getPasteboard(device.udid, extra.signal)
+      pasteboard = text.length > MAX_PASTEBOARD_CHARS ? `${text.slice(0, MAX_PASTEBOARD_CHARS)}…` : text
+    }
     const result = {
       action: args.action,
       device: deviceSummary(device),
       ...(delivery === undefined ? {} : { delivery }),
+      ...(pasteboard === undefined ? {} : { pasteboard }),
       ...(warning === undefined ? {} : { warning }),
     }
     if (!(args.screenshot ?? deps.interactScreenshot)) return jsonResult(result)
