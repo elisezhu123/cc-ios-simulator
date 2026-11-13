@@ -88,6 +88,7 @@ const ui = {
   stage: element<HTMLElement>('stage'),
   frame: element<HTMLDivElement>('frame'),
   screen: element<HTMLDivElement>('screen'),
+  ime: element<HTMLTextAreaElement>('ime'),
   img: element<HTMLImageElement>('stream'),
   placeholder: element<HTMLParagraphElement>('placeholder'),
   toast: element<HTMLParagraphElement>('toast'),
@@ -323,6 +324,7 @@ ui.screen.addEventListener('pointerdown', event => {
   if (event.button !== 0) return
   event.preventDefault()
   ui.screen.setPointerCapture(event.pointerId)
+  focusTextSink()
   state.dragging = true
   const point = pointerPoint(event)
   send(simTouchFrame('begin', point.x, point.y))
@@ -492,16 +494,64 @@ function warnUnsupportedKey(): void {
 document.addEventListener('keydown', event => {
   if (annotator.isOpen || state.kind !== 'simulator') return
   if (event.metaKey || event.ctrlKey || event.altKey) return
-  const target = event.target as HTMLElement | null
-  if (target !== null && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(target.tagName))) return
+  if (isOtherField(event.target)) return
+  // An input method is composing in the text sink: the keys are its own.
+  if (event.isComposing || event.key === 'Process') return
   const frames = simKeyFrames(event.key)
   if (frames === undefined) {
-    // A printable character outside the US keyboard (Chinese, emoji) is ignored.
-    if ([...event.key].length === 1) warnUnsupportedKey()
+    // A printable character outside the US keyboard: the text sink takes it and
+    // sends it as text; without the sink's focus there is nowhere for it to go.
+    if ([...event.key].length === 1 && event.target !== ui.ime) warnUnsupportedKey()
     return
   }
   event.preventDefault()
   for (const frame of frames) send(frame)
+})
+
+// ── text the hardware keyboard cannot type ────────────────────────────────────
+
+/** A text field that is not the simulator's text sink (the annotation text tool). */
+function isOtherField(target: EventTarget | null): boolean {
+  const node = target as HTMLElement | null
+  if (node === null || node === ui.ime) return false
+  return node.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(node.tagName ?? '')
+}
+
+/** Give the hidden text sink focus, so an input method has a field to compose in. */
+function focusTextSink(): void {
+  if (annotator.isOpen || state.kind !== 'simulator') return
+  ui.ime.focus({ preventScroll: true })
+}
+
+let textQueue: Promise<void> = Promise.resolve()
+
+/** Send text to the simulator's focused field, one request at a time so order is kept. */
+function typeText(text: string): void {
+  if (text === '' || state.kind !== 'simulator') return
+  textQueue = textQueue
+    .then(() => postJson('/api/type', { text }))
+    .then(() => undefined, error => report(copy.actionFailed, error))
+}
+
+/** Whatever the input method (or emoji picker) committed into the sink goes to the simulator. */
+function flushTextSink(): void {
+  const text = ui.ime.value
+  ui.ime.value = ''
+  typeText(text)
+}
+
+ui.ime.addEventListener('compositionend', () => window.setTimeout(flushTextSink, 0))
+ui.ime.addEventListener('input', event => {
+  if (!(event as InputEvent).isComposing) flushTextSink()
+})
+
+// ⌘V pastes the Mac clipboard into the simulator's focused field.
+document.addEventListener('paste', event => {
+  if (annotator.isOpen || state.kind !== 'simulator' || isOtherField(event.target)) return
+  const text = event.clipboardData?.getData('text/plain') ?? ''
+  if (text === '') return
+  event.preventDefault()
+  typeText(text)
 })
 
 ui.home.addEventListener('click', pressHome)

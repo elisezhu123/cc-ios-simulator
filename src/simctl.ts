@@ -45,18 +45,27 @@ const SIMCTL_CONTAINER_TIMEOUT_MS = 30_000
 const SIMCTL_LISTAPPS_TIMEOUT_MS = 60_000
 const SIMCTL_TERMINATE_TIMEOUT_MS = 30_000
 const SIMCTL_UNINSTALL_TIMEOUT_MS = 60_000
+const SIMCTL_PASTEBOARD_TIMEOUT_MS = 15_000
 const SIMCTL_MAX_BUFFER_BYTES = 16 * 1024 * 1024
 
 /** Runs `xcrun simctl <args>` and resolves stdout; rejects with SimctlError. */
-export type SimctlRunner = (args: readonly string[], timeoutMs: number, signal?: AbortSignal) => Promise<string>
+export type SimctlRunner = (args: readonly string[], timeoutMs: number, signal?: AbortSignal, options?: SimctlRunOptions) => Promise<string>
+
+export interface SimctlRunOptions {
+  /** Written to the command's stdin, which is then closed. */
+  input?: string
+  /** Environment variables set on top of this process's own. */
+  env?: Record<string, string>
+}
 
 /** Run `xcrun simctl <args>` and resolve its stdout, with a typed failure. */
-function runXcrunSimctl(args: readonly string[], timeoutMs: number, signal?: AbortSignal): Promise<string> {
+function runXcrunSimctl(args: readonly string[], timeoutMs: number, signal?: AbortSignal, options: SimctlRunOptions = {}): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile('xcrun', ['simctl', ...args], {
+    const child = execFile('xcrun', ['simctl', ...args], {
       timeout: timeoutMs,
       maxBuffer: SIMCTL_MAX_BUFFER_BYTES,
       signal,
+      ...(options.env === undefined ? {} : { env: { ...process.env, ...options.env } }),
     }, (error, stdout, stderr) => {
       if (error !== null) {
         const detail = stderr.trim()
@@ -69,6 +78,11 @@ function runXcrunSimctl(args: readonly string[], timeoutMs: number, signal?: Abo
       }
       resolve(stdout)
     })
+    if (options.input !== undefined) {
+      // A command that died early closes its stdin; its exit is what gets reported.
+      child.stdin?.on('error', () => undefined)
+      child.stdin?.end(options.input)
+    }
   })
 }
 
@@ -100,8 +114,8 @@ function noXcodeError(error: unknown): SimctlError | undefined {
   )
 }
 
-function execSimctl(args: readonly string[], timeoutMs: number, signal?: AbortSignal): Promise<string> {
-  return runner(args, timeoutMs, signal).catch((error: unknown) => {
+function execSimctl(args: readonly string[], timeoutMs: number, signal?: AbortSignal, options?: SimctlRunOptions): Promise<string> {
+  return runner(args, timeoutMs, signal, options).catch((error: unknown) => {
     throw noXcodeError(error) ?? error
   })
 }
@@ -269,6 +283,15 @@ export async function getDevice(reference: string, options: DeviceListOptions = 
 /** Capture the device screen into `filePath` (`simctl io <udid> screenshot`). */
 export async function takeScreenshot(udid: string, filePath: string, signal?: AbortSignal): Promise<void> {
   await execSimctl(['io', udid, 'screenshot', filePath], SIMCTL_SCREENSHOT_TIMEOUT_MS, signal)
+}
+
+/**
+ * Put `text` on the simulator's pasteboard (`simctl pbcopy`, text on stdin).
+ * The UTF-8 locale is required: without one pbcopy decodes stdin as MacRoman
+ * and Chinese or emoji land on the pasteboard as mojibake.
+ */
+export async function setPasteboard(udid: string, text: string, signal?: AbortSignal): Promise<void> {
+  await execSimctl(['pbcopy', udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { input: text, env: { LC_ALL: 'en_US.UTF-8' } })
 }
 
 /** Install a built `.app` bundle on the simulator. */

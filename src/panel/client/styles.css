@@ -379,3 +379,17 @@ body.annotating #btn-annotate { background: rgb(59 130 246 / 18%); color: #3b82f
   .annotate-text-button { padding: 6px 8px; }
   .annotate-primary { padding: 6px 10px; }
 }
+
+/* Invisible text sink: holds focus so an input method (Chinese, emoji picker) has somewhere to compose. */
+.ime-sink {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  resize: none;
+  pointer-events: none;
+}

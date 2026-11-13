@@ -9,6 +9,7 @@
 import { serveSimControlArgs, type SimStreamInfo } from './sim-host.js'
 import {
   sendSimGesture,
+  sendSimPaste,
   sendSimTap,
   simDragPath,
   simDragRequestOf,
@@ -45,6 +46,30 @@ const SCROLL_DIRECTIONS = ['up', 'down', 'left', 'right'] as const
 
 /** serve-sim types through the US keyboard layout only. */
 const US_KEYBOARD_TEXT = /^[\x20-\x7E\t\n]+$/u
+
+/** Runs of US-keyboard characters, or runs of anything else. */
+const TEXT_RUNS = /[\x20-\x7E\t\n]+|[^\x20-\x7E\t\n]+/gu
+
+/**
+ * How long to wait after ⌘V before the next keys: the paste is applied by the
+ * app asynchronously, and keys typed too early land in front of it.
+ */
+const PASTE_SETTLE_MS = 250
+
+/** One stretch of typed text and how it reaches the simulator. */
+export interface SimTextSegment {
+  /** `keys`: typed on the US hardware keyboard. `paste`: put on the pasteboard and pasted with ⌘V. */
+  kind: 'keys' | 'paste'
+  text: string
+}
+
+/**
+ * Split text into what the US keyboard can type and what it cannot (Chinese,
+ * emoji, accents, …). Order is kept, so "hi 你好\n" still ends by pressing Return.
+ */
+export function simTextSegments(text: string): SimTextSegment[] {
+  return (text.match(TEXT_RUNS) ?? []).map(run => ({ kind: US_KEYBOARD_TEXT.test(run) ? 'keys' : 'paste', text: run }))
+}
 
 /**
  * The button names serve-sim 0.1.47 acts on: its helper's HIDInjector.sendButton
@@ -128,14 +153,8 @@ export function interactControlArgs(args: SimInteractArgs): string[][] {
       if (typeof args.text !== 'string' || args.text === '') {
         throw new Error('ios_sim_interact: action "type" requires a non-empty text')
       }
-      if (!US_KEYBOARD_TEXT.test(args.text)) {
-        throw new Error(
-          'ios_sim_interact: action "type" only supports US-keyboard ASCII text — for Chinese, emoji or other '
-          + 'characters copy the text to the simulator pasteboard (printf "%s" "<text>" | xcrun simctl pbcopy <udid>) '
-          + 'and paste it (long-press the field, then Paste)',
-        )
-      }
-      return [['type', args.text]]
+      // Text the US keyboard cannot type is pasted by performSimInteract, not sent to the CLI.
+      return simTextSegments(args.text).filter(segment => segment.kind === 'keys').map(segment => ['type', segment.text])
     }
     case 'button': {
       if (typeof args.name !== 'string' || args.name.trim() === '') {
@@ -196,6 +215,55 @@ export interface SimInteractDelivery {
   elapsedMs?: number
   /** Why the WS channel was skipped or refused; the CLI carried it instead. */
   wsError?: string
+  /** Stretches of typed text that went in through the simulator pasteboard and ⌘V (it now holds the last one). */
+  pasted?: number
+}
+
+export interface SimInteractOptions {
+  stepMs?: number
+  tapHoldMs?: number
+  /** Replace the simulator pasteboard — needed to type text the US keyboard cannot. */
+  setPasteboard?: (udid: string, text: string) => Promise<void>
+  /** Delay between the ⌘V key frames (default `SIM_PASTE_HOLD_MS`). */
+  pasteHoldMs?: number
+  /** Wait after a paste before typing on (default 250 ms). */
+  pasteSettleMs?: number
+}
+
+/**
+ * Type text that needs the pasteboard: US-keyboard runs go through the
+ * serve-sim CLI as before, every other run is copied to the simulator
+ * pasteboard and pasted with ⌘V over the control socket. Both requirements
+ * are checked before the first key, so a failure never leaves half a text typed.
+ */
+async function typeWithPaste(
+  host: SimGestureHostLike,
+  deviceUdid: string,
+  segments: readonly SimTextSegment[],
+  wsUrl: string | undefined,
+  options: SimInteractOptions,
+): Promise<SimInteractDelivery> {
+  const reason = 'ios_sim_interact: action "type" got text the US keyboard cannot type (Chinese, emoji, …), which is '
+    + 'copied to the simulator pasteboard and pasted with ⌘V over the stream\'s control socket'
+  const setPasteboard = options.setPasteboard
+  if (setPasteboard === undefined) throw new Error(`${reason} — this caller has no access to the simulator pasteboard`)
+  if (wsUrl === undefined) {
+    throw new Error(`${reason} — no live serve-sim stream reports a control socket for ${deviceUdid}; start it with ios_sim_boot and retry`)
+  }
+  let pasted = 0
+  let typed = false
+  for (const segment of segments) {
+    if (segment.kind === 'keys') {
+      await host.control(serveSimControlArgs('type', deviceUdid, [segment.text]))
+      typed = true
+      continue
+    }
+    await setPasteboard(deviceUdid, segment.text)
+    await sendSimPaste(wsUrl, options.pasteHoldMs === undefined ? {} : { holdMs: options.pasteHoldMs })
+    await sleep(options.pasteSettleMs ?? PASTE_SETTLE_MS)
+    pasted += 1
+  }
+  return { channel: typed ? 'cli' : 'ws', pasted }
 }
 
 /** The traced finger path of a multi-event interaction, else undefined. */
@@ -214,14 +282,16 @@ export function simInteractGesturePath(args: SimInteractArgs): SimGesturePoint[]
  * the `serve-sim tap` CLI sends, without spawning a Node process per tap;
  * gestures run at ~16 ms per frame, which iOS reads as a real flick); the CLI
  * is the fallback when no live stream reports a control socket for this
- * device or the socket refuses. Typing, buttons and raw frames use the CLI.
+ * device or the socket refuses. Typing, buttons and raw frames use the CLI —
+ * except typed text the US keyboard cannot produce, which is pasted (see
+ * `typeWithPaste`).
  */
 export async function performSimInteract(
   host: SimGestureHostLike,
   deviceUdid: string,
   args: SimInteractArgs,
   payloads: string[][],
-  options: { stepMs?: number; tapHoldMs?: number } = {},
+  options: SimInteractOptions = {},
 ): Promise<SimInteractDelivery> {
   const points = simInteractGesturePath(args)
   const tap = args.action === 'tap' && typeof args.x === 'number' && typeof args.y === 'number'
@@ -233,6 +303,10 @@ export async function performSimInteract(
   const wsUrl = info !== undefined && info.device === deviceUdid && typeof info.wsUrl === 'string'
     ? info.wsUrl
     : undefined
+  if (args.action === 'type' && typeof args.text === 'string') {
+    const segments = simTextSegments(args.text)
+    if (segments.some(segment => segment.kind === 'paste')) return typeWithPaste(host, deviceUdid, segments, wsUrl, options)
+  }
   let wsError: string | undefined
   if (points !== undefined || tap !== undefined) {
     if (wsUrl === undefined) {

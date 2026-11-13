@@ -34,6 +34,13 @@ export const SIM_TOUCH_TAG = 3
 /** serve-sim hardware-button frame tag (`{button}`). */
 export const SIM_BUTTON_TAG = 4
 
+/** serve-sim hardware-keyboard frame tag (`{type:'down'|'up',usage}`, USB HID page 0x07). */
+export const SIM_KEY_TAG = 6
+
+/** Left ⌘ (0xE3) and V (0x19) on the HID keyboard page. */
+const HID_LEFT_COMMAND = 227
+const HID_V = 25
+
 /**
  * One frame per display refresh: 16 ms is the cadence the hand-verified scroll
  * used, and it is what makes iOS see a flick (2.05 s over 7 CLI invocations
@@ -99,6 +106,11 @@ export function encodeSimTouchFrame(type: 'begin' | 'move' | 'end', x: number, y
 /** One hardware-button frame (tag 4), e.g. `home`. */
 export function encodeSimButtonFrame(name: string): Buffer {
   return encodeSimControlFrame(SIM_BUTTON_TAG, { button: name })
+}
+
+/** serve-sim key frame: `[tag 6][{"type":"down","usage":25}]`. */
+export function encodeSimKeyFrame(type: 'down' | 'up', usage: number): Buffer {
+  return encodeSimControlFrame(SIM_KEY_TAG, { type, usage })
 }
 
 // ── pure geometry ─────────────────────────────────────────────────────────────
@@ -391,6 +403,42 @@ export async function sendSimTap(wsUrl: string, point: SimGesturePoint, options:
     { frame: encodeSimTouchFrame('end', point.x, point.y), waitMs: holdMs },
   ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS)
   return { frames: 2, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url }
+}
+
+/** How long each key of ⌘V stays in its state before the next frame. */
+export const SIM_PASTE_HOLD_MS = 40
+
+export interface SimPasteOptions {
+  /** Delay between the four key frames (default `SIM_PASTE_HOLD_MS`). */
+  holdMs?: number
+  /** Budget for the socket to open (default `SIM_GESTURE_CONNECT_TIMEOUT_MS`). */
+  connectTimeoutMs?: number
+}
+
+/**
+ * Press ⌘V on the simulator's hardware keyboard over the stream's control
+ * socket: ⌘ down, V down, V up, ⌘ up. The focused field pastes the simulator
+ * pasteboard — the way text the US keyboard cannot type (Chinese, emoji)
+ * gets in. Verified on iOS 27.2: it pastes without the "Allow Paste" prompt,
+ * because iOS treats a keyboard paste as the user's own. Rejects like
+ * `sendSimGesture`; there is no CLI fallback for a key combination.
+ */
+export async function sendSimPaste(wsUrl: string, options: SimPasteOptions = {}): Promise<SimGestureReport> {
+  const url = typeof wsUrl === 'string' ? wsUrl.trim() : ''
+  if (!/^wss?:\/\//.test(url)) {
+    throw gestureUnavailable(url, 'the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running')
+  }
+  const holdMs = options.holdMs ?? SIM_PASTE_HOLD_MS
+  if (!Number.isFinite(holdMs) || holdMs < 0) {
+    throw new RangeError(`ios-simulator: paste holdMs must be a non-negative number of milliseconds, got ${String(holdMs)}`)
+  }
+  const elapsedMs = await writeSimFrames(url, [
+    { frame: encodeSimKeyFrame('down', HID_LEFT_COMMAND), waitMs: 0 },
+    { frame: encodeSimKeyFrame('down', HID_V), waitMs: holdMs },
+    { frame: encodeSimKeyFrame('up', HID_V), waitMs: holdMs },
+    { frame: encodeSimKeyFrame('up', HID_LEFT_COMMAND), waitMs: holdMs },
+  ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS)
+  return { frames: 4, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url }
 }
 
 /**

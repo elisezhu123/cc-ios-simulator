@@ -46,7 +46,7 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 | tap visible text | `ios_sim_tap_text {query}` |
 | tap inside a list row | `ios_sim_tap_row {row, x, y}` (fractions of the row frame) |
 | tap a raw position (last resort) | `ios_sim_interact {action:"tap", x, y}` |
-| type ASCII into the focused field | `ios_sim_interact {action:"type", text}` |
+| type text into the focused field | `ios_sim_interact {action:"type", text}` |
 | scroll | `ios_sim_interact {action:"scroll", direction}` — direction names the CONTENT: `down` reveals what is below (the finger moves up) |
 | drag or swipe | `ios_sim_interact {action:"gesture", json:{fromX, fromY, toX, toY, duration}}` |
 | go home | `ios_sim_interact {action:"button", name:"home"}` (other buttons: `lock`, `siri`, `volume-up`, …; an unknown name returns the full list) |
@@ -56,7 +56,7 @@ Prefer tapping by meaning — raw coordinates break on the next layout change.
 
 - `ios_sim_tap_element` refuses off-screen and disabled matches and tells you what to do; scroll the element into view rather than passing `allow_offscreen` by reflex. An ambiguous selector fails with every candidate listed — pick a more specific one.
 - Chaining actions (tap a field, type, tap Done)? Send them back to back with `ios_sim_interact` and look once at the end (`screenshot: true` on the last step, or `ios_sim_screenshot`). With the tap tools, pass `screenshot:false` on all but the last one.
-- `type` only supports US-keyboard ASCII. For Chinese, emoji or other text run `printf '%s' '中文' | xcrun simctl pbcopy <udid>` in Bash, then long-press the field and tap Paste.
+- `type` takes any text. Chinese, emoji and other characters a US keyboard lacks are pasted through the simulator pasteboard (⌘V), which replaces the pasteboard's contents; the result reports it as `delivery.pasted`. Tap the field first so it has focus.
 - `lock` is a hardware-button press through serve-sim. The other six device actions drive Simulator.app through AppleScript — menu clicks, and `unlock` is a keystroke (⇧⌘H twice) — so they bring Simulator.app to the front for a moment and need the Accessibility permission for the app running Claude. If one fails with that hint, tell the user instead of retrying.
 - With Xcode 27, keyboard input also needs Device Hub running with the simulator visible and frontmost. `serve-sim repair-input -d <udid>` revives dead input but restarts SpringBoard — ask the user before running it.
 

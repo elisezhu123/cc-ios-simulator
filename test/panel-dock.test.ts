@@ -94,3 +94,23 @@ test('the on-screen keyboard and slow animations click Simulator menu items belo
   assert.match(simulatorMenuItemScript('Slow Animations', ['Debug']), /click menu item "Slow Animations" of menu 1 of menu bar item "Debug" of menu bar 1/)
   assert.match(simulatorMenuItemScript('Shake'), /menu bar item "Device"/)
 })
+
+test('POST /api/type types text into the shown simulator, and refuses an empty text or an iPhone', async () => {
+  const f = await dockPanel()
+  try {
+    const typed = await f.post('/api/type', { text: 'hello' })
+    assert.deepEqual([typed.status, typed.body.ok], [200, true])
+    assert.deepEqual(f.hostCalls.filter(call => call[0] === 'control'), [['control', 'type', '-d', 'BBB', '--', 'hello']])
+    assert.equal((await f.post('/api/type', { text: '' })).status, 400)
+    assert.equal((await f.post('/api/type', {})).status, 400)
+    // This fake host streams nothing, so a paste has no control socket to press ⌘V on.
+    const pasted = await f.post('/api/type', { text: '你好' })
+    assert.equal(pasted.status, 502)
+    assert.match(String(pasted.body.error), /control socket/)
+    await f.panel.showRealDevice(IPHONE)
+    const refused = await f.post('/api/type', { text: 'hello' })
+    assert.deepEqual([refused.status, refused.body.error], [400, 'typing from the panel works on simulators only'])
+  } finally {
+    await f.panel.dispose()
+  }
+})

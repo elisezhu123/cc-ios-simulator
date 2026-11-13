@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { WebSocketServer } from 'ws'
-import { interactControlArgs, performSimInteract, scrollRequestOf, type SimInteractArgs } from '../src/interact.js'
+import { interactControlArgs, performSimInteract, scrollRequestOf, simTextSegments, type SimInteractArgs } from '../src/interact.js'
 import { fakeHost } from './helpers/fakes.js'
 
 test('interactControlArgs maps each action to serve-sim CLI arguments', () => {
@@ -31,7 +31,7 @@ test('button names are checked against the ones serve-sim 0.1.47 acts on', () =>
 
 test('interactControlArgs rejects bad input with actionable errors', () => {
   assert.throws(() => interactControlArgs({ action: 'tap', x: 0.5 }), /requires numeric x and y/)
-  assert.throws(() => interactControlArgs({ action: 'type', text: '你好' }), /US-keyboard ASCII/)
+  assert.throws(() => interactControlArgs({ action: 'type', text: '' }), /non-empty text/)
   assert.throws(() => interactControlArgs({ action: 'scroll' }), /requires direction/)
   assert.throws(() => scrollRequestOf({ action: 'scroll', direction: 'up', amount: 2 }), /amount/)
 })
@@ -109,4 +109,62 @@ test('a tap falls back to the serve-sim CLI when the socket refuses, and never g
   const elsewhere = await performSimInteract(other.host, 'BBB', args, interactControlArgs(args))
   assert.equal(elsewhere.channel, 'cli')
   assert.deepEqual(other.calls, [['control', 'tap', '-d', 'BBB', '--', '0.4', '0.6']])
+})
+
+test('simTextSegments splits text into US-keyboard runs and runs that must be pasted', () => {
+  assert.deepEqual(simTextSegments('hello'), [{ kind: 'keys', text: 'hello' }])
+  assert.deepEqual(simTextSegments('你好🎉'), [{ kind: 'paste', text: '你好🎉' }])
+  assert.deepEqual(simTextSegments('hi 你好, ok\n'), [
+    { kind: 'keys', text: 'hi ' },
+    { kind: 'paste', text: '你好' },
+    { kind: 'keys', text: ', ok\n' },
+  ])
+})
+
+test('performSimInteract pastes Chinese and emoji through the pasteboard and ⌘V, and types the ASCII around it', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const events: string[] = []
+  wss.on('connection', socket => socket.on('message', data => {
+    const frame = JSON.parse((data as Buffer).subarray(1).toString('utf8')) as { type: string; usage: number }
+    events.push(`key ${frame.type} ${frame.usage}`)
+  }))
+  const { host, calls } = fakeHost({ device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true })
+  const control = host.control.bind(host)
+  host.control = async (args, options) => {
+    events.push(`type ${args[args.length - 1] ?? ''}`)
+    return control(args, options)
+  }
+  const args: SimInteractArgs = { action: 'type', text: 'hi 你好🎉!' }
+  const delivery = await performSimInteract(host, 'BBB', args, interactControlArgs(args), {
+    setPasteboard: async (udid, text) => {
+      // Let the socket's frames from an earlier paste land before recording the next step.
+      await new Promise(resolve => setTimeout(resolve, 30))
+      events.push(`pbcopy ${udid} ${text}`)
+    },
+    pasteHoldMs: 0,
+    pasteSettleMs: 30,
+  })
+  wss.close()
+  assert.deepEqual(events, [
+    'type hi ',
+    'pbcopy BBB 你好🎉',
+    'key down 227', 'key down 25', 'key up 25', 'key up 227',
+    'type !',
+  ])
+  assert.deepEqual(calls.map(call => call.slice(0, 2)), [['control', 'type'], ['control', 'type']])
+  assert.deepEqual(delivery, { channel: 'cli', pasted: 1 })
+})
+
+test('pasting needs the stream control socket and a pasteboard: without them the error says so', async () => {
+  const args: SimInteractArgs = { action: 'type', text: '你好' }
+  const offline = fakeHost({ device: 'BBB' })
+  await assert.rejects(
+    performSimInteract(offline.host, 'BBB', args, interactControlArgs(args), { setPasteboard: async () => {} }),
+    /Chinese, emoji.*pasted with ⌘V over the stream's control socket/s,
+  )
+  const live = fakeHost({ device: 'BBB', wsUrl: 'ws://127.0.0.1:9', exposeStreamInfo: true })
+  await assert.rejects(performSimInteract(live.host, 'BBB', args, interactControlArgs(args)), /pasteboard/)
+  assert.deepEqual([...offline.calls, ...live.calls], [])
 })

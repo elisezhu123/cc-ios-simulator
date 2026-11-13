@@ -19,6 +19,7 @@ import { isAnnotationFileName, MAX_ANNOTATION_BYTES, type AnnotationStore } from
 import type { RealDevice, RealDeviceApi } from '../devicectl.js'
 import type { RecorderApi, ScreenshotService, SimctlApi, StreamHost, WdaApi } from '../deps.js'
 import { isDeviceAction } from '../device-actions.js'
+import { interactControlArgs, performSimInteract, type SimInteractArgs } from '../interact.js'
 import { captureWda, planWdaInteract, runWdaInteract } from '../real-ui.js'
 import { isScreenshotFileName } from '../screenshot.js'
 import type { SimulatorDevice } from '../simctl.js'
@@ -35,7 +36,7 @@ export interface PanelServerOptions {
   attempts?: number
   host: StreamHost
   stream: StreamSource
-  simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'> & Partial<Pick<SimctlApi, 'shutdownDevice' | 'setAppearance'>>
+  simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'> & Partial<Pick<SimctlApi, 'shutdownDevice' | 'setAppearance' | 'setPasteboard'>>
   screenshots: Pick<ScreenshotService, 'capture' | 'dir' | 'save'>
   /** WebDriverAgent: the live view and touch of a connected iPhone/iPad. */
   wda?: WdaApi
@@ -271,6 +272,7 @@ export class PanelServer {
         return sendJson(res, 200, await this.#capture())
       }
       if (method === 'POST' && path === '/api/record') return sendJson(res, 200, await this.#record(await readJsonBody(req)))
+      if (method === 'POST' && path === '/api/type') return sendJson(res, 200, await this.#type(await readJsonBody(req)))
       if (method === 'POST' && path === '/api/appearance') return sendJson(res, 200, await this.#appearance(await readJsonBody(req)))
       if (method === 'POST' && path === '/api/shutdown') {
         await readJsonBody(req)
@@ -578,6 +580,27 @@ export class PanelServer {
     const device = await this.#simulatorFor('appearance')
     await set(device.udid, appearance)
     return { ok: true, appearance }
+  }
+
+  /**
+   * Type text into the shown simulator's focused field, the way ios_sim_interact
+   * "type" does. The panel sends single keystrokes as key frames itself; this
+   * is for what those cannot carry — a pasted clipboard, IME output, emoji.
+   */
+  async #type(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const text = body.text
+    if (typeof text !== 'string' || text === '') throw new HttpError(400, 'text must be a non-empty string')
+    const device = await this.#simulatorFor('typing from the panel')
+    const args: SimInteractArgs = { action: 'type', text }
+    const setPasteboard = this.#options.simctl.setPasteboard
+    try {
+      await this.#options.host.ensureRunning({ udid: device.udid })
+      const delivery = await performSimInteract(this.#options.host, device.udid, args, interactControlArgs(args),
+        setPasteboard === undefined ? {} : { setPasteboard: (udid, value) => setPasteboard(udid, value) })
+      return { ok: true, ...(delivery.pasted === undefined ? {} : { pasted: delivery.pasted }) }
+    } catch (error) {
+      throw new HttpError(502, errorMessage(error))
+    }
   }
 
   /** Shut the shown simulator down (its recording and stream first, like ios_sim_shutdown). */
