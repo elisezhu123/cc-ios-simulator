@@ -46291,6 +46291,8 @@ var AXE_EXEC_TIMEOUT_MS = 6e4;
 var AXE_MAX_BUFFER_BYTES = 32 * 1024 * 1024;
 var DIGEST_FILE2 = ".ios-simulator-axe.sha256";
 var BREW_BIN_CANDIDATES = ["/opt/homebrew/bin/axe", "/usr/local/bin/axe"];
+var SIMULATOR_STARTING = /Timed out creating the simulator remote automation session|No translation object returned for simulator/u;
+var DEFAULT_STARTUP_RETRY = { budgetMs: 3e4, delayMs: 1e3 };
 function isExecutableFile3(path) {
   try {
     const info = statSync7(path);
@@ -46325,11 +46327,13 @@ var AxeHelper = class {
   #cacheDir;
   #platform;
   #env;
+  #startupRetry;
   #downloading;
   constructor(options) {
     this.#cacheDir = options.cacheDir;
     this.#platform = options.platform ?? process.platform;
     this.#env = options.env ?? process.env;
+    this.#startupRetry = options.startupRetry ?? DEFAULT_STARTUP_RETRY;
   }
   #installDir() {
     return join14(this.#cacheDir, AXE_VERSION);
@@ -46467,7 +46471,21 @@ var AxeHelper = class {
   }
   /** The sanitized accessibility tree of a booted simulator. */
   async describeUi(udid, signal) {
-    return parseDescribeUi(await this.exec(["describe-ui", "--udid", udid], signal));
+    const { budgetMs, delayMs } = this.#startupRetry;
+    const started = Date.now();
+    for (; ; ) {
+      try {
+        return parseDescribeUi(await this.exec(["describe-ui", "--udid", udid], signal));
+      } catch (error62) {
+        const message = error62 instanceof Error ? error62.message : String(error62);
+        if (!SIMULATOR_STARTING.test(message)) throw error62;
+        const waited = Date.now() - started;
+        if (signal?.aborted === true || waited + delayMs > budgetMs) {
+          throw new Error(`${message} \u2014 the simulator is still starting: its accessibility service did not answer in ${Math.round(waited / 1e3)} s; wait a few seconds and retry (ios_sim_screenshot and ios_sim_find_text work meanwhile)`);
+        }
+        await new Promise((resolve7) => setTimeout(resolve7, delayMs));
+      }
+    }
   }
   /** HID tap at device-point coordinates. */
   async tap(udid, x, y, signal) {
@@ -49711,6 +49729,25 @@ function registerUiTools(server, deps) {
       note: "the simulator point size could not be resolved (the AXe helper is not installed yet, or describe-ui failed) \u2014 size and rects are in image pixels instead of points"
     };
   };
+  const streamTap = async (udid, x, y, screen) => {
+    const info = deps.host.streamInfo;
+    if (info === void 0 || info.device !== udid || screen.width <= 0 || screen.height <= 0) return false;
+    const point = { x: x / screen.width, y: y / screen.height };
+    if (!(point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1)) return false;
+    let args = { action: "tap", x: Math.round(point.x * 1e4) / 1e4, y: Math.round(point.y * 1e4) / 1e4 };
+    try {
+      if (screen.width > screen.height) {
+        const orientation = (await simScreenConfig(info.wsUrl))?.orientation ?? "portrait";
+        if (!isLandscape(orientation)) return false;
+        args = toFramebufferArgs(orientation, args);
+      }
+      if (typeof args.x !== "number" || typeof args.y !== "number") return false;
+      await sendSimTap(info.wsUrl, { x: args.x, y: args.y });
+      return true;
+    } catch {
+      return false;
+    }
+  };
   const uiTarget = async (tool, udid) => {
     assertMac(deps.platform);
     const target = await resolveToolTarget(deps, udid);
@@ -49743,7 +49780,8 @@ function registerUiTools(server, deps) {
       summary: deviceSummary(device),
       simulator: device,
       readTree: async (signal) => ({ roots: await readTree(device, signal) }),
-      tap: async (x, y, signal) => {
+      tap: async (x, y, signal, screen) => {
+        if (screen !== void 0 && await streamTap(device.udid, x, y, screen)) return;
         try {
           await deps.axe.tap(device.udid, x, y, signal);
         } catch (error62) {
@@ -49840,7 +49878,7 @@ function registerUiTools(server, deps) {
     const { roots } = await device.readTree(extra.signal);
     const { element, matchedBy } = resolveTapTarget(roots, args, { allowOffscreen: args.allow_offscreen === true });
     const center = frameCenter(element.frame);
-    await device.tap(center.x, center.y, extra.signal);
+    await device.tap(center.x, center.y, extra.signal, screenBounds(roots));
     await sleep8(deps.settleMs);
     const expected = await runExpectation(device, expectation, extra.signal);
     return withScreenshot(device, {
@@ -50025,7 +50063,7 @@ function registerUiTools(server, deps) {
     const bounds = screenBounds(roots);
     const plan = planRowTap(detectListRows(roots, { bounds }).rows, args.row, args.x ?? 0.5, args.y ?? 0.5, bounds);
     const before = expectation === void 0 ? void 0 : requireCountKey(plan.row, expectation.key);
-    await device.tap(plan.tap.x, plan.tap.y, extra.signal);
+    await device.tap(plan.tap.x, plan.tap.y, extra.signal, bounds);
     let countCheck;
     if (expectation !== void 0) {
       await sleep8(deps.rowSettleMs);
