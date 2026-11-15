@@ -294,6 +294,11 @@ export async function setPasteboard(udid: string, text: string, signal?: AbortSi
   await execSimctl(['pbcopy', udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { input: text, env: { LC_ALL: 'en_US.UTF-8' } })
 }
 
+/** Post a Darwin notification inside the simulator (`simctl spawn <udid> notifyutil -p <name>`). */
+export async function postDarwinNotification(udid: string, name: string, signal?: AbortSignal): Promise<void> {
+  await execSimctl(['spawn', udid, 'notifyutil', '-p', name], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal)
+}
+
 /** The text on the simulator's pasteboard (`simctl pbpaste`), decoded as UTF-8 like `setPasteboard` writes it. */
 export async function getPasteboard(udid: string, signal?: AbortSignal): Promise<string> {
   return execSimctl(['pbpaste', udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { env: { LC_ALL: 'en_US.UTF-8' } })

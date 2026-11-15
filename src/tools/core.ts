@@ -320,8 +320,8 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       + 'lock, …), send a gesture, scroll (direction names the CONTENT), rotate, press an editing shortcut in the focused field '
       + '(shortcut: copy, paste, cut, select-all, undo, redo — copy and cut answer with the text now on the simulator pasteboard), '
       + 'or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; '
-      + 'toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; the others except lock '
-      + 'drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. '
+      + 'toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; siri, re-center and '
+      + 'slow-animations click Simulator.app menus, need the Accessibility permission and are unavailable under Xcode 27, which has no Simulator.app). Starts the live stream when needed but never boots a device. '
       + (deps.interactScreenshot
         ? 'About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. '
         : 'Answers in text right after the action so actions chain quickly; pass screenshot:true (or call '

@@ -25,7 +25,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { runSimulatorDeviceAction, type DeviceAction } from './device-actions.js'
 import { sendSimKeyboardToggle, SIM_SOFTWARE_KEYBOARD_TAG } from './sim-gesture.js'
-import { takeScreenshot } from './simctl.js'
+import { postDarwinNotification, takeScreenshot } from './simctl.js'
 import { serveSimControlArgs, type SimHostController, type SimStreamInfo } from './sim-host.js'
 
 /** The slice of SimHostController this adapter uses (structural, so tests can fake it). */
@@ -238,18 +238,17 @@ export class SimStreamSource implements StreamSource {
     rotate: async orientation => {
       await this.#run('rotate', orientation)
     },
-    deviceAction: action => runSimulatorDeviceAction(
-      action,
-      async name => { await this.#run('button', name) },
-      undefined,
-      async tag => {
+    deviceAction: action => runSimulatorDeviceAction(action, {
+      pressButton: async name => { await this.#run('button', name) },
+      sendFrame: async tag => {
         if (tag !== SIM_SOFTWARE_KEYBOARD_TAG) throw new Error(`ios-simulator: no sender for serve-sim control frame ${String(tag)}`)
         const udid = this.#requireDevice()
         // Never the control socket of a stream that serves another device.
         const info = (await this.host.ensureRunning({ udid }))
         await sendSimKeyboardToggle(info.wsUrl)
       },
-    ),
+      postNotification: name => postDarwinNotification(this.#requireDevice(), name),
+    }),
     screenshot: async () => {
       const udid = this.#requireDevice()
       const path = join(tmpdir(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`)

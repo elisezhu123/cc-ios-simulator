@@ -3,26 +3,30 @@
  * Device-level actions that are not touches: the App Switcher, Lock/Unlock,
  * Shake, Siri, the Action button, and window re-centering.
  *
- * Each action names HOW it is delivered, because the three mechanisms have
- * very different costs and were each established by experiment:
+ * Each action names HOW it is delivered, because the mechanisms have very
+ * different costs and were each established by experiment (last on an
+ * iPhone 17 / iOS 27.2 simulator under Xcode 27, which ships no
+ * Simulator.app — so anything that clicks its menus cannot run there):
  *
- * - `serve-sim` — a hardware-button frame through the stream helper. Fast
- *   (~280 ms) and never touches macOS focus. Verified working for `home` and
- *   `lock`; `siri`/`shake`/`appswitcher` are ACCEPTED by the CLI and silently
- *   do nothing, which is why they are not routed here.
- * - `menu` — click an item in Simulator.app's `Device` menu. Verified: it only
- *   fires while Simulator is FRONTMOST (a background click/AXPress is a
- *   no-op), so the helper raises it, clicks, and hands focus straight back —
- *   a ~0.6 s blip. This is the only way to reach the App Switcher: the swipe
- *   that opens it on a real device cannot be synthesized through serve-sim's
- *   touch channel (tried at 280 ms, 30 ms and 8 ms event spacing with a
- *   jittered 1 s dwell — a mid-screen drag scrolls fine, but a touch starting
- *   in the home-indicator strip is swallowed by the system gesture
- *   recognizer).
- * - `keystroke` — a key combination delivered to the focused Simulator. Used
- *   for Unlock, which has no menu item: ⇧⌘H twice in a row dismisses the lock
- *   screen (verified), and without it `lock` would be a one-way trip — the
- *   swipe-up-to-unlock is swallowed exactly like the App Switcher gesture.
+ * - `serve-sim` — a hardware-button frame through the stream helper. Fast and
+ *   never touches macOS focus. Verified with serve-sim 0.1.47: `lock`,
+ *   `app_switcher` (the switcher opens), `action` (the Dynamic Island shows
+ *   the ring/silent switch) and `home` twice, which unlocks (the first press
+ *   wakes the lock screen, the second leaves it). NOT `siri`: that button
+ *   blacked the screen with a spinner and left the simulator dim and deaf to
+ *   app launches until it was rebooted.
+ * - `notify` — a Darwin notification posted inside the simulator. Shake is
+ *   `com.apple.UIKit.SimulatorShake`, what Simulator.app's own menu item
+ *   posts: verified, a text field with typing answered with "Undo Typing".
+ * - `frame` — one bare serve-sim control frame (the software keyboard).
+ * - `menu` — click an item in Simulator.app's menus. It only fires while
+ *   Simulator is FRONTMOST, so the helper raises it, clicks, and hands focus
+ *   straight back; it needs the Accessibility permission. What is left here
+ *   has no other route: Siri (see above), Re-Center, and Slow Animations
+ *   (serve-sim's `ca-debug slow-animations` was accepted and changed nothing
+ *   visible).
+ * - `keystroke` — a key combination delivered to the focused Simulator. No
+ *   action uses it any more; the script stays for an Xcode with Simulator.app.
  *
  * DELIBERATELY ABSENT: `Restart` and `Erase All Content and Settings…`. Both
  * exist in the same menu, both are irreversible from a panel click, and
@@ -57,7 +61,10 @@ export function isDeviceAction(value: unknown): value is DeviceAction {
 
 /** How one action reaches the simulator. */
 export type DeviceActionTransport =
-  | { kind: 'serve-sim'; button: string }
+  /** A serve-sim hardware button, pressed `repeat` times (default once). */
+  | { kind: 'serve-sim'; button: string; repeat?: number }
+  /** A Darwin notification posted inside the simulator (`simctl spawn … notifyutil -p`). */
+  | { kind: 'notify'; name: string }
   /** `path` is the menu bar item and any submenus above `item` (default `Device`). */
   | { kind: 'menu'; item: string; path?: readonly string[] }
   | { kind: 'keystroke'; repeat: number }
@@ -78,13 +85,14 @@ export interface DeviceActionSpec {
  * re-centering are simulator-window concepts with no device equivalent.
  */
 export const DEVICE_ACTION_SPECS: readonly DeviceActionSpec[] = [
-  { action: 'app-switcher', transport: { kind: 'menu', item: 'App Switcher' }, realDevice: true },
+  { action: 'app-switcher', transport: { kind: 'serve-sim', button: 'app_switcher' }, realDevice: true },
   { action: 'lock', transport: { kind: 'serve-sim', button: 'lock' }, realDevice: true },
-  // ⇧⌘H twice: the lock screen has no menu item, and the swipe is unusable.
-  { action: 'unlock', transport: { kind: 'keystroke', repeat: 2 }, realDevice: true },
-  { action: 'shake', transport: { kind: 'menu', item: 'Shake' }, realDevice: false },
+  // The home button twice: the first press wakes the lock screen, the second leaves it.
+  { action: 'unlock', transport: { kind: 'serve-sim', button: 'home', repeat: 2 }, realDevice: true },
+  // What Simulator.app's Device ▸ Shake posts; UIKit turns it into a motion-shake event.
+  { action: 'shake', transport: { kind: 'notify', name: 'com.apple.UIKit.SimulatorShake' }, realDevice: false },
   { action: 'siri', transport: { kind: 'menu', item: 'Siri' }, realDevice: true },
-  { action: 'action-button', transport: { kind: 'menu', item: 'Action Button' }, realDevice: false },
+  { action: 'action-button', transport: { kind: 'serve-sim', button: 'action' }, realDevice: false },
   { action: 're-center', transport: { kind: 'menu', item: 'Re-Center Open Apps' }, realDevice: false },
   // serve-sim's native toggle (what Simulator.app's ⌘K sends): no Simulator.app window, no Accessibility permission.
   { action: 'toggle-keyboard', transport: { kind: 'frame', tag: 12 }, realDevice: false },
@@ -105,7 +113,8 @@ export const DEVICE_ACTION_PERMISSION_HINT =
   + 'then enable the app running Claude Code (Terminal / iTerm / the Claude app)'
 
 export const DEVICE_ACTION_SIMULATOR_HINT =
-  'the Simulator app is not running — boot a simulator first (ios_sim_boot)'
+  'this action clicks a menu of Simulator.app, which is not running — Xcode 27 ships no Simulator.app (simulators run '
+  + 'through Device Hub), so there it is unavailable; on an older Xcode open Simulator.app first'
 
 /** Classify an osascript failure into something the caller can act on. */
 export function deviceActionFailureHint(message: string): string {
@@ -183,6 +192,16 @@ export function simulatorHomeKeystrokeScript(repeat: number): string {
   return focusedSimulatorScript(presses)
 }
 
+/** True when a Simulator.app process exists (`pgrep -x Simulator`); true too when that cannot be asked. */
+function simulatorAppRunning(): Promise<boolean> {
+  return new Promise(resolve => {
+    execFile('pgrep', ['-x', 'Simulator'], { timeout: 2_000 }, error => {
+      // pgrep exits 1 when nothing matches; any other failure is not evidence either way.
+      resolve(error === null || error.code !== 1)
+    })
+  })
+}
+
 function runOsascript(script: string, timeoutMs: number): Promise<void> {
   return new Promise((resolve, reject) => {
     execFile('osascript', ['-e', script], { timeout: timeoutMs }, (error, _stdout, stderr) => {
@@ -196,6 +215,21 @@ function runOsascript(script: string, timeoutMs: number): Promise<void> {
   })
 }
 
+/** How an action reaches the simulator; the stream source supplies them. */
+export interface DeviceActionChannels {
+  /** Press a serve-sim hardware button. */
+  pressButton(name: string): Promise<void>
+  /** Send one bare serve-sim control frame. */
+  sendFrame?(tag: number): Promise<void>
+  /** Post a Darwin notification inside the simulator. */
+  postNotification?(name: string): Promise<void>
+  /** Pause between repeated button presses (default `BUTTON_REPEAT_DELAY_MS`). */
+  repeatDelayMs?: number
+}
+
+/** Between the two home presses of an unlock: the lock screen has to wake first. */
+const BUTTON_REPEAT_DELAY_MS = 700
+
 /**
  * Run one device action against the booted simulator. `pressButton` is the
  * serve-sim path, injected so the caller owns the stream helper (and so this
@@ -203,21 +237,31 @@ function runOsascript(script: string, timeoutMs: number): Promise<void> {
  */
 export async function runSimulatorDeviceAction(
   action: DeviceAction,
-  pressButton: (name: string) => Promise<void>,
+  channels: DeviceActionChannels,
   timeoutMs: number = OSASCRIPT_TIMEOUT_MS,
-  sendFrame?: (tag: number) => Promise<void>,
 ): Promise<void> {
   const spec = deviceActionSpec(action)
   try {
     if (spec.transport.kind === 'serve-sim') {
-      await pressButton(spec.transport.button)
+      const presses = spec.transport.repeat ?? 1
+      for (let press = 0; press < presses; press += 1) {
+        if (press > 0) await new Promise(resolve => setTimeout(resolve, channels.repeatDelayMs ?? BUTTON_REPEAT_DELAY_MS))
+        await channels.pressButton(spec.transport.button)
+      }
       return
     }
     if (spec.transport.kind === 'frame') {
-      if (sendFrame === undefined) throw new Error('this stream backend cannot send serve-sim control frames')
-      await sendFrame(spec.transport.tag)
+      if (channels.sendFrame === undefined) throw new Error('this stream backend cannot send serve-sim control frames')
+      await channels.sendFrame(spec.transport.tag)
       return
     }
+    if (spec.transport.kind === 'notify') {
+      if (channels.postNotification === undefined) throw new Error('this stream backend cannot post a notification inside the simulator')
+      await channels.postNotification(spec.transport.name)
+      return
+    }
+    // Without a Simulator.app process the AppleScript only fails after its whole timeout (8 s measured).
+    if (!(await simulatorAppRunning())) throw new Error('ios-simulator: simulator-not-running')
     const script = spec.transport.kind === 'menu'
       ? simulatorMenuItemScript(spec.transport.item, spec.transport.path)
       : simulatorHomeKeystrokeScript(spec.transport.repeat)
