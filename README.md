@@ -170,13 +170,13 @@
 | action | 关键参数 | 说明 |
 |---|---|---|
 | `tap` | `x`, `y` | 归一化坐标：`x = 像素x / 截图宽`，`y = 像素y / 截图高` |
-| `type` | `text` | 任意文字。英文键盘打不出的字符（中文、emoji）经模拟器剪贴板粘贴，见 [常见问题](#常见问题) |
+| `type` | `text` | 任意文字，有实时流时逐键走控制通道（约 4 毫秒一个字符）。英文键盘打不出的字符（中文、emoji）经模拟器剪贴板粘贴，见 [常见问题](#常见问题) |
 | `button` | `name` | `home`、`lock`、`siri`、`volume-up`…，未知名称会返回完整列表 |
 | `gesture` | `json` | 拖动 `{"fromX":0.1,"fromY":0.5,"toX":0.9,"toY":0.5,"duration":0.3}` 或单帧 `{"type":"begin","x":0.5,"y":0.5}` |
 | `scroll` | `direction`, `amount?`, `x?`, `y?` | 方向按**内容**命名：`down` 表示看下面的内容（手指上滑）；`amount` 默认 0.6 |
 | `rotate` | `orientation` | `portrait` / `landscape_left` / `portrait_upside_down` / `landscape_right` |
 | `device_action` | `name` | `app-switcher` / `lock` / `unlock` / `shake` / `siri` / `action-button` / `re-center` / `toggle-keyboard`（显示 / 隐藏屏幕键盘）/ `slow-animations`（慢动画） |
-| `shortcut` | `name` | 在当前输入框里按编辑快捷键：`copy` / `paste` / `cut` / `select-all` / `undo` / `redo`。`copy` 和 `cut` 会把复制到的文字放在结果的 `pasteboard` 里返回 |
+| `shortcut` | `name` | 在当前输入框里按编辑快捷键：`copy` / `paste` / `cut` / `select-all` / `undo` / `redo`。`copy` 和 `cut` 会把复制到的文字放在结果的 `pasteboard` 里返回；如果 2 秒内剪贴板没有变化，结果会带 `pasteboardUnchanged: true`，表示返回的是之前的内容（App 忙的时候复制会更晚生效，可稍后用 `ios_sim_pasteboard` 再读） |
 
 `ios_sim_interact` 默认不截图：点击走 serve-sim 的 WebSocket 控制通道，发完立刻返回，连续操作不用每步等截图。需要看结果时传 `screenshot: true`（约 300 ms 后截图），或单独调用 `ios_sim_screenshot`。想恢复以前「每步都带截图」的行为，设置 `IOS_SIM_INTERACT_SCREENSHOT=1`。
 
