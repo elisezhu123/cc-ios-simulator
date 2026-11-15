@@ -25,6 +25,7 @@
  */
 
 import { WebSocket as WsWebSocket } from 'ws'
+import { simKeyFrames } from './panel/client/protocol.js'
 
 // ── frame encoding (host twin of src/client/protocol.ts) ──────────────────────
 
@@ -428,6 +429,53 @@ export async function sendSimTap(wsUrl: string, point: SimGesturePoint, options:
   return { frames: 2, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url }
 }
 
+/**
+ * Pause before each typed character. Measured on an iPhone 17 / iOS 27.2
+ * simulator with a 520-character text: no pause and a 1 ms pause lost the
+ * text, 2 ms and 4 ms typed it exactly. 4 ms keeps a margin and is still
+ * twice as fast as the serve-sim CLI (about 10 ms a character plus ~240 ms
+ * to start its process).
+ */
+export const SIM_TYPE_CHAR_GAP_MS = 4
+
+export interface SimTextOptions {
+  /** Pause before each character but the first (default `SIM_TYPE_CHAR_GAP_MS`). */
+  charGapMs?: number
+  /** Budget for the socket to open (default `SIM_GESTURE_CONNECT_TIMEOUT_MS`). */
+  connectTimeoutMs?: number
+  /** Called once the socket is open: from then on some of the text may have been typed. */
+  onOpen?: () => void
+}
+
+/**
+ * Type US-keyboard text as hardware-keyboard frames over the stream's control
+ * socket — the frames the panel sends for a key typed in the browser. A
+ * newline presses Return, a tab presses Tab. Rejects before sending anything
+ * when a character has no key (the caller pastes those), and like
+ * `sendSimGesture` when the socket is unavailable.
+ */
+export async function sendSimText(wsUrl: string, text: string, options: SimTextOptions = {}): Promise<SimGestureReport> {
+  const url = typeof wsUrl === 'string' ? wsUrl.trim() : ''
+  if (!/^wss?:\/\//.test(url)) {
+    throw gestureUnavailable(url, 'the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running')
+  }
+  const charGapMs = options.charGapMs ?? SIM_TYPE_CHAR_GAP_MS
+  if (!Number.isFinite(charGapMs) || charGapMs < 0) {
+    throw new RangeError(`ios-simulator: type charGapMs must be a non-negative number of milliseconds, got ${String(charGapMs)}`)
+  }
+  const frames: Array<{ frame: Buffer; waitMs: number }> = []
+  for (const character of text) {
+    const keys = simKeyFrames(character === '\n' ? 'Enter' : character === '\t' ? 'Tab' : character)
+    if (keys === undefined) throw new RangeError(`ios-simulator: the US hardware keyboard cannot type ${JSON.stringify(character)}`)
+    keys.forEach((key, index) => {
+      frames.push({ frame: Buffer.from(key), waitMs: index === 0 && frames.length > 0 ? charGapMs : 0 })
+    })
+  }
+  if (frames.length === 0) throw new RangeError('ios-simulator: there is no text to type')
+  const elapsedMs = await writeSimFrames(url, frames, options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS, options.onOpen)
+  return { frames: frames.length, moves: 0, elapsedMs, stepMs: charGapMs, wsUrl: url }
+}
+
 /** How long each key of ⌘V stays in its state before the next frame. */
 export const SIM_PASTE_HOLD_MS = 40
 
@@ -503,6 +551,7 @@ async function writeSimFrames(
   url: string,
   frames: ReadonlyArray<{ frame: Buffer; waitMs: number }>,
   connectTimeoutMs: number,
+  onOpen?: () => void,
 ): Promise<number> {
   const { WebSocket } = loadWs()
   const socket = new WebSocket(url, { perMessageDeflate: false })
@@ -521,6 +570,7 @@ async function writeSimFrames(
   const started = Date.now()
   try {
     await openSocket(socket, connectTimeoutMs, url, () => broken)
+    onOpen?.()
     for (const [index, { frame, waitMs }] of frames.entries()) {
       if (broken !== undefined) throw gestureUnavailable(url, broken)
       if (waitMs > 0) await sleep(waitMs)

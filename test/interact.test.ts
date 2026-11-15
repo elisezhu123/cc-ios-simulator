@@ -145,16 +145,20 @@ test('performSimInteract pastes Chinese and emoji through the pasteboard and ⌘
     },
     pasteHoldMs: 0,
     pasteSettleMs: 30,
+    charGapMs: 0,
   })
+  await new Promise(resolve => setTimeout(resolve, 50))
   wss.close()
   assert.deepEqual(events, [
-    'type hi ',
+    // "hi " as keys: h, i, space.
+    'key down 11', 'key up 11', 'key down 12', 'key up 12', 'key down 44', 'key up 44',
     'pbcopy BBB 你好🎉',
     'key down 227', 'key down 25', 'key up 25', 'key up 227',
-    'type !',
+    // "!" is Shift + 1.
+    'key down 225', 'key down 30', 'key up 30', 'key up 225',
   ])
-  assert.deepEqual(calls.map(call => call.slice(0, 2)), [['control', 'type'], ['control', 'type']])
-  assert.deepEqual(delivery, { channel: 'cli', pasted: 1 })
+  assert.deepEqual(calls, [], 'no serve-sim process at all')
+  assert.deepEqual(delivery, { channel: 'ws', pasted: 1 })
 })
 
 test('pasting needs the stream control socket and a pasteboard: without them the error says so', async () => {
@@ -189,4 +193,29 @@ test('a shortcut goes over the control socket only: no CLI call, and a clear err
   assert.throws(() => interactControlArgs({ action: 'shortcut', name: 'quit' }), /requires name — one of copy, paste, cut, select-all, undo, redo/)
   const offline = fakeHost({ device: 'BBB' })
   await assert.rejects(performSimInteract(offline.host, 'BBB', args, []), /shortcut.*control socket/s)
+})
+
+test('typing goes over the control socket when the stream is live, and through the serve-sim CLI when it is not', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const usages: number[] = []
+  wss.on('connection', socket => socket.on('message', data => {
+    usages.push((JSON.parse((data as Buffer).subarray(1).toString('utf8')) as { usage: number }).usage)
+  }))
+  const live = fakeHost({ device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true })
+  const args: SimInteractArgs = { action: 'type', text: 'ok' }
+  const delivery = await performSimInteract(live.host, 'BBB', args, interactControlArgs(args), { charGapMs: 0 })
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  assert.deepEqual([delivery.channel, delivery.frames], ['ws', 4])
+  assert.deepEqual(usages, [18, 18, 14, 14])
+  assert.deepEqual(live.calls, [])
+
+  // A socket that never opens typed nothing: the CLI can safely type the whole text.
+  const refused = fakeHost({ device: 'BBB', wsUrl: 'ws://127.0.0.1:9', exposeStreamInfo: true })
+  const fallback = await performSimInteract(refused.host, 'BBB', args, interactControlArgs(args))
+  assert.equal(fallback.channel, 'cli')
+  assert.match(fallback.wsError ?? '', /control socket/)
+  assert.deepEqual(refused.calls, [['control', 'type', '-d', 'BBB', '--', 'ok']])
 })
