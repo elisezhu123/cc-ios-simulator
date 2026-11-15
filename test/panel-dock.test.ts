@@ -128,3 +128,21 @@ test('POST /api/pasteboard returns the simulator pasteboard, and refuses an iPho
     await f.panel.dispose()
   }
 })
+
+test('POST /api/manage-device deletes or erases a shut-down simulator by udid, and refuses a booted or unknown one', async () => {
+  const f = await dockPanel()
+  try {
+    const booted = await f.post('/api/manage-device', { action: 'delete', udid: 'BBB' })
+    assert.deepEqual([booted.status, booted.body.error], [409, 'iPhone 17 Pro is Booted — shut it down first'])
+    assert.equal((await f.post('/api/manage-device', { action: 'delete', udid: 'iPad Air' })).status, 404, 'a name is not a udid')
+    assert.equal((await f.post('/api/manage-device', { action: 'wipe', udid: 'CCC' })).status, 400)
+    assert.equal((await f.post('/api/manage-device', { action: 'delete' })).status, 400)
+    assert.deepEqual(f.simctlCalls, [])
+    assert.equal((await f.post('/api/manage-device', { action: 'erase', udid: 'CCC' })).status, 200)
+    const deleted = await f.post('/api/manage-device', { action: 'delete', udid: 'CCC' })
+    assert.deepEqual([deleted.status, deleted.body.device], [200, { udid: 'CCC', name: 'iPad Air' }])
+    assert.deepEqual(f.simctlCalls, [['erase', 'CCC'], ['delete', 'CCC']])
+  } finally {
+    await f.panel.dispose()
+  }
+})

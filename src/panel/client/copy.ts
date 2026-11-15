@@ -77,6 +77,15 @@ export interface PanelCopy {
   bootedSection: string
   realSection: string
   shutdownSection: string
+  deleteDevice: string
+  eraseDevice: string
+  shutDownFirst: string
+  cannotUndo: string
+  confirmDelete: string
+  confirmErase: string
+  cancel: string
+  deviceDeleted: string
+  deviceErased: string
   displaySize: string
   reconnect: string
   simulatorOnly: string
@@ -157,6 +166,15 @@ const EN: PanelCopy = {
   bootedSection: 'Booted',
   realSection: 'iPhone / iPad',
   shutdownSection: 'Shut down',
+  deleteDevice: 'Delete simulator…',
+  eraseDevice: 'Erase all content and settings…',
+  shutDownFirst: 'Shut it down first to delete or erase it',
+  cannotUndo: 'Its apps and data are removed. This cannot be undone.',
+  confirmDelete: 'Delete this simulator',
+  confirmErase: 'Erase this simulator',
+  cancel: 'Cancel',
+  deviceDeleted: 'Simulator deleted',
+  deviceErased: 'Simulator erased',
   displaySize: 'Display size',
   reconnect: 'Reconnect stream',
   simulatorOnly: 'Simulators only',
@@ -236,6 +254,15 @@ const ZH: PanelCopy = {
   bootedSection: '已启动',
   realSection: 'iPhone / iPad',
   shutdownSection: '未启动',
+  deleteDevice: '删除模拟器…',
+  eraseDevice: '抹掉所有内容和设置…',
+  shutDownFirst: '需要先关机才能删除或抹掉',
+  cannotUndo: '里面的 App 和数据会被清除，此操作无法撤销。',
+  confirmDelete: '删除这台模拟器',
+  confirmErase: '抹掉这台模拟器',
+  cancel: '取消',
+  deviceDeleted: '模拟器已删除',
+  deviceErased: '模拟器已抹掉',
   displaySize: '显示大小',
   reconnect: '重新连接画面',
   simulatorOnly: '仅模拟器可用',

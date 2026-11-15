@@ -16,6 +16,14 @@ export interface MenuItem {
   disabled?: boolean
   run?: () => void
   submenu?: () => MenuEntry[]
+  /** Red: an action that cannot be undone. */
+  danger?: boolean
+  /** Rebuild the menu after `run` instead of closing it (a step inside the menu). */
+  keepOpen?: boolean
+  /** A small icon button at the end of the row, with its own action; the menu is rebuilt after it. */
+  trailing?: { icon: string; label: string; run: () => void }
+  /** Right-click on the row; the menu is rebuilt after it. */
+  onContext?: () => void
 }
 
 export type MenuEntry = MenuItem | { separator: true } | { section: string; dot?: boolean }
@@ -118,7 +126,7 @@ export class Menu {
   #row(item: MenuItem, topLevel: boolean): HTMLButtonElement {
     const row = document.createElement('button')
     row.type = 'button'
-    row.className = 'menu-item'
+    row.className = item.danger === true ? 'menu-item danger' : 'menu-item'
     row.setAttribute('role', item.checked === undefined ? 'menuitem' : 'menuitemcheckbox')
     if (item.checked !== undefined) row.setAttribute('aria-checked', String(item.checked))
     row.disabled = item.disabled === true
@@ -138,6 +146,31 @@ export class Menu {
       row.append(hint)
     }
     if (item.checked === true) row.insertAdjacentHTML('beforeend', `<span class="menu-check">${CHECK}</span>`)
+    const trailing = item.trailing
+    if (trailing !== undefined) {
+      // A span, not a button: the row is a button already, and buttons do not nest.
+      const extra = document.createElement('span')
+      extra.className = 'menu-trailing'
+      extra.setAttribute('role', 'button')
+      extra.setAttribute('aria-label', trailing.label)
+      extra.title = trailing.label
+      extra.innerHTML = trailing.icon
+      extra.addEventListener('click', event => {
+        event.stopPropagation()
+        event.preventDefault()
+        trailing.run()
+        this.open()
+      })
+      row.append(extra)
+    }
+    const onContext = item.onContext
+    if (onContext !== undefined) {
+      row.addEventListener('contextmenu', event => {
+        event.preventDefault()
+        onContext()
+        this.open()
+      })
+    }
     if (item.submenu !== undefined) row.insertAdjacentHTML('beforeend', `<span class="menu-chevron">${CHEVRON}</span>`)
     const submenu = item.submenu
     if (submenu !== undefined) {
@@ -161,6 +194,11 @@ export class Menu {
     } else {
       if (topLevel) row.addEventListener('pointerenter', () => this.#closeSub())
       row.addEventListener('click', () => {
+        if (item.keepOpen === true) {
+          item.run?.()
+          this.open()
+          return
+        }
         this.close()
         item.run?.()
       })
