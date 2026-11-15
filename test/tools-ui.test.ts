@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
+import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
 import type { ToolDeps } from '../src/deps.js'
 import type { OcrItem } from '../src/ocr-backend.js'
@@ -224,5 +225,47 @@ test('when the control socket refuses, ios_sim_tap_element still taps through ax
   const result = await h.call('ios_sim_tap_element', { label: 'General', screenshot: false })
   assert.equal(result.isError, undefined, textOf(result))
   assert.deepEqual(h.taps, [{ udid: 'BBB', x: 201, y: 226 }])
+  await h.close()
+})
+
+/** A serve-sim MJPEG stand-in: answers every request with the current `screen` as one JPEG frame. */
+async function frameServer(t: { after(fn: () => void): void }): Promise<{ baseUrl: string; screen: string }> {
+  const stand = { baseUrl: '', screen: 'one' }
+  const server = createServer((_req, res) => {
+    res.writeHead(200, { 'content-type': 'multipart/x-mixed-replace; boundary=frame' })
+    res.write('--frame\r\nContent-Type: image/jpeg\r\n\r\n')
+    res.write(Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.from(stand.screen), Buffer.from([0xff, 0xd9])]))
+  })
+  t.after(() => { server.closeAllConnections(); server.close() })
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', () => resolve()))
+  stand.baseUrl = `http://127.0.0.1:${(server.address() as { port: number }).port}`
+  return stand
+}
+
+test('while the stream shows the same frame, OCR tools reuse the last reading instead of capturing and recognizing again', async t => {
+  const stream = await frameServer(t)
+  const h = await uiHarness({
+    host: { device: 'BBB', baseUrl: stream.baseUrl, exposeStreamInfo: true },
+    ocr: [[ocrItem('Loading', 0.9, { x: 100, y: 400, w: 60, h: 20 })], [ocrItem('Done', 0.9, { x: 100, y: 400, w: 60, h: 20 })]],
+  })
+  const texts = async (): Promise<string[]> => (h.json(await h.call('ios_sim_find_text')) as { items: Array<{ text: string }> }).items.map(item => item.text)
+  assert.deepEqual(await texts(), ['Loading'])
+  assert.deepEqual(await texts(), ['Loading'])
+  // A wait that times out polls several times over an unchanged screen: still that one recognition.
+  const never = h.json(await h.call('ios_sim_wait_for', { text: 'Done', timeout_ms: 300 })) as { matched: boolean }
+  assert.equal(never.matched, false)
+  assert.equal(h.ocrPaths.length, 1, 'one screenshot and one recognition for all of the above')
+  // The screen changes: the next reading is a real one.
+  stream.screen = 'two'
+  assert.deepEqual(await texts(), ['Done'])
+  assert.equal(h.ocrPaths.length, 2)
+  await h.close()
+})
+
+test('without a stream frame to compare, every OCR reading is a fresh one', async () => {
+  const h = await uiHarness({ host: { device: 'BBB' }, ocr: [[ocrItem('A', 0.9, { x: 1, y: 1, w: 9, h: 9 })]] })
+  await h.call('ios_sim_find_text')
+  await h.call('ios_sim_find_text')
+  assert.equal(h.ocrPaths.length, 2)
   await h.close()
 })

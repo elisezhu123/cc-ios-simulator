@@ -32,6 +32,7 @@ import { captureWda, ROW_SNAPSHOT_DEPTH, wdaTree } from '../real-ui.js'
 import type { ScreenshotCapture } from '../screenshot.js'
 import { sendSimTap } from '../sim-gesture.js'
 import type { SimulatorDevice } from '../simctl.js'
+import { streamFrameDigest } from '../stream-frame.js'
 import { assertMac, ensureStreamFor, realDeviceSummary, requireBooted, resolveToolTarget } from '../target.js'
 import type { AxeElement } from '../uitree-backend.js'
 import {
@@ -63,6 +64,9 @@ const MIN_CONFIDENCE_PARAM = z.number().min(0).max(1).optional()
 const IMAGE_LANDSCAPE_UNSYNCED_WARNING = 'the screen looks landscape, but the live stream does not report a landscape '
   + 'orientation, so the tap went out without the landscape mapping and may miss — send ios_sim_interact '
   + '{action: "rotate", orientation: "landscape_left" or "landscape_right"} matching the screen, then retry'
+
+/** A reading is reused only this long, whatever the stream says: its screenshot file is pruned eventually. */
+const OCR_READING_MAX_AGE_MS = 60_000
 
 export function registerUiTools(server: McpServer, deps: ToolDeps): void {
   /**
@@ -209,7 +213,36 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     path: string
   }
 
+  /**
+   * The last OCR reading per simulator and the stream frame it belongs to. A
+   * reading costs a screenshot (~470 ms) plus a recognition (~520 ms); a poll
+   * over a screen that has not changed needs neither.
+   */
+  const ocrReadings = new Map<string, { frame: string; at: number; snapshot: OcrSnapshot }>()
+
+  /** The digest of the frame the live stream shows for this simulator; undefined without one. */
+  const frameOf = async (device: UiTarget): Promise<string | undefined> => {
+    if (device.simulator === undefined) return undefined
+    const info = deps.host.streamInfo
+    if (info === undefined || info.device !== device.udid) return undefined
+    return streamFrameDigest(info.streamUrl)
+  }
+
   const readOcr = async (device: UiTarget, signal?: AbortSignal): Promise<OcrSnapshot> => {
+    // Looked at BEFORE the screenshot: if the screen changes in between, the next frame differs
+    // from this one and the reading is redone, so a reused reading is never older than its frame.
+    const frame = await frameOf(device)
+    if (frame !== undefined) {
+      const known = ocrReadings.get(device.udid)
+      if (known !== undefined && known.frame === frame && Date.now() - known.at <= OCR_READING_MAX_AGE_MS) return known.snapshot
+    }
+    const snapshot = await captureAndRecognize(device, signal)
+    if (frame === undefined) ocrReadings.delete(device.udid)
+    else ocrReadings.set(device.udid, { frame, at: Date.now(), snapshot })
+    return snapshot
+  }
+
+  const captureAndRecognize = async (device: UiTarget, signal?: AbortSignal): Promise<OcrSnapshot> => {
     const capture = await device.capture(signal)
     if (capture.width === undefined || capture.height === undefined || capture.width <= 0 || capture.height <= 0) {
       throw new Error(`could not determine the screenshot pixel size of ${device.name} (unreadable PNG header)`)
