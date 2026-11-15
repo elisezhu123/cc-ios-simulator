@@ -198,7 +198,7 @@ Supports `#Preview { … }` (including `#Preview("Name", traits: …)`) and `str
   - an Apple ID signed in under Xcode ▸ Settings ▸ Accounts (a free personal team works), or `IOS_SIM_TEAM_ID`;
   - a [WebDriverAgent](https://github.com/appium/WebDriverAgent) checkout: `git clone https://github.com/appium/WebDriverAgent.git ~/Library/Caches/ios-simulator/WebDriverAgent` (or point `IOS_SIM_WDA_DIR` at an existing one). The plugin never modifies it: it builds a private copy in its cache with safety patches that bind WDA to the phone's loopback only, so WDA is reachable through the USB tunnel and not by other devices on the same Wi-Fi;
   - the tunnel goes straight through usbmuxd, falling back to `iproxy` (`brew install libimobiledevice`).
-- All `device_action`s except lock and the on-screen keyboard drive Simulator.app's menus and need the app running Claude enabled under **System Settings ▸ Privacy & Security ▸ Accessibility**
+- The `device_action`s `siri`, `re-center` and `slow-animations` drive Simulator.app's menus (Xcode 27 has no Simulator.app, so they are unavailable there) and need the app running Claude enabled under **System Settings ▸ Privacy & Security ▸ Accessibility**
 
 ---
 
@@ -311,7 +311,7 @@ The panel is a local web page (`127.0.0.1:3456`, or the next free port up to +20
 - **Chinese, emoji and paste**: click the simulator screen first, then type with your input method or pick an emoji from the system picker; the committed text goes into the simulator's focused field. ⌘V pastes the text on your Mac clipboard. This text goes in through the simulator pasteboard, so whatever the simulator pasteboard held is replaced.
 - **Copy, cut, select all, undo**: ⌘C / ⌘X / ⌘A / ⌘Z / ⇧⌘Z go to the simulator's focused field. After ⌘C or ⌘X the text copied in the simulator is brought over to your Mac clipboard, ready to paste anywhere.
 - **On-screen keyboard**: ⌘K (or "Show on-screen keyboard" in the Device menu) shows or hides iOS's own keyboard, whose keys you can then click. It only appears while a text field has focus; the toggle needs neither Simulator.app nor the Accessibility permission.
-- Slow animations and every device action except lock click Simulator.app's menus and need the Accessibility permission (see [Requirements](#requirements)).
+- The app switcher, lock, unlock, shake and the Action button go straight to the simulator and need no Simulator.app. Slow animations, Siri and Re-Center click Simulator.app's menus: they need the Accessibility permission and are unavailable under Xcode 27, which has no Simulator.app (see [Requirements](#requirements)).
 - Your clicks in the panel and Claude's tool calls drive **the same simulator**, so either of you can take over at any time.
 - **Real devices**: once `ios_real_start_wda` has started WebDriverAgent, the phone appears in the picker's "iPhone / iPad" group (or call `ios_sim_panel {udid: the phone}`). The view is WDA's MJPEG stream (through the USB tunnel); a click taps, a drag swipes (sent as one swipe with the drag's duration on release). Home, annotate, save screenshot and rotate work, and the Device menu offers rotation, lock, unlock and Siri; recording and shutting down are simulator-only, and "detach" goes back to simulators.
 
@@ -454,7 +454,7 @@ The part a US keyboard can type is typed as keys; the rest is put on the simulat
 <details>
 <summary><b>A device action asks for the Accessibility permission?</b></summary>
 
-Every device action except lock drives Simulator.app's menus through AppleScript. Open **System Settings ▸ Privacy & Security ▸ Accessibility** and enable the app running Claude (Terminal, the Claude desktop app…).
+Only three device actions — `siri`, `re-center` and `slow-animations` — drive Simulator.app's menus through AppleScript; the rest (app switcher, lock, unlock, shake, Action button, on-screen keyboard) go straight to the simulator. Xcode 27 has no Simulator.app, so those three are unavailable there. On an older Xcode, open **System Settings ▸ Privacy & Security ▸ Accessibility** and enable the app running Claude (Terminal, the Claude desktop app…).
 
 </details>
 

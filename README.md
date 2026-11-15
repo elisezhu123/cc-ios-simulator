@@ -198,7 +198,7 @@
   - 在 Xcode ▸ Settings ▸ Accounts 登录 Apple ID（免费的个人团队也可以），或设置 `IOS_SIM_TEAM_ID`；
   - 一份 [WebDriverAgent](https://github.com/appium/WebDriverAgent) 源码：`git clone https://github.com/appium/WebDriverAgent.git ~/Library/Caches/ios-simulator/WebDriverAgent`（或用 `IOS_SIM_WDA_DIR` 指向已有的目录）。插件不会修改这份源码，而是复制一份到缓存里，打上"只监听手机本机回环地址"的安全补丁再构建，所以 WDA 只能通过 USB 隧道访问，同一 Wi-Fi 下的其他设备连不上；
   - 隧道优先直接走 usbmuxd，不行时用 `iproxy`（`brew install libimobiledevice`）。
-- `device_action` 中除"锁屏"和"屏幕键盘"外的动作会操作 Simulator.app 菜单，需要在 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能** 中给运行 Claude 的应用授权
+- `device_action` 里的 `siri`、`re-center`、`slow-animations` 会操作 Simulator.app 菜单（Xcode 27 没有 Simulator.app，这三个不可用），需要在 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能** 中给运行 Claude 的应用授权
 
 ---
 
@@ -311,7 +311,7 @@ sequenceDiagram
 - **中文、emoji 和粘贴**：先点一下模拟器画面，再用输入法打字或用系统表情面板选 emoji，提交的文字会进到模拟器当前的输入框；⌘V 把电脑剪贴板里的文字粘贴进去。这些文字是经模拟器剪贴板粘贴的，所以模拟器剪贴板原有的内容会被替换。
 - **复制、剪切、全选、撤销**：⌘C / ⌘X / ⌘A / ⌘Z / ⇧⌘Z 会发给模拟器当前的输入框。⌘C 和 ⌘X 之后，模拟器里复制到的文字会同步到电脑剪贴板，可以直接粘贴到别处。
 - **屏幕键盘**：⌘K（或"设备"菜单里的"显示屏幕键盘"）显示 / 隐藏 iOS 自带的屏幕键盘，之后可以直接点键盘上的按键。键盘只在输入框有焦点时出现；这个开关不需要 Simulator.app，也不需要辅助功能权限。
-- 慢动画和"设备操作"里除锁屏外的项目会点 Simulator.app 的菜单，需要辅助功能权限（见[运行要求](#运行要求)）。
+- 应用切换器、锁屏、解锁、摇一摇、Action 按钮直接发给模拟器，不需要 Simulator.app。慢动画、Siri 和"重新居中"会点 Simulator.app 的菜单，需要辅助功能权限，在没有 Simulator.app 的 Xcode 27 上不可用（见[运行要求](#运行要求)）。
 - 你在面板里的操作和 Claude 的工具调用驱动的是**同一台模拟器**，可以随时接手或交还。
 - **真机**：`ios_real_start_wda` 启动 WebDriverAgent 后，设备选择器的"iPhone / iPad"分组里会出现这台手机（或调用 `ios_sim_panel {udid: 这台手机}`）。画面来自 WDA 的 MJPEG 流（经 USB 隧道），单击 = 点击，拖动 = 滑动（松手时按拖动时长一次发出），回到桌面、标注、保存截图、旋转可用，设备菜单只有旋转、锁屏、解锁、Siri；录屏和关闭模拟器只对模拟器可用，"断开"回到模拟器。
 
@@ -454,7 +454,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 <details>
 <summary><b>设备操作提示需要"辅助功能"权限？</b></summary>
 
-除锁屏外的设备操作通过 AppleScript 操作 Simulator.app 菜单。打开 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能**，勾选运行 Claude 的应用（终端、Claude 桌面版等）。
+只有 `siri`、`re-center` 和 `slow-animations` 三个设备操作通过 AppleScript 操作 Simulator.app 菜单，其余的（应用切换器、锁屏、解锁、摇一摇、Action 按钮、屏幕键盘）直接发给模拟器。Xcode 27 没有 Simulator.app，这三个在那里不可用。在更早的 Xcode 上，打开 **系统设置 ▸ 隐私与安全性 ▸ 辅助功能**，勾选运行 Claude 的应用（终端、Claude 桌面版等）。
 
 </details>
 
