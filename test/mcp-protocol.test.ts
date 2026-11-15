@@ -20,7 +20,10 @@ const EXPECTED_TOOLS = [
   'ios_sim_backtrace',
   'ios_sim_boot',
   'ios_sim_build_run',
+  'ios_sim_create',
+  'ios_sim_delete',
   'ios_sim_devices',
+  'ios_sim_erase',
   'ios_sim_find_text',
   'ios_sim_install_app',
   'ios_sim_interact',
@@ -57,7 +60,7 @@ function childEnv(): Record<string, string> {
   return env
 }
 
-test('the stdio MCP server lists the 32 tools and answers calls', async () => {
+test('the stdio MCP server lists the 35 tools and answers calls', async () => {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: ['--import', 'tsx', join(ROOT, 'src/server.ts')],

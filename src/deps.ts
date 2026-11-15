@@ -14,7 +14,7 @@ import type { PreviewStatus } from './preview-host.js'
 import type { RecordingInfo, RecordingResult } from './recorder.js'
 import type { ModelImage, ScreenshotCapture } from './screenshot.js'
 import type { SimHostController } from './sim-host.js'
-import type { SimulatorDevice } from './simctl.js'
+import type { SimulatorDevice, SimulatorDeviceType, SimulatorRuntime, UnavailableDevice } from './simctl.js'
 import type { StreamSource } from './stream-source.js'
 import type { AxeBinary, AxeElement } from './uitree-backend.js'
 import type { WdaSessionClient, WdaStatus } from './wda-host.js'
@@ -41,6 +41,15 @@ export interface SimctlApi {
   setLocation(udid: string, latitude: number, longitude: number, signal?: AbortSignal): Promise<void>
   clearLocation(udid: string, signal?: AbortSignal): Promise<void>
   setAppearance(udid: string, appearance: 'light' | 'dark', signal?: AbortSignal): Promise<void>
+  /** Device types and available runtimes a simulator can be created from. */
+  listCatalog(signal?: AbortSignal): Promise<{ deviceTypes: SimulatorDeviceType[]; runtimes: SimulatorRuntime[] }>
+  listUnavailableDevices(signal?: AbortSignal): Promise<UnavailableDevice[]>
+  /** Create a simulator; resolves its udid. */
+  createDevice(name: string, deviceType: string, runtime: string, signal?: AbortSignal): Promise<string>
+  eraseDevice(udid: string, signal?: AbortSignal): Promise<void>
+  /** Deletes even a booted device: the caller refuses those. */
+  deleteDevice(udid: string, signal?: AbortSignal): Promise<void>
+  deleteUnavailableDevices(signal?: AbortSignal): Promise<void>
   /** Replace the simulator's pasteboard with `text`. */
   setPasteboard(udid: string, text: string, signal?: AbortSignal): Promise<void>
   /** The text on the simulator's pasteboard. */

@@ -45,6 +45,7 @@ const SIMCTL_CONTAINER_TIMEOUT_MS = 30_000
 const SIMCTL_LISTAPPS_TIMEOUT_MS = 60_000
 const SIMCTL_TERMINATE_TIMEOUT_MS = 30_000
 const SIMCTL_UNINSTALL_TIMEOUT_MS = 60_000
+const SIMCTL_MANAGE_TIMEOUT_MS = 120_000
 const SIMCTL_PASTEBOARD_TIMEOUT_MS = 15_000
 const SIMCTL_MAX_BUFFER_BYTES = 16 * 1024 * 1024
 
@@ -233,6 +234,149 @@ export async function shutdownDevice(udid: string): Promise<void> {
       if (error instanceof SimctlError && alreadyInState(error.stderr, 'Shutdown')) return
       throw error
     })
+  } finally {
+    forgetDeviceList()
+  }
+}
+
+/** A device type simulators can be created from. */
+export interface SimulatorDeviceType {
+  identifier: string
+  name: string
+}
+
+/** An installed runtime and the device types it can run. */
+export interface SimulatorRuntime {
+  identifier: string
+  /** e.g. "iOS 27.2". */
+  name: string
+  /** e.g. "27.2". */
+  version: string
+  /** Identifiers of the device types this runtime supports. */
+  deviceTypes: string[]
+}
+
+/** A device simctl lists but cannot run (its runtime is gone, or it is corrupt). */
+export interface UnavailableDevice {
+  udid: string
+  name: string
+  runtime: string
+  /** simctl's `availabilityError`, when it gives one. */
+  reason?: string
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** Parse `simctl list --json` into the device types and the AVAILABLE runtimes (each identifier once). */
+export function parseCatalog(stdout: string): { deviceTypes: SimulatorDeviceType[]; runtimes: SimulatorRuntime[] } {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(stdout)
+  } catch (error) {
+    throw new SimctlError(`simctl list returned invalid JSON: ${error instanceof Error ? error.message : String(error)}`, stdout)
+  }
+  const root = isRecord(parsed) ? parsed : {}
+  const deviceTypes: SimulatorDeviceType[] = []
+  for (const entry of Array.isArray(root.devicetypes) ? root.devicetypes : []) {
+    if (isRecord(entry) && typeof entry.identifier === 'string' && typeof entry.name === 'string') {
+      deviceTypes.push({ identifier: entry.identifier, name: entry.name })
+    }
+  }
+  const runtimes = new Map<string, SimulatorRuntime>()
+  for (const entry of Array.isArray(root.runtimes) ? root.runtimes : []) {
+    if (!isRecord(entry) || entry.isAvailable !== true) continue
+    if (typeof entry.identifier !== 'string' || typeof entry.name !== 'string' || runtimes.has(entry.identifier)) continue
+    const supported: string[] = []
+    for (const type of Array.isArray(entry.supportedDeviceTypes) ? entry.supportedDeviceTypes : []) {
+      if (isRecord(type) && typeof type.identifier === 'string') supported.push(type.identifier)
+    }
+    runtimes.set(entry.identifier, {
+      identifier: entry.identifier,
+      name: entry.name,
+      version: typeof entry.version === 'string' ? entry.version : '',
+      deviceTypes: supported,
+    })
+  }
+  return { deviceTypes, runtimes: [...runtimes.values()] }
+}
+
+/** The device types and available runtimes a simulator can be created from. */
+export async function listCatalog(signal?: AbortSignal): Promise<{ deviceTypes: SimulatorDeviceType[]; runtimes: SimulatorRuntime[] }> {
+  return parseCatalog(await execSimctl(['list', '--json'], SIMCTL_LIST_TIMEOUT_MS, signal))
+}
+
+/** The devices `parseDeviceList` skips: listed by simctl, but not runnable. */
+export function parseUnavailableDevices(stdout: string): UnavailableDevice[] {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(stdout)
+  } catch (error) {
+    throw new SimctlError(`simctl list devices returned invalid JSON: ${error instanceof Error ? error.message : String(error)}`, stdout)
+  }
+  const runtimes = isRecord(parsed) && isRecord(parsed.devices) ? parsed.devices : {}
+  const devices: UnavailableDevice[] = []
+  for (const [runtime, entries] of Object.entries(runtimes)) {
+    for (const entry of Array.isArray(entries) ? entries : []) {
+      if (!isRecord(entry) || entry.isAvailable === true) continue
+      if (typeof entry.udid !== 'string' || typeof entry.name !== 'string') continue
+      devices.push({
+        udid: entry.udid,
+        name: entry.name,
+        runtime,
+        ...(typeof entry.availabilityError === 'string' && entry.availabilityError !== '' ? { reason: entry.availabilityError } : {}),
+      })
+    }
+  }
+  return devices
+}
+
+export async function listUnavailableDevices(signal?: AbortSignal): Promise<UnavailableDevice[]> {
+  return parseUnavailableDevices(await execSimctl(['list', 'devices', '--json'], SIMCTL_LIST_TIMEOUT_MS, signal))
+}
+
+/** Create a simulator and resolve its udid (`simctl create <name> <device type> <runtime>`). */
+export async function createDevice(name: string, deviceType: string, runtime: string, signal?: AbortSignal): Promise<string> {
+  forgetDeviceList()
+  try {
+    const stdout = await execSimctl(['create', name, deviceType, runtime], SIMCTL_MANAGE_TIMEOUT_MS, signal)
+    const udid = stdout.trim().split('\n').pop()?.trim() ?? ''
+    if (!/^[0-9A-Fa-f-]{36}$/u.test(udid)) throw new SimctlError(`simctl create did not print a udid: ${stdout.trim()}`, stdout)
+    return udid
+  } finally {
+    forgetDeviceList()
+  }
+}
+
+/** Erase a simulator's contents and settings. simctl itself refuses a booted device. */
+export async function eraseDevice(udid: string, signal?: AbortSignal): Promise<void> {
+  forgetDeviceList()
+  try {
+    await execSimctl(['erase', udid], SIMCTL_MANAGE_TIMEOUT_MS, signal)
+  } finally {
+    forgetDeviceList()
+  }
+}
+
+/**
+ * Delete a simulator for good. simctl deletes a BOOTED device without a word
+ * (verified: exit 0, the device is gone), so refusing one is the caller's job.
+ */
+export async function deleteDevice(udid: string, signal?: AbortSignal): Promise<void> {
+  forgetDeviceList()
+  try {
+    await execSimctl(['delete', udid], SIMCTL_MANAGE_TIMEOUT_MS, signal)
+  } finally {
+    forgetDeviceList()
+  }
+}
+
+/** Delete every device simctl marks unavailable (`simctl delete unavailable`). */
+export async function deleteUnavailableDevices(signal?: AbortSignal): Promise<void> {
+  forgetDeviceList()
+  try {
+    await execSimctl(['delete', 'unavailable'], SIMCTL_MANAGE_TIMEOUT_MS, signal)
   } finally {
     forgetDeviceList()
   }
