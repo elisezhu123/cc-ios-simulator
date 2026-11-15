@@ -170,13 +170,13 @@ Supports `#Preview { … }` (including `#Preview("Name", traits: …)`) and `str
 | action | Key parameters | Notes |
 |---|---|---|
 | `tap` | `x`, `y` | Normalized: `x = pixel x / screenshot width`, `y = pixel y / screenshot height` |
-| `type` | `text` | Any text. Characters a US keyboard lacks (Chinese, emoji) are pasted through the simulator pasteboard, see the [FAQ](#faq) |
+| `type` | `text` | Any text, typed key by key over the control channel while a stream is live (about 4 ms a character). Characters a US keyboard lacks (Chinese, emoji) are pasted through the simulator pasteboard, see the [FAQ](#faq) |
 | `button` | `name` | `home`, `lock`, `siri`, `volume-up`…; an unknown name returns the full list |
 | `gesture` | `json` | A drag `{"fromX":0.1,"fromY":0.5,"toX":0.9,"toY":0.5,"duration":0.3}` or one frame `{"type":"begin","x":0.5,"y":0.5}` |
 | `scroll` | `direction`, `amount?`, `x?`, `y?` | Named by the **content**: `down` shows what is below (the finger moves up); `amount` defaults to 0.6 |
 | `rotate` | `orientation` | `portrait` / `landscape_left` / `portrait_upside_down` / `landscape_right` |
 | `device_action` | `name` | `app-switcher` / `lock` / `unlock` / `shake` / `siri` / `action-button` / `re-center` / `toggle-keyboard` (on-screen keyboard) / `slow-animations` |
-| `shortcut` | `name` | Press an editing shortcut in the focused field: `copy` / `paste` / `cut` / `select-all` / `undo` / `redo`. `copy` and `cut` return the copied text as `pasteboard` in the result |
+| `shortcut` | `name` | Press an editing shortcut in the focused field: `copy` / `paste` / `cut` / `select-all` / `undo` / `redo`. `copy` and `cut` return the copied text as `pasteboard` in the result; when the pasteboard did not change within 2 s the result carries `pasteboardUnchanged: true`, meaning this is what was there before (a busy app acts on the copy later: read again with `ios_sim_pasteboard`) |
 
 `ios_sim_interact` takes no screenshot by default: taps go over serve-sim's WebSocket control channel and the call returns as soon as they are sent, so chained actions never wait for a capture. To see the result pass `screenshot: true` (captured about 300 ms later) or call `ios_sim_screenshot`. Set `IOS_SIM_INTERACT_SCREENSHOT=1` to get the old screenshot-after-every-action behavior back.
 

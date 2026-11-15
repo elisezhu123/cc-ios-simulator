@@ -24,8 +24,18 @@ const XCODE27_TYPE_HINT = ' — with Xcode 27, keyboard input needs Device Hub r
 
 /** The interact actions whose arguments carry screen coordinates. */
 const COORDINATE_ACTIONS: ReadonlySet<string> = new Set(['tap', 'scroll', 'gesture'])
-/** How long an app gets to put a copied selection on the pasteboard before it is read back. */
-const COPY_SETTLE_MS = 300
+/**
+ * How long a copy / cut waits for the simulator pasteboard to change. The
+ * selection reaches it well after the key press: 0.3 s for two characters and
+ * 1.3–1.5 s for 73 were measured, so a fixed 300 ms read back the PREVIOUS
+ * contents for anything but a very short text. It is the app that is slow,
+ * not the pasteboard: Safari's address bar, still digesting 520 typed
+ * characters, took 10 s to act on ⌘C. Waiting that long for every copy of an
+ * unchanged text is not worth it, so the result says when nothing arrived.
+ */
+const COPY_WAIT_MS = 2_000
+/** Pause between pasteboard reads while waiting. */
+const COPY_POLL_MS = 150
 /** Pasteboard text returned in a tool result is capped here. */
 const MAX_PASTEBOARD_CHARS = 20_000
 
@@ -318,7 +328,9 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       + 'screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and '
       + 'other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, '
       + 'lock, …), send a gesture, scroll (direction names the CONTENT), rotate, press an editing shortcut in the focused field '
-      + '(shortcut: copy, paste, cut, select-all, undo, redo — copy and cut answer with the text now on the simulator pasteboard), '
+      + '(shortcut: copy, paste, cut, select-all, undo, redo — copy and cut answer with the text now on the simulator pasteboard; '
+      + 'pasteboardUnchanged:true means nothing new arrived within 2 s, so it is what was there before — a busy app can take longer '
+      + '(Safari needed 10 s after 520 typed characters): read again with ios_sim_pasteboard get), '
       + 'or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; '
       + 'toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; siri, re-center and '
       + 'slow-animations click Simulator.app menus, need the Accessibility permission and are unavailable under Xcode 27, which has no Simulator.app). Starts the live stream when needed but never boots a device. '
@@ -376,6 +388,9 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
     await ensureStreamFor(deps.host, device)
     let delivery: SimInteractDelivery | undefined
     let warning: string | undefined
+    const copying = args.action === 'shortcut' && (args.name === 'copy' || args.name === 'cut')
+    // What the pasteboard holds before the key press, to tell when the selection has arrived.
+    const pasteboardBefore = copying ? await deps.simctl.getPasteboard(device.udid, extra.signal) : undefined
     if (args.action === 'rotate') {
       if (args.orientation === undefined) {
         throw new Error(`action "rotate" requires orientation: ${ROTATE_ORIENTATIONS.join(', ')}`)
@@ -428,10 +443,17 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       }
     }
     let pasteboard: string | undefined
-    if (args.action === 'shortcut' && (args.name === 'copy' || args.name === 'cut')) {
-      // The app puts the selection on the pasteboard a moment after the key press.
-      await sleep(COPY_SETTLE_MS)
-      const text = await deps.simctl.getPasteboard(device.udid, extra.signal)
+    let pasteboardUnchanged = false
+    if (copying && pasteboardBefore !== undefined) {
+      // Read until the selection arrives; nothing tells a copy of the same text from a copy of nothing.
+      const deadline = Date.now() + (deps.copyWaitMs ?? COPY_WAIT_MS)
+      let text = pasteboardBefore
+      for (;;) {
+        await sleep(Math.min(COPY_POLL_MS, Math.max(0, deadline - Date.now())))
+        text = await deps.simctl.getPasteboard(device.udid, extra.signal)
+        if (text !== pasteboardBefore || Date.now() >= deadline) break
+      }
+      pasteboardUnchanged = text === pasteboardBefore
       pasteboard = text.length > MAX_PASTEBOARD_CHARS ? `${text.slice(0, MAX_PASTEBOARD_CHARS)}…` : text
     }
     const result = {
@@ -439,6 +461,7 @@ export function registerCoreTools(server: McpServer, deps: ToolDeps): void {
       device: deviceSummary(device),
       ...(delivery === undefined ? {} : { delivery }),
       ...(pasteboard === undefined ? {} : { pasteboard }),
+      ...(pasteboardUnchanged ? { pasteboardUnchanged: true } : {}),
       ...(warning === undefined ? {} : { warning }),
     }
     if (!(args.screenshot ?? deps.interactScreenshot)) return jsonResult(result)

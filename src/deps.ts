@@ -142,4 +142,6 @@ export interface ToolDeps {
   pollIntervalMs: number
   /** Delay before ios_sim_tap_row re-reads the row to verify expect_count, ms. */
   rowSettleMs: number
+  /** How long a copy / cut shortcut waits for the simulator pasteboard to change, ms (default 2000). */
+  copyWaitMs?: number
 }

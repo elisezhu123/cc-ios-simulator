@@ -1382,12 +1382,23 @@ async function writeMacClipboard(text) {
   ui.ime.value = before;
   return copied;
 }
+var COPY_WAIT_MS = 2e3;
+var COPY_POLL_MS = 200;
 function runSimShortcut(name) {
-  for (const frame of simShortcutFrames(name)) send(frame);
-  if (name !== "copy" && name !== "cut") return;
+  if (name !== "copy" && name !== "cut") {
+    for (const frame of simShortcutFrames(name)) send(frame);
+    return;
+  }
   void (async () => {
-    await new Promise((resolve) => window.setTimeout(resolve, 300));
-    const { text } = await postJson("/api/pasteboard", {});
+    const readPasteboard = async () => (await postJson("/api/pasteboard", {})).text;
+    const before = await readPasteboard();
+    for (const frame of simShortcutFrames(name)) send(frame);
+    const deadline = Date.now() + COPY_WAIT_MS;
+    let text = before;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, COPY_POLL_MS));
+      text = await readPasteboard();
+    } while (text === before && Date.now() < deadline);
     if (text === "") {
       notify(copy.copyNothing, "error");
       return;

@@ -13,6 +13,7 @@ import {
   sendSimPaste,
   sendSimShortcut,
   sendSimTap,
+  sendSimText,
   SIM_SHORTCUTS,
   simDragPath,
   simDragRequestOf,
@@ -239,6 +240,44 @@ export interface SimInteractOptions {
   pasteSettleMs?: number
   /** Delay between the key frames of a shortcut (default `SIM_PASTE_HOLD_MS`). */
   shortcutHoldMs?: number
+  /** Pause before each typed character (default `SIM_TYPE_CHAR_GAP_MS`). */
+  charGapMs?: number
+}
+
+/**
+ * Type US-keyboard text: as key frames over the stream's control socket when
+ * there is one (73 characters in ~0.3 s, against ~1 s for the serve-sim CLI,
+ * which starts a process and types about 10 ms a character), through the CLI
+ * otherwise. A socket that never opened typed nothing, so the CLI types the
+ * whole text; one that broke after opening may have typed part of it, and
+ * typing it again would duplicate that part — it fails instead.
+ */
+async function typeKeys(
+  host: SimGestureHostLike,
+  deviceUdid: string,
+  text: string,
+  wsUrl: string | undefined,
+  options: SimInteractOptions,
+): Promise<SimInteractDelivery> {
+  let wsError: string | undefined
+  if (wsUrl !== undefined) {
+    let opened = false
+    try {
+      const report = await sendSimText(wsUrl, text, {
+        ...(options.charGapMs === undefined ? {} : { charGapMs: options.charGapMs }),
+        onOpen: () => { opened = true },
+      })
+      return { channel: 'ws', frames: report.frames, elapsedMs: report.elapsedMs }
+    } catch (error) {
+      if (opened) {
+        throw new Error(`typing stopped part-way through (${errorMessage(error)}) — some of the text may be in the field; `
+          + 'check it (ios_sim_screenshot) before typing again')
+      }
+      wsError = errorMessage(error)
+    }
+  }
+  await host.control(serveSimControlArgs('type', deviceUdid, [text]))
+  return { channel: 'cli', ...(wsError === undefined ? {} : { wsError }) }
 }
 
 /**
@@ -262,11 +301,10 @@ async function typeWithPaste(
     throw new Error(`${reason} — no live serve-sim stream reports a control socket for ${deviceUdid}; start it with ios_sim_boot and retry`)
   }
   let pasted = 0
-  let typed = false
+  let typedThroughCli = false
   for (const segment of segments) {
     if (segment.kind === 'keys') {
-      await host.control(serveSimControlArgs('type', deviceUdid, [segment.text]))
-      typed = true
+      if ((await typeKeys(host, deviceUdid, segment.text, wsUrl, options)).channel === 'cli') typedThroughCli = true
       continue
     }
     await setPasteboard(deviceUdid, segment.text)
@@ -274,7 +312,7 @@ async function typeWithPaste(
     await sleep(options.pasteSettleMs ?? PASTE_SETTLE_MS)
     pasted += 1
   }
-  return { channel: typed ? 'cli' : 'ws', pasted }
+  return { channel: typedThroughCli ? 'cli' : 'ws', pasted }
 }
 
 /** The traced finger path of a multi-event interaction, else undefined. */
@@ -317,6 +355,7 @@ export async function performSimInteract(
   if (args.action === 'type' && typeof args.text === 'string') {
     const segments = simTextSegments(args.text)
     if (segments.some(segment => segment.kind === 'paste')) return typeWithPaste(host, deviceUdid, segments, wsUrl, options)
+    return typeKeys(host, deviceUdid, args.text, wsUrl, options)
   }
   if (args.action === 'shortcut' && isSimShortcut(args.name)) {
     if (wsUrl === undefined) {

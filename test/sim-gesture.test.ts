@@ -10,6 +10,7 @@ import {
   sendSimShortcut,
   SIM_SHORTCUTS,
   sendSimTap,
+  sendSimText,
   simDragPath,
   simDragRequestOf,
   simScrollPath,
@@ -130,4 +131,37 @@ test('sendSimShortcut presses ⌘ with the key — and Shift for redo; the keybo
   assert.deepEqual(Object.keys(SIM_SHORTCUTS), ['copy', 'paste', 'cut', 'select-all', 'undo', 'redo'])
   await assert.rejects(sendSimShortcut(url, 'quit' as 'copy'), /unknown shortcut "quit"/)
   await assert.rejects(sendSimKeyboardToggle(''), /gesture channel/)
+})
+
+test('sendSimText types US-keyboard text as key frames over one socket: Shift around capitals, Return for a newline', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const keys: string[] = []
+  wss.on('connection', socket => socket.on('message', data => {
+    const body = JSON.parse((data as Buffer).subarray(1).toString('utf8')) as { type: string; usage: number }
+    keys.push(`${body.type} ${body.usage}`)
+  }))
+  let opened = false
+  const report = await sendSimText(`ws://127.0.0.1:${port}`, 'aB\n', { charGapMs: 0, onOpen: () => { opened = true } })
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  assert.deepEqual(keys, ['down 4', 'up 4', 'down 225', 'down 5', 'up 5', 'up 225', 'down 40', 'up 40'])
+  assert.deepEqual([report.frames, opened], [8, true])
+  await assert.rejects(sendSimText(`ws://127.0.0.1:${port}`, '你好'), /cannot type "你"/)
+  await assert.rejects(sendSimText('', 'a'), /gesture channel/)
+})
+
+test('sendSimText paces the characters so a long text is not dropped', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const at: number[] = []
+  wss.on('connection', socket => socket.on('message', () => { at.push(Date.now()) }))
+  await sendSimText(`ws://127.0.0.1:${port}`, 'abcd', { charGapMs: 20 })
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  // 4 characters, 8 frames: a gap before each character but the first.
+  assert.equal(at.length, 8)
+  assert.ok((at[7] ?? 0) - (at[0] ?? 0) >= 55, `three gaps of 20 ms, got ${(at[7] ?? 0) - (at[0] ?? 0)} ms`)
 })
