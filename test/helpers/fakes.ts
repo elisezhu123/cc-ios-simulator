@@ -14,7 +14,7 @@ import type { RealApp, RealDevice, RealDeviceApi, RealProcess } from '../../src/
 import type { DebugToolName, DevToolsApi, RunOptions, RunOutcome } from '../../src/devtools.js'
 import type { OcrItem } from '../../src/ocr-backend.js'
 import type { AxeElement } from '../../src/uitree-backend.js'
-import type { SimulatorDevice } from '../../src/simctl.js'
+import type { SimulatorDevice, UnavailableDevice } from '../../src/simctl.js'
 import type { WdaSessionClient, WdaStatus } from '../../src/wda-host.js'
 import { tinyPng } from './png.js'
 
@@ -237,6 +237,9 @@ export function fakeSimctl(
 } {
   const calls: unknown[][] = []
   const pasteboards = new Map<string, string>()
+  const unavailable: UnavailableDevice[] = [
+    { udid: 'GONE-1', name: 'iPhone 8', runtime: 'com.apple.CoreSimulator.SimRuntime.iOS-12-0', reason: 'runtime profile not found' },
+  ]
   const containerRoot = mkdtempSync(join(tmpdir(), 'ios-sim-containers-'))
   const screenshotSize = options.screenshotSize ?? { width: 1206, height: 2622 }
   const find = (reference: string): SimulatorDevice => {
@@ -271,6 +274,32 @@ export function fakeSimctl(
     setLocation: async (udid, latitude, longitude) => { calls.push(['location', udid, latitude, longitude]) },
     clearLocation: async udid => { calls.push(['location-clear', udid]) },
     setAppearance: async (udid, appearance) => { calls.push(['appearance', udid, appearance]) },
+    listCatalog: async () => ({
+      deviceTypes: [
+        { identifier: 'com.apple.CoreSimulator.SimDeviceType.iPhone-17', name: 'iPhone 17' },
+        { identifier: 'com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro', name: 'iPhone 17 Pro' },
+        { identifier: 'com.apple.CoreSimulator.SimDeviceType.iPad-Air', name: 'iPad Air' },
+      ],
+      runtimes: [
+        { identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-18-0', name: 'iOS 18.0', version: '18.0', deviceTypes: ['com.apple.CoreSimulator.SimDeviceType.iPad-Air'] },
+        { identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-26-0', name: 'iOS 26.0', version: '26.0', deviceTypes: ['com.apple.CoreSimulator.SimDeviceType.iPhone-17', 'com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro', 'com.apple.CoreSimulator.SimDeviceType.iPad-Air'] },
+        { identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-9-3', name: 'iOS 9.3', version: '9.3', deviceTypes: ['com.apple.CoreSimulator.SimDeviceType.iPad-Air'] },
+      ],
+    }),
+    listUnavailableDevices: async () => unavailable.map(device => ({ ...device })),
+    createDevice: async (name, deviceType, runtime) => {
+      calls.push(['create', name, deviceType, runtime])
+      const udid = `NEW-${devices.length + 1}`
+      devices.push({ udid, name, runtime, state: 'Shutdown', deviceType })
+      return udid
+    },
+    eraseDevice: async udid => { calls.push(['erase', udid]) },
+    deleteDevice: async udid => {
+      calls.push(['delete', udid])
+      const index = devices.findIndex(device => device.udid === udid)
+      if (index >= 0) devices.splice(index, 1)
+    },
+    deleteUnavailableDevices: async () => { calls.push(['delete-unavailable']); unavailable.length = 0 },
     setPasteboard: async (udid, text) => { calls.push(['pbcopy', udid, text]); pasteboards.set(udid, text) },
     getPasteboard: async udid => { calls.push(['pbpaste', udid]); return pasteboards.get(udid) ?? '' },
   }

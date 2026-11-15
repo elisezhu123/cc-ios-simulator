@@ -667,13 +667,69 @@ function switchTo(udid: string): void {
     .catch(error => report(copy.actionFailed, error))
 }
 
+/**
+ * Deleting or erasing a simulator from the picker. Neither can be undone, so
+ * it is never one click: the trash can (or a right-click) turns the menu into
+ * a question about that one device, and only its red button does it.
+ */
+let deviceQuestion: { udid: string; step: 'actions' | 'delete' | 'erase' } | undefined
+
+function manageDevice(device: DeviceRow, action: 'delete' | 'erase'): void {
+  void postJson('/api/manage-device', { udid: device.udid, action })
+    .then(() => {
+      notify(`${action === 'delete' ? copy.deviceDeleted : copy.deviceErased}: ${device.name}`, 'ok')
+      return loadDevices()
+    })
+    .catch(error => report(copy.actionFailed, error))
+}
+
+/** The picker while it asks about one device: what to do with it, or whether to really do it. */
+function deviceQuestionEntries(device: DeviceRow, step: 'actions' | 'delete' | 'erase'): MenuEntry[] {
+  const heading: MenuEntry = { section: `${device.name} · ${runtimeLabel(device.runtime)}` }
+  const cancel: MenuEntry = { label: copy.cancel, keepOpen: true, run: () => { deviceQuestion = undefined } }
+  if (step === 'actions') {
+    const running = device.state !== 'Shutdown'
+    const ask = (next: 'delete' | 'erase') => (): void => { deviceQuestion = { udid: device.udid, step: next } }
+    return [
+      heading,
+      { label: copy.eraseDevice, disabled: running, keepOpen: true, run: ask('erase') },
+      { label: copy.deleteDevice, danger: true, disabled: running, keepOpen: true, run: ask('delete') },
+      ...(running ? [{ label: copy.shutDownFirst, disabled: true }] : []),
+      { separator: true },
+      cancel,
+    ]
+  }
+  return [
+    heading,
+    { label: copy.cannotUndo, disabled: true },
+    {
+      label: step === 'delete' ? copy.confirmDelete : copy.confirmErase,
+      danger: true,
+      run: () => {
+        deviceQuestion = undefined
+        manageDevice(device, step)
+      },
+    },
+    cancel,
+  ]
+}
+
 const devicesMenu = new Menu(ui.devicesButton, () => {
+  const asked = deviceQuestion
+  const askedDevice = asked === undefined ? undefined : state.devices.find(device => device.udid === asked.udid)
+  if (asked !== undefined && askedDevice !== undefined) return deviceQuestionEntries(askedDevice, asked.step)
+  deviceQuestion = undefined
   const entries: MenuEntry[] = []
   const row = (device: DeviceRow): MenuEntry => ({
     label: device.name,
     detail: runtimeLabel(device.runtime),
     checked: device.udid === state.device,
     run: () => switchTo(device.udid),
+    onContext: () => { deviceQuestion = { udid: device.udid, step: 'actions' } },
+    // Only a shut-down simulator can be deleted: the trash can goes straight to the confirmation.
+    ...(device.state === 'Shutdown'
+      ? { trailing: { icon: icon('trash', 16), label: copy.deleteDevice, run: () => { deviceQuestion = { udid: device.udid, step: 'delete' } } } }
+      : {}),
   })
   const booted = state.devices.filter(device => device.state === 'Booted')
   const others = state.devices.filter(device => device.state !== 'Booted')
@@ -691,6 +747,8 @@ const devicesMenu = new Menu(ui.devicesButton, () => {
 })
 // The list is fetched as the menu opens, then shown again with fresh rows.
 ui.devicesButton.addEventListener('pointerdown', () => {
+  // Opening the picker afresh always starts at the list, never inside a half-answered question.
+  deviceQuestion = undefined
   void loadDevices().then(() => { if (devicesMenu.isOpen) devicesMenu.open() })
 })
 

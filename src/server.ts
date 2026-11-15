@@ -40,6 +40,7 @@ import { registerAppTools } from './tools/apps.js'
 import { registerCoreTools } from './tools/core.js'
 import { registerDebugTools } from './tools/debug.js'
 import { registerEnvTools } from './tools/env.js'
+import { registerManageTools } from './tools/manage.js'
 import { registerPreviewTools } from './tools/preview.js'
 import { registerUiTools } from './tools/ui.js'
 import { AxeHelper } from './uitree-backend.js'
@@ -123,6 +124,7 @@ async function main(): Promise<void> {
   registerUiTools(server, deps)
   registerDebugTools(server, deps)
   registerPreviewTools(server, deps)
+  registerManageTools(server, deps)
 
   let shuttingDown = false
   /** A failed shutdown step gets one stderr line and never blocks the exit. */

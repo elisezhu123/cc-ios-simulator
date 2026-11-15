@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Claude Code Plugin" src="https://img.shields.io/badge/Claude%20Code-Plugin-d97757">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-32%20tools-4f7cff">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-35%20tools-4f7cff">
   <img alt="Platform" src="https://img.shields.io/badge/macOS-Apple%20Silicon-1f2330?logo=apple">
   <img alt="Node" src="https://img.shields.io/badge/Node.js-%E2%89%A5%2020-339933?logo=node.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
@@ -26,7 +26,7 @@
 
 - [效果预览](#效果预览)
 - [支持的功能](#支持的功能)
-- [工具一览（32 个）](#工具一览32-个)
+- [工具一览（35 个）](#工具一览35-个)
 - [运行要求](#运行要求)
 - [安装](#安装)
 - [快速上手](#快速上手)
@@ -87,7 +87,7 @@
 
 ---
 
-## 工具一览（32 个）
+## 工具一览（35 个）
 
 所有工具都接受可选的 `udid`（udid 或设备名，如 `"iPhone 17 Pro"`）。以下工具还可以传**连接的真机**的 udid 或名字（见 `ios_sim_devices` 返回的 `realDevices`）：
 
@@ -103,6 +103,9 @@
 | `ios_sim_devices` | 列出模拟器（已启动的在前，runtime 新的在前），可按名称 / udid / runtime 过滤；连接的 iPhone / iPad 列在 `realDevices` 里 |
 | `ios_sim_boot` | 启动模拟器并开始推流，返回 `panelUrl` |
 | `ios_sim_shutdown` | 关闭模拟器（先停止它的录屏和推流） |
+| `ios_sim_create` | 新建模拟器：`deviceType`（如 "iPhone 17 Pro"），`runtime` 默认取能运行它的最新系统，`name` 默认取机型名 |
+| `ios_sim_erase` | 抹掉一台模拟器的所有内容和设置。只接受准确的 UDID，必须已关机；不带 `confirm: true` 只返回预览 |
+| `ios_sim_delete` | 删除一台模拟器（准确的 UDID，必须已关机），或用 `unavailable: true` 删除运行时已卸载的不可用设备；不带 `confirm: true` 只返回预览。没有"全部删除" |
 | `ios_sim_panel` | 为已启动的设备确保推流并返回 `panelUrl`，不会启动设备；传运行着 WebDriverAgent 的 iPhone 时，面板改为显示这台真机 |
 | `ios_sim_screenshot` | 截图，以图片返回给 Claude，同时给出原尺寸 PNG 路径 |
 | `ios_sim_interact` | 交互：`tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action` / `shortcut`，默认只回文字；传 `screenshot: true` 附带结果截图 |
@@ -296,6 +299,7 @@ sequenceDiagram
 - **画面上直接操作**：单击即点击，按住拖动即手势；坐标自动扣除黑边，横屏时按方向换算。
 - **标题栏**：连接状态（实时 / 连接中 / 离线）和全屏按钮。
 - **设备选择**：按"已启动 / iPhone·iPad（真机）/ 未启动"分组，当前设备打勾；选中未启动的模拟器会自动启动并切换画面。
+- **删除和抹掉模拟器**：在设备选择里，把鼠标移到未启动的模拟器上，右边会出现垃圾桶；右键任意一台则可以选"抹掉所有内容和设置"或"删除模拟器"。两者都要在菜单里再点一次红色按钮确认，无法撤销。已启动的模拟器不能删除或抹掉，要先关机。
 - **设备菜单**：外观（浅色 / 深色）、键盘（显示屏幕键盘 ⌘K）、向左 / 向右旋转（⌘← / ⌘→）、回到桌面、后台 App、摇一摇、Action 按钮、窗口重新居中、锁屏、解锁、Siri。
 - **调试菜单**：慢动画、显示大小（适应 / 50–125% / S·M·L）、外框（无框 / 边框 / 真机框，默认真机框）、重新连接画面。显示设置保存在浏览器本地。
 - **底部工具条**（悬停显示名称和快捷键）：
@@ -340,7 +344,7 @@ assets/ocr.swift                    # Vision OCR 助手源码（首次使用时�
 assets/preview-host/                # SwiftUI 预览宿主 App 的源码
 src/
   server.ts            # MCP 入口、组装、生命周期
-  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts：32 个工具
+  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts / manage.ts：35 个工具
   sim-host.ts          # serve-sim 生命周期
   stream-source.ts     # 视频流抽象（为真机预留）
   sim-gesture.ts       # WebSocket 手势通道
@@ -535,7 +539,7 @@ test/                  # node:test 单元 / 集成测试，test/live/ 为真机�
 npm install
 npm test              # 单元与集成测试，不需要模拟器
 npm run build         # 类型检查 + 打包 dist/（dist 需要提交）
-npm run check:bundle  # 启动 dist/server.js 并确认 32 个工具
+npm run check:bundle  # 启动 dist/server.js 并确认 35 个工具
 IOS_SIM_SMOKE=1 npm run test:live   # 在真实模拟器上冒烟
 npm run dev:panel     # 启动一台模拟器并保持面板运行，用于在浏览器里调试
 npm run notices       # 按 esbuild 的打包清单重新生成 THIRD_PARTY_NOTICES.md（依赖变化后运行）

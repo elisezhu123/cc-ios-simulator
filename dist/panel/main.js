@@ -513,6 +513,15 @@ var EN = {
   bootedSection: "Booted",
   realSection: "iPhone / iPad",
   shutdownSection: "Shut down",
+  deleteDevice: "Delete simulator\u2026",
+  eraseDevice: "Erase all content and settings\u2026",
+  shutDownFirst: "Shut it down first to delete or erase it",
+  cannotUndo: "Its apps and data are removed. This cannot be undone.",
+  confirmDelete: "Delete this simulator",
+  confirmErase: "Erase this simulator",
+  cancel: "Cancel",
+  deviceDeleted: "Simulator deleted",
+  deviceErased: "Simulator erased",
   displaySize: "Display size",
   reconnect: "Reconnect stream",
   simulatorOnly: "Simulators only",
@@ -591,6 +600,15 @@ var ZH = {
   bootedSection: "\u5DF2\u542F\u52A8",
   realSection: "iPhone / iPad",
   shutdownSection: "\u672A\u542F\u52A8",
+  deleteDevice: "\u5220\u9664\u6A21\u62DF\u5668\u2026",
+  eraseDevice: "\u62B9\u6389\u6240\u6709\u5185\u5BB9\u548C\u8BBE\u7F6E\u2026",
+  shutDownFirst: "\u9700\u8981\u5148\u5173\u673A\u624D\u80FD\u5220\u9664\u6216\u62B9\u6389",
+  cannotUndo: "\u91CC\u9762\u7684 App \u548C\u6570\u636E\u4F1A\u88AB\u6E05\u9664\uFF0C\u6B64\u64CD\u4F5C\u65E0\u6CD5\u64A4\u9500\u3002",
+  confirmDelete: "\u5220\u9664\u8FD9\u53F0\u6A21\u62DF\u5668",
+  confirmErase: "\u62B9\u6389\u8FD9\u53F0\u6A21\u62DF\u5668",
+  cancel: "\u53D6\u6D88",
+  deviceDeleted: "\u6A21\u62DF\u5668\u5DF2\u5220\u9664",
+  deviceErased: "\u6A21\u62DF\u5668\u5DF2\u62B9\u6389",
   displaySize: "\u663E\u793A\u5927\u5C0F",
   reconnect: "\u91CD\u65B0\u8FDE\u63A5\u753B\u9762",
   simulatorOnly: "\u4EC5\u6A21\u62DF\u5668\u53EF\u7528",
@@ -756,7 +774,7 @@ var Menu = class {
   #row(item, topLevel) {
     const row = document.createElement("button");
     row.type = "button";
-    row.className = "menu-item";
+    row.className = item.danger === true ? "menu-item danger" : "menu-item";
     row.setAttribute("role", item.checked === void 0 ? "menuitem" : "menuitemcheckbox");
     if (item.checked !== void 0) row.setAttribute("aria-checked", String(item.checked));
     row.disabled = item.disabled === true;
@@ -776,6 +794,30 @@ var Menu = class {
       row.append(hint);
     }
     if (item.checked === true) row.insertAdjacentHTML("beforeend", `<span class="menu-check">${CHECK}</span>`);
+    const trailing = item.trailing;
+    if (trailing !== void 0) {
+      const extra = document.createElement("span");
+      extra.className = "menu-trailing";
+      extra.setAttribute("role", "button");
+      extra.setAttribute("aria-label", trailing.label);
+      extra.title = trailing.label;
+      extra.innerHTML = trailing.icon;
+      extra.addEventListener("click", (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        trailing.run();
+        this.open();
+      });
+      row.append(extra);
+    }
+    const onContext = item.onContext;
+    if (onContext !== void 0) {
+      row.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        onContext();
+        this.open();
+      });
+    }
     if (item.submenu !== void 0) row.insertAdjacentHTML("beforeend", `<span class="menu-chevron">${CHEVRON}</span>`);
     const submenu = item.submenu;
     if (submenu !== void 0) {
@@ -799,6 +841,11 @@ var Menu = class {
     } else {
       if (topLevel) row.addEventListener("pointerenter", () => this.#closeSub());
       row.addEventListener("click", () => {
+        if (item.keepOpen === true) {
+          item.run?.();
+          this.open();
+          return;
+        }
         this.close();
         item.run?.();
       });
@@ -1439,13 +1486,64 @@ function switchTo(udid) {
   setStatus("connecting", copy.switching);
   void postJson("/api/switch-device", { udid }).then(() => refreshStatus()).then(reconnect).catch((error) => report(copy.actionFailed, error));
 }
+var deviceQuestion;
+function manageDevice(device, action) {
+  void postJson("/api/manage-device", { udid: device.udid, action }).then(() => {
+    notify(`${action === "delete" ? copy.deviceDeleted : copy.deviceErased}: ${device.name}`, "ok");
+    return loadDevices();
+  }).catch((error) => report(copy.actionFailed, error));
+}
+function deviceQuestionEntries(device, step) {
+  const heading = { section: `${device.name} \xB7 ${runtimeLabel(device.runtime)}` };
+  const cancel = { label: copy.cancel, keepOpen: true, run: () => {
+    deviceQuestion = void 0;
+  } };
+  if (step === "actions") {
+    const running = device.state !== "Shutdown";
+    const ask = (next) => () => {
+      deviceQuestion = { udid: device.udid, step: next };
+    };
+    return [
+      heading,
+      { label: copy.eraseDevice, disabled: running, keepOpen: true, run: ask("erase") },
+      { label: copy.deleteDevice, danger: true, disabled: running, keepOpen: true, run: ask("delete") },
+      ...running ? [{ label: copy.shutDownFirst, disabled: true }] : [],
+      { separator: true },
+      cancel
+    ];
+  }
+  return [
+    heading,
+    { label: copy.cannotUndo, disabled: true },
+    {
+      label: step === "delete" ? copy.confirmDelete : copy.confirmErase,
+      danger: true,
+      run: () => {
+        deviceQuestion = void 0;
+        manageDevice(device, step);
+      }
+    },
+    cancel
+  ];
+}
 var devicesMenu = new Menu(ui.devicesButton, () => {
+  const asked = deviceQuestion;
+  const askedDevice = asked === void 0 ? void 0 : state.devices.find((device) => device.udid === asked.udid);
+  if (asked !== void 0 && askedDevice !== void 0) return deviceQuestionEntries(askedDevice, asked.step);
+  deviceQuestion = void 0;
   const entries = [];
   const row = (device) => ({
     label: device.name,
     detail: runtimeLabel(device.runtime),
     checked: device.udid === state.device,
-    run: () => switchTo(device.udid)
+    run: () => switchTo(device.udid),
+    onContext: () => {
+      deviceQuestion = { udid: device.udid, step: "actions" };
+    },
+    // Only a shut-down simulator can be deleted: the trash can goes straight to the confirmation.
+    ...device.state === "Shutdown" ? { trailing: { icon: icon("trash", 16), label: copy.deleteDevice, run: () => {
+      deviceQuestion = { udid: device.udid, step: "delete" };
+    } } } : {}
   });
   const booted = state.devices.filter((device) => device.state === "Booted");
   const others = state.devices.filter((device) => device.state !== "Booted");
@@ -1462,6 +1560,7 @@ var devicesMenu = new Menu(ui.devicesButton, () => {
   return entries.length > 0 ? entries : [{ label: copy.noDevice, disabled: true }];
 });
 ui.devicesButton.addEventListener("pointerdown", () => {
+  deviceQuestion = void 0;
   void loadDevices().then(() => {
     if (devicesMenu.isOpen) devicesMenu.open();
   });

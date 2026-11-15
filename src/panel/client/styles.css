@@ -157,6 +157,18 @@ button:disabled { cursor: default; }
 }
 .menu-item:hover:not(:disabled), .menu-item.expanded { background: var(--hover); }
 .menu-item:disabled { color: var(--muted); }
+.menu-item.danger:not(:disabled) { color: var(--danger); }
+.menu-trailing {
+  display: inline-flex;
+  margin: -3px -4px -3px 6px;
+  padding: 4px;
+  border-radius: 6px;
+  color: var(--muted);
+  opacity: 0;
+}
+.menu-item:hover .menu-trailing, .menu-item:focus-visible .menu-trailing { opacity: 1; }
+.menu-trailing:hover { color: #fff; background: var(--danger); }
+@media (hover: none) { .menu-trailing { opacity: 1; } }
 .menu-label { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .menu-detail { color: var(--muted); font-size: 13px; }
 .menu-item kbd { margin-left: 18px; color: var(--muted); font: inherit; font-size: 13px; }

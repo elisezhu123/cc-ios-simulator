@@ -38,7 +38,7 @@ export interface PanelServerOptions {
   attempts?: number
   host: StreamHost
   stream: StreamSource
-  simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'> & Partial<Pick<SimctlApi, 'shutdownDevice' | 'setAppearance' | 'setPasteboard' | 'getPasteboard'>>
+  simctl: Pick<SimctlApi, 'listDevices' | 'getDevice' | 'bootDevice'> & Partial<Pick<SimctlApi, 'shutdownDevice' | 'setAppearance' | 'setPasteboard' | 'getPasteboard' | 'deleteDevice' | 'eraseDevice'>>
   screenshots: Pick<ScreenshotService, 'capture' | 'dir' | 'save'>
   /** WebDriverAgent: the live view and touch of a connected iPhone/iPad. */
   wda?: WdaApi
@@ -277,6 +277,7 @@ export class PanelServer {
       if (method === 'POST' && path === '/api/type') return sendJson(res, 200, await this.#type(await readJsonBody(req)))
       if (method === 'POST' && path === '/api/pasteboard') return sendJson(res, 200, await this.#pasteboard())
       if (method === 'POST' && path === '/api/appearance') return sendJson(res, 200, await this.#appearance(await readJsonBody(req)))
+      if (method === 'POST' && path === '/api/manage-device') return sendJson(res, 200, await this.#manageDevice(await readJsonBody(req)))
       if (method === 'POST' && path === '/api/shutdown') {
         await readJsonBody(req)
         return sendJson(res, 200, await this.#shutdown())
@@ -616,6 +617,32 @@ export class PanelServer {
     if (read === undefined) throw new HttpError(501, 'reading the pasteboard is not supported')
     const device = await this.#simulatorFor('the pasteboard')
     return { ok: true, text: await read(device.udid) }
+  }
+
+  /**
+   * Delete or erase one simulator from the device picker. Neither can be
+   * undone, so the device is named by its exact udid and must be shut down:
+   * `simctl delete` would remove a running simulator without a word. The
+   * panel asks for the confirmation; this only refuses what must never happen.
+   */
+  async #manageDevice(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const action = body.action
+    if (action !== 'delete' && action !== 'erase') throw new HttpError(400, 'action must be "delete" or "erase"')
+    const run = action === 'delete' ? this.#options.simctl.deleteDevice : this.#options.simctl.eraseDevice
+    if (run === undefined) throw new HttpError(501, `${action} is not supported`)
+    const udid = typeof body.udid === 'string' ? body.udid.trim() : ''
+    if (udid === '') throw new HttpError(400, 'udid is required')
+    const device = (await this.#options.simctl.listDevices()).find(candidate => candidate.udid === udid)
+    if (device === undefined) throw new HttpError(404, 'no simulator has this udid')
+    if (device.state !== 'Shutdown' || this.#options.host.status().device === device.udid) {
+      throw new HttpError(409, `${device.name} is ${device.state} — shut it down first`)
+    }
+    try {
+      await run(device.udid)
+    } catch (error) {
+      throw new HttpError(502, errorMessage(error))
+    }
+    return { ok: true, action, device: { udid: device.udid, name: device.name } }
   }
 
   /** Shut the shown simulator down (its recording and stream first, like ios_sim_shutdown). */
