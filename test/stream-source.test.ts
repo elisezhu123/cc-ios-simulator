@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { pngDimensionsFromBase64, SimStreamSource } from '../src/stream-source.js'
+import { setSimctlRunnerForTests } from '../src/simctl.js'
 import { fakeHost } from './helpers/fakes.js'
 import { tinyPng } from './helpers/png.js'
 
@@ -28,4 +29,20 @@ test('SimStreamSource routes control through serve-sim for the streamed device, 
 
 test('pngDimensionsFromBase64 reads the IHDR size', () => {
   assert.deepEqual(pngDimensionsFromBase64(tinyPng(3, 7).toString('base64')), { width: 3, height: 7 })
+})
+
+test('device actions use serve-sim buttons and a simctl notification, with no Simulator.app', async t => {
+  const simctlArgs: string[] = []
+  setSimctlRunnerForTests(async args => { simctlArgs.push(args.join(' ')); return '' })
+  t.after(() => setSimctlRunnerForTests())
+  const { host, calls } = fakeHost({ device: 'BBB' })
+  const source = new SimStreamSource(host)
+  await source.control.deviceAction?.('app-switcher')
+  await source.control.deviceAction?.('action-button')
+  await source.control.deviceAction?.('shake')
+  assert.deepEqual(calls.filter(call => call[0] === 'control').map(call => call.join(' ')), [
+    'control button -d BBB -- app_switcher',
+    'control button -d BBB -- action',
+  ])
+  assert.deepEqual(simctlArgs, ['spawn BBB notifyutil -p com.apple.UIKit.SimulatorShake'])
 })
