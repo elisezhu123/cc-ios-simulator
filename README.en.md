@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Claude Code Plugin" src="https://img.shields.io/badge/Claude%20Code-Plugin-d97757">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-32%20tools-4f7cff">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-35%20tools-4f7cff">
   <img alt="Platform" src="https://img.shields.io/badge/macOS-Apple%20Silicon-1f2330?logo=apple">
   <img alt="Node" src="https://img.shields.io/badge/Node.js-%E2%89%A5%2020-339933?logo=node.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
@@ -26,7 +26,7 @@ Drive the iOS Simulator right from Claude Code: a **live panel**, taps and gestu
 
 - [Preview](#preview)
 - [Features](#features)
-- [Tools (32)](#tools-32)
+- [Tools (35)](#tools-35)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Quick start](#quick-start)
@@ -87,7 +87,7 @@ Drive the iOS Simulator right from Claude Code: a **live panel**, taps and gestu
 
 ---
 
-## Tools (32)
+## Tools (35)
 
 Every tool takes an optional `udid` (a udid or a device name such as `"iPhone 17 Pro"`). These tools also take the udid or name of a **connected iPhone or iPad** (listed under `realDevices` by `ios_sim_devices`):
 
@@ -103,6 +103,9 @@ Without a `udid` the tools use the streamed device, else the first booted one. `
 | `ios_sim_devices` | Lists simulators (booted and newest runtimes first), filterable by name / udid / runtime; connected iPhones and iPads are under `realDevices` |
 | `ios_sim_boot` | Boots a simulator, starts the stream and returns `panelUrl` |
 | `ios_sim_shutdown` | Shuts a simulator down (stopping its recording and stream first) |
+| `ios_sim_create` | Creates a simulator: `deviceType` (e.g. "iPhone 17 Pro"); `runtime` defaults to the newest that runs it, `name` to the device type's name |
+| `ios_sim_erase` | Erases all content and settings of one simulator. Exact udid only, and it must be shut down; without `confirm: true` it only previews |
+| `ios_sim_delete` | Deletes one simulator (exact udid, shut down), or with `unavailable: true` the devices whose runtime is gone; without `confirm: true` it only previews. There is no "delete all" |
 | `ios_sim_panel` | Makes sure a booted device streams and returns `panelUrl`, never booting anything; given an iPhone running WebDriverAgent, the panel shows that phone instead |
 | `ios_sim_screenshot` | Takes a screenshot, returned to Claude as an image, plus the full-size PNG path |
 | `ios_sim_interact` | `tap` / `type` / `button` / `gesture` / `scroll` / `rotate` / `device_action` / `shortcut`, answering in text by default; `screenshot: true` adds a screenshot of the effect |
@@ -296,6 +299,7 @@ The panel is a local web page (`127.0.0.1:3456`, or the next free port up to +20
 - **Right on the screen**: click to tap, press and drag for gestures; letterboxing is accounted for and landscape is mapped for the orientation.
 - **Title bar**: connection status (live / connecting / offline) and full screen.
 - **Device picker**: grouped into Booted / iPhone·iPad (real devices) / Shut down, with the current device checked; picking a shut-down simulator boots it and switches the view.
+- **Deleting and erasing simulators**: in the device picker, hovering a shut-down simulator shows a trash can on its right; right-clicking any simulator offers "Erase all content and settings" and "Delete simulator". Both ask once more with a red button inside the menu, and neither can be undone. A booted simulator cannot be deleted or erased: shut it down first.
 - **Device menu**: appearance (light / dark), keyboard (show the on-screen keyboard ⌘K), rotate left / right (⌘← / ⌘→), Home, App Switcher, shake, Action button, re-center the window, lock, unlock, Siri.
 - **Debug menu**: slow animations, display size (fit / 50–125% / S·M·L), frame (none / bezel / device, device by default), reconnect the stream. Display settings are kept in the browser.
 - **Dock** (hover for the name and shortcut):
@@ -340,7 +344,7 @@ assets/ocr.swift                    # Vision OCR helper source (compiled on firs
 assets/preview-host/                # SwiftUI preview host app sources
 src/
   server.ts            # MCP entry point, wiring, lifecycle
-  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts: the 32 tools
+  tools/               # core.ts / apps.ts / env.ts / ui.ts / debug.ts / preview.ts: the 35 tools
   sim-host.ts          # serve-sim lifecycle
   stream-source.ts     # video stream abstraction (simulator and real device)
   sim-gesture.ts       # WebSocket gesture channel
@@ -535,7 +539,7 @@ When the device was rotated by hand in Simulator.app, the stream may not know th
 npm install
 npm test              # unit and integration tests, no simulator needed
 npm run build         # typecheck + bundle dist/ (commit dist)
-npm run check:bundle  # starts dist/server.js and checks for the 32 tools
+npm run check:bundle  # starts dist/server.js and checks for the 35 tools
 IOS_SIM_SMOKE=1 npm run test:live   # smoke test on a real simulator
 npm run dev:panel     # boots a simulator and keeps the panel up for browser debugging
 npm run notices       # regenerates THIRD_PARTY_NOTICES.md from esbuild's metafiles (after dependency changes)
