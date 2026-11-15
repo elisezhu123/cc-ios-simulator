@@ -84,3 +84,44 @@ test('AxeHelper with IOS_SIM_AXE_OFFLINE=1 reports the missing helper without do
   // Homebrew prefixes are probed too; on a machine without them the cache is the last stop.
   if (!binary.available) assert.match(binary.reason ?? '', /no axe binary found/)
 })
+
+/** An `axe` stand-in that prints `failure` (exit 1) on its first `failures` runs, then a tree. */
+function flakyAxeBinary(failure: string, failures: number): { command: string; runs(): number } {
+  const dir = mkdtempSync(join(tmpdir(), 'ios-sim-axe-'))
+  const command = join(dir, 'axe')
+  const counter = join(dir, 'runs')
+  writeFileSync(counter, '')
+  writeFileSync(command, `#!/bin/sh
+echo x >> '${counter}'
+if [ "$(wc -l < '${counter}')" -le ${failures} ]; then echo '${failure}'; exit 1; fi
+echo '[{"type":"Application","AXLabel":"Settings","frame":{"x":0,"y":0,"width":402,"height":874}}]'
+`)
+  chmodSync(command, 0o755)
+  return { command, runs: () => readFileSync(counter, 'utf8').split('\n').filter(line => line !== '').length }
+}
+
+test('describeUi waits out a simulator that is still starting: the automation session errors are retried', async () => {
+  const cacheDir = mkdtempSync(join(tmpdir(), 'ios-sim-axe-cache-'))
+  const starting = flakyAxeBinary('Error: Timed out creating the simulator remote automation session', 2)
+  const helper = new AxeHelper({ cacheDir, platform: 'darwin', env: { IOS_SIM_AXE_BIN: starting.command, PATH: '' }, startupRetry: { budgetMs: 5_000, delayMs: 10 } })
+  assert.equal((await helper.describeUi('BBB'))[0]!.label, 'Settings')
+  assert.equal(starting.runs(), 3)
+
+  const translation = flakyAxeBinary('Error: No translation object returned for simulator. This means you have likely specified a point onscreen that is invalid', 1)
+  const second = new AxeHelper({ cacheDir, platform: 'darwin', env: { IOS_SIM_AXE_BIN: translation.command, PATH: '' }, startupRetry: { budgetMs: 5_000, delayMs: 10 } })
+  assert.equal((await second.describeUi('BBB'))[0]!.label, 'Settings')
+  assert.equal(translation.runs(), 2)
+})
+
+test('describeUi gives up when the budget runs out, and never retries another error', async () => {
+  const cacheDir = mkdtempSync(join(tmpdir(), 'ios-sim-axe-cache-'))
+  const stuck = flakyAxeBinary('Error: Timed out creating the simulator remote automation session', 1_000)
+  const helper = new AxeHelper({ cacheDir, platform: 'darwin', env: { IOS_SIM_AXE_BIN: stuck.command, PATH: '' }, startupRetry: { budgetMs: 1_200, delayMs: 20 } })
+  await assert.rejects(helper.describeUi('BBB'), /Timed out creating the simulator remote automation session.*still starting/s)
+  assert.ok(stuck.runs() >= 2, 'it tried again before giving up')
+
+  const notBooted = flakyAxeBinary('Error: Simulator BBB is not booted', 1_000)
+  const other = new AxeHelper({ cacheDir, platform: 'darwin', env: { IOS_SIM_AXE_BIN: notBooted.command, PATH: '' }, startupRetry: { budgetMs: 5_000, delayMs: 10 } })
+  await assert.rejects(other.describeUi('BBB'), /not booted/)
+  assert.equal(notBooted.runs(), 1)
+})

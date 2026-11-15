@@ -104,7 +104,20 @@ export interface AxeHelperOptions {
   cacheDir: string
   platform?: NodeJS.Platform
   env?: Env
+  /** How long describe-ui keeps asking a simulator that is still starting, and how long it waits between tries. */
+  startupRetry?: { budgetMs: number; delayMs: number }
 }
+
+/**
+ * What AXe answers while a freshly booted simulator's accessibility service
+ * is not up yet. Measured on an iPhone 17 / iOS 27.2 simulator: describe-ui
+ * failed this way three times over the first ~15 s after boot (2.7 s, 5.5 s
+ * and 5.4 s per attempt), then answered.
+ */
+const SIMULATOR_STARTING = /Timed out creating the simulator remote automation session|No translation object returned for simulator/u
+
+/** Three failed attempts took ~15 s in the measurement above; this leaves room for a slower machine. */
+const DEFAULT_STARTUP_RETRY = { budgetMs: 30_000, delayMs: 1_000 }
 
 function isExecutableFile(path: string): boolean {
   try {
@@ -144,12 +157,14 @@ export class AxeHelper {
   readonly #cacheDir: string
   readonly #platform: NodeJS.Platform
   readonly #env: Env
+  readonly #startupRetry: { budgetMs: number; delayMs: number }
   #downloading: Promise<string> | undefined
 
   constructor(options: AxeHelperOptions) {
     this.#cacheDir = options.cacheDir
     this.#platform = options.platform ?? process.platform
     this.#env = options.env ?? process.env
+    this.#startupRetry = options.startupRetry ?? DEFAULT_STARTUP_RETRY
   }
 
   #installDir(): string {
@@ -283,7 +298,22 @@ export class AxeHelper {
 
   /** The sanitized accessibility tree of a booted simulator. */
   async describeUi(udid: string, signal?: AbortSignal): Promise<AxeElement[]> {
-    return parseDescribeUi(await this.exec(['describe-ui', '--udid', udid], signal))
+    const { budgetMs, delayMs } = this.#startupRetry
+    const started = Date.now()
+    for (;;) {
+      try {
+        return parseDescribeUi(await this.exec(['describe-ui', '--udid', udid], signal))
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (!SIMULATOR_STARTING.test(message)) throw error
+        const waited = Date.now() - started
+        if (signal?.aborted === true || waited + delayMs > budgetMs) {
+          throw new Error(`${message} — the simulator is still starting: its accessibility service did not answer in `
+            + `${Math.round(waited / 1000)} s; wait a few seconds and retry (ios_sim_screenshot and ios_sim_find_text work meanwhile)`)
+        }
+        await new Promise(resolve => setTimeout(resolve, delayMs))
+      }
+    }
   }
 
   /** HID tap at device-point coordinates. */

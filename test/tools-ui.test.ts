@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
+import { WebSocketServer } from 'ws'
 import type { ToolDeps } from '../src/deps.js'
 import type { OcrItem } from '../src/ocr-backend.js'
 import { ScreenshotStore } from '../src/screenshot.js'
@@ -189,5 +190,39 @@ test('ios_sim_tap_row refuses an unknown counter key and an out-of-range row bef
   assert.match(textOf(await h.call('ios_sim_tap_row', { row: 7 })), /row 7 does not exist/)
   assert.match(textOf(await h.call('ios_sim_tap_row', { row: 0, expect_count: { key: '喜欢', delta: 2 } })), /\+1 or -1/)
   assert.deepEqual(h.taps, [])
+  await h.close()
+})
+
+test('with a live stream ios_sim_tap_element taps over the control socket, not through an axe process', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const touches: string[] = []
+  wss.on('connection', socket => {
+    socket.send(Buffer.concat([Buffer.from([130]), Buffer.from('{"width":1206,"height":2622,"orientation":"portrait"}')]))
+    socket.on('message', data => {
+      const bytes = data as Buffer
+      if (bytes[0] !== 3) return
+      const touch = JSON.parse(bytes.subarray(1).toString('utf8')) as { type: string; x: number; y: number }
+      touches.push(`${touch.type} ${touch.x} ${touch.y}`)
+    })
+  })
+  const h = await uiHarness({ host: { device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true } })
+  const result = await h.call('ios_sim_tap_element', { label: 'General', screenshot: false })
+  await new Promise(resolve => setTimeout(resolve, 50))
+  wss.close()
+  assert.equal(result.isError, undefined, textOf(result))
+  // The element center (201, 226) pt on a 402×874 pt screen.
+  assert.deepEqual(touches, ['begin 0.5 0.2586', 'end 0.5 0.2586'])
+  assert.deepEqual(h.taps, [], 'no axe tap')
+  assert.deepEqual((h.json(result) as { center: object }).center, { x: 201, y: 226 })
+  await h.close()
+})
+
+test('when the control socket refuses, ios_sim_tap_element still taps through axe', async () => {
+  const h = await uiHarness({ host: { device: 'BBB', wsUrl: 'ws://127.0.0.1:9', exposeStreamInfo: true } })
+  const result = await h.call('ios_sim_tap_element', { label: 'General', screenshot: false })
+  assert.equal(result.isError, undefined, textOf(result))
+  assert.deepEqual(h.taps, [{ udid: 'BBB', x: 201, y: 226 }])
   await h.close()
 })

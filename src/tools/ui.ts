@@ -30,6 +30,7 @@ import { filterOcrItems, pixelRectToNormalizedCenter, pixelRectToPoints, type Oc
 import { isLandscape, simScreenConfig, toFramebufferArgs } from '../orientation.js'
 import { captureWda, ROW_SNAPSHOT_DEPTH, wdaTree } from '../real-ui.js'
 import type { ScreenshotCapture } from '../screenshot.js'
+import { sendSimTap } from '../sim-gesture.js'
 import type { SimulatorDevice } from '../simctl.js'
 import { assertMac, ensureStreamFor, realDeviceSummary, requireBooted, resolveToolTarget } from '../target.js'
 import type { AxeElement } from '../uitree-backend.js'
@@ -108,6 +109,34 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
   }
 
   /**
+   * Tap a point (device points, upright interface) over the live stream's
+   * control socket: ~45 ms, against ~1.3 s for an `axe tap` process, which
+   * opens its own HID session every time. False — and AXe taps instead —
+   * when no stream serves this device, the point is off the screen, a
+   * landscape interface cannot be mapped, or the socket refuses.
+   */
+  const streamTap = async (udid: string, x: number, y: number, screen: PixelSize): Promise<boolean> => {
+    const info = deps.host.streamInfo
+    if (info === undefined || info.device !== udid || screen.width <= 0 || screen.height <= 0) return false
+    const point = { x: x / screen.width, y: y / screen.height }
+    if (!(point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1)) return false
+    let args: SimInteractArgs = { action: 'tap', x: Math.round(point.x * 10_000) / 10_000, y: Math.round(point.y * 10_000) / 10_000 }
+    try {
+      if (screen.width > screen.height) {
+        // The tree is upright in the interface orientation; serve-sim takes portrait framebuffer coordinates.
+        const orientation = (await simScreenConfig(info.wsUrl))?.orientation ?? 'portrait'
+        if (!isLandscape(orientation)) return false
+        args = toFramebufferArgs(orientation, args)
+      }
+      if (typeof args.x !== 'number' || typeof args.y !== 'number') return false
+      await sendSimTap(info.wsUrl, { x: args.x, y: args.y })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
    * The device a UI tool acts on: a booted simulator (AXe, simctl
    * screenshots) or a connected iPhone/iPad (WebDriverAgent, which must be
    * running — ios_real_start_wda). Coordinates are device points either way.
@@ -121,7 +150,8 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     simulator?: SimulatorDevice
     /** `depth` caps WDA's snapshot on a real device; a simulator always reads the full tree. */
     readTree(signal?: AbortSignal, depth?: number): Promise<{ roots: AxeElement[]; sampledDepth?: number; deepened?: boolean }>
-    tap(x: number, y: number, signal?: AbortSignal): Promise<void>
+    /** Tap at a point; `screen` (the screen size in points) lets a simulator tap over the live stream. */
+    tap(x: number, y: number, signal?: AbortSignal, screen?: PixelSize): Promise<void>
     capture(signal?: AbortSignal): Promise<ScreenshotCapture>
     pointSize(pixelSize: PixelSize, signal?: AbortSignal): Promise<{ size: PixelSize; note?: string }>
   }
@@ -158,7 +188,8 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
       summary: deviceSummary(device),
       simulator: device,
       readTree: async signal => ({ roots: await readTree(device, signal) }),
-      tap: async (x, y, signal) => {
+      tap: async (x, y, signal, screen) => {
+        if (screen !== undefined && await streamTap(device.udid, x, y, screen)) return
         try {
           await deps.axe.tap(device.udid, x, y, signal)
         } catch (error) {
@@ -296,7 +327,7 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     const { roots } = await device.readTree(extra.signal)
     const { element, matchedBy } = resolveTapTarget(roots, args, { allowOffscreen: args.allow_offscreen === true })
     const center = frameCenter(element.frame)
-    await device.tap(center.x, center.y, extra.signal)
+    await device.tap(center.x, center.y, extra.signal, screenBounds(roots))
     await sleep(deps.settleMs)
     const expected = await runExpectation(device, expectation, extra.signal)
     return withScreenshot(device, {
@@ -518,7 +549,7 @@ export function registerUiTools(server: McpServer, deps: ToolDeps): void {
     const bounds = screenBounds(roots)
     const plan = planRowTap(detectListRows(roots, { bounds }).rows, args.row, args.x ?? 0.5, args.y ?? 0.5, bounds)
     const before = expectation === undefined ? undefined : requireCountKey(plan.row, expectation.key)
-    await device.tap(plan.tap.x, plan.tap.y, extra.signal)
+    await device.tap(plan.tap.x, plan.tap.y, extra.signal, bounds)
     let countCheck: CountCheckResult | undefined
     if (expectation !== undefined) {
       await sleep(deps.rowSettleMs)
