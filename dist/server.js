@@ -40495,6 +40495,10 @@ __export(simctl_exports, {
   bootedDevices: () => bootedDevices,
   clearLocation: () => clearLocation,
   compareRuntimesDesc: () => compareRuntimesDesc,
+  createDevice: () => createDevice,
+  deleteDevice: () => deleteDevice,
+  deleteUnavailableDevices: () => deleteUnavailableDevices,
+  eraseDevice: () => eraseDevice,
   forgetDeviceList: () => forgetDeviceList,
   getAppContainer: () => getAppContainer,
   getDevice: () => getDevice,
@@ -40502,10 +40506,14 @@ __export(simctl_exports, {
   installApp: () => installApp,
   launchApp: () => launchApp,
   listAppsPlist: () => listAppsPlist,
+  listCatalog: () => listCatalog,
   listDevices: () => listDevices,
+  listUnavailableDevices: () => listUnavailableDevices,
   locationSetArgs: () => locationSetArgs,
   openUrl: () => openUrl,
+  parseCatalog: () => parseCatalog,
   parseDeviceList: () => parseDeviceList,
+  parseUnavailableDevices: () => parseUnavailableDevices,
   postDarwinNotification: () => postDarwinNotification,
   sendPush: () => sendPush,
   setAppearance: () => setAppearance,
@@ -40579,6 +40587,7 @@ var SIMCTL_CONTAINER_TIMEOUT_MS = 3e4;
 var SIMCTL_LISTAPPS_TIMEOUT_MS = 6e4;
 var SIMCTL_TERMINATE_TIMEOUT_MS = 3e4;
 var SIMCTL_UNINSTALL_TIMEOUT_MS = 6e4;
+var SIMCTL_MANAGE_TIMEOUT_MS = 12e4;
 var SIMCTL_PASTEBOARD_TIMEOUT_MS = 15e3;
 var SIMCTL_MAX_BUFFER_BYTES = 16 * 1024 * 1024;
 function runXcrunSimctl(args, timeoutMs, signal, options = {}) {
@@ -40703,6 +40712,104 @@ async function shutdownDevice(udid) {
       if (error62 instanceof SimctlError && alreadyInState(error62.stderr, "Shutdown")) return;
       throw error62;
     });
+  } finally {
+    forgetDeviceList();
+  }
+}
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function parseCatalog(stdout) {
+  let parsed;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch (error62) {
+    throw new SimctlError(`simctl list returned invalid JSON: ${error62 instanceof Error ? error62.message : String(error62)}`, stdout);
+  }
+  const root = isRecord(parsed) ? parsed : {};
+  const deviceTypes = [];
+  for (const entry of Array.isArray(root.devicetypes) ? root.devicetypes : []) {
+    if (isRecord(entry) && typeof entry.identifier === "string" && typeof entry.name === "string") {
+      deviceTypes.push({ identifier: entry.identifier, name: entry.name });
+    }
+  }
+  const runtimes = /* @__PURE__ */ new Map();
+  for (const entry of Array.isArray(root.runtimes) ? root.runtimes : []) {
+    if (!isRecord(entry) || entry.isAvailable !== true) continue;
+    if (typeof entry.identifier !== "string" || typeof entry.name !== "string" || runtimes.has(entry.identifier)) continue;
+    const supported = [];
+    for (const type of Array.isArray(entry.supportedDeviceTypes) ? entry.supportedDeviceTypes : []) {
+      if (isRecord(type) && typeof type.identifier === "string") supported.push(type.identifier);
+    }
+    runtimes.set(entry.identifier, {
+      identifier: entry.identifier,
+      name: entry.name,
+      version: typeof entry.version === "string" ? entry.version : "",
+      deviceTypes: supported
+    });
+  }
+  return { deviceTypes, runtimes: [...runtimes.values()] };
+}
+async function listCatalog(signal) {
+  return parseCatalog(await execSimctl(["list", "--json"], SIMCTL_LIST_TIMEOUT_MS, signal));
+}
+function parseUnavailableDevices(stdout) {
+  let parsed;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch (error62) {
+    throw new SimctlError(`simctl list devices returned invalid JSON: ${error62 instanceof Error ? error62.message : String(error62)}`, stdout);
+  }
+  const runtimes = isRecord(parsed) && isRecord(parsed.devices) ? parsed.devices : {};
+  const devices = [];
+  for (const [runtime, entries] of Object.entries(runtimes)) {
+    for (const entry of Array.isArray(entries) ? entries : []) {
+      if (!isRecord(entry) || entry.isAvailable === true) continue;
+      if (typeof entry.udid !== "string" || typeof entry.name !== "string") continue;
+      devices.push({
+        udid: entry.udid,
+        name: entry.name,
+        runtime,
+        ...typeof entry.availabilityError === "string" && entry.availabilityError !== "" ? { reason: entry.availabilityError } : {}
+      });
+    }
+  }
+  return devices;
+}
+async function listUnavailableDevices(signal) {
+  return parseUnavailableDevices(await execSimctl(["list", "devices", "--json"], SIMCTL_LIST_TIMEOUT_MS, signal));
+}
+async function createDevice(name, deviceType, runtime, signal) {
+  forgetDeviceList();
+  try {
+    const stdout = await execSimctl(["create", name, deviceType, runtime], SIMCTL_MANAGE_TIMEOUT_MS, signal);
+    const udid = stdout.trim().split("\n").pop()?.trim() ?? "";
+    if (!/^[0-9A-Fa-f-]{36}$/u.test(udid)) throw new SimctlError(`simctl create did not print a udid: ${stdout.trim()}`, stdout);
+    return udid;
+  } finally {
+    forgetDeviceList();
+  }
+}
+async function eraseDevice(udid, signal) {
+  forgetDeviceList();
+  try {
+    await execSimctl(["erase", udid], SIMCTL_MANAGE_TIMEOUT_MS, signal);
+  } finally {
+    forgetDeviceList();
+  }
+}
+async function deleteDevice(udid, signal) {
+  forgetDeviceList();
+  try {
+    await execSimctl(["delete", udid], SIMCTL_MANAGE_TIMEOUT_MS, signal);
+  } finally {
+    forgetDeviceList();
+  }
+}
+async function deleteUnavailableDevices(signal) {
+  forgetDeviceList();
+  try {
+    await execSimctl(["delete", "unavailable"], SIMCTL_MANAGE_TIMEOUT_MS, signal);
   } finally {
     forgetDeviceList();
   }
@@ -42473,7 +42580,7 @@ var import_websocket_server = __toESM(require_websocket_server(), 1);
 var SIM_KEY_TAG = 6;
 var SIM_ROTATE_TAG = 7;
 var SIM_CONFIG_TAG = 130;
-function isRecord(value) {
+function isRecord2(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function encodeSimControlFrame(tag, payload) {
@@ -42553,7 +42660,7 @@ function parseSimConfigFrame(data) {
   if (bytes === void 0 || bytes.length < 2 || bytes[0] !== SIM_CONFIG_TAG) return void 0;
   try {
     const value = JSON.parse(new TextDecoder().decode(bytes.subarray(1)));
-    if (isRecord(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
+    if (isRecord2(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
       return { width: value.width, height: value.height, orientation: value.orientation };
     }
   } catch {
@@ -47590,6 +47697,7 @@ var PanelServer = class {
       if (method === "POST" && path === "/api/type") return sendJson(res, 200, await this.#type(await readJsonBody(req)));
       if (method === "POST" && path === "/api/pasteboard") return sendJson(res, 200, await this.#pasteboard());
       if (method === "POST" && path === "/api/appearance") return sendJson(res, 200, await this.#appearance(await readJsonBody(req)));
+      if (method === "POST" && path === "/api/manage-device") return sendJson(res, 200, await this.#manageDevice(await readJsonBody(req)));
       if (method === "POST" && path === "/api/shutdown") {
         await readJsonBody(req);
         return sendJson(res, 200, await this.#shutdown());
@@ -47914,6 +48022,31 @@ var PanelServer = class {
     if (read === void 0) throw new HttpError(501, "reading the pasteboard is not supported");
     const device = await this.#simulatorFor("the pasteboard");
     return { ok: true, text: await read(device.udid) };
+  }
+  /**
+   * Delete or erase one simulator from the device picker. Neither can be
+   * undone, so the device is named by its exact udid and must be shut down:
+   * `simctl delete` would remove a running simulator without a word. The
+   * panel asks for the confirmation; this only refuses what must never happen.
+   */
+  async #manageDevice(body) {
+    const action = body.action;
+    if (action !== "delete" && action !== "erase") throw new HttpError(400, 'action must be "delete" or "erase"');
+    const run4 = action === "delete" ? this.#options.simctl.deleteDevice : this.#options.simctl.eraseDevice;
+    if (run4 === void 0) throw new HttpError(501, `${action} is not supported`);
+    const udid = typeof body.udid === "string" ? body.udid.trim() : "";
+    if (udid === "") throw new HttpError(400, "udid is required");
+    const device = (await this.#options.simctl.listDevices()).find((candidate) => candidate.udid === udid);
+    if (device === void 0) throw new HttpError(404, "no simulator has this udid");
+    if (device.state !== "Shutdown" || this.#options.host.status().device === device.udid) {
+      throw new HttpError(409, `${device.name} is ${device.state} \u2014 shut it down first`);
+    }
+    try {
+      await run4(device.udid);
+    } catch (error62) {
+      throw new HttpError(502, errorMessage11(error62));
+    }
+    return { ok: true, action, device: { udid: device.udid, name: device.name } };
   }
   /** Shut the shown simulator down (its recording and stream first, like ios_sim_shutdown). */
   async #shutdown() {
@@ -49203,15 +49336,15 @@ function registerDebugTools(server, deps) {
       note = "Xcode's lldb is not installed; sample was used instead";
     }
     if (threads === void 0) {
-      const sample = deps.devtools.which("sample");
-      if (sample === void 0) {
+      const sample2 = deps.devtools.which("sample");
+      if (sample2 === void 0) {
         throw new Error(`LLDB capture is unavailable${note === void 0 ? "" : ` (${note})`} and Xcode's sample tool is not installed \u2014 install Xcode or the Command Line Tools`);
       }
       const dir = join19(deps.cacheRoot, "samples");
       mkdirSync8(dir, { recursive: true });
       reportPath = join19(dir, `sample-${slug(target.name)}-${target.pid}-${Date.now()}.txt`);
       const outcome = await deps.devtools.run({
-        command: sample,
+        command: sample2,
         args: [String(target.pid), "1", "1", "-file", reportPath],
         label: `sample of pid ${target.pid}`,
         timeoutMs: BACKTRACE_TIMEOUT_MS,
@@ -49493,6 +49626,134 @@ function registerEnvTools(server, deps) {
       durationMs: result.durationMs,
       ...result.warning === void 0 ? {} : { warning: result.warning }
     });
+  }));
+}
+
+// src/tools/manage.ts
+var CONFIRM_PARAM = external_exports.boolean().optional().describe("Leave it out to see what would happen without doing it; pass true \u2014 after the user agreed \u2014 to really do it");
+function sample(names, count = 10) {
+  const phoneFirst = (name) => name.startsWith("iPhone") ? 0 : 1;
+  return [...names].sort((a, b) => phoneFirst(a) - phoneFirst(b) || b.localeCompare(a, void 0, { numeric: true })).slice(0, count).join(", ");
+}
+function resolveDeviceType(types, wanted) {
+  const text = wanted.trim();
+  const found = types.find((type) => type.identifier === text) ?? types.find((type) => type.name.toLowerCase() === text.toLowerCase());
+  if (found !== void 0) return found;
+  const near = types.filter((type) => type.name.toLowerCase().includes(text.toLowerCase()));
+  throw new Error(`unknown device type ${JSON.stringify(text)} \u2014 ${near.length > 0 ? "did you mean" : "some of the installed ones"}: ` + sample((near.length > 0 ? near : types).map((type) => type.name)));
+}
+function resolveRuntime(runtimes, type, wanted) {
+  const able = runtimes.filter((runtime) => runtime.deviceTypes.includes(type.identifier));
+  if (wanted === void 0 || wanted.trim() === "") {
+    const newest = [...able].sort((a, b) => compareRuntimesDesc(a.version, b.version))[0];
+    if (newest === void 0) throw new Error(`no installed runtime can run ${type.name} \u2014 install one in Xcode \u25B8 Settings \u25B8 Components`);
+    return newest;
+  }
+  const text = wanted.trim().toLowerCase();
+  const found = runtimes.find((runtime) => runtime.identifier.toLowerCase() === text || runtime.name.toLowerCase() === text || runtime.version === text);
+  if (found === void 0) {
+    throw new Error(`unknown runtime ${JSON.stringify(wanted.trim())} \u2014 installed: ${sample(runtimes.map((runtime) => runtime.name))}`);
+  }
+  if (!found.deviceTypes.includes(type.identifier)) {
+    throw new Error(`${found.name} cannot run ${type.name}${able.length === 0 ? "" : ` \u2014 runtimes that can: ${sample(able.map((runtime) => runtime.name))}`}`);
+  }
+  return found;
+}
+function registerManageTools(server, deps) {
+  const deviceByUdid = async (udid) => {
+    const wanted = udid.trim();
+    const device = (await deps.simctl.listDevices()).find((candidate) => candidate.udid.toLowerCase() === wanted.toLowerCase());
+    if (device === void 0) {
+      throw new Error(`this needs the exact udid of an existing simulator, and ${JSON.stringify(wanted)} is not one \u2014 several simulators can share a name, so a name is not accepted; ios_sim_devices lists the udids`);
+    }
+    return device;
+  };
+  const requireShutdown = (what, device) => {
+    if (device.state !== "Shutdown") {
+      throw new Error(`${device.name} is ${device.state} \u2014 a running simulator is not ${what}; shut it down first with ios_sim_shutdown`);
+    }
+  };
+  server.registerTool("ios_sim_create", {
+    title: "Create a simulator",
+    description: `Create a new iOS Simulator device. deviceType is a device name ("iPhone 17 Pro") or type identifier; runtime ("iOS 27.2", "27.2" or an identifier) defaults to the newest installed one that can run it; name defaults to the device type's name. The new device is shut down: boot it with ios_sim_boot.`,
+    inputSchema: {
+      deviceType: external_exports.string().min(1).describe('Device name or type identifier, e.g. "iPhone 17 Pro"'),
+      runtime: external_exports.string().optional().describe('Runtime name, version or identifier, e.g. "iOS 27.2" (default: the newest that runs the device)'),
+      name: external_exports.string().optional().describe("Name of the new simulator (default: the device type's name)")
+    }
+  }, async (args, extra) => runTool("ios_sim_create", async () => {
+    assertMac(deps.platform);
+    const catalog = await deps.simctl.listCatalog(extra.signal);
+    const type = resolveDeviceType(catalog.deviceTypes, args.deviceType);
+    const runtime = resolveRuntime(catalog.runtimes, type, args.runtime);
+    const name = args.name?.trim() || type.name;
+    const udid = await deps.simctl.createDevice(name, type.identifier, runtime.identifier, extra.signal);
+    return jsonResult({
+      created: true,
+      device: { udid, name, runtime: runtime.identifier, state: "Shutdown" },
+      deviceType: type.name,
+      runtimeName: runtime.name
+    });
+  }));
+  server.registerTool("ios_sim_erase", {
+    title: "Erase a simulator",
+    description: "Erase all content and settings of ONE simulator (apps, data, accounts) \u2014 it cannot be undone. Takes the exact udid; the device must be shut down. Without confirm:true nothing is erased and the answer says what would be: ask the user, then call again with confirm:true.",
+    inputSchema: { udid: external_exports.string().min(1).describe("Exact simulator udid (a name is not accepted)"), confirm: CONFIRM_PARAM },
+    annotations: { destructiveHint: true }
+  }, async (args, extra) => runTool("ios_sim_erase", async () => {
+    assertMac(deps.platform);
+    const device = await deviceByUdid(args.udid);
+    requireShutdown("erased", device);
+    if (args.confirm !== true) {
+      return jsonResult({
+        erased: false,
+        wouldErase: deviceSummary(device),
+        confirm: "nothing was erased \u2014 this removes every app and all data on that simulator and cannot be undone; after the user agrees, call ios_sim_erase again with the same udid and confirm: true"
+      });
+    }
+    await deps.simctl.eraseDevice(device.udid, extra.signal);
+    return jsonResult({ erased: true, device: deviceSummary(device) });
+  }));
+  server.registerTool("ios_sim_delete", {
+    title: "Delete a simulator",
+    description: "Delete ONE simulator for good, by its exact udid (it must be shut down) \u2014 or, with unavailable:true, every device simctl marks unusable (its runtime was removed). It cannot be undone and there is no way to delete all simulators at once. Without confirm:true nothing is deleted and the answer lists what would be: ask the user, then call again with confirm:true.",
+    inputSchema: {
+      udid: external_exports.string().optional().describe("Exact udid of the simulator to delete (a name is not accepted)"),
+      unavailable: external_exports.boolean().optional().describe("true: delete the devices whose runtime is no longer installed, instead of one udid"),
+      confirm: CONFIRM_PARAM
+    },
+    annotations: { destructiveHint: true }
+  }, async (args, extra) => runTool("ios_sim_delete", async () => {
+    assertMac(deps.platform);
+    const udid = args.udid?.trim() ?? "";
+    if (udid !== "" && args.unavailable === true) throw new Error("pass either a udid or unavailable: true, not both");
+    if (args.unavailable === true) {
+      const gone = await deps.simctl.listUnavailableDevices(extra.signal);
+      if (gone.length === 0) return jsonResult({ deleted: false, devices: [], note: "there are no unavailable simulators to delete" });
+      if (args.confirm !== true) {
+        return jsonResult({
+          deleted: false,
+          wouldDelete: gone,
+          confirm: `nothing was deleted \u2014 ${gone.length} unusable simulator${gone.length === 1 ? "" : "s"} would be removed for good; after the user agrees, call ios_sim_delete again with unavailable: true and confirm: true`
+        });
+      }
+      await deps.simctl.deleteUnavailableDevices(extra.signal);
+      return jsonResult({ deleted: true, devices: gone });
+    }
+    if (udid === "") throw new Error("ios_sim_delete needs the udid of the simulator to delete, or unavailable: true");
+    const device = await deviceByUdid(udid);
+    requireShutdown("deleted", device);
+    if (args.confirm !== true) {
+      return jsonResult({
+        deleted: false,
+        wouldDelete: [deviceSummary(device)],
+        confirm: "nothing was deleted \u2014 this removes that simulator with its apps and data and cannot be undone; after the user agrees, call ios_sim_delete again with the same udid and confirm: true"
+      });
+    }
+    if (deps.recorder.active(device.udid) !== void 0) await deps.recorder.stop(device.udid).catch(() => void 0);
+    if (deps.host.status().device === device.udid) await deps.host.stop();
+    await deps.simctl.deleteDevice(device.udid, extra.signal);
+    return jsonResult({ deleted: true, devices: [deviceSummary(device)] });
   }));
 }
 
@@ -50344,6 +50605,7 @@ async function main() {
   registerUiTools(server, deps);
   registerDebugTools(server, deps);
   registerPreviewTools(server, deps);
+  registerManageTools(server, deps);
   let shuttingDown = false;
   const logFailure = (step) => (error62) => {
     process.stderr.write(`${PLUGIN_NAME}: shutdown: ${step} failed: ${error62 instanceof Error ? error62.message : String(error62)}
