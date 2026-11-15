@@ -318,9 +318,11 @@ test('type, button, rotate and device_action never ask the stream for its orient
   await h.call('ios_sim_interact', { action: 'button', name: 'home', screenshot: false })
   await h.call('ios_sim_interact', { action: 'rotate', orientation: 'landscape_left', screenshot: false })
   await h.call('ios_sim_interact', { action: 'device_action', name: 'lock', screenshot: false })
-  assert.equal(serveSim.connections(), 0)
+  // One socket: the one "type" sends its keys over. None of the four read the orientation.
+  assert.equal(serveSim.connections(), 1)
   await h.call('ios_sim_interact', { action: 'tap', x: 0.5, y: 0.5, screenshot: false })
-  assert.ok(serveSim.connections() >= 1)
+  // The tap adds its own socket and the orientation read.
+  assert.equal(serveSim.connections(), 3)
   assert.deepEqual(serveSim.taps(), ['0.5 0.5'])
   await h.close()
 })
@@ -378,7 +380,7 @@ test('shortcut copy presses ⌘C and returns what landed on the simulator pasteb
     const bytes = data as Buffer
     frames.push(bytes.length === 1 ? `tag ${bytes[0]}` : String((JSON.parse(bytes.subarray(1).toString('utf8')) as { usage: number }).usage))
   }))
-  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true } })
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true }, deps: { copyWaitMs: 40 } })
   await h.deps.simctl.setPasteboard('BBB', 'copied text')
   const copied = h.json(await h.call('ios_sim_interact', { action: 'shortcut', name: 'copy', screenshot: false })) as { pasteboard?: string }
   assert.equal(copied.pasteboard, 'copied text')
@@ -391,4 +393,28 @@ test('shortcut copy presses ⌘C and returns what landed on the simulator pasteb
   assert.deepEqual(frames, ['227', '6', '6', '227', '227', '25', '25', '227', 'tag 12'])
   assert.match(textOf(await h.call('ios_sim_interact', { action: 'shortcut', name: 'quit' })), /one of copy, paste, cut/)
   await h.close()
+})
+
+test('shortcut copy waits for the pasteboard to change: the selection lands a moment after the key press', async () => {
+  const wss = new WebSocketServer({ host: '127.0.0.1', port: 0 })
+  await new Promise<void>(resolve => wss.once('listening', () => resolve()))
+  const port = (wss.address() as { port: number }).port
+  const h = await toolHarness(registerCoreTools, { host: { device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true }, deps: { copyWaitMs: 2_000 } })
+  // What an earlier copy left there; the new selection shows up on the third read after the key press.
+  let reads = 0
+  h.deps.simctl.getPasteboard = async () => {
+    reads += 1
+    return reads <= 3 ? 'old text' : 'the new selection'
+  }
+  const copied = h.json(await h.call('ios_sim_interact', { action: 'shortcut', name: 'copy', screenshot: false })) as { pasteboard?: string; pasteboardUnchanged?: boolean }
+  assert.deepEqual([copied.pasteboard, copied.pasteboardUnchanged], ['the new selection', undefined])
+
+  // Nothing new arrives (the same text copied again, or nothing selected): say so instead of passing it off as the copy.
+  const quiet = await toolHarness(registerCoreTools, { host: { device: 'BBB', wsUrl: `ws://127.0.0.1:${port}`, exposeStreamInfo: true }, deps: { copyWaitMs: 60 } })
+  await quiet.deps.simctl.setPasteboard('BBB', 'same')
+  const same = quiet.json(await quiet.call('ios_sim_interact', { action: 'shortcut', name: 'cut', screenshot: false })) as { pasteboard?: string; pasteboardUnchanged?: boolean }
+  assert.deepEqual([same.pasteboard, same.pasteboardUnchanged], ['same', true])
+  wss.close()
+  await h.close()
+  await quiet.close()
 })

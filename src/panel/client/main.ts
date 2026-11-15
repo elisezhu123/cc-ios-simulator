@@ -601,13 +601,26 @@ async function writeMacClipboard(text: string): Promise<boolean> {
   return copied
 }
 
+/** How long a copy / cut waits for the simulator pasteboard to change, and how often it looks. */
+const COPY_WAIT_MS = 2000
+const COPY_POLL_MS = 200
+
 function runSimShortcut(name: SimPanelShortcut): void {
-  for (const frame of simShortcutFrames(name)) send(frame)
-  if (name !== 'copy' && name !== 'cut') return
+  if (name !== 'copy' && name !== 'cut') {
+    for (const frame of simShortcutFrames(name)) send(frame)
+    return
+  }
   void (async () => {
-    // The app puts the selection on the pasteboard a moment after the key press.
-    await new Promise(resolve => window.setTimeout(resolve, 300))
-    const { text } = await postJson<{ text: string }>('/api/pasteboard', {})
+    const readPasteboard = async (): Promise<string> => (await postJson<{ text: string }>('/api/pasteboard', {})).text
+    // What is there before the key press tells when the selection has arrived: it lands 0.3–1.5 s later.
+    const before = await readPasteboard()
+    for (const frame of simShortcutFrames(name)) send(frame)
+    const deadline = Date.now() + COPY_WAIT_MS
+    let text = before
+    do {
+      await new Promise(resolve => window.setTimeout(resolve, COPY_POLL_MS))
+      text = await readPasteboard()
+    } while (text === before && Date.now() < deadline)
     if (text === '') {
       notify(copy.copyNothing, 'error')
       return
