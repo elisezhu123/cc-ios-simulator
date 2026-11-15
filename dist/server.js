@@ -9444,7 +9444,7 @@ var require_websocket = __commonJS({
     var http = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes, createHash: createHash4 } = __require("crypto");
+    var { randomBytes, createHash: createHash5 } = __require("crypto");
     var { Duplex, Readable } = __require("stream");
     var { URL: URL2 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -10125,7 +10125,7 @@ var require_websocket = __commonJS({
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest = createHash4("sha1").update(key + GUID).digest("base64");
+        const digest = createHash5("sha1").update(key + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -10494,7 +10494,7 @@ var require_websocket_server = __commonJS({
     var EventEmitter = __require("events");
     var http = __require("http");
     var { Duplex } = __require("stream");
-    var { createHash: createHash4 } = __require("crypto");
+    var { createHash: createHash5 } = __require("crypto");
     var extension2 = require_extension();
     var PerMessageDeflate2 = require_permessage_deflate();
     var subprotocol2 = require_subprotocol();
@@ -10801,7 +10801,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest = createHash4("sha1").update(key + GUID).digest("base64");
+        const digest = createHash5("sha1").update(key + GUID).digest("base64");
         const headers = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -18020,14 +18020,14 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
   const desc = Object.getOwnPropertyDescriptor(def, "shape");
   const sh = desc?.get ? desc.get.raw : def.shape ?? {};
   if (sh) {
-    const get = () => {
+    const get2 = () => {
       const newSh = { ...sh };
       Object.defineProperty(def, "shape", { value: newSh });
-      get.raw = newSh;
+      get2.raw = newSh;
       return newSh;
     };
-    get.raw = sh;
-    Object.defineProperty(def, "shape", { get });
+    get2.raw = sh;
+    Object.defineProperty(def, "shape", { get: get2 });
   }
   const _normalized = cached(() => normalizeDef(def));
   defineLazyInternal(inst, "propValues", (zod) => {
@@ -49716,12 +49716,56 @@ function verifyCountChange(before, after, key, delta) {
   };
 }
 
+// src/stream-frame.ts
+import { createHash as createHash4 } from "node:crypto";
+import { get } from "node:http";
+var JPEG_START = Buffer.from([255, 216]);
+var JPEG_END = Buffer.from([255, 217]);
+var STREAM_FRAME_TIMEOUT_MS = 700;
+var MAX_FRAME_BYTES = 16 * 1024 * 1024;
+function streamFrameDigest(streamUrl, timeoutMs = STREAM_FRAME_TIMEOUT_MS) {
+  return new Promise((resolve7) => {
+    let settled = false;
+    let request2;
+    const finish = (digest) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      request2?.destroy();
+      resolve7(digest);
+    };
+    const timer = setTimeout(() => finish(void 0), timeoutMs);
+    try {
+      request2 = get(streamUrl, (response) => {
+        if (response.statusCode !== 200) {
+          finish(void 0);
+          return;
+        }
+        let received = Buffer.alloc(0);
+        response.on("data", (chunk) => {
+          received = Buffer.concat([received, chunk]);
+          const start = received.indexOf(JPEG_START);
+          const end = start < 0 ? -1 : received.indexOf(JPEG_END, start + JPEG_START.length);
+          if (end > start) finish(createHash4("sha1").update(received.subarray(start, end + JPEG_END.length)).digest("hex"));
+          else if (received.length > MAX_FRAME_BYTES) finish(void 0);
+        });
+        response.on("error", () => finish(void 0));
+        response.on("end", () => finish(void 0));
+      });
+      request2.on("error", () => finish(void 0));
+    } catch {
+      finish(void 0);
+    }
+  });
+}
+
 // src/tools/ui.ts
 var SCREENSHOT_PARAM = external_exports.boolean().optional().describe("Return a screenshot of the result as an image (default true); pass false when chaining actions");
 var EXPECT_TEXT_PARAM = external_exports.string().optional().describe("Text that should APPEAR after the tap: screen OCR is polled for up to ~4 s and reported as expected.matched");
 var EXPECT_GONE_PARAM = external_exports.string().optional().describe("Text that should DISAPPEAR after the tap (mutually exclusive with expect_text); expected.matched = it is gone");
 var MIN_CONFIDENCE_PARAM = external_exports.number().min(0).max(1).optional().describe('Minimum OCR confidence 0..1 (default 0.3 \u2014 CJK labels commonly read 0.3\u20130.6, so do not raise it "to be safe")');
 var IMAGE_LANDSCAPE_UNSYNCED_WARNING = 'the screen looks landscape, but the live stream does not report a landscape orientation, so the tap went out without the landscape mapping and may miss \u2014 send ios_sim_interact {action: "rotate", orientation: "landscape_left" or "landscape_right"} matching the screen, then retry';
+var OCR_READING_MAX_AGE_MS = 6e4;
 function registerUiTools(server, deps) {
   const pointSizes = /* @__PURE__ */ new Map();
   const readTree = async (device, signal) => {
@@ -49814,7 +49858,25 @@ function registerUiTools(server, deps) {
       pointSize: (pixelSize, signal) => pointSizeOf(device.udid, pixelSize, signal)
     };
   };
+  const ocrReadings = /* @__PURE__ */ new Map();
+  const frameOf = async (device) => {
+    if (device.simulator === void 0) return void 0;
+    const info = deps.host.streamInfo;
+    if (info === void 0 || info.device !== device.udid) return void 0;
+    return streamFrameDigest(info.streamUrl);
+  };
   const readOcr = async (device, signal) => {
+    const frame = await frameOf(device);
+    if (frame !== void 0) {
+      const known = ocrReadings.get(device.udid);
+      if (known !== void 0 && known.frame === frame && Date.now() - known.at <= OCR_READING_MAX_AGE_MS) return known.snapshot;
+    }
+    const snapshot = await captureAndRecognize(device, signal);
+    if (frame === void 0) ocrReadings.delete(device.udid);
+    else ocrReadings.set(device.udid, { frame, at: Date.now(), snapshot });
+    return snapshot;
+  };
+  const captureAndRecognize = async (device, signal) => {
     const capture = await device.capture(signal);
     if (capture.width === void 0 || capture.height === void 0 || capture.width <= 0 || capture.height <= 0) {
       throw new Error(`could not determine the screenshot pixel size of ${device.name} (unreadable PNG header)`);
