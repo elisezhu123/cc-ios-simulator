@@ -42469,9 +42469,101 @@ var import_subprotocol = __toESM(require_subprotocol(), 1);
 var import_websocket = __toESM(require_websocket(), 1);
 var import_websocket_server = __toESM(require_websocket_server(), 1);
 
+// src/panel/client/protocol.ts
+var SIM_KEY_TAG = 6;
+var SIM_ROTATE_TAG = 7;
+var SIM_CONFIG_TAG = 130;
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function encodeSimControlFrame(tag, payload) {
+  const json2 = new TextEncoder().encode(JSON.stringify(payload));
+  const frame = new Uint8Array(1 + json2.length);
+  frame[0] = tag;
+  frame.set(json2, 1);
+  return frame;
+}
+var SHIFT_USAGE = 225;
+var NAMED_KEYS = {
+  Enter: 40,
+  Escape: 41,
+  Backspace: 42,
+  Tab: 43,
+  Home: 74,
+  PageUp: 75,
+  Delete: 76,
+  End: 77,
+  PageDown: 78,
+  ArrowRight: 79,
+  ArrowLeft: 80,
+  ArrowDown: 81,
+  ArrowUp: 82
+};
+var KEY_TABLE = buildKeyTable();
+function buildKeyTable() {
+  const table = {};
+  const add = (characters, base, shift) => {
+    [...characters].forEach((character, index) => {
+      table[character] = { usage: base + index, shift };
+    });
+  };
+  add("abcdefghijklmnopqrstuvwxyz", 4, false);
+  add("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4, true);
+  add("1234567890", 30, false);
+  add("!@#$%^&*()", 30, true);
+  add(" -=", 44, false);
+  add("_+", 45, true);
+  add("[]\\", 47, false);
+  add("{}|", 47, true);
+  add(";", 51, false);
+  add(":", 51, true);
+  add("'", 52, false);
+  add('"', 52, true);
+  add("`", 53, false);
+  add("~", 53, true);
+  add(",", 54, false);
+  add("<", 54, true);
+  add(".", 55, false);
+  add(">", 55, true);
+  add("/", 56, false);
+  add("?", 56, true);
+  return table;
+}
+function simKeyFrame(type, usage) {
+  return encodeSimControlFrame(SIM_KEY_TAG, { type, usage });
+}
+function simKeyFrames(key) {
+  const named = NAMED_KEYS[key];
+  if (named !== void 0) return [simKeyFrame("down", named), simKeyFrame("up", named)];
+  const stroke = KEY_TABLE[key];
+  if (stroke === void 0) return void 0;
+  const frames = [];
+  if (stroke.shift) frames.push(simKeyFrame("down", SHIFT_USAGE));
+  frames.push(simKeyFrame("down", stroke.usage), simKeyFrame("up", stroke.usage));
+  if (stroke.shift) frames.push(simKeyFrame("up", SHIFT_USAGE));
+  return frames;
+}
+function messageBytes(data) {
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  return void 0;
+}
+function parseSimConfigFrame(data) {
+  const bytes = messageBytes(data);
+  if (bytes === void 0 || bytes.length < 2 || bytes[0] !== SIM_CONFIG_TAG) return void 0;
+  try {
+    const value = JSON.parse(new TextDecoder().decode(bytes.subarray(1)));
+    if (isRecord(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
+      return { width: value.width, height: value.height, orientation: value.orientation };
+    }
+  } catch {
+  }
+  return void 0;
+}
+
 // src/sim-gesture.ts
 var SIM_TOUCH_TAG = 3;
-var SIM_KEY_TAG = 6;
+var SIM_KEY_TAG2 = 6;
 var SIM_SOFTWARE_KEYBOARD_TAG = 12;
 var HID_LEFT_COMMAND = 227;
 var HID_LEFT_SHIFT = 225;
@@ -42497,7 +42589,7 @@ var SIM_DRAG_MIN_MS = 100;
 function clamp01(value) {
   return Math.min(1, Math.max(0, value));
 }
-function encodeSimControlFrame(tag, payload) {
+function encodeSimControlFrame2(tag, payload) {
   const json2 = Buffer.from(JSON.stringify(payload), "utf8");
   const frame = Buffer.allocUnsafe(1 + json2.length);
   frame[0] = tag;
@@ -42505,10 +42597,10 @@ function encodeSimControlFrame(tag, payload) {
   return frame;
 }
 function encodeSimTouchFrame(type, x, y) {
-  return encodeSimControlFrame(SIM_TOUCH_TAG, { type, x: clamp01(x), y: clamp01(y) });
+  return encodeSimControlFrame2(SIM_TOUCH_TAG, { type, x: clamp01(x), y: clamp01(y) });
 }
 function encodeSimKeyFrame(type, usage) {
-  return encodeSimControlFrame(SIM_KEY_TAG, { type, usage });
+  return encodeSimControlFrame2(SIM_KEY_TAG2, { type, usage });
 }
 function clampBand(value) {
   return Math.min(SIM_GESTURE_BAND_MAX, Math.max(SIM_GESTURE_BAND_MIN, value));
@@ -42634,6 +42726,28 @@ async function sendSimTap(wsUrl, point, options = {}) {
   ], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
   return { frames: 2, moves: 0, elapsedMs, stepMs: holdMs, wsUrl: url2 };
 }
+var SIM_TYPE_CHAR_GAP_MS = 4;
+async function sendSimText(wsUrl, text, options = {}) {
+  const url2 = typeof wsUrl === "string" ? wsUrl.trim() : "";
+  if (!/^wss?:\/\//.test(url2)) {
+    throw gestureUnavailable(url2, "the stream reports its control-socket url (SimStreamInfo.wsUrl) only while serve-sim is running");
+  }
+  const charGapMs = options.charGapMs ?? SIM_TYPE_CHAR_GAP_MS;
+  if (!Number.isFinite(charGapMs) || charGapMs < 0) {
+    throw new RangeError(`ios-simulator: type charGapMs must be a non-negative number of milliseconds, got ${String(charGapMs)}`);
+  }
+  const frames = [];
+  for (const character of text) {
+    const keys = simKeyFrames(character === "\n" ? "Enter" : character === "	" ? "Tab" : character);
+    if (keys === void 0) throw new RangeError(`ios-simulator: the US hardware keyboard cannot type ${JSON.stringify(character)}`);
+    keys.forEach((key, index) => {
+      frames.push({ frame: Buffer.from(key), waitMs: index === 0 && frames.length > 0 ? charGapMs : 0 });
+    });
+  }
+  if (frames.length === 0) throw new RangeError("ios-simulator: there is no text to type");
+  const elapsedMs = await writeSimFrames(url2, frames, options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS, options.onOpen);
+  return { frames: frames.length, moves: 0, elapsedMs, stepMs: charGapMs, wsUrl: url2 };
+}
 var SIM_PASTE_HOLD_MS = 40;
 function sendSimPaste(wsUrl, options = {}) {
   return sendSimShortcut(wsUrl, "paste", options);
@@ -42669,7 +42783,7 @@ async function sendSimKeyboardToggle(wsUrl, options = {}) {
   }
   await writeSimFrames(url2, [{ frame: Buffer.from([SIM_SOFTWARE_KEYBOARD_TAG]), waitMs: 0 }], options.connectTimeoutMs ?? SIM_GESTURE_CONNECT_TIMEOUT_MS);
 }
-async function writeSimFrames(url2, frames, connectTimeoutMs) {
+async function writeSimFrames(url2, frames, connectTimeoutMs, onOpen) {
   const { WebSocket: WebSocket2 } = loadWs();
   const socket = new WebSocket2(url2, { perMessageDeflate: false });
   let broken;
@@ -42685,6 +42799,7 @@ async function writeSimFrames(url2, frames, connectTimeoutMs) {
   const started = Date.now();
   try {
     await openSocket(socket, connectTimeoutMs, url2, () => broken);
+    onOpen?.();
     for (const [index, { frame, waitMs }] of frames.entries()) {
       if (broken !== void 0) throw gestureUnavailable(url2, broken);
       if (waitMs > 0) await sleep2(waitMs);
@@ -45618,60 +45733,6 @@ function framebufferPoint(orientation, displayed) {
   }
 }
 
-// src/panel/client/protocol.ts
-var SIM_ROTATE_TAG = 7;
-var SIM_CONFIG_TAG = 130;
-function isRecord(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-var KEY_TABLE = buildKeyTable();
-function buildKeyTable() {
-  const table = {};
-  const add = (characters, base, shift) => {
-    [...characters].forEach((character, index) => {
-      table[character] = { usage: base + index, shift };
-    });
-  };
-  add("abcdefghijklmnopqrstuvwxyz", 4, false);
-  add("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4, true);
-  add("1234567890", 30, false);
-  add("!@#$%^&*()", 30, true);
-  add(" -=", 44, false);
-  add("_+", 45, true);
-  add("[]\\", 47, false);
-  add("{}|", 47, true);
-  add(";", 51, false);
-  add(":", 51, true);
-  add("'", 52, false);
-  add('"', 52, true);
-  add("`", 53, false);
-  add("~", 53, true);
-  add(",", 54, false);
-  add("<", 54, true);
-  add(".", 55, false);
-  add(">", 55, true);
-  add("/", 56, false);
-  add("?", 56, true);
-  return table;
-}
-function messageBytes(data) {
-  if (data instanceof ArrayBuffer) return new Uint8Array(data);
-  if (ArrayBuffer.isView(data)) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  return void 0;
-}
-function parseSimConfigFrame(data) {
-  const bytes = messageBytes(data);
-  if (bytes === void 0 || bytes.length < 2 || bytes[0] !== SIM_CONFIG_TAG) return void 0;
-  try {
-    const value = JSON.parse(new TextDecoder().decode(bytes.subarray(1)));
-    if (isRecord(value) && typeof value.width === "number" && Number.isFinite(value.width) && typeof value.height === "number" && Number.isFinite(value.height) && typeof value.orientation === "string" && value.orientation !== "") {
-      return { width: value.width, height: value.height, orientation: value.orientation };
-    }
-  } catch {
-  }
-  return void 0;
-}
-
 // src/orientation.ts
 function isLandscape(orientation) {
   return orientation === "landscape_left" || orientation === "landscape_right";
@@ -45883,6 +45944,28 @@ async function performSimInteractControl(host, deviceUdid, payloads) {
     }
   }
 }
+async function typeKeys(host, deviceUdid, text, wsUrl, options) {
+  let wsError;
+  if (wsUrl !== void 0) {
+    let opened = false;
+    try {
+      const report = await sendSimText(wsUrl, text, {
+        ...options.charGapMs === void 0 ? {} : { charGapMs: options.charGapMs },
+        onOpen: () => {
+          opened = true;
+        }
+      });
+      return { channel: "ws", frames: report.frames, elapsedMs: report.elapsedMs };
+    } catch (error62) {
+      if (opened) {
+        throw new Error(`typing stopped part-way through (${errorMessage9(error62)}) \u2014 some of the text may be in the field; check it (ios_sim_screenshot) before typing again`);
+      }
+      wsError = errorMessage9(error62);
+    }
+  }
+  await host.control(serveSimControlArgs("type", deviceUdid, [text]));
+  return { channel: "cli", ...wsError === void 0 ? {} : { wsError } };
+}
 async function typeWithPaste(host, deviceUdid, segments, wsUrl, options) {
   const reason = `ios_sim_interact: action "type" got text the US keyboard cannot type (Chinese, emoji, \u2026), which is copied to the simulator pasteboard and pasted with \u2318V over the stream's control socket`;
   const setPasteboard2 = options.setPasteboard;
@@ -45891,11 +45974,10 @@ async function typeWithPaste(host, deviceUdid, segments, wsUrl, options) {
     throw new Error(`${reason} \u2014 no live serve-sim stream reports a control socket for ${deviceUdid}; start it with ios_sim_boot and retry`);
   }
   let pasted = 0;
-  let typed = false;
+  let typedThroughCli = false;
   for (const segment of segments) {
     if (segment.kind === "keys") {
-      await host.control(serveSimControlArgs("type", deviceUdid, [segment.text]));
-      typed = true;
+      if ((await typeKeys(host, deviceUdid, segment.text, wsUrl, options)).channel === "cli") typedThroughCli = true;
       continue;
     }
     await setPasteboard2(deviceUdid, segment.text);
@@ -45903,7 +45985,7 @@ async function typeWithPaste(host, deviceUdid, segments, wsUrl, options) {
     await sleep7(options.pasteSettleMs ?? PASTE_SETTLE_MS);
     pasted += 1;
   }
-  return { channel: typed ? "cli" : "ws", pasted };
+  return { channel: typedThroughCli ? "cli" : "ws", pasted };
 }
 function simInteractGesturePath(args) {
   if (args.action === "scroll") return simScrollPath(scrollRequestOf(args));
@@ -45921,6 +46003,7 @@ async function performSimInteract(host, deviceUdid, args, payloads, options = {}
   if (args.action === "type" && typeof args.text === "string") {
     const segments = simTextSegments(args.text);
     if (segments.some((segment) => segment.kind === "paste")) return typeWithPaste(host, deviceUdid, segments, wsUrl, options);
+    return typeKeys(host, deviceUdid, args.text, wsUrl, options);
   }
   if (args.action === "shortcut" && isSimShortcut(args.name)) {
     if (wsUrl === void 0) {
@@ -48557,7 +48640,8 @@ function registerAppTools(server, deps) {
 var ROTATE_ORIENTATIONS = ["portrait", "landscape_left", "portrait_upside_down", "landscape_right"];
 var XCODE27_TYPE_HINT = " \u2014 with Xcode 27, keyboard input needs Device Hub running with this simulator visible and frontmost, and the app that launched Claude enabled under System Settings \u25B8 Privacy & Security \u25B8 Accessibility; if input stays dead, `serve-sim repair-input -d <udid>` repairs it (it restarts SpringBoard and closes apps)";
 var COORDINATE_ACTIONS = /* @__PURE__ */ new Set(["tap", "scroll", "gesture"]);
-var COPY_SETTLE_MS = 300;
+var COPY_WAIT_MS = 2e3;
+var COPY_POLL_MS = 150;
 var MAX_PASTEBOARD_CHARS = 2e4;
 var LOST_ORIENTATION_WARNING = 'the screen looks landscape, but the live stream does not know its orientation (the device was rotated outside these tools, or the stream restarted), so taps, scrolls and gestures go out without the landscape mapping and can miss \u2014 send ios_sim_interact {action: "rotate", orientation: "landscape_left" or "landscape_right"} matching the screen, then retry';
 function resyncFailedWarning(orientation, error62) {
@@ -48775,7 +48859,7 @@ function registerCoreTools(server, deps) {
   }));
   server.registerTool("ios_sim_interact", {
     title: "Interact with the simulator",
-    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, press an editing shortcut in the focused field (shortcut: copy, paste, cut, select-all, undo, redo \u2014 copy and cut answer with the text now on the simulator pasteboard), or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; siri, re-center and slow-animations click Simulator.app menus, need the Accessibility permission and are unavailable under Xcode 27, which has no Simulator.app). Starts the live stream when needed but never boots a device. " + (deps.interactScreenshot ? "About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. " : "Answers in text right after the action so actions chain quickly; pass screenshot:true (or call ios_sim_screenshot) to see the result as an image about 300 ms later. ") + "On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
+    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, press an editing shortcut in the focused field (shortcut: copy, paste, cut, select-all, undo, redo \u2014 copy and cut answer with the text now on the simulator pasteboard; pasteboardUnchanged:true means nothing new arrived within 2 s, so it is what was there before \u2014 a busy app can take longer (Safari needed 10 s after 520 typed characters): read again with ios_sim_pasteboard get), or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; siri, re-center and slow-animations click Simulator.app menus, need the Accessibility permission and are unavailable under Xcode 27, which has no Simulator.app). Starts the live stream when needed but never boots a device. " + (deps.interactScreenshot ? "About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. " : "Answers in text right after the action so actions chain quickly; pass screenshot:true (or call ios_sim_screenshot) to see the result as an image about 300 ms later. ") + "On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
     inputSchema: {
       action: external_exports.enum(["tap", "type", "button", "gesture", "scroll", "rotate", "device_action", "shortcut"]),
       udid: UDID_PARAM,
@@ -48820,6 +48904,8 @@ function registerCoreTools(server, deps) {
     await ensureStreamFor(deps.host, device);
     let delivery;
     let warning;
+    const copying = args.action === "shortcut" && (args.name === "copy" || args.name === "cut");
+    const pasteboardBefore = copying ? await deps.simctl.getPasteboard(device.udid, extra.signal) : void 0;
     if (args.action === "rotate") {
       if (args.orientation === void 0) {
         throw new Error(`action "rotate" requires orientation: ${ROTATE_ORIENTATIONS.join(", ")}`);
@@ -48869,9 +48955,16 @@ function registerCoreTools(server, deps) {
       }
     }
     let pasteboard;
-    if (args.action === "shortcut" && (args.name === "copy" || args.name === "cut")) {
-      await sleep8(COPY_SETTLE_MS);
-      const text = await deps.simctl.getPasteboard(device.udid, extra.signal);
+    let pasteboardUnchanged = false;
+    if (copying && pasteboardBefore !== void 0) {
+      const deadline = Date.now() + (deps.copyWaitMs ?? COPY_WAIT_MS);
+      let text = pasteboardBefore;
+      for (; ; ) {
+        await sleep8(Math.min(COPY_POLL_MS, Math.max(0, deadline - Date.now())));
+        text = await deps.simctl.getPasteboard(device.udid, extra.signal);
+        if (text !== pasteboardBefore || Date.now() >= deadline) break;
+      }
+      pasteboardUnchanged = text === pasteboardBefore;
       pasteboard = text.length > MAX_PASTEBOARD_CHARS ? `${text.slice(0, MAX_PASTEBOARD_CHARS)}\u2026` : text;
     }
     const result = {
@@ -48879,6 +48972,7 @@ function registerCoreTools(server, deps) {
       device: deviceSummary(device),
       ...delivery === void 0 ? {} : { delivery },
       ...pasteboard === void 0 ? {} : { pasteboard },
+      ...pasteboardUnchanged ? { pasteboardUnchanged: true } : {},
       ...warning === void 0 ? {} : { warning }
     };
     if (!(args.screenshot ?? deps.interactScreenshot)) return jsonResult(result);
