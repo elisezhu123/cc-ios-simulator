@@ -40506,6 +40506,7 @@ __export(simctl_exports, {
   locationSetArgs: () => locationSetArgs,
   openUrl: () => openUrl,
   parseDeviceList: () => parseDeviceList,
+  postDarwinNotification: () => postDarwinNotification,
   sendPush: () => sendPush,
   setAppearance: () => setAppearance,
   setLocation: () => setLocation,
@@ -40737,6 +40738,9 @@ async function takeScreenshot(udid, filePath, signal) {
 }
 async function setPasteboard(udid, text, signal) {
   await execSimctl(["pbcopy", udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { input: text, env: { LC_ALL: "en_US.UTF-8" } });
+}
+async function postDarwinNotification(udid, name, signal) {
+  await execSimctl(["spawn", udid, "notifyutil", "-p", name], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal);
 }
 async function getPasteboard(udid, signal) {
   return execSimctl(["pbpaste", udid], SIMCTL_PASTEBOARD_TIMEOUT_MS, signal, { env: { LC_ALL: "en_US.UTF-8" } });
@@ -42326,13 +42330,14 @@ function isDeviceAction(value) {
   return typeof value === "string" && DEVICE_ACTIONS.includes(value);
 }
 var DEVICE_ACTION_SPECS = [
-  { action: "app-switcher", transport: { kind: "menu", item: "App Switcher" }, realDevice: true },
+  { action: "app-switcher", transport: { kind: "serve-sim", button: "app_switcher" }, realDevice: true },
   { action: "lock", transport: { kind: "serve-sim", button: "lock" }, realDevice: true },
-  // ⇧⌘H twice: the lock screen has no menu item, and the swipe is unusable.
-  { action: "unlock", transport: { kind: "keystroke", repeat: 2 }, realDevice: true },
-  { action: "shake", transport: { kind: "menu", item: "Shake" }, realDevice: false },
+  // The home button twice: the first press wakes the lock screen, the second leaves it.
+  { action: "unlock", transport: { kind: "serve-sim", button: "home", repeat: 2 }, realDevice: true },
+  // What Simulator.app's Device ▸ Shake posts; UIKit turns it into a motion-shake event.
+  { action: "shake", transport: { kind: "notify", name: "com.apple.UIKit.SimulatorShake" }, realDevice: false },
   { action: "siri", transport: { kind: "menu", item: "Siri" }, realDevice: true },
-  { action: "action-button", transport: { kind: "menu", item: "Action Button" }, realDevice: false },
+  { action: "action-button", transport: { kind: "serve-sim", button: "action" }, realDevice: false },
   { action: "re-center", transport: { kind: "menu", item: "Re-Center Open Apps" }, realDevice: false },
   // serve-sim's native toggle (what Simulator.app's ⌘K sends): no Simulator.app window, no Accessibility permission.
   { action: "toggle-keyboard", transport: { kind: "frame", tag: 12 }, realDevice: false },
@@ -42345,7 +42350,7 @@ function deviceActionSpec(action) {
   return spec;
 }
 var DEVICE_ACTION_PERMISSION_HINT = "macOS needs permission to drive Simulator.app: System Settings \u25B8 Privacy & Security \u25B8 Accessibility, then enable the app running Claude Code (Terminal / iTerm / the Claude app)";
-var DEVICE_ACTION_SIMULATOR_HINT = "the Simulator app is not running \u2014 boot a simulator first (ios_sim_boot)";
+var DEVICE_ACTION_SIMULATOR_HINT = "this action clicks a menu of Simulator.app, which is not running \u2014 Xcode 27 ships no Simulator.app (simulators run through Device Hub), so there it is unavailable; on an older Xcode open Simulator.app first";
 function deviceActionFailureHint(message) {
   if (/simulator-not-running/.test(message)) return DEVICE_ACTION_SIMULATOR_HINT;
   if (/not allowed assistive|osascript is not allowed|-1719|1002|assistive access/i.test(message)) {
@@ -42404,6 +42409,13 @@ function simulatorHomeKeystrokeScript(repeat) {
   const presses = Array.from({ length: Math.max(1, repeat) }, (_, index) => `  key code 4 using {command down, shift down}${index + 1 < repeat ? "\n  delay 0.25" : ""}`).join("\n");
   return focusedSimulatorScript(presses);
 }
+function simulatorAppRunning() {
+  return new Promise((resolve7) => {
+    execFile4("pgrep", ["-x", "Simulator"], { timeout: 2e3 }, (error62) => {
+      resolve7(error62 === null || error62.code !== 1);
+    });
+  });
+}
 function runOsascript(script, timeoutMs) {
   return new Promise((resolve7, reject) => {
     execFile4("osascript", ["-e", script], { timeout: timeoutMs }, (error62, _stdout, stderr) => {
@@ -42416,18 +42428,29 @@ function runOsascript(script, timeoutMs) {
     });
   });
 }
-async function runSimulatorDeviceAction(action, pressButton, timeoutMs = OSASCRIPT_TIMEOUT_MS, sendFrame) {
+var BUTTON_REPEAT_DELAY_MS = 700;
+async function runSimulatorDeviceAction(action, channels, timeoutMs = OSASCRIPT_TIMEOUT_MS) {
   const spec = deviceActionSpec(action);
   try {
     if (spec.transport.kind === "serve-sim") {
-      await pressButton(spec.transport.button);
+      const presses = spec.transport.repeat ?? 1;
+      for (let press = 0; press < presses; press += 1) {
+        if (press > 0) await new Promise((resolve7) => setTimeout(resolve7, channels.repeatDelayMs ?? BUTTON_REPEAT_DELAY_MS));
+        await channels.pressButton(spec.transport.button);
+      }
       return;
     }
     if (spec.transport.kind === "frame") {
-      if (sendFrame === void 0) throw new Error("this stream backend cannot send serve-sim control frames");
-      await sendFrame(spec.transport.tag);
+      if (channels.sendFrame === void 0) throw new Error("this stream backend cannot send serve-sim control frames");
+      await channels.sendFrame(spec.transport.tag);
       return;
     }
+    if (spec.transport.kind === "notify") {
+      if (channels.postNotification === void 0) throw new Error("this stream backend cannot post a notification inside the simulator");
+      await channels.postNotification(spec.transport.name);
+      return;
+    }
+    if (!await simulatorAppRunning()) throw new Error("ios-simulator: simulator-not-running");
     const script = spec.transport.kind === "menu" ? simulatorMenuItemScript(spec.transport.item, spec.transport.path) : simulatorHomeKeystrokeScript(spec.transport.repeat);
     await runOsascript(script, timeoutMs);
   } catch (error62) {
@@ -43595,19 +43618,18 @@ var SimStreamSource = class {
     rotate: async (orientation) => {
       await this.#run("rotate", orientation);
     },
-    deviceAction: (action) => runSimulatorDeviceAction(
-      action,
-      async (name) => {
+    deviceAction: (action) => runSimulatorDeviceAction(action, {
+      pressButton: async (name) => {
         await this.#run("button", name);
       },
-      void 0,
-      async (tag) => {
+      sendFrame: async (tag) => {
         if (tag !== SIM_SOFTWARE_KEYBOARD_TAG) throw new Error(`ios-simulator: no sender for serve-sim control frame ${String(tag)}`);
         const udid = this.#requireDevice();
         const info = await this.host.ensureRunning({ udid });
         await sendSimKeyboardToggle(info.wsUrl);
-      }
-    ),
+      },
+      postNotification: (name) => postDarwinNotification(this.#requireDevice(), name)
+    }),
     screenshot: async () => {
       const udid = this.#requireDevice();
       const path = join8(tmpdir2(), `ios-simulator-stream-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
@@ -48753,7 +48775,7 @@ function registerCoreTools(server, deps) {
   }));
   server.registerTool("ios_sim_interact", {
     title: "Interact with the simulator",
-    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, press an editing shortcut in the focused field (shortcut: copy, paste, cut, select-all, undo, redo \u2014 copy and cut answer with the text now on the simulator pasteboard), or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; the others except lock drive Simulator.app and need the Accessibility permission). Starts the live stream when needed but never boots a device. " + (deps.interactScreenshot ? "About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. " : "Answers in text right after the action so actions chain quickly; pass screenshot:true (or call ios_sim_screenshot) to see the result as an image about 300 ms later. ") + "On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
+    description: "Drive a booted simulator through serve-sim: tap at normalized 0..1 coordinates (x = pixel x / screenshot image width, y = pixel y / image height), type text into the focused field (any text: Chinese, emoji and other characters the US keyboard lacks are pasted through the simulator pasteboard, replacing its contents), press a hardware button (home, lock, \u2026), send a gesture, scroll (direction names the CONTENT), rotate, press an editing shortcut in the focused field (shortcut: copy, paste, cut, select-all, undo, redo \u2014 copy and cut answer with the text now on the simulator pasteboard), or run a device action (app-switcher, lock, unlock, shake, siri, action-button, re-center, toggle-keyboard, slow-animations; toggle-keyboard shows or hides the on-screen keyboard of the focused field, so its keys can be tapped; siri, re-center and slow-animations click Simulator.app menus, need the Accessibility permission and are unavailable under Xcode 27, which has no Simulator.app). Starts the live stream when needed but never boots a device. " + (deps.interactScreenshot ? "About 300 ms after the action a screenshot of the result comes back as an image; pass screenshot:false when chaining actions. " : "Answers in text right after the action so actions chain quickly; pass screenshot:true (or call ios_sim_screenshot) to see the result as an image about 300 ms later. ") + "On a connected iPhone/iPad (WebDriverAgent, start it once with ios_real_start_wda): tap, type (any text), button (home, lock, volume-up, volume-down), a drag gesture, scroll, rotate, and device_action lock / unlock / siri.",
     inputSchema: {
       action: external_exports.enum(["tap", "type", "button", "gesture", "scroll", "rotate", "device_action", "shortcut"]),
       udid: UDID_PARAM,
